@@ -124,14 +124,14 @@ if (!function_exists('array_len')) {
 }
 
 if (!function_exists('array_collapse')) {
-    function array_collapse(array $object, string $key = 'key', string|array $value = 'value'): array
+    function array_collapse(array $array, string $key = 'key', string|array $value = 'value'): array
     {
-        if (empty($object)) {
+        if (empty($array)) {
             return [];
         }
 
         $list = [];
-        foreach ($object as $element) {
+        foreach ($array as $element) {
             if (!isset($element->{$key})) {
                 continue;
             }
@@ -149,5 +149,26 @@ if (!function_exists('array_collapse')) {
         }
 
         return $list;
+    }
+}
+
+if (!function_exists('array_find')) {
+    function array_find(array $array, mixed $value, bool $strict = false): int|string|false
+    {
+        return array_search($value, $array, $strict);
+    }
+}
+
+if (!function_exists('array_apply')) {
+    function array_apply(array $array, ?callable $callback, array ...$arrays): array
+    {
+        return array_map($callback, $array, ...$arrays);
+    }
+}
+
+if (!function_exists('array_join')) {
+    function array_join(array $array, string $separator = ''): string
+    {
+        return implode($separator, $array);
     }
 }
