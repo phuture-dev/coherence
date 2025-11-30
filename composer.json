@@ -1,0 +1,70 @@
+{
+    "name": "advandz/kernel",
+    "description": "Unified PHP wrappers for multiple data serialization formats including CSV, JSON, TOON, YAML, NEON, TOML, and PHP serialization",
+    "type": "library",
+    "keywords": [
+        "toon",
+        "yaml",
+        "neon",
+        "object-notation",
+        "token-optimization",
+        "json-alternative"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Advandz Technologies, LLC"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "nette/php-generator": "~4.2.0",
+        "symfony/polyfill-php82": "~v1.33.0",
+        "symfony/polyfill-php83": "~v1.33.0",
+        "symfony/polyfill-php84": "~v1.33.0",
+        "symfony/polyfill-php85": "~v1.33.0",
+        "symfony/polyfill-mbstring": "~v1.33.0",
+        "symfony/polyfill-iconv": "~v1.33.0",
+        "symfony/polyfill-uuid": "~v1.33.0",
+        "symfony/polyfill-intl-grapheme": "~v1.33.0",
+        "symfony/polyfill-intl-idn": "~v1.33.0",
+        "symfony/polyfill-intl-icu": "~v1.33.0",
+        "symfony/polyfill-intl-messageformatter": "~v1.33.0",
+        "symfony/polyfill-intl-normalizer": "~v1.33.0"
+    },
+    "require-dev": {
+        "nette/tester": "^2.5",
+        "phpstan/phpstan": "^1.10",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "autoload": {
+        "files": [
+            "src/functions/std.php",
+            "src/functions/array.php",
+            "src/functions/date.php",
+            "src/functions/hash.php",
+            "src/functions/html.php",
+            "src/functions/mb.php",
+            "src/functions/str.php",
+            "src/functions/url.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Advandz\\Kernel\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "tester tests -C",
+        "test-coverage": "tester tests -C --coverage coverage.html --coverage-src src",
+        "phpstan": "phpstan analyse src --level=max",
+        "cs-check": "phpcs --standard=PSR12 src",
+        "cs-fix": "phpcbf --standard=PSR12 src"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
