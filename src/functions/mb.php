@@ -172,9 +172,148 @@ if (!function_exists('mb_str_width')) {
     }
 }
 
+if (!function_exists('mb_strimwidth')) {
+    function mb_strimwidth(string $string, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
+    {
+        $encoding = $encoding ?? 'UTF-8';
+
+        // Extract substring from start position
+        $string = mb_substr($string, $start, null, $encoding);
+
+        // Get the visual width of the string
+        $string_width = mb_strwidth($string, $encoding);
+
+        // If string is already within width, return as-is
+        if ($string_width <= $width) {
+            return $string;
+        }
+
+        // Calculate width available for content (accounting for trim marker)
+        $trim_marker_width = mb_strwidth($trim_marker, $encoding);
+        $available_width = $width - $trim_marker_width;
+
+        // Truncate string to fit available width
+        $truncated = '';
+        $current_width = 0;
+        $length = mb_strlen($string, $encoding);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($string, $i, 1, $encoding);
+            $char_width = mb_strwidth($char, $encoding);
+
+            if ($current_width + $char_width > $available_width) {
+                break;
+            }
+
+            $truncated .= $char;
+            $current_width += $char_width;
+        }
+
+        return $truncated . $trim_marker;
+    }
+}
+
 if (!function_exists('mb_str_cut')) {
     function mb_str_cut(string $subject, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
     {
         return mb_strimwidth($subject, $start, $width, $trim_marker, $encoding);
+    }
+}
+
+if (!function_exists('mb_str_replace')) {
+    function mb_str_replace(
+        array|string $search,
+        array|string $replace,
+        array|string $subject,
+        int &$count = null,
+        ?string $encoding = null
+    ): string|array
+    {
+        $encoding = $encoding ?? 'UTF-8';
+
+        // Convert to arrays for uniform handling
+        $searches = is_array($search) ? $search : [$search];
+        $replaces = is_array($replace) ? $replace : [$replace];
+        $subjects = is_array($subject) ? $subject : [$subject];
+
+        $count = 0;
+        $result = [];
+
+        foreach ($subjects as $subj) {
+            foreach ($searches as $i => $srch) {
+                $repl = $replaces[$i] ?? '';
+                // Use preg_replace for multibyte-safe replacement
+                $pattern = '/' . preg_quote($srch, '/') . '/u';
+                $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
+                    $count++;
+                    return $repl;
+                }, $subj);
+            }
+            $result[] = $subj;
+        }
+
+        return is_array($subject) ? $result : $result[0];
+    }
+}
+
+if (!function_exists('mb_str_rep')) {
+    function mb_str_rep(
+        string $subject,
+        string|array $search,
+        string|array $replace,
+        int &$count = null,
+        ?string $encoding = null
+    ): string|array
+    {
+        return mb_str_replace($search, $replace, $subject, $count, $encoding);
+    }
+}
+
+if (!function_exists('mb_str_ireplace')) {
+    function mb_str_ireplace(
+        array|string $search,
+        array|string $replace,
+        array|string $subject,
+        int &$count = null,
+        ?string $encoding = null
+    ): string|array
+    {
+        $encoding = $encoding ?? 'UTF-8';
+
+        // Convert to arrays for uniform handling
+        $searches = is_array($search) ? $search : [$search];
+        $replaces = is_array($replace) ? $replace : [$replace];
+        $subjects = is_array($subject) ? $subject : [$subject];
+
+        $count = 0;
+        $result = [];
+
+        foreach ($subjects as $subj) {
+            foreach ($searches as $i => $srch) {
+                $repl = $replaces[$i] ?? '';
+                // Use preg_replace with case-insensitive flag and UTF-8 support
+                $pattern = '/' . preg_quote($srch, '/') . '/ui';
+                $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
+                    $count++;
+                    return $repl;
+                }, $subj);
+            }
+            $result[] = $subj;
+        }
+
+        return is_array($subject) ? $result : $result[0];
+    }
+}
+
+if (!function_exists('mb_str_irep')) {
+    function mb_str_irep(
+        string $subject,
+        string|array $search,
+        string|array $replace,
+        int &$count = null,
+        ?string $encoding = null
+    ): string|array
+    {
+        return mb_str_ireplace($search, $replace, $subject, $count, $encoding);
     }
 }
