@@ -1,19 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Advandz\Kernel;
 
-use Advandz\Kernel\Html;
+use Advandz\Kernel\Class\StaticClass;
 
 /**
- * These functions offer a convenient and more consistent procedural interface to
- * the native HTML API.
+ * HTML utility class providing consistent wrappers around native PHP HTML functions.
+ *
+ * This class offers static methods for common HTML operations including entity encoding,
+ * special character conversion, and tag stripping. All methods follow camelCase naming
+ * conventions and provide a clean, object-oriented interface to PHP's native HTML functions.
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.advandz.com/ Advandz
  */
-
-if (!function_exists('html_entity_encode')) {
+class Html extends StaticClass
+{
     /**
      * Converts all applicable characters to HTML entities.
      *
@@ -23,20 +26,18 @@ if (!function_exists('html_entity_encode')) {
      * @param int $flags Flags for controlling conversion behavior (default: ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)
      * @param string|null $encoding Character encoding (default: null for ini default)
      * @param bool $double_encode Whether to encode existing HTML entities (default: true)
-     * @return string Returns the encoded string or false on failure
+     * @return string Returns the encoded string
      * @see https://www.php.net/manual/en/function.htmlentities.php
      */
-    function html_entity_encode(
+    public static function entityEncode(
         string $string,
         int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401,
         ?string $encoding = null,
         bool $double_encode = true
     ): string {
-        return Html::entityEncode($string, $flags, $encoding, $double_encode);
+        return htmlentities($string, $flags, $encoding, $double_encode);
     }
-}
 
-if (!function_exists('html_special_chars_encode')) {
     /**
      * Converts special characters to HTML entities.
      *
@@ -46,20 +47,18 @@ if (!function_exists('html_special_chars_encode')) {
      * @param int $flags Flags for controlling conversion behavior (default: ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)
      * @param string|null $encoding Character encoding (default: null for ini default)
      * @param bool $double_encode Whether to encode existing HTML entities (default: true)
-     * @return string Returns the encoded string or false on failure
+     * @return string Returns the encoded string
      * @see https://www.php.net/manual/en/function.htmlspecialchars.php
      */
-    function html_special_chars_encode(
+    public static function specialCharsEncode(
         string $string,
         int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401,
         ?string $encoding = null,
         bool $double_encode = true
     ): string {
-        return Html::specialCharsEncode($string, $flags, $encoding, $double_encode);
+        return htmlspecialchars($string, $flags, $encoding, $double_encode);
     }
-}
 
-if (!function_exists('html_special_chars_decode')) {
     /**
      * Converts special HTML entities back to characters.
      *
@@ -67,18 +66,16 @@ if (!function_exists('html_special_chars_decode')) {
      *
      * @param string $string The string to decode
      * @param int $flags Flags for controlling conversion behavior (default: ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)
-     * @return string Returns the decoded string or false on failure
+     * @return string Returns the decoded string
      * @see https://www.php.net/manual/en/function.htmlspecialchars-decode.php
      */
-    function html_special_chars_decode(
+    public static function specialCharsDecode(
         string $string,
         int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401
     ): string {
-        return Html::specialCharsDecode($string, $flags);
+        return htmlspecialchars_decode($string, $flags);
     }
-}
 
-if (!function_exists('html_strip_tags')) {
     /**
      * Strips HTML and PHP tags from a string.
      *
@@ -89,8 +86,8 @@ if (!function_exists('html_strip_tags')) {
      * @return string Returns the stripped string
      * @see https://www.php.net/manual/en/function.strip-tags.php
      */
-    function html_strip_tags(string $string, array|string|null $allowed_tags = null): string
+    public static function stripTags(string $string, array|string|null $allowed_tags = null): string
     {
-        return Html::stripTags($string, $allowed_tags);
+        return strip_tags($string, $allowed_tags);
     }
 }

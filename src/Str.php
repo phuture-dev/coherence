@@ -1,32 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Advandz\Kernel;
 
-use Advandz\Kernel\Str;
+use Advandz\Kernel\Class\StaticClass;
 
 /**
- * These functions offer a convenient and more consistent procedural interface to
- * the native strings API with automatic multibyte detection.
+ * String utility class providing consistent wrappers around native PHP string functions.
  *
- * All functions automatically detect multibyte strings and use appropriate
- * underlying functions (mb_* for multibyte, native for ASCII).
+ * This class offers static methods for comprehensive string operations with automatic multibyte
+ * detection. All methods automatically detect multibyte strings and use appropriate underlying
+ * functions (mb_* for multibyte, native for ASCII), following camelCase naming conventions.
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.advandz.com/ Advandz
  */
-
-if (!defined('STR_CASE_UPPER')) {
-    define('STR_CASE_UPPER', MB_CASE_UPPER);
-}
-if (!defined('STR_CASE_LOWER')) {
-    define('STR_CASE_LOWER', MB_CASE_LOWER);
-}
-if (!defined('STR_CASE_TITLE')) {
-    define('STR_CASE_TITLE', MB_CASE_TITLE);
-}
-
-if (!function_exists('str_str')) {
+class Str extends StaticClass
+{
     /**
      * Finds the first occurrence of a string.
      *
@@ -40,13 +30,20 @@ if (!function_exists('str_str')) {
      * @see https://www.php.net/manual/en/function.strstr.php
      * @see https://www.php.net/manual/en/function.mb-strstr.php
      */
-    function str_str(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
+    public static function str(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false
     {
-        return Str::str($subject, $search, $before, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strstr($subject, $search, $before, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_istr')) {
+        return strstr($subject, $search, $before);
+    }
+
     /**
      * Finds the first occurrence of a string (case-insensitive).
      *
@@ -60,13 +57,20 @@ if (!function_exists('str_istr')) {
      * @see https://www.php.net/manual/en/function.stristr.php
      * @see https://www.php.net/manual/en/function.mb-stristr.php
      */
-    function str_istr(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
+    public static function istr(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false
     {
-        return Str::istr($subject, $search, $before, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_stristr($subject, $search, $before, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_contains')) {
+        return stristr($subject, $search, $before);
+    }
+
     /**
      * Checks if a string contains a given substring.
      *
@@ -77,13 +81,11 @@ if (!function_exists('str_contains')) {
      * @return bool Returns true if substring is found, false otherwise
      * @see https://www.php.net/manual/en/function.str-contains.php
      */
-    function str_contains(string $subject, string $search): bool
+    public static function contains(string $subject, string $search): bool
     {
-        return Str::contains($subject, $search);
+        return $search !== '' && strpos($subject, $search) !== false;
     }
-}
 
-if (!function_exists('str_icontains')) {
     /**
      * Checks if a string contains a given substring (case-insensitive).
      *
@@ -93,13 +95,11 @@ if (!function_exists('str_icontains')) {
      * @param string $search The substring to search for
      * @return bool Returns true if substring is found, false otherwise
      */
-    function str_icontains(string $subject, string $search): bool
+    public static function icontains(string $subject, string $search): bool
     {
-        return Str::icontains($subject, $search);
+        return $search !== '' && stripos($subject, $search) !== false;
     }
-}
 
-if (!function_exists('str_pos')) {
     /**
      * Finds the position of the first occurrence of a substring.
      *
@@ -113,13 +113,15 @@ if (!function_exists('str_pos')) {
      * @see https://www.php.net/manual/en/function.strpos.php
      * @see https://www.php.net/manual/en/function.mb-strpos.php
      */
-    function str_pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
     {
-        return Str::pos($subject, $search, $offset, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strpos($subject, $search, $offset, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_ipos')) {
+        return strpos($subject, $search, $offset);
+    }
+
     /**
      * Finds the position of the first occurrence of a substring (case-insensitive).
      *
@@ -133,13 +135,15 @@ if (!function_exists('str_ipos')) {
      * @see https://www.php.net/manual/en/function.stripos.php
      * @see https://www.php.net/manual/en/function.mb-stripos.php
      */
-    function str_ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
     {
-        return Str::ipos($subject, $search, $offset, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_stripos($subject, $search, $offset, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_last_pos')) {
+        return stripos($subject, $search, $offset);
+    }
+
     /**
      * Finds the position of the last occurrence of a substring.
      *
@@ -153,13 +157,20 @@ if (!function_exists('str_last_pos')) {
      * @see https://www.php.net/manual/en/function.strrpos.php
      * @see https://www.php.net/manual/en/function.mb-strrpos.php
      */
-    function str_last_pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function lastPos(
+        string $subject,
+        string $search,
+        int $offset = 0,
+        ?string $encoding = null
+    ): int|false
     {
-        return Str::lastPos($subject, $search, $offset, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strrpos($subject, $search, $offset, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_last_ipos')) {
+        return strrpos($subject, $search, $offset);
+    }
+
     /**
      * Finds the position of the last occurrence of a substring (case-insensitive).
      *
@@ -173,13 +184,20 @@ if (!function_exists('str_last_ipos')) {
      * @see https://www.php.net/manual/en/function.strripos.php
      * @see https://www.php.net/manual/en/function.mb-strripos.php
      */
-    function str_last_ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function lastIpos(
+        string $subject,
+        string $search,
+        int $offset = 0,
+        ?string $encoding = null
+    ): int|false
     {
-        return Str::lastIpos($subject, $search, $offset, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strripos($subject, $search, $offset, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_len')) {
+        return strripos($subject, $search, $offset);
+    }
+
     /**
      * Gets the length of a string.
      *
@@ -191,13 +209,15 @@ if (!function_exists('str_len')) {
      * @see https://www.php.net/manual/en/function.strlen.php
      * @see https://www.php.net/manual/en/function.mb-strlen.php
      */
-    function str_len(string $subject, ?string $encoding = null): int
+    public static function len(string $subject, ?string $encoding = null): int
     {
-        return Str::len($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strlen($subject, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_lower')) {
+        return strlen($subject);
+    }
+
     /**
      * Converts a string to lowercase.
      *
@@ -209,13 +229,15 @@ if (!function_exists('str_lower')) {
      * @see https://www.php.net/manual/en/function.strtolower.php
      * @see https://www.php.net/manual/en/function.mb-strtolower.php
      */
-    function str_lower(string $subject, ?string $encoding = null): string
+    public static function lower(string $subject, ?string $encoding = null): string
     {
-        return Str::lower($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strtolower($subject, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_upper')) {
+        return strtolower($subject);
+    }
+
     /**
      * Converts a string to uppercase.
      *
@@ -227,13 +249,15 @@ if (!function_exists('str_upper')) {
      * @see https://www.php.net/manual/en/function.strtoupper.php
      * @see https://www.php.net/manual/en/function.mb-strtoupper.php
      */
-    function str_upper(string $subject, ?string $encoding = null): string
+    public static function upper(string $subject, ?string $encoding = null): string
     {
-        return Str::upper($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strtoupper($subject, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_upper_first')) {
+        return strtoupper($subject);
+    }
+
     /**
      * Uppercases the first character of a string.
      *
@@ -244,13 +268,18 @@ if (!function_exists('str_upper_first')) {
      * @return string Returns the string with first character uppercased
      * @see https://www.php.net/manual/en/function.ucfirst.php
      */
-    function str_upper_first(string $subject, ?string $encoding = null): string
+    public static function upperFirst(string $subject, ?string $encoding = null): string
     {
-        return Str::upperFirst($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            $first = mb_substr($subject, 0, 1, $encoding ?? mb_internal_encoding());
+            $rest = mb_substr($subject, 1, null, $encoding ?? mb_internal_encoding());
 
-if (!function_exists('str_lower_first')) {
+            return mb_strtoupper($first, $encoding ?? mb_internal_encoding()) . $rest;
+        }
+
+        return ucfirst($subject);
+    }
+
     /**
      * Lowercases the first character of a string.
      *
@@ -261,13 +290,18 @@ if (!function_exists('str_lower_first')) {
      * @return string Returns the string with first character lowercased
      * @see https://www.php.net/manual/en/function.lcfirst.php
      */
-    function str_lower_first(string $subject, ?string $encoding = null): string
+    public static function lowerFirst(string $subject, ?string $encoding = null): string
     {
-        return Str::lowerFirst($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            $first = mb_substr($subject, 0, 1, $encoding ?? mb_internal_encoding());
+            $rest = mb_substr($subject, 1, null, $encoding ?? mb_internal_encoding());
 
-if (!function_exists('str_upper_words')) {
+            return mb_strtolower($first, $encoding ?? mb_internal_encoding()) . $rest;
+        }
+
+        return lcfirst($subject);
+    }
+
     /**
      * Uppercases the first character of each word in a string.
      *
@@ -279,13 +313,15 @@ if (!function_exists('str_upper_words')) {
      * @see https://www.php.net/manual/en/function.ucwords.php
      * @see https://www.php.net/manual/en/function.mb-convert-case.php
      */
-    function str_upper_words(string $subject, ?string $encoding = null): string
+    public static function upperWords(string $subject, ?string $encoding = null): string
     {
-        return Str::upperWords($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_convert_case($subject, MB_CASE_TITLE, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_lower_words')) {
+        return ucwords($subject);
+    }
+
     /**
      * Lowercases the first character of each word in a string.
      *
@@ -295,13 +331,19 @@ if (!function_exists('str_lower_words')) {
      * @param string|null $encoding Character encoding (default: null for UTF-8)
      * @return string Returns the string with each word's first character lowercased
      */
-    function str_lower_words(string $subject, ?string $encoding = null): string
+    public static function lowerWords(string $subject, ?string $encoding = null): string
     {
-        return Str::lowerWords($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return preg_replace_callback('/\b\w/u', function ($matches) use ($encoding) {
+                return mb_strtolower($matches[0], $encoding ?? mb_internal_encoding());
+            }, $subject);
+        }
 
-if (!function_exists('str_parse')) {
+        return preg_replace_callback('/\b\w/', function ($matches) {
+            return strtolower($matches[0]);
+        }, $subject);
+    }
+
     /**
      * Parses a query string into variables.
      *
@@ -314,13 +356,15 @@ if (!function_exists('str_parse')) {
      * @see https://www.php.net/manual/en/function.parse-str.php
      * @see https://www.php.net/manual/en/function.mb-parse-str.php
      */
-    function str_parse(string $subject, &$result, ?string $encoding = null): void
+    public static function parse(string $subject, &$result, ?string $encoding = null): void
     {
-        Str::parse($subject, $result, $encoding);
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            mb_parse_str($subject, $result);
+        } else {
+            parse_str($subject, $result);
+        }
     }
-}
 
-if (!function_exists('str_sub')) {
     /**
      * Returns part of a string.
      *
@@ -334,13 +378,15 @@ if (!function_exists('str_sub')) {
      * @see https://www.php.net/manual/en/function.substr.php
      * @see https://www.php.net/manual/en/function.mb-substr.php
      */
-    function str_sub(string $subject, int $offset, ?int $length = null, ?string $encoding = null): string
+    public static function sub(string $subject, int $offset, ?int $length = null, ?string $encoding = null): string
     {
-        return Str::sub($subject, $offset, $length, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_substr($subject, $offset, $length, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_trim')) {
+        return substr($subject, $offset, $length);
+    }
+
     /**
      * Strips whitespace (or other characters) from the beginning and end of a string.
      *
@@ -351,13 +397,11 @@ if (!function_exists('str_trim')) {
      * @return string Returns the trimmed string
      * @see https://www.php.net/manual/en/function.trim.php
      */
-    function str_trim(string $subject, string $characters = " \n\r\t\v\0"): string
+    public static function trim(string $subject, string $characters = " \n\r\t\v\0"): string
     {
-        return Str::trim($subject, $characters);
+        return trim($subject, $characters);
     }
-}
 
-if (!function_exists('str_ltrim')) {
     /**
      * Strips whitespace (or other characters) from the beginning of a string.
      *
@@ -368,13 +412,11 @@ if (!function_exists('str_ltrim')) {
      * @return string Returns the trimmed string
      * @see https://www.php.net/manual/en/function.ltrim.php
      */
-    function str_ltrim(string $subject, string $characters = " \n\r\t\v\0"): string
+    public static function ltrim(string $subject, string $characters = " \n\r\t\v\0"): string
     {
-        return Str::ltrim($subject, $characters);
+        return ltrim($subject, $characters);
     }
-}
 
-if (!function_exists('str_rtrim')) {
     /**
      * Strips whitespace (or other characters) from the end of a string.
      *
@@ -385,13 +427,11 @@ if (!function_exists('str_rtrim')) {
      * @return string Returns the trimmed string
      * @see https://www.php.net/manual/en/function.rtrim.php
      */
-    function str_rtrim(string $subject, string $characters = " \n\r\t\v\0"): string
+    public static function rtrim(string $subject, string $characters = " \n\r\t\v\0"): string
     {
-        return Str::rtrim($subject, $characters);
+        return rtrim($subject, $characters);
     }
-}
 
-if (!function_exists('str_count')) {
     /**
      * Counts the number of substring occurrences.
      *
@@ -406,18 +446,26 @@ if (!function_exists('str_count')) {
      * @see https://www.php.net/manual/en/function.substr-count.php
      * @see https://www.php.net/manual/en/function.mb-substr-count.php
      */
-    function str_count(
+    public static function count(
         string $subject,
         string $search,
         int $offset = 0,
         ?int $length = null,
         ?string $encoding = null
-    ): int {
-        return Str::count($subject, $search, $offset, $length, $encoding);
-    }
-}
+    ): int
+    {
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            // Multibyte: emulate offset/length using mb_substr
+            if ($offset !== 0 || $length !== null) {
+                $subject = mb_substr($subject, $offset, $length, $encoding ?? mb_internal_encoding());
+            }
 
-if (!function_exists('str_rep')) {
+            return mb_substr_count($subject, $search, $encoding ?? mb_internal_encoding());
+        }
+
+        return substr_count($subject, $search, $offset, $length);
+    }
+
     /**
      * Replaces all occurrences of the search string with the replacement string.
      *
@@ -431,18 +479,21 @@ if (!function_exists('str_rep')) {
      * @return string|array Returns a string or array with replaced values
      * @see https://www.php.net/manual/en/function.str-replace.php
      */
-    function str_rep(
+    public static function rep(
         string $subject,
         string|array $search,
         string|array $replace,
         ?int &$count = null,
         ?string $encoding = null
-    ): string|array {
-        return Str::rep($subject, $search, $replace, $count, $encoding);
-    }
-}
+    ): string|array
+    {
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_str_replace($search, $replace, $subject, $count, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_irep')) {
+        return str_replace($search, $replace, $subject, $count);
+    }
+
     /**
      * Replaces all occurrences of the search string with the replacement string (case-insensitive).
      *
@@ -456,18 +507,21 @@ if (!function_exists('str_irep')) {
      * @return string|array Returns a string or array with replaced values
      * @see https://www.php.net/manual/en/function.str-ireplace.php
      */
-    function str_irep(
+    public static function irep(
         string $subject,
         string|array $search,
         string|array $replace,
         ?int &$count = null,
         ?string $encoding = null
-    ): string|array {
-        return Str::irep($subject, $search, $replace, $count, $encoding);
-    }
-}
+    ): string|array
+    {
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_str_ireplace($search, $replace, $subject, $count, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_reverse')) {
+        return str_ireplace($search, $replace, $subject, $count);
+    }
+
     /**
      * Reverses a string.
      *
@@ -477,13 +531,11 @@ if (!function_exists('str_reverse')) {
      * @return string Returns the reversed string
      * @see https://www.php.net/manual/en/function.strrev.php
      */
-    function str_reverse(string $subject): string
+    public static function reverse(string $subject): string
     {
-        return Str::reverse($subject);
+        return strrev($subject);
     }
-}
 
-if (!function_exists('str_split')) {
     /**
      * Splits a string by a given separator.
      *
@@ -495,13 +547,11 @@ if (!function_exists('str_split')) {
      * @return array Returns a list containing the string split by the separator
      * @see https://www.php.net/manual/en/function.explode.php
      */
-    function str_split(string $subject, string $separator, int $limit = PHP_INT_MAX): array
+    public static function split(string $subject, string $separator, int $limit = PHP_INT_MAX): array
     {
-        return Str::split($subject, $separator, $limit);
+        return explode($subject, $separator, $limit);
     }
-}
 
-if (!function_exists('str_chunk_split')) {
     /**
      * Splits a string into smaller chunks.
      *
@@ -513,13 +563,11 @@ if (!function_exists('str_chunk_split')) {
      * @return string Returns the chunked string
      * @see https://www.php.net/manual/en/function.chunk-split.php
      */
-    function str_chunk_split(string $subject, int $length = 76, string $separator = "\r\n"): string
+    public static function chunkSplit(string $subject, int $length = 76, string $separator = "\r\n"): string
     {
-        return Str::chunkSplit($subject, $length, $separator);
+        return chunk_split($subject, $length, $separator);
     }
-}
 
-if (!function_exists('str_compare')) {
     /**
      * Performs binary safe string comparison.
      *
@@ -530,13 +578,11 @@ if (!function_exists('str_compare')) {
      * @return int Returns < 0 if string1 is less than string2; > 0 if greater; 0 if equal
      * @see https://www.php.net/manual/en/function.strcmp.php
      */
-    function str_compare(string $string1, string $string2): int
+    public static function compare(string $string1, string $string2): int
     {
-        return Str::compare($string1, $string2);
+        return strcmp($string1, $string2);
     }
-}
 
-if (!function_exists('str_icompare')) {
     /**
      * Performs binary safe case-insensitive string comparison.
      *
@@ -547,13 +593,11 @@ if (!function_exists('str_icompare')) {
      * @return int Returns < 0 if string1 is less than string2; > 0 if greater; 0 if equal
      * @see https://www.php.net/manual/en/function.strcasecmp.php
      */
-    function str_icompare(string $string1, string $string2): int
+    public static function icompare(string $string1, string $string2): int
     {
-        return Str::icompare($string1, $string2);
+        return strcasecmp($string1, $string2);
     }
-}
 
-if (!function_exists('str_ncompare')) {
     /**
      * Performs binary safe string comparison of the first n characters.
      *
@@ -565,13 +609,11 @@ if (!function_exists('str_ncompare')) {
      * @return int Returns < 0 if string1 is less than string2; > 0 if greater; 0 if equal
      * @see https://www.php.net/manual/en/function.strncmp.php
      */
-    function str_ncompare(string $string1, string $string2, int $length): int
+    public static function ncompare(string $string1, string $string2, int $length): int
     {
-        return Str::ncompare($string1, $string2, $length);
+        return strncmp($string1, $string2, $length);
     }
-}
 
-if (!function_exists('str_incompare')) {
     /**
      * Performs binary safe case-insensitive string comparison of the first n characters.
      *
@@ -583,13 +625,11 @@ if (!function_exists('str_incompare')) {
      * @return int Returns < 0 if string1 is less than string2; > 0 if greater; 0 if equal
      * @see https://www.php.net/manual/en/function.strncasecmp.php
      */
-    function str_incompare(string $string1, string $string2, int $length): int
+    public static function incompare(string $string1, string $string2, int $length): int
     {
-        return Str::incompare($string1, $string2, $length);
+        return strncasecmp($string1, $string2, $length);
     }
-}
 
-if (!function_exists('str_last_chr')) {
     /**
      * Finds the last occurrence of a character in a string.
      *
@@ -603,13 +643,20 @@ if (!function_exists('str_last_chr')) {
      * @see https://www.php.net/manual/en/function.strrchr.php
      * @see https://www.php.net/manual/en/function.mb-strrchr.php
      */
-    function str_last_chr(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
+    public static function lastChr(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false
     {
-        return Str::lastChr($subject, $search, $before, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strrchr($subject, $search, $before, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_replace_sub')) {
+        return strrchr($subject, $search);
+    }
+
     /**
      * Replaces text within a portion of a string.
      *
@@ -622,17 +669,16 @@ if (!function_exists('str_replace_sub')) {
      * @return string|array Returns the result string or array
      * @see https://www.php.net/manual/en/function.substr-replace.php
      */
-    function str_replace_sub(
+    public static function replaceSub(
         string|array $subject,
         string|array $replace,
         int $offset,
         ?int $length = null
-    ): string|array {
-        return Str::replaceSub($subject, $replace, $offset, $length);
+    ): string|array
+    {
+        return substr_replace($subject, $replace, $offset, $length);
     }
-}
 
-if (!function_exists('str_wrap')) {
     /**
      * Wraps a string to a given number of characters.
      *
@@ -645,13 +691,16 @@ if (!function_exists('str_wrap')) {
      * @return string Returns the wrapped string
      * @see https://www.php.net/manual/en/function.wordwrap.php
      */
-    function str_wrap(string $subject, int $width = 75, string $break = "\n", bool $cut_long_words = false): string
+    public static function wrap(
+        string $subject,
+        int $width = 75,
+        string $break = "\n",
+        bool $cut_long_words = false
+    ): string
     {
-        return Str::wrap($subject, $width, $break, $cut_long_words);
+        return wordwrap($subject, $width, $break, $cut_long_words);
     }
-}
 
-if (!function_exists('str_translate')) {
     /**
      * Translates characters or replaces substrings.
      *
@@ -663,13 +712,11 @@ if (!function_exists('str_translate')) {
      * @return string Returns the translated string
      * @see https://www.php.net/manual/en/function.strtr.php
      */
-    function str_translate(string $subject, array|string $from, ?string $to = null): string
+    public static function translate(string $subject, array|string $from, ?string $to = null): string
     {
-        return Str::translate($subject, $from, $to);
+        return strtr($subject, $from, $to);
     }
-}
 
-if (!function_exists('str_ord')) {
     /**
      * Gets the Unicode code point of a character.
      *
@@ -681,13 +728,15 @@ if (!function_exists('str_ord')) {
      * @see https://www.php.net/manual/en/function.ord.php
      * @see https://www.php.net/manual/en/function.mb-ord.php
      */
-    function str_ord(string $subject, ?string $encoding = null): int|false
+    public static function ord(string $subject, ?string $encoding = null): int|false
     {
-        return Str::ord($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_ord($subject, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_chr')) {
+        return ord($subject);
+    }
+
     /**
      * Returns a character from a Unicode code point.
      *
@@ -699,13 +748,15 @@ if (!function_exists('str_chr')) {
      * @see https://www.php.net/manual/en/function.chr.php
      * @see https://www.php.net/manual/en/function.mb-chr.php
      */
-    function str_chr(int $codepoint, ?string $encoding = null): string|false
+    public static function chr(int $codepoint, ?string $encoding = null): string|false
     {
-        return Str::chr($codepoint, $encoding);
-    }
-}
+        if ($encoding !== null) {
+            return mb_chr($codepoint, $encoding);
+        }
 
-if (!function_exists('str_nl2br')) {
+        return chr($codepoint);
+    }
+
     /**
      * Inserts HTML line breaks before all newlines in a string.
      *
@@ -716,13 +767,11 @@ if (!function_exists('str_nl2br')) {
      * @return string Returns the string with inserted line breaks
      * @see https://www.php.net/manual/en/function.nl2br.php
      */
-    function str_nl2br(string $subject, bool $use_xhtml = true): string
+    public static function nl2br(string $subject, bool $use_xhtml = true): string
     {
-        return Str::nl2br($subject, $use_xhtml);
+        return nl2br($subject, $use_xhtml);
     }
-}
 
-if (!function_exists('str_quote_meta')) {
     /**
      * Quotes meta characters.
      *
@@ -732,13 +781,11 @@ if (!function_exists('str_quote_meta')) {
      * @return string Returns the string with meta characters quoted
      * @see https://www.php.net/manual/en/function.quotemeta.php
      */
-    function str_quote_meta(string $subject): string
+    public static function quoteMeta(string $subject): string
     {
-        return Str::quoteMeta($subject);
+        return quotemeta($subject);
     }
-}
 
-if (!function_exists('str_format')) {
     /**
      * Returns a formatted string.
      *
@@ -749,13 +796,11 @@ if (!function_exists('str_format')) {
      * @return string Returns the formatted string
      * @see https://www.php.net/manual/en/function.sprintf.php
      */
-    function str_format(string $format, mixed ...$values): string
+    public static function format(string $format, mixed ...$values): string
     {
-        return Str::format($format, $values);
+        return sprintf($format, ...$values);
     }
-}
 
-if (!function_exists('str_similar')) {
     /**
      * Calculates the similarity between two strings.
      *
@@ -767,13 +812,11 @@ if (!function_exists('str_similar')) {
      * @return int Returns the number of matching characters
      * @see https://www.php.net/manual/en/function.similar-text.php
      */
-    function str_similar(string $string1, string $string2, ?float &$percent = null): int
+    public static function similar(string $string1, string $string2, ?float &$percent = null): int
     {
-        return Str::similar($string1, $string2, $percent);
+        return similar_text($string1, $string2, $percent);
     }
-}
 
-if (!function_exists('str_levenshtein')) {
     /**
      * Calculates Levenshtein distance between two strings.
      *
@@ -787,18 +830,16 @@ if (!function_exists('str_levenshtein')) {
      * @return int Returns the Levenshtein distance between the two strings
      * @see https://www.php.net/manual/en/function.levenshtein.php
      */
-    function str_levenshtein(
+    public static function levenshtein(
         string $string1,
         string $string2,
         int $insertion_cost = 1,
         int $replacement_cost = 1,
         int $deletion_cost = 1
     ): int {
-        return Str::levenshtein($string1, $string2, $insertion_cost, $replacement_cost, $deletion_cost);
+        return levenshtein($string1, $string2, $insertion_cost, $replacement_cost, $deletion_cost);
     }
-}
 
-if (!function_exists('str_soundex')) {
     /**
      * Calculates the soundex key of a string.
      *
@@ -808,13 +849,11 @@ if (!function_exists('str_soundex')) {
      * @return string Returns the soundex key as a string
      * @see https://www.php.net/manual/en/function.soundex.php
      */
-    function str_soundex(string $subject): string
+    public static function soundex(string $subject): string
     {
-        return Str::soundex($subject);
+        return soundex($subject);
     }
-}
 
-if (!function_exists('str_metaphone')) {
     /**
      * Calculates the metaphone key of a string.
      *
@@ -825,13 +864,11 @@ if (!function_exists('str_metaphone')) {
      * @return string|false Returns the metaphone key or false on failure
      * @see https://www.php.net/manual/en/function.metaphone.php
      */
-    function str_metaphone(string $subject, int $max_phonemes = 0): string|false
+    public static function metaphone(string $subject, int $max_phonemes = 0): string|false
     {
-        return Str::metaphone($subject, $max_phonemes);
+        return metaphone($subject, $max_phonemes);
     }
-}
 
-if (!function_exists('str_locale_compare')) {
     /**
      * Locale based string comparison.
      *
@@ -842,13 +879,11 @@ if (!function_exists('str_locale_compare')) {
      * @return int Returns < 0 if string1 is less than string2; > 0 if greater; 0 if equal
      * @see https://www.php.net/manual/en/function.strcoll.php
      */
-    function str_locale_compare(string $string1, string $string2): int
+    public static function localeCompare(string $string1, string $string2): int
     {
-        return Str::localeCompare($string1, $string2);
+        return strcoll($string1, $string2);
     }
-}
 
-if (!function_exists('str_printf')) {
     /**
      * Outputs a formatted string using an array of values.
      *
@@ -859,13 +894,11 @@ if (!function_exists('str_printf')) {
      * @return int Returns the length of the outputted string
      * @see https://www.php.net/manual/en/function.vprintf.php
      */
-    function str_printf(string $format, array $values): int
+    public static function printf(string $format, array $values): int
     {
-        return Str::printf($format, $values);
+        return vprintf($format, $values);
     }
-}
 
-if (!function_exists('str_format_sprintf')) {
     /**
      * Returns a formatted string using an array of values.
      *
@@ -876,13 +909,11 @@ if (!function_exists('str_format_sprintf')) {
      * @return string Returns the formatted string
      * @see https://www.php.net/manual/en/function.vsprintf.php
      */
-    function str_format_sprintf(string $format, array $values): string
+    public static function formatSprintf(string $format, array $values): string
     {
-        return Str::formatSprintf($format, $values);
+        return vsprintf($format, $values);
     }
-}
 
-if (!function_exists('str_convert_uuencode')) {
     /**
      * Uuencodes a string.
      *
@@ -892,13 +923,11 @@ if (!function_exists('str_convert_uuencode')) {
      * @return string Returns the uuencoded string
      * @see https://www.php.net/manual/en/function.convert-uuencode.php
      */
-    function str_convert_uuencode(string $subject): string
+    public static function convertUuencode(string $subject): string
     {
-        return Str::convertUuencode($subject);
+        return convert_uuencode($subject);
     }
-}
 
-if (!function_exists('str_convert_uudecode')) {
     /**
      * Decodes a uuencoded string.
      *
@@ -908,13 +937,11 @@ if (!function_exists('str_convert_uudecode')) {
      * @return string|false Returns the decoded string or false on failure
      * @see https://www.php.net/manual/en/function.convert-uudecode.php
      */
-    function str_convert_uudecode(string $subject): string|false
+    public static function convertUudecode(string $subject): string|false
     {
-        return Str::convertUudecode($subject);
+        return convert_uudecode($subject);
     }
-}
 
-if (!function_exists('str_tok')) {
     /**
      * Tokenizes a string.
      *
@@ -925,13 +952,11 @@ if (!function_exists('str_tok')) {
      * @return string|false Returns the next token or false if no more tokens
      * @see https://www.php.net/manual/en/function.strtok.php
      */
-    function str_tok(string $subject, string $token): string|false
+    public static function tok(string $subject, string $token): string|false
     {
-        return Str::tok($subject, $token);
+        return strtok($subject, $token);
     }
-}
 
-if (!function_exists('str_width')) {
     /**
      * Gets the display width of a string.
      *
@@ -942,13 +967,15 @@ if (!function_exists('str_width')) {
      * @return int Returns the width of the string
      * @see https://www.php.net/manual/en/function.mb-strwidth.php
      */
-    function str_width(string $subject, ?string $encoding = null): int
+    public static function width(string $subject, ?string $encoding = null): int
     {
-        return Str::width($subject, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strwidth($subject, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_cut')) {
+        return strlen($subject);
+    }
+
     /**
      * Truncates a string to a specified width.
      *
@@ -962,13 +989,26 @@ if (!function_exists('str_cut')) {
      * @return string Returns the truncated string
      * @see https://www.php.net/manual/en/function.mb-strimwidth.php
      */
-    function str_cut(string $subject, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
+    public static function cut(
+        string $subject,
+        int $start,
+        int $width,
+        string $trim_marker = '',
+        ?string $encoding = null
+    ): string
     {
-        return Str::cut($subject, $start, $width, $trim_marker, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_strimwidth($subject, $start, $width, $trim_marker, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_convert_case')) {
+        $result = substr($subject, $start, $width);
+        if (strlen($result) >= $width && strlen($trim_marker) > 0) {
+            $result = substr($result, 0, $width - strlen($trim_marker)) . $trim_marker;
+        }
+
+        return $result;
+    }
+
     /**
      * Performs case folding on a string.
      *
@@ -980,13 +1020,20 @@ if (!function_exists('str_convert_case')) {
      * @return string Returns the converted string
      * @see https://www.php.net/manual/en/function.mb-convert-case.php
      */
-    function str_convert_case(string $subject, int $mode, ?string $encoding = null): string
+    public static function convertCase(string $subject, int $mode, ?string $encoding = null): string
     {
-        return Str::convertCase($subject, $mode, $encoding);
-    }
-}
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_convert_case($subject, $mode, $encoding ?? mb_internal_encoding());
+        }
 
-if (!function_exists('str_detect_encoding')) {
+        return match ($mode) {
+            MB_CASE_UPPER, STR_CASE_UPPER => strtoupper($subject),
+            MB_CASE_LOWER, STR_CASE_LOWER => strtolower($subject),
+            MB_CASE_TITLE, STR_CASE_TITLE => ucwords(strtolower($subject)),
+            default => $subject,
+        };
+    }
+
     /**
      * Detects character encoding of a string.
      *
@@ -998,13 +1045,15 @@ if (!function_exists('str_detect_encoding')) {
      * @return string|false Returns the detected encoding or false on failure
      * @see https://www.php.net/manual/en/function.mb-detect-encoding.php
      */
-    function str_detect_encoding(string $subject, array|string|null $encodings = null, bool $strict = false): string|false
+    public static function detectEncoding(
+        string $subject,
+        array|string|null $encodings = null,
+        bool $strict = false
+    ): string|false
     {
-        return Str::detectEncoding($subject, $encodings, $strict);
+        return mb_detect_encoding($subject, $encodings, $strict);
     }
-}
 
-if (!function_exists('str_convert_encoding')) {
     /**
      * Converts character encoding of a string or array.
      *
@@ -1016,13 +1065,15 @@ if (!function_exists('str_convert_encoding')) {
      * @return array|string|false Returns the converted value or false on failure
      * @see https://www.php.net/manual/en/function.mb-convert-encoding.php
      */
-    function str_convert_encoding(array|string $subject, string $to_encoding, array|string|null $from_encoding = null): array|string|false
+    public static function convertEncoding(
+        array|string $subject,
+        string $to_encoding,
+        array|string|null $from_encoding = null
+    ): array|string|false
     {
-        return Str::convertEncoding($subject, $to_encoding, $from_encoding);
+        return mb_convert_encoding($subject, $to_encoding, $from_encoding);
     }
-}
 
-if (!function_exists('str_scrub')) {
     /**
      * Replaces invalid characters in a string with substitute characters.
      *
@@ -1033,8 +1084,12 @@ if (!function_exists('str_scrub')) {
      * @return string Returns the scrubbed string
      * @see https://www.php.net/manual/en/function.mb-scrub.php
      */
-    function str_scrub(string $subject, ?string $encoding = null): string
+    public static function scrub(string $subject, ?string $encoding = null): string
     {
-        return Str::scrub($subject, $encoding);
+        if (strlen($subject) !== mb_strlen($subject, $encoding ?? mb_internal_encoding())) {
+            return mb_scrub($subject, $encoding ?? mb_internal_encoding());
+        }
+
+        return $subject;
     }
 }

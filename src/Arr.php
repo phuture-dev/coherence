@@ -1,19 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Advandz\Kernel;
 
-use Advandz\Kernel\Arr;
+use Advandz\Kernel\Class\StaticClass;
 
 /**
- * These functions offer a convenient and more consistent procedural interface to
- * the native array API.
+ * Array utility class providing consistent wrappers around native PHP array functions.
+ *
+ * This class offers static methods for comprehensive array operations including searching,
+ * sorting, manipulation, and transformation. All methods follow camelCase naming conventions
+ * and provide a clean, object-oriented interface to PHP's native array functions.
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.advandz.com/ Advandz
  */
-
-if (!function_exists('array_contains')) {
+class Arr extends StaticClass
+{
     /**
      * Checks if a value exists in an array.
      *
@@ -25,13 +28,11 @@ if (!function_exists('array_contains')) {
      * @return bool Returns true if the value is found, false otherwise
      * @see https://www.php.net/manual/en/function.in-array.php
      */
-    function array_contains(array $array, mixed $value, bool $strict = false): bool
+    public static function contains(array $array, mixed $value, bool $strict = false): bool
     {
-        return Arr::contains($array, $value, $strict);
+        return in_array($value, $array, $strict);
     }
-}
 
-if (!function_exists('array_contains_key')) {
     /**
      * Checks if a key exists in an array.
      *
@@ -42,13 +43,11 @@ if (!function_exists('array_contains_key')) {
      * @return bool Returns true if the key exists, false otherwise
      * @see https://www.php.net/manual/en/function.array-key-exists.php
      */
-    function array_contains_key(array $array, string|int $key): bool
+    public static function containsKey(array $array, string|int $key): bool
     {
-        return Arr::containsKey($array, $key);
+        return array_key_exists($key, $array);
     }
-}
 
-if (!function_exists('array_intersect_keys')) {
     /**
      * Computes the intersection of arrays using keys for comparison.
      *
@@ -59,13 +58,11 @@ if (!function_exists('array_intersect_keys')) {
      * @return array Returns an array containing all entries whose keys are present in all arguments
      * @see https://www.php.net/manual/en/function.array-intersect-key.php
      */
-    function array_intersect_keys(array $array, array ...$arrays): array
+    public static function intersectKeys(array $array, array ...$arrays): array
     {
-        return Arr::intersectKeys($array, $arrays);
+        return array_intersect_key($array, ...$arrays);
     }
-}
 
-if (!function_exists('array_sort')) {
     /**
      * Sorts an array in ascending order.
      *
@@ -76,13 +73,11 @@ if (!function_exists('array_sort')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.sort.php
      */
-    function array_sort(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sort(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sort($array, $flags);
+        return sort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_reverse')) {
     /**
      * Sorts an array in descending order.
      *
@@ -93,13 +88,11 @@ if (!function_exists('array_sort_reverse')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.rsort.php
      */
-    function array_sort_reverse(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sortReverse(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sortReverse($array, $flags);
+        return rsort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_keys')) {
     /**
      * Sorts an array by keys in ascending order.
      *
@@ -110,13 +103,11 @@ if (!function_exists('array_sort_keys')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.ksort.php
      */
-    function array_sort_keys(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sortKeys(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sortKeys($array, $flags);
+        return ksort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_keys_reverse')) {
     /**
      * Sorts an array by keys in descending order.
      *
@@ -127,13 +118,11 @@ if (!function_exists('array_sort_keys_reverse')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.krsort.php
      */
-    function array_sort_keys_reverse(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sortKeysReverse(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sortKeysReverse($array, $flags);
+        return krsort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_assoc')) {
     /**
      * Sorts an array in ascending order and maintains index association.
      *
@@ -144,13 +133,11 @@ if (!function_exists('array_sort_assoc')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.asort.php
      */
-    function array_sort_assoc(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sortAssoc(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sortAssoc($array, $flags);
+        return asort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_assoc_reverse')) {
     /**
      * Sorts an array in descending order and maintains index association.
      *
@@ -161,13 +148,11 @@ if (!function_exists('array_sort_assoc_reverse')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.arsort.php
      */
-    function array_sort_assoc_reverse(array &$array, int $flags = SORT_REGULAR): bool
+    public static function sortAssocReverse(array &$array, int $flags = SORT_REGULAR): bool
     {
-        return Arr::sortAssocReverse($array, $flags);
+        return arsort($array, $flags);
     }
-}
 
-if (!function_exists('array_sort_natural')) {
     /**
      * Sorts an array using natural order algorithm.
      *
@@ -179,13 +164,11 @@ if (!function_exists('array_sort_natural')) {
      * @see https://www.php.net/manual/en/function.natsort.php
      * @see https://www.php.net/manual/en/function.natcasesort.php
      */
-    function array_sort_natural(array &$array, bool $case_insensitive = false): bool
+    public static function sortNatural(array &$array, bool $case_insensitive = false): bool
     {
-        return Arr::sortNatural($array, $case_insensitive);
+        return $case_insensitive ? natcasesort($array) : natsort($array);
     }
-}
 
-if (!function_exists('array_sort_user')) {
     /**
      * Sorts an array using a user-defined comparison function.
      *
@@ -196,13 +179,11 @@ if (!function_exists('array_sort_user')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.usort.php
      */
-    function array_sort_user(array &$array, callable $callback): bool
+    public static function sortUser(array &$array, callable $callback): bool
     {
-        return Arr::sortUser($array, $callback);
+        return usort($array, $callback);
     }
-}
 
-if (!function_exists('array_sort_keys_user')) {
     /**
      * Sorts an array by keys using a user-defined comparison function.
      *
@@ -213,13 +194,11 @@ if (!function_exists('array_sort_keys_user')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.uksort.php
      */
-    function array_sort_keys_user(array &$array, callable $callback): bool
+    public static function sortKeysUser(array &$array, callable $callback): bool
     {
-        return Arr::sortKeysUser($array, $callback);
+        return uksort($array, $callback);
     }
-}
 
-if (!function_exists('array_sort_assoc_user')) {
     /**
      * Sorts an array using a user-defined comparison function and maintains index association.
      *
@@ -230,13 +209,11 @@ if (!function_exists('array_sort_assoc_user')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.uasort.php
      */
-    function array_sort_assoc_user(array &$array, callable $callback): bool
+    public static function sortAssocUser(array &$array, callable $callback): bool
     {
-        return Arr::sortAssocUser($array, $callback);
+        return uasort($array, $callback);
     }
-}
 
-if (!function_exists('array_random')) {
     /**
      * Returns a random value from an array.
      *
@@ -246,13 +223,13 @@ if (!function_exists('array_random')) {
      * @return mixed Returns a random value from the array
      * @see https://www.php.net/manual/en/function.array-rand.php
      */
-    function array_random(array $array): mixed
+    public static function random(array $array): mixed
     {
-        return Arr::random($array);
-    }
-}
+        $key = array_rand($array);
 
-if (!function_exists('array_random_keys')) {
+        return $array[$key];
+    }
+
     /**
      * Picks one or more random keys from an array.
      *
@@ -263,13 +240,11 @@ if (!function_exists('array_random_keys')) {
      * @return string|int|array Returns a single key if num is 1, otherwise an array of keys
      * @see https://www.php.net/manual/en/function.array-rand.php
      */
-    function array_random_keys(array $array, int $num = 1): string|int|array
+    public static function randomKeys(array $array, int $num = 1): string|int|array
     {
-        return Arr::randomKeys($array, $num);
+        return array_rand($array, $num);
     }
-}
 
-if (!function_exists('array_shuffle')) {
     /**
      * Shuffles an array randomly.
      *
@@ -279,13 +254,11 @@ if (!function_exists('array_shuffle')) {
      * @return bool Returns true on success, false on failure
      * @see https://www.php.net/manual/en/function.shuffle.php
      */
-    function array_shuffle(array &$array): bool
+    public static function shuffle(array &$array): bool
     {
-        return Arr::shuffle($array);
+        return shuffle($array);
     }
-}
 
-if (!function_exists('array_len')) {
     /**
      * Counts all elements in an array.
      *
@@ -296,13 +269,11 @@ if (!function_exists('array_len')) {
      * @return int Returns the number of elements in the array
      * @see https://www.php.net/manual/en/function.count.php
      */
-    function array_len(array $array, int $mode = COUNT_NORMAL): int
+    public static function len(array $array, int $mode = COUNT_NORMAL): int
     {
-        return Arr::len($array, $mode);
+        return count($array, $mode);
     }
-}
 
-if (!function_exists('array_collapse')) {
     /**
      * Collapses an array of objects into a key-value array.
      *
@@ -313,13 +284,33 @@ if (!function_exists('array_collapse')) {
      * @param string|array $value The object property or properties to use as array value (default: 'value')
      * @return array Returns the collapsed associative array
      */
-    function array_collapse(array $array, string $key = 'key', string|array $value = 'value'): array
+    public static function collapse(array $array, string $key = 'key', string|array $value = 'value'): array
     {
-        return Arr::collapse($array, $key, $value);
-    }
-}
+        if (empty($array)) {
+            return [];
+        }
 
-if (!function_exists('array_find')) {
+        $list = [];
+        foreach ($array as $element) {
+            if (!isset($element->{$key})) {
+                continue;
+            }
+
+            if (is_string($value)) {
+                $list[$element->{$key}] = $element->{$value};
+            } elseif (is_array($value)) {
+                $composed_value = '';
+                foreach ($value as $value_name) {
+                    $composed_value .= $element->{$value_name} . ' ';
+                }
+
+                $list[$element->{$key}] = trim($composed_value);
+            }
+        }
+
+        return $list;
+    }
+
     /**
      * Searches for a value in an array and returns its key.
      *
@@ -331,13 +322,11 @@ if (!function_exists('array_find')) {
      * @return int|string|false Returns the key if found, false otherwise
      * @see https://www.php.net/manual/en/function.array-search.php
      */
-    function array_find(array $array, mixed $value, bool $strict = false): int|string|false
+    public static function find(array $array, mixed $value, bool $strict = false): int|string|false
     {
-        return Arr::find($array, $value, $strict);
+        return array_search($value, $array, $strict);
     }
-}
 
-if (!function_exists('array_apply')) {
     /**
      * Applies a callback function to the elements of arrays.
      *
@@ -349,13 +338,11 @@ if (!function_exists('array_apply')) {
      * @return array Returns an array containing the results
      * @see https://www.php.net/manual/en/function.array-map.php
      */
-    function array_apply(array $array, ?callable $callback, array ...$arrays): array
+    public static function apply(array $array, ?callable $callback, array ...$arrays): array
     {
-        return Arr::apply($array, $callback, $arrays);
+        return array_map($callback, $array, ...$arrays);
     }
-}
 
-if (!function_exists('array_join')) {
     /**
      * Joins array elements with a separator string.
      *
@@ -366,8 +353,8 @@ if (!function_exists('array_join')) {
      * @return string Returns a string containing a string representation of all array elements
      * @see https://www.php.net/manual/en/function.implode.php
      */
-    function array_join(array $array, string $separator = ''): string
+    public static function join(array $array, string $separator = ''): string
     {
-        return Arr::join($array, $separator);
+        return implode($separator, $array);
     }
 }

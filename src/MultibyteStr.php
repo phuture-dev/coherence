@@ -1,19 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Advandz\Kernel;
 
-use Advandz\Kernel\MultibyteStr;
+use Advandz\Kernel\Class\StaticClass;
 
 /**
- * These functions offer a convenient and more consistent procedural interface to
- * the native multibyte strings API.
+ * Multibyte string utility class providing consistent wrappers around native PHP multibyte string functions.
+ *
+ * This class offers static methods for comprehensive multibyte string operations with proper character
+ * encoding support. All methods follow camelCase naming conventions and provide a clean, object-oriented
+ * interface to PHP's native mb_* functions.
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.advandz.com/ Advandz
  */
-
-if (!function_exists('mb_str_str')) {
+class MultibyteStr extends StaticClass
+{
     /**
      * Finds the first occurrence of a string (multibyte safe).
      *
@@ -26,13 +29,15 @@ if (!function_exists('mb_str_str')) {
      * @return string|false Returns the portion of string, or false if not found
      * @see https://www.php.net/manual/en/function.mb-strstr.php
      */
-    function mb_str_str(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
-    {
-        return MultibyteStr::str($subject, $search, $before, $encoding);
+    public static function str(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false {
+        return mb_strstr($subject, $search, $before, $encoding);
     }
-}
 
-if (!function_exists('mb_str_istr')) {
     /**
      * Finds the first occurrence of a string (case-insensitive, multibyte safe).
      *
@@ -45,13 +50,15 @@ if (!function_exists('mb_str_istr')) {
      * @return string|false Returns the portion of string, or false if not found
      * @see https://www.php.net/manual/en/function.mb-stristr.php
      */
-    function mb_str_istr(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
-    {
-        return MultibyteStr::istr($subject, $search, $before, $encoding);
+    public static function istr(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false {
+        return mb_stristr($subject, $search, $before, $encoding);
     }
-}
 
-if (!function_exists('mb_str_contains')) {
     /**
      * Checks if a string contains a given substring (multibyte safe).
      *
@@ -63,13 +70,14 @@ if (!function_exists('mb_str_contains')) {
      * @return bool Returns true if substring is found, false otherwise
      * @see https://www.php.net/manual/en/function.mb-strpos.php
      */
-    function mb_str_contains(string $subject, string $search, ?string $encoding = null): bool
-    {
-        return MultibyteStr::contains($subject, $search, $encoding);
+    public static function contains(
+        string $subject,
+        string $search,
+        ?string $encoding = null
+    ): bool {
+        return mb_strpos($subject, $search, 0, $encoding) !== false;
     }
-}
 
-if (!function_exists('mb_str_icontains')) {
     /**
      * Checks if a string contains a given substring (case-insensitive, multibyte safe).
      *
@@ -81,13 +89,11 @@ if (!function_exists('mb_str_icontains')) {
      * @return bool Returns true if substring is found, false otherwise
      * @see https://www.php.net/manual/en/function.mb-stripos.php
      */
-    function mb_str_icontains(string $subject, string $search, ?string $encoding = null): bool
+    public static function icontains(string $subject, string $search, ?string $encoding = null): bool
     {
-        return MultibyteStr::icontains($subject, $search, $encoding);
+        return mb_stripos($subject, $search, 0, $encoding) !== false;
     }
-}
 
-if (!function_exists('mb_str_pos')) {
     /**
      * Finds the position of the first occurrence of a substring (multibyte safe).
      *
@@ -100,13 +106,11 @@ if (!function_exists('mb_str_pos')) {
      * @return int|false Returns the position or false if not found
      * @see https://www.php.net/manual/en/function.mb-strpos.php
      */
-    function mb_str_pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
     {
-        return MultibyteStr::pos($subject, $search, $offset, $encoding);
+        return mb_strpos($subject, $search, $offset, $encoding);
     }
-}
 
-if (!function_exists('mb_str_ipos')) {
     /**
      * Finds the position of the first occurrence of a substring (case-insensitive, multibyte safe).
      *
@@ -119,13 +123,11 @@ if (!function_exists('mb_str_ipos')) {
      * @return int|false Returns the position or false if not found
      * @see https://www.php.net/manual/en/function.mb-stripos.php
      */
-    function mb_str_ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
+    public static function ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
     {
-        return MultibyteStr::ipos($subject, $search, $offset, $encoding);
+        return mb_stripos($subject, $search, $offset, $encoding);
     }
-}
 
-if (!function_exists('mb_str_last_pos')) {
     /**
      * Finds the position of the last occurrence of a substring (multibyte safe).
      *
@@ -138,13 +140,15 @@ if (!function_exists('mb_str_last_pos')) {
      * @return int|false Returns the position or false if not found
      * @see https://www.php.net/manual/en/function.mb-strrpos.php
      */
-    function mb_str_last_pos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
-    {
-        return MultibyteStr::lastPos($subject, $search, $offset, $encoding);
+    public static function lastPos(
+        string $subject,
+        string $search,
+        int $offset = 0,
+        ?string $encoding = null
+    ): int|false {
+        return mb_strrpos($subject, $search, $offset, $encoding);
     }
-}
 
-if (!function_exists('mb_str_last_ipos')) {
     /**
      * Finds the position of the last occurrence of a substring (case-insensitive, multibyte safe).
      *
@@ -157,13 +161,15 @@ if (!function_exists('mb_str_last_ipos')) {
      * @return int|false Returns the position or false if not found
      * @see https://www.php.net/manual/en/function.mb-strripos.php
      */
-    function mb_str_last_ipos(string $subject, string $search, int $offset = 0, ?string $encoding = null): int|false
-    {
-        return MultibyteStr::lastIpos($subject, $search, $offset, $encoding);
+    public static function lastIpos(
+        string $subject,
+        string $search,
+        int $offset = 0,
+        ?string $encoding = null
+    ): int|false {
+        return mb_strripos($subject, $search, $offset, $encoding);
     }
-}
 
-if (!function_exists('mb_str_len')) {
     /**
      * Gets the length of a string (multibyte safe).
      *
@@ -174,13 +180,11 @@ if (!function_exists('mb_str_len')) {
      * @return int Returns the length of the string
      * @see https://www.php.net/manual/en/function.mb-strlen.php
      */
-    function mb_str_len(string $subject, ?string $encoding = null): int
+    public static function len(string $subject, ?string $encoding = null): int
     {
-        return MultibyteStr::len($subject, $encoding);
+        return mb_strlen($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_str_lower')) {
     /**
      * Converts a string to lowercase (multibyte safe).
      *
@@ -191,13 +195,11 @@ if (!function_exists('mb_str_lower')) {
      * @return string Returns the lowercased string
      * @see https://www.php.net/manual/en/function.mb-strtolower.php
      */
-    function mb_str_lower(string $subject, ?string $encoding = null): string
+    public static function lower(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::lower($subject, $encoding);
+        return mb_strtolower($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_str_upper')) {
     /**
      * Converts a string to uppercase (multibyte safe).
      *
@@ -208,13 +210,11 @@ if (!function_exists('mb_str_upper')) {
      * @return string Returns the uppercased string
      * @see https://www.php.net/manual/en/function.mb-strtoupper.php
      */
-    function mb_str_upper(string $subject, ?string $encoding = null): string
+    public static function upper(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::upper($subject, $encoding);
+        return mb_strtoupper($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_str_upper_first')) {
     /**
      * Uppercases the first character of a string (multibyte safe).
      *
@@ -226,13 +226,14 @@ if (!function_exists('mb_str_upper_first')) {
      * @see https://www.php.net/manual/en/function.mb-substr.php
      * @see https://www.php.net/manual/en/function.mb-strtoupper.php
      */
-    function mb_str_upper_first(string $subject, ?string $encoding = null): string
+    public static function upperFirst(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::upperFirst($subject, $encoding);
-    }
-}
+        $first = mb_substr($subject, 0, 1, $encoding);
+        $rest = mb_substr($subject, 1, null, $encoding);
 
-if (!function_exists('mb_str_upper_words')) {
+        return mb_strtoupper($first, $encoding) . $rest;
+    }
+
     /**
      * Uppercases the first character of each word in a string (multibyte safe).
      *
@@ -243,47 +244,49 @@ if (!function_exists('mb_str_upper_words')) {
      * @return string Returns the string with each word capitalized
      * @see https://www.php.net/manual/en/function.mb-convert-case.php
      */
-    function mb_str_upper_words(string $subject, ?string $encoding = null): string
+    public static function upperWords(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::upperWords($subject, $encoding);
+        return mb_convert_case($subject, MB_CASE_TITLE, $encoding);
     }
-}
 
-if (!function_exists('mb_str_lower_first')) {
     /**
      * Lowercases the first character of a string (multibyte safe).
      *
      * Provides a multibyte-safe implementation using mb_substr and mb_strtolower.
      *
      * @param string $subject The string to convert
-     * @param string|null $encoding Character encoding (default: null for UTF-8)
+     * @param string|null $encoding Character encoding
      * @return string Returns the string with first character lowercased
      * @see https://www.php.net/manual/en/function.mb-substr.php
      * @see https://www.php.net/manual/en/function.mb-strtolower.php
      */
-    function mb_str_lower_first(string $subject, ?string $encoding = null): string
+    public static function lowerFirst(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::lowerFirst($subject, $encoding);
-    }
-}
+        $encoding = $encoding ?? mb_internal_encoding();
+        $first = mb_substr($subject, 0, 1, $encoding);
+        $rest = mb_substr($subject, 1, null, $encoding);
 
-if (!function_exists('mb_str_lower_words')) {
+        return mb_strtolower($first, $encoding) . $rest;
+    }
+
     /**
      * Lowercases the first character of each word in a string (multibyte safe).
      *
      * Provides a custom multibyte-safe implementation using preg_replace_callback.
      *
      * @param string $subject The string to convert
-     * @param string|null $encoding Character encoding (default: null for UTF-8)
+     * @param string|null $encoding Character encoding
      * @return string Returns the string with each word's first character lowercased
      */
-    function mb_str_lower_words(string $subject, ?string $encoding = null): string
+    public static function lowerWords(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::lowerWords($subject, $encoding);
-    }
-}
+        $encoding = $encoding ?? mb_internal_encoding();
 
-if (!function_exists('mb_str_parse')) {
+        return preg_replace_callback('/\b\w/u', function ($matches) use ($encoding) {
+            return mb_strtolower($matches[0], $encoding);
+        }, $subject);
+    }
+
     /**
      * Parses a query string into variables (multibyte safe).
      *
@@ -294,13 +297,11 @@ if (!function_exists('mb_str_parse')) {
      * @return void
      * @see https://www.php.net/manual/en/function.mb-parse-str.php
      */
-    function mb_str_parse(string $subject, &$result): void
+    public static function parse(string $subject, &$result): void
     {
-        MultibyteStr::parse($subject, $result);
+        mb_parse_str($subject, $result);
     }
-}
 
-if (!function_exists('mb_str_sub')) {
     /**
      * Returns part of a string (multibyte safe).
      *
@@ -313,13 +314,11 @@ if (!function_exists('mb_str_sub')) {
      * @return string Returns the extracted part of string
      * @see https://www.php.net/manual/en/function.mb-substr.php
      */
-    function mb_str_sub(string $subject, int $offset, ?int $length = null, ?string $encoding = null): string
+    public static function sub(string $subject, int $offset, ?int $length = null, ?string $encoding = null): string
     {
-        return MultibyteStr::sub($subject, $offset, $length, $encoding);
+        return mb_substr($subject, $offset, $length, $encoding);
     }
-}
 
-if (!function_exists('mb_str_count')) {
     /**
      * Counts the number of substring occurrences (multibyte safe).
      *
@@ -331,13 +330,11 @@ if (!function_exists('mb_str_count')) {
      * @return int Returns the number of times the substring occurs
      * @see https://www.php.net/manual/en/function.mb-substr-count.php
      */
-    function mb_str_count(string $subject, string $search, ?string $encoding = null): int
+    public static function count(string $subject, string $search, ?string $encoding = null): int
     {
-        return MultibyteStr::count($subject, $search, $encoding);
+        return mb_substr_count($subject, $search, $encoding);
     }
-}
 
-if (!function_exists('mb_str_last_chr')) {
     /**
      * Finds the last occurrence of a character in a string (multibyte safe).
      *
@@ -350,13 +347,15 @@ if (!function_exists('mb_str_last_chr')) {
      * @return string|false Returns the portion of string, or false if not found
      * @see https://www.php.net/manual/en/function.mb-strrchr.php
      */
-    function mb_str_last_chr(string $subject, string $search, bool $before = false, ?string $encoding = null): string|false
-    {
-        return MultibyteStr::lastChr($subject, $search, $before, $encoding);
+    public static function lastChr(
+        string $subject,
+        string $search,
+        bool $before = false,
+        ?string $encoding = null
+    ): string|false {
+        return mb_strrchr($subject, $search, $before, $encoding);
     }
-}
 
-if (!function_exists('mb_str_convert_case')) {
     /**
      * Performs case folding on a string (multibyte safe).
      *
@@ -368,13 +367,11 @@ if (!function_exists('mb_str_convert_case')) {
      * @return string Returns the converted string
      * @see https://www.php.net/manual/en/function.mb-convert-case.php
      */
-    function mb_str_convert_case(string $subject, int $mode, ?string $encoding = null): string
+    public static function convertCase(string $subject, int $mode, ?string $encoding = null): string
     {
-        return MultibyteStr::convertCase($subject, $mode, $encoding);
+        return mb_convert_case($subject, $mode, $encoding);
     }
-}
 
-if (!function_exists('mb_str_detect_encoding')) {
     /**
      * Detects character encoding of a string (multibyte safe).
      *
@@ -386,13 +383,14 @@ if (!function_exists('mb_str_detect_encoding')) {
      * @return string|false Returns the detected encoding or false on failure
      * @see https://www.php.net/manual/en/function.mb-detect-encoding.php
      */
-    function mb_str_detect_encoding(string $subject, array|string|null $encodings = null, bool $strict = false): string|false
-    {
-        return MultibyteStr::detectEncoding($subject, $encodings, $strict);
+    public static function detectEncoding(
+        string $subject,
+        array|string|null $encodings = null,
+        bool $strict = false
+    ): string|false {
+        return mb_detect_encoding($subject, $encodings, $strict);
     }
-}
 
-if (!function_exists('mb_str_convert_encoding')) {
     /**
      * Converts character encoding of a string or array (multibyte safe).
      *
@@ -404,13 +402,14 @@ if (!function_exists('mb_str_convert_encoding')) {
      * @return array|string|false Returns the converted value or false on failure
      * @see https://www.php.net/manual/en/function.mb-convert-encoding.php
      */
-    function mb_str_convert_encoding(array|string $subject, string $to_encoding, array|string|null $from_encoding = null): array|string|false
-    {
-        return MultibyteStr::convertEncoding($subject, $to_encoding, $from_encoding);
+    public static function convertEncoding(
+        array|string $subject,
+        string $to_encoding,
+        array|string|null $from_encoding = null
+    ): array|string|false {
+        return mb_convert_encoding($subject, $to_encoding, $from_encoding);
     }
-}
 
-if (!function_exists('mb_str_chr')) {
     /**
      * Returns a character from a Unicode code point (multibyte safe).
      *
@@ -421,13 +420,11 @@ if (!function_exists('mb_str_chr')) {
      * @return string|false Returns the character or false on failure
      * @see https://www.php.net/manual/en/function.mb-chr.php
      */
-    function mb_str_chr(int $codepoint, ?string $encoding = null): string|false
+    public static function chr(int $codepoint, ?string $encoding = null): string|false
     {
-        return MultibyteStr::chr($codepoint, $encoding);
+        return mb_chr($codepoint, $encoding);
     }
-}
 
-if (!function_exists('mb_str_ord')) {
     /**
      * Gets the Unicode code point of a character (multibyte safe).
      *
@@ -438,13 +435,11 @@ if (!function_exists('mb_str_ord')) {
      * @return int|false Returns the code point or false on failure
      * @see https://www.php.net/manual/en/function.mb-ord.php
      */
-    function mb_str_ord(string $subject, ?string $encoding = null): int|false
+    public static function ord(string $subject, ?string $encoding = null): int|false
     {
-        return MultibyteStr::ord($subject, $encoding);
+        return mb_ord($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_str_scrub')) {
     /**
      * Replaces invalid characters in a string with substitute characters (multibyte safe).
      *
@@ -455,13 +450,11 @@ if (!function_exists('mb_str_scrub')) {
      * @return string Returns the scrubbed string
      * @see https://www.php.net/manual/en/function.mb-scrub.php
      */
-    function mb_str_scrub(string $subject, ?string $encoding = null): string
+    public static function scrub(string $subject, ?string $encoding = null): string
     {
-        return MultibyteStr::scrub($subject, $encoding);
+        return mb_scrub($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_str_width')) {
     /**
      * Gets the display width of a string (multibyte safe).
      *
@@ -472,13 +465,11 @@ if (!function_exists('mb_str_width')) {
      * @return int Returns the width of the string
      * @see https://www.php.net/manual/en/function.mb-strwidth.php
      */
-    function mb_str_width(string $subject, ?string $encoding = null): int
+    public static function width(string $subject, ?string $encoding = null): int
     {
-        return MultibyteStr::width($subject, $encoding);
+        return mb_strwidth($subject, $encoding);
     }
-}
 
-if (!function_exists('mb_strimwidth')) {
     /**
      * Truncates a string to a specified width (multibyte safe polyfill).
      *
@@ -488,17 +479,54 @@ if (!function_exists('mb_strimwidth')) {
      * @param int $start The start position
      * @param int $width The desired width
      * @param string $trim_marker String to append when truncated (default: '')
-     * @param string|null $encoding Character encoding (default: null for UTF-8)
+     * @param string|null $encoding Character encoding
      * @return string Returns the truncated string
      * @see https://www.php.net/manual/en/function.mb-strimwidth.php
      */
-    function mb_strimwidth(string $string, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
-    {
-        return MultibyteStr::strimwidth($string, $start, $width, $trim_marker, $encoding);
-    }
-}
+    public static function strimwidth(
+        string $string,
+        int $start,
+        int $width,
+        string $trim_marker = '',
+        ?string $encoding = null
+    ): string {
+        $encoding = $encoding ?? mb_internal_encoding();
 
-if (!function_exists('mb_str_cut')) {
+        // Extract substring from start position
+        $string = mb_substr($string, $start, null, $encoding);
+
+        // Get the visual width of the string
+        $string_width = mb_strwidth($string, $encoding);
+
+        // If string is already within width, return as-is
+        if ($string_width <= $width) {
+            return $string;
+        }
+
+        // Calculate width available for content (accounting for trim marker)
+        $trim_marker_width = mb_strwidth($trim_marker, $encoding);
+        $available_width = $width - $trim_marker_width;
+
+        // Truncate string to fit available width
+        $truncated = '';
+        $current_width = 0;
+        $length = mb_strlen($string, $encoding);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($string, $i, 1, $encoding);
+            $char_width = mb_strwidth($char, $encoding);
+
+            if ($current_width + $char_width > $available_width) {
+                break;
+            }
+
+            $truncated .= $char;
+            $current_width += $char_width;
+        }
+
+        return $truncated . $trim_marker;
+    }
+
     /**
      * Truncates a string to a specified width (multibyte safe).
      *
@@ -512,13 +540,16 @@ if (!function_exists('mb_str_cut')) {
      * @return string Returns the truncated string
      * @see https://www.php.net/manual/en/function.mb-strimwidth.php
      */
-    function mb_str_cut(string $subject, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
-    {
-        return MultibyteStr::cut($subject, $start, $width, $trim_marker, $encoding);
+    public static function cut(
+        string $subject,
+        int $start,
+        int $width,
+        string $trim_marker = '',
+        ?string $encoding = null
+    ): string {
+        return mb_strimwidth($subject, $start, $width, $trim_marker, $encoding);
     }
-}
 
-if (!function_exists('mb_str_replace')) {
     /**
      * Replaces all occurrences of the search string with the replacement string (multibyte safe polyfill).
      *
@@ -528,21 +559,39 @@ if (!function_exists('mb_str_replace')) {
      * @param array|string $replace The replacement value
      * @param array|string $subject The string or array being searched and replaced on
      * @param int|null $count Number of replacements performed (passed by reference)
-     * @param string|null $encoding Character encoding (default: null for UTF-8)
+     * @param string|null $encoding Character encoding
      * @return string|array Returns a string or array with replaced values
      */
-    function mb_str_replace(
+    public static function replace(
         array|string $search,
         array|string $replace,
         array|string $subject,
         ?int &$count = null,
         ?string $encoding = null
     ): string|array {
-        return MultibyteStr::replace($search, $replace, $subject, $count, $encoding);
-    }
-}
+        $searches = is_array($search) ? $search : [$search];
+        $replaces = is_array($replace) ? $replace : [$replace];
+        $subjects = is_array($subject) ? $subject : [$subject];
 
-if (!function_exists('mb_str_rep')) {
+        $count = 0;
+        $result = [];
+
+        foreach ($subjects as $subj) {
+            foreach ($searches as $i => $srch) {
+                $repl = $replaces[$i] ?? '';
+                // Use preg_replace for multibyte-safe replacement
+                $pattern = '/' . preg_quote($srch, '/') . '/u';
+                $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
+                    $count++;
+                    return $repl;
+                }, $subj);
+            }
+            $result[] = $subj;
+        }
+
+        return is_array($subject) ? $result : $result[0];
+    }
+
     /**
      * Replaces all occurrences of the search string with the replacement string (multibyte safe).
      *
@@ -555,18 +604,16 @@ if (!function_exists('mb_str_rep')) {
      * @param string|null $encoding Character encoding (default: null for internal encoding)
      * @return string|array Returns a string or array with replaced values
      */
-    function mb_str_rep(
+    public static function rep(
         string $subject,
         string|array $search,
         string|array $replace,
         ?int &$count = null,
         ?string $encoding = null
     ): string|array {
-        return MultibyteStr::rep($subject, $search, $replace, $count, $encoding);
+        return mb_str_replace($search, $replace, $subject, $count, $encoding);
     }
-}
 
-if (!function_exists('mb_str_ireplace')) {
     /**
      * Replaces all occurrences of the search string with the replacement string (case-insensitive, multibyte safe polyfill).
      *
@@ -576,21 +623,39 @@ if (!function_exists('mb_str_ireplace')) {
      * @param array|string $replace The replacement value
      * @param array|string $subject The string or array being searched and replaced on
      * @param int|null $count Number of replacements performed (passed by reference)
-     * @param string|null $encoding Character encoding (default: null for UTF-8)
+     * @param string|null $encoding Character encoding
      * @return string|array Returns a string or array with replaced values
      */
-    function mb_str_ireplace(
+    public static function ireplace(
         array|string $search,
         array|string $replace,
         array|string $subject,
         ?int &$count = null,
         ?string $encoding = null
     ): string|array {
-        return MultibyteStr::ireplace($search, $replace, $subject, $count, $encoding);
-    }
-}
+        $searches = is_array($search) ? $search : [$search];
+        $replaces = is_array($replace) ? $replace : [$replace];
+        $subjects = is_array($subject) ? $subject : [$subject];
 
-if (!function_exists('mb_str_irep')) {
+        $count = 0;
+        $result = [];
+
+        foreach ($subjects as $subj) {
+            foreach ($searches as $i => $srch) {
+                $repl = $replaces[$i] ?? '';
+                // Use preg_replace with case-insensitive flag and UTF-8 support
+                $pattern = '/' . preg_quote($srch, '/') . '/ui';
+                $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
+                    $count++;
+                    return $repl;
+                }, $subj);
+            }
+            $result[] = $subj;
+        }
+
+        return is_array($subject) ? $result : $result[0];
+    }
+
     /**
      * Replaces all occurrences of the search string with the replacement string (case-insensitive, multibyte safe).
      *
@@ -603,13 +668,13 @@ if (!function_exists('mb_str_irep')) {
      * @param string|null $encoding Character encoding (default: null for internal encoding)
      * @return string|array Returns a string or array with replaced values
      */
-    function mb_str_irep(
+    public static function irep(
         string $subject,
         string|array $search,
         string|array $replace,
         ?int &$count = null,
         ?string $encoding = null
     ): string|array {
-        return MultibyteStr::irep($subject, $search, $replace, $count, $encoding);
+        return mb_str_ireplace($search, $replace, $subject, $count, $encoding);
     }
 }

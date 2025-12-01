@@ -1,19 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Advandz\Kernel;
 
-use Advandz\Kernel\Url;
+use Advandz\Kernel\Class\StaticClass;
 
 /**
- * These functions offer a convenient and more consistent procedural interface to
- * the native url API.
+ * URL utility class providing consistent wrappers around native PHP URL functions.
+ *
+ * This class offers static methods for common URL operations including encoding, decoding,
+ * parsing, and query string manipulation. All methods follow camelCase naming conventions
+ * and provide a clean, object-oriented interface to PHP's native URL functions.
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.advandz.com/ Advandz
  */
-
-if (!function_exists('url_encode')) {
+class Url extends StaticClass
+{
     /**
      * URL-encodes a string.
      *
@@ -23,13 +26,11 @@ if (!function_exists('url_encode')) {
      * @return string Returns the URL-encoded string
      * @see https://www.php.net/manual/en/function.urlencode.php
      */
-    function url_encode(string $subject): string
+    public static function encode(string $subject): string
     {
-        return Url::encode($subject);
+        return urlencode($subject);
     }
-}
 
-if (!function_exists('url_decode')) {
     /**
      * Decodes a URL-encoded string.
      *
@@ -39,13 +40,11 @@ if (!function_exists('url_decode')) {
      * @return string Returns the decoded string
      * @see https://www.php.net/manual/en/function.urldecode.php
      */
-    function url_decode(string $subject): string
+    public static function decode(string $subject): string
     {
-        return Url::decode($subject);
+        return urldecode($subject);
     }
-}
 
-if (!function_exists('url_encode_raw')) {
     /**
      * URL-encodes a string according to RFC 3986.
      *
@@ -55,13 +54,11 @@ if (!function_exists('url_encode_raw')) {
      * @return string Returns the URL-encoded string
      * @see https://www.php.net/manual/en/function.rawurlencode.php
      */
-    function url_encode_raw(string $subject): string
+    public static function encodeRaw(string $subject): string
     {
-        return Url::encodeRaw($subject);
+        return rawurlencode($subject);
     }
-}
 
-if (!function_exists('url_decode_raw')) {
     /**
      * Decodes a URL-encoded string according to RFC 3986.
      *
@@ -71,13 +68,11 @@ if (!function_exists('url_decode_raw')) {
      * @return string Returns the decoded string
      * @see https://www.php.net/manual/en/function.rawurldecode.php
      */
-    function url_decode_raw(string $subject): string
+    public static function decodeRaw(string $subject): string
     {
-        return Url::decodeRaw($subject);
+        return rawurldecode($subject);
     }
-}
 
-if (!function_exists('url_parse')) {
     /**
      * Parses a URL and returns its components.
      *
@@ -88,13 +83,11 @@ if (!function_exists('url_parse')) {
      * @return int|string|array|null|false Returns the requested component(s) or false on failure
      * @see https://www.php.net/manual/en/function.parse-url.php
      */
-    function url_parse(string $url, int $component = -1): int|string|array|null|false
+    public static function parse(string $url, int $component = -1): int|string|array|null|false
     {
-        return Url::parse($url, $component);
+        return parse_url($url, $component);
     }
-}
 
-if (!function_exists('url_build_query')) {
     /**
      * Generates a URL-encoded query string.
      *
@@ -107,17 +100,15 @@ if (!function_exists('url_build_query')) {
      * @return string Returns the URL-encoded query string
      * @see https://www.php.net/manual/en/function.http-build-query.php
      */
-    function url_build_query(
+    public static function buildQuery(
         array|object $data,
         string $numeric_prefix = '',
         ?string $arg_separator = null,
         int $encoding_type = PHP_QUERY_RFC1738
     ): string {
-        return Url::buildQuery($data, $numeric_prefix, $arg_separator, $encoding_type);
+        return http_build_query($data, $numeric_prefix, $arg_separator, $encoding_type);
     }
-}
 
-if (!function_exists('url_base64_encode')) {
     /**
      * Encodes a string to URL-safe Base64.
      *
@@ -127,13 +118,11 @@ if (!function_exists('url_base64_encode')) {
      * @return string Returns the URL-safe Base64 encoded string
      * @see https://www.php.net/manual/en/function.base64-encode.php
      */
-    function url_base64_encode(string $subject): string
+    public static function base64Encode(string $subject): string
     {
-        return Url::base64Encode($subject);
+        return rtrim(strtr(base64_encode($subject), '+/', '-_'), '=');
     }
-}
 
-if (!function_exists('url_base64_decode')) {
     /**
      * Decodes a URL-safe Base64 encoded string.
      *
@@ -143,8 +132,8 @@ if (!function_exists('url_base64_decode')) {
      * @return string|false Returns the decoded string or false on failure
      * @see https://www.php.net/manual/en/function.base64-decode.php
      */
-    function url_base64_decode(string $subject): string|false
+    public static function base64Decode(string $subject): string|false
     {
-        return Url::base64Decode($subject);
+        return base64_decode(strtr($subject, '-_', '+/'));
     }
 }
