@@ -576,6 +576,24 @@ if (!function_exists('str_reverse')) {
     }
 }
 
+if (!function_exists('str_split')) {
+    /**
+     * Splits a string by a given separator.
+     *
+     * Provides a consistent wrapper around the native function explode.
+     *
+     * @param string $subject The string to split
+     * @param string $separator The character to use to split the string by
+     * @param int $limit The maximum limit of elements with the last element containing the rest of the string
+     * @return array Returns a list containing the string split by the separator
+     * @see https://www.php.net/manual/en/function.explode.php
+     */
+    function str_split(string $subject, string $separator, int $limit = PHP_INT_MAX): array
+    {
+        return explode($subject, $separator, $limit);
+    }
+}
+
 if (!function_exists('str_chunk_split')) {
     /**
      * Splits a string into smaller chunks.
