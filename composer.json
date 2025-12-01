@@ -41,6 +41,7 @@
         "files": [
             "src/functions/std.php",
             "src/functions/array.php",
+            "src/functions/class.php",
             "src/functions/date.php",
             "src/functions/hash.php",
             "src/functions/html.php",
