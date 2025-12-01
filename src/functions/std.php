@@ -14,6 +14,49 @@ use Nette\PhpGenerator\Literal;
  * @link https://www.advandz.com/ Advandz
  */
 
+if (!function_exists('error_handler')) {
+    /**
+     * Sets the error and exception handler.
+     *
+     * Provides a consistent wrapper around the native function set_error_handler and set_exception_handler.
+     *
+     * @param ?callable $handler The callable handler for errors and exceptions
+     * @see https://www.php.net/manual/en/function.set-error-handler.php
+     * @see https://www.php.net/manual/en/function.set-exception-handler.php
+     */
+    function error_handler(?callable $handler = null): void
+    {
+        $current_level = error_reporting();
+
+        $error = set_error_handler(
+            function (int $severity, string $message, string $file, int $line) use ($handler) {
+                if ($handler) {
+                    $exception = new ErrorException($message, 0, $severity, $file, $line);
+                    $handler($exception);
+
+                    return true;
+                }
+
+                return false;
+            },
+            $current_level
+        );
+
+        $exception = set_exception_handler(
+            function (Throwable $exception) use ($handler) {
+                if ($handler) {
+                    $handler($exception);
+                }
+            }
+        );
+
+        if ($error === false || $exception === false) {
+            set_error_handler(null);
+            set_exception_handler(null);
+        }
+    }
+}
+
 if (!function_exists('php_version')) {
     /**
      * Gets the current PHP version.
