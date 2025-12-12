@@ -1,8 +1,12 @@
 <?php
 
-namespace Advandz\Kernel\Class;
+declare(strict_types=1);
 
-use Advandz\Kernel\Exception\SingletonSerializationException;
+namespace Phuture\Coherence\Class;
+
+use Phuture\Coherence\Exception\MemberAccessException;
+use Phuture\Coherence\Exception\SerializationException;
+use Throwable;
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.
@@ -18,8 +22,12 @@ use Advandz\Kernel\Exception\SingletonSerializationException;
  * and maintain due to hidden dependencies and global state. In most cases, a Dependency Injection container is
  * the recommended approach as it provides better testability, flexibility, and follows SOLID principles.
  *
- * Example usage:
+ * Example:
  * ```php
+ * namespace Phuture\Coherence;
+ *
+ * use Phuture\Coherence\Class\SingletonClass;
+ *
  * class MyService extends SingletonClass
  * {
  *     public function doSomething() { ... }
@@ -30,19 +38,15 @@ use Advandz\Kernel\Exception\SingletonSerializationException;
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
- * @link https://www.advandz.com/ Advandz
+ * @link https://www.phuture.dev/ Phuture
  */
-class SingletonClass
+abstract class SingletonClass
 {
-    private static ?SingletonClass $instance = null;
-
-    /**
-     * Class is singleton and cannot be instantiated.
-     */
-    private function __construct()
-    {
-        return false;
+    use \Nette\StaticClass {
+        __callStatic as protected callStatic;
     }
+
+    private static ?SingletonClass $instance = null;
 
     /**
      * Class is singleton and cannot be cloned.
@@ -57,8 +61,10 @@ class SingletonClass
      */
     public function __sleep()
     {
-        $class = static::class;
-        throw new SingletonSerializationException("You cannot serialize an instance of {$class}.");
+        $class = get_class($this);
+        throw new SerializationException(
+            "You cannot serialize an instance of {$class}"
+        );
     }
 
     /**
@@ -66,8 +72,10 @@ class SingletonClass
      */
     public function __wakeup()
     {
-        $class = static::class;
-        throw new SingletonSerializationException("You cannot unserialize an instance of {$class}.");
+        $class = get_class($this);
+        throw new SerializationException(
+            "You cannot unserialize an instance of {$class}"
+        );
     }
 
     /**
@@ -75,14 +83,26 @@ class SingletonClass
      * On the first run, it creates a singleton instance and places it into a private static field.
      * On subsequent runs, it returns the existing instance previously stored in the static field.
      *
-     * @return \Advandz\Kernel\Class\SingletonClass A single instance of the current class
+     * @return \Phuture\Coherence\Class\SingletonClass A single instance of the current class
      */
     public static function getInstance(): SingletonClass
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
+        if (static::$instance === null) {
+            static::$instance = new static();
         }
 
-        return self::$instance;
+        return static::$instance;
+    }
+
+    /**
+     * Call to undefined static method.
+     */
+    public static function __callStatic(string $name, array $args): mixed
+    {
+        try {
+            return static::callStatic($name, $args);
+        } catch (Throwable $e) {
+            throw new MemberAccessException($e->getMessage(), $e->getCode());
+        }
     }
 }

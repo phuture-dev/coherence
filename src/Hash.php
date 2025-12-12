@@ -1,8 +1,10 @@
 <?php
 
-namespace Advandz\Kernel;
+declare(strict_types=1);
 
-use Advandz\Kernel\Class\StaticClass;
+namespace Phuture\Coherence;
+
+use Phuture\Coherence\Class\StaticClass;
 
 /**
  * Hash utility class providing consistent wrappers around native PHP hash functions.
@@ -14,7 +16,7 @@ use Advandz\Kernel\Class\StaticClass;
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
- * @link https://www.advandz.com/ Advandz
+ * @link https://www.phuture.dev/ Phuture
  */
 class Hash extends StaticClass
 {

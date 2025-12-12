@@ -1,29 +1,25 @@
 {
-    "name": "advandz/kernel",
-    "description": "Foundation library providing unified and consistent API for PHP's native functions",
+    "name": "phuture/coherence",
+    "description": "",
     "type": "library",
     "keywords": [
-        "php",
-        "foundation",
-        "kernel",
-        "unified-methods",
-        "consistent-api",
-        "native-wrappers",
-        "string-utilities",
-        "multibyte-safe",
-        "url-utilities",
-        "hash-utilities",
-        "html-utilities"
+        "php", "array", "hash", "html", "multibyte", "string", "url", "polyfill", "helpers"
     ],
     "license": "MIT",
     "authors": [
         {
-            "name": "Advandz Technologies, LLC"
+            "name": "Phuture",
+            "homepage": "https://www.phuture.dev"
+        },
+        {
+            "name": "Advandz Technologies, LLC",
+            "homepage": "https://www.advandz.com"
         }
     ],
     "require": {
         "php": "^8.1",
         "nette/php-generator": "~4.2.0",
+        "nette/utils": "~4.0.0",
         "symfony/polyfill-php82": "~v1.33.0",
         "symfony/polyfill-php83": "~v1.33.0",
         "symfony/polyfill-php84": "~v1.33.0",
@@ -44,21 +40,15 @@
     },
     "autoload": {
         "psr-4": {
-            "Advandz\\Kernel\\": "src/"
+            "Phuture\\Coherence\\": "src/"
         },
         "files": [
-            "src/helpers.php",
-            "src/functions/array.php",
-            "src/functions/hash.php",
-            "src/functions/html.php",
-            "src/functions/mb.php",
-            "src/functions/str.php",
-            "src/functions/url.php"
+            "src/bootstrap.php"
         ]
     },
     "autoload-dev": {
         "psr-4": {
-            "Advandz\\Kernel\\Tests\\": "tests/"
+            "Phuture\\Coherence\\Tests\\": "tests/"
         }
     },
     "scripts": {

@@ -5,15 +5,93 @@ declare(strict_types=1);
 use Nette\PhpGenerator\GlobalFunction;
 use Nette\PhpGenerator\Literal;
 
+if (!function_exists('int')) {
+    /**
+     * Converts a value to an integer.
+     *
+     * @param mixed $value The value to convert to integer
+     * @return int Returns the integer value
+     */
+    function int(mixed $value): int
+    {
+        return intval($value);
+    }
+}
+
+if (!function_exists('float')) {
+    /**
+     * Converts a value to a float.
+     *
+     * @param mixed $value The value to convert to float
+     * @return float Returns the float value
+     */
+    function float(mixed $value): float
+    {
+        return floatval($value);
+    }
+}
+
+if (!function_exists('string')) {
+    /**
+     * Converts a value to a string.
+     *
+     * @param mixed $value The value to convert to string
+     * @return string Returns the string value
+     */
+    function string(mixed $value): string
+    {
+        return strval($value);
+    }
+}
+
+if (!function_exists('bool')) {
+    /**
+     * Converts a value to a boolean.
+     *
+     * @param mixed $value The value to convert to boolean
+     * @return bool Returns the boolean value
+     */
+    function bool(mixed $value): bool
+    {
+        return boolval($value);
+    }
+}
+
+if (!function_exists('get_type')) {
+    /**
+     * Gets the type of variable.
+     *
+     * @param mixed $data The variable to get the type of
+     * @return string Returns the type of the variable
+     */
+    function get_type(mixed $data): string
+    {
+        return gettype($data);
+    }
+}
+
+if (!function_exists('set_type')) {
+    /**
+     * Sets the type of variable.
+     *
+     * This function modifies the variable passed by reference.
+     *
+     * @param mixed $data The variable to set the type of (passed by reference)
+     * @param string $type The target type (e.g., 'bool', 'int', 'float', 'string', 'array', 'object', 'null')
+     * @return bool Returns true on success, false on failure
+     */
+    function set_type(mixed &$data, string $type): bool
+    {
+        return settype($data, $type);
+    }
+}
+
 if (!function_exists('class_name')) {
     /**
      * Gets the fully qualified class name of an object.
      *
-     * Provides a consistent wrapper around the native function get_class.
-     *
      * @param object $class The object to get the class name from
      * @return string Returns the fully qualified class name
-     * @see https://www.php.net/manual/en/function.get-class.php
      */
     function class_name(object $class): string
     {
@@ -23,23 +101,19 @@ if (!function_exists('class_name')) {
 
 if (!function_exists('class_basename')) {
     /**
-     * Gets the class name without namespace.
+     * Gets the class name without a namespace.
      *
-     * Provides a way to get just the short class name using ReflectionClass.
-     *
-     * @param object $class The object to get the basename from
-     * @return string Returns the class name without namespace
-     * @throws RuntimeException If reflection fails
-     * @see https://www.php.net/manual/en/reflectionclass.getshortname.php
+     * @param object|string $class The object to get the basename from
+     * @return string Returns the class name without a namespace
      */
-    function class_basename(object $class): string
+    function class_basename(object|string $class): string
     {
         try {
             $reflection = new ReflectionClass($class);
 
             return $reflection->getShortName();
-        } catch (ReflectionException $exception) {
-            throw new RuntimeException($exception->getMessage());
+        } catch (Throwable $e) {
+            throw new Error($e->getMessage());
         }
     }
 }
@@ -48,21 +122,15 @@ if (!function_exists('class_namespace')) {
     /**
      * Gets the namespace of a class.
      *
-     * Provides a way to get the namespace using ReflectionClass.
-     *
-     * @param object $class The object to get the namespace from
+     * @param object|string $class The object to get the namespace from
      * @return string Returns the namespace or '\\' if no namespace
-     * @throws RuntimeException If reflection fails
-     * @see https://www.php.net/manual/en/reflectionclass.getnamespacename.php
      */
-    function class_namespace(object $class): string
+    function class_namespace(object|string $class): string
     {
         try {
-            $reflection = new ReflectionClass($class);
-
-            return $reflection->getNamespaceName() ?? '\\';
-        } catch (ReflectionException $exception) {
-            throw new RuntimeException($exception->getMessage());
+            return (new ReflectionClass($class))->getNamespaceName();
+        } catch (Throwable $e) {
+            throw new Error($e->getMessage());
         }
     }
 }
@@ -71,19 +139,18 @@ if (!function_exists('class_parent')) {
     /**
      * Gets the parent class name of an object.
      *
-     * Provides a consistent wrapper around the native function get_parent_class.
-     *
-     * @param object $class The object to get the parent class from
+     * @param object|string $class The object to get the parent class from
      * @return string Returns the parent class name
-     * @throws RuntimeException If the class has no parent or is not valid
-     * @see https://www.php.net/manual/en/function.get-parent-class.php
+     * @throws LogicException If the class has no parent or is not valid
      */
-    function class_parent(object $class): string
+    function class_parent(object|string $class): string
     {
         $parent = get_parent_class($class);
 
         if ($parent === false) {
-            throw new RuntimeException("{$class} does not have a child or is not a valid class");
+            throw new Error(
+                "{$class} does not have a parent or is not a valid class"
+            );
         }
 
         return $parent;
@@ -94,31 +161,120 @@ if (!function_exists('class_methods')) {
     /**
      * Gets the method names of a class.
      *
-     * Provides a consistent wrapper around the native function get_class_methods.
-     *
-     * @param object $class The object to get methods from
+     * @param object|string $class The object to get methods from
      * @return array Returns an array of method names
-     * @see https://www.php.net/manual/en/function.get-class-methods.php
      */
-    function class_methods(object $class): array
+    function class_methods(object|string $class): array
     {
         return get_class_methods($class);
     }
 }
 
-if (!function_exists('class_vars')) {
+if (!function_exists('class_method_exists')) {
+    /**
+     * Checks if a class contains a specific method.
+     *
+     * @param object|string $class The class name or object instance to check
+     * @param string $method The method name to check for existence
+     * @return bool Returns true if the method exists, false otherwise
+     */
+    function class_method_exists(object|string $class, string $method): bool
+    {
+        return method_exists($class, $method);
+    }
+}
+
+if (!function_exists('class_method_visibility')) {
+    /**
+     * Gets the visibility level of a class method.
+     *
+     * This function uses reflection to determine whether a method is public, private,
+     * or protected. It's useful for debugging, logging, or when you need to check
+     * method accessibility before calling it dynamically.
+     *
+     * @param object|string $class The class name or class instance
+     * @param string $method The method name to check
+     * @return string Returns 'public', 'private', or 'protected'
+     * @throws Error If the method doesn't exist or reflection fails
+     */
+    function class_method_visibility(object|string $class, string $method): string
+    {
+        try {
+            return match (true) {
+                (new ReflectionMethod($class, $method))->isPublic() => 'public',
+                (new ReflectionMethod($class, $method))->isPrivate() => 'private',
+                (new ReflectionMethod($class, $method))->isProtected() => 'protected'
+            };
+        } catch (Throwable $e) {
+            throw new Error($e->getMessage());
+        }
+    }
+}
+
+if (!function_exists('class_properties')) {
     /**
      * Gets the default properties of a class.
      *
-     * Provides a consistent wrapper around the native function get_class_vars.
-     *
-     * @param object $class The object to get properties from
+     * @param object|string $class The object to get properties from
      * @return array Returns an associative array of default properties
-     * @see https://www.php.net/manual/en/function.get-class-vars.php
      */
-    function class_vars(object $class): array
+    function class_properties(object|string $class): array
     {
-        return get_class_vars(get_class($class));
+        return is_string($class) ? get_class_vars($class) : get_class_vars(get_class($class));
+    }
+}
+
+if (!function_exists('class_property_exists')) {
+    /**
+     * Check if a property exists in a class (including private properties)
+     *
+     * @param object|string $class The class name or object instance
+     * @param string $property The property name to check
+     * @return bool True if property exists, false otherwise
+     */
+    function class_property_exists(object|string $class, string $property): bool
+    {
+        return property_exists($class, $property);
+    }
+}
+
+if (!function_exists('class_property_visibility')) {
+    /**
+     * Gets the visibility level of a class property.
+     *
+     * This function uses reflection to determine whether a property is public, private,
+     * or protected. It's useful for debugging, logging, or when you need to check
+     * property accessibility before accessing it dynamically.
+     *
+     * @param object|string $class The class name or class instance
+     * @param string $property The property name to check
+     * @return string Returns 'public', 'private', or 'protected'
+     * @throws Error If the property doesn't exist or reflection fails
+     */
+    function class_property_visibility(object|string $class, string $property): string
+    {
+        try {
+            return match (true) {
+                (new ReflectionProperty($class, $property))->isPublic() => 'public',
+                (new ReflectionProperty($class, $property))->isPrivate() => 'private',
+                (new ReflectionProperty($class, $property))->isProtected() => 'protected'
+            };
+        } catch (Throwable $e) {
+            throw new Error($e->getMessage());
+        }
+    }
+}
+
+if (!function_exists('class_traits')) {
+    /**
+     * Gets all traits used by a class.
+     *
+     * @param object|string $class The object or class name to get traits from
+     * @return array Returns an array of trait names used by the class
+     */
+    function class_traits(object|string $class): array
+    {
+        return class_uses($class);
     }
 }
 
@@ -126,10 +282,7 @@ if (!function_exists('class_called')) {
     /**
      * Gets the name of the class a static method is called in.
      *
-     * Provides a consistent wrapper around the native function get_called_class.
-     *
      * @return string Returns the called class name
-     * @see https://www.php.net/manual/en/function.get-called-class.php
      */
     function class_called(): string
     {
@@ -141,31 +294,18 @@ if (!function_exists('class_reflect')) {
     /**
      * Creates a ReflectionClass instance for an object.
      *
-     * Provides a convenient way to create a ReflectionClass with error handling.
-     *
      * @param object $class The object to create reflection from
      * @return ReflectionClass Returns a ReflectionClass instance
-     * @throws RuntimeException If reflection creation fails
-     * @see https://www.php.net/manual/en/class.reflectionclass.php
      */
     function class_reflect(object $class): ReflectionClass
     {
         try {
             return new ReflectionClass($class);
-        } catch (ReflectionException $exception) {
-            throw new RuntimeException($exception->getMessage());
+        } catch (Throwable $e) {
+            throw new Error($e->getMessage());
         }
     }
 }
-
-/**
- * These functions offer a convenient and more consistent procedural interface to
- * the standard library.
- *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
- * @license https://opensource.org/licenses/MIT MIT License
- * @link https://www.advandz.com/ Advandz
- */
 
 if (!function_exists('error_handler')) {
     /**
@@ -203,67 +343,26 @@ if (!function_exists('error_handler')) {
             }
         );
 
-        if ($error === false || $exception === false) {
+        $shutdown = register_shutdown_function(function () use ($handler) {
+            $error = error_get_last();
+            if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+                if ($handler) {
+                    $exception = new ErrorException(
+                        $error['message'],
+                        0,
+                        $error['type'],
+                        $error['file'],
+                        $error['line']
+                    );
+                    $handler($exception);
+                }
+            }
+        });
+
+        if ($error === false || $exception === false || $shutdown === false) {
             set_error_handler(null);
             set_exception_handler(null);
         }
-    }
-}
-
-if (!function_exists('php_version')) {
-    /**
-     * Gets the current PHP version.
-     *
-     * Provides a consistent wrapper around the native function phpversion.
-     *
-     * @param string|null $extension Optional extension name (default: null for PHP version)
-     * @return string|false Returns the version string or false on failure
-     * @see https://www.php.net/manual/en/function.phpversion.php
-     */
-    function php_version(?string $extension = null): string|false
-    {
-        $version = phpversion($extension);
-
-        if ($version === false) {
-            throw new RuntimeException('There is no version information associated or the extension isn\'t enabled');
-        }
-
-        return $version;
-    }
-}
-
-if (!function_exists('php_info')) {
-    /**
-     * Outputs information about PHP's configuration.
-     *
-     * Provides a consistent wrapper around the native function phpinfo.
-     *
-     * @param int $flags What information to show (default: INFO_ALL)
-     * @return bool Returns true on success
-     * @see https://www.php.net/manual/en/function.phpinfo.php
-     */
-    function php_info(int $flags = INFO_ALL): bool
-    {
-        return phpinfo($flags);
-    }
-}
-
-if (!function_exists('php_credits')) {
-    /**
-     * Prints credits for PHP.
-     *
-     * Provides an enhanced wrapper around the native function phpcredits.
-     *
-     * @param int $flags What credits to show (default: CREDITS_ALL)
-     * @return bool Returns true on success
-     * @see https://www.php.net/manual/en/function.phpcredits.php
-     */
-    function php_credits(int $flags = CREDITS_ALL): bool
-    {
-        $year = date('Y');
-        echo "Advandz Kernel\nCopyright (c) {$year} Advandz Technologies, LLC\n\n";
-
-        return phpcredits($flags);
     }
 }
 
@@ -313,7 +412,12 @@ if (!function_exists('get')) {
     function get(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_GET;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_GET);
         }
 
         if (!isset($_GET[$key])) {
@@ -339,7 +443,12 @@ if (!function_exists('post')) {
     function post(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_POST;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_POST);
         }
 
         if (!isset($_POST[$key])) {
@@ -365,7 +474,12 @@ if (!function_exists('files')) {
     function files(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_FILES;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_FILES);
         }
 
         if (!isset($_FILES[$key])) {
@@ -391,7 +505,12 @@ if (!function_exists('server')) {
     function server(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_SERVER;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_SERVER);
         }
 
         if (!isset($_SERVER[$key])) {
@@ -417,7 +536,12 @@ if (!function_exists('cookie')) {
     function cookie(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_COOKIE;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_COOKIE);
         }
 
         if (!isset($_COOKIE[$key])) {
@@ -443,7 +567,12 @@ if (!function_exists('session')) {
     function session(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_SESSION;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_SESSION);
         }
 
         if (!isset($_SESSION[$key])) {
@@ -469,7 +598,12 @@ if (!function_exists('request')) {
     function request(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
     {
         if ($key === null) {
-            return $_REQUEST;
+            $recursive = function ($array) use (&$recursive, $filter) {
+                return array_map(fn($value) => is_array($value)
+                    ? $recursive($value)
+                    : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
+            };
+            return $recursive($_REQUEST);
         }
 
         if (!isset($_REQUEST[$key])) {
@@ -480,39 +614,7 @@ if (!function_exists('request')) {
     }
 }
 
-if (!function_exists('env')) {
-    /**
-     * Accesses $_ENV superglobal and environment variables with optional filtering.
-     *
-     * Provides safe access to environment variables with automatic sanitization.
-     *
-     * @param string|null $key The ENV parameter key (default: null to return entire array)
-     * @param mixed $default Default value if key doesn't exist (default: null)
-     * @param int $filter Filter to apply (default: FILTER_SANITIZE_SPECIAL_CHARS)
-     * @return mixed Returns the filtered value, default, or entire $_ENV array
-     * @see https://www.php.net/manual/en/function.filter-var.php
-     * @see https://www.php.net/manual/en/function.getenv.php
-     */
-    function env(?string $key = null, mixed $default = null, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): mixed
-    {
-        if ($key === null) {
-            return $_ENV;
-        }
-
-        if (!isset($_ENV[$key])) {
-            $value = getenv($key);
-            if ($value === false) {
-                return $default;
-            }
-
-            return filter_var($value, $filter);
-        }
-
-        return filter_var($_ENV[$key], $filter);
-    }
-}
-
-if (!function_exists('object')) {
+if (!function_exists('literal')) {
     /**
      * Creates an object from the provided arguments.
      *
@@ -521,23 +623,13 @@ if (!function_exists('object')) {
      * @param mixed ...$args Values to convert to object properties
      * @return object Returns an object created from the arguments
      */
-    function object(...$args): object
+    function literal(...$args): object
     {
         if (count($args) === 1 && array_is_list($args)) {
             return (object) $args[0];
         }
 
         return (object) $args;
-    }
-
-    /**
-     * Laravel-style alias for the object method.
-     */
-    if (!function_exists('literal')) {
-        function literal(): object
-        {
-            return call_user_func_array('object', func_get_args());
-        }
     }
 }
 

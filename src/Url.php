@@ -1,8 +1,10 @@
 <?php
 
-namespace Advandz\Kernel;
+declare(strict_types=1);
 
-use Advandz\Kernel\Class\StaticClass;
+namespace Phuture\Coherence;
+
+use Phuture\Coherence\Class\StaticClass;
 
 /**
  * URL utility class providing consistent wrappers around native PHP URL functions.
@@ -13,7 +15,7 @@ use Advandz\Kernel\Class\StaticClass;
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
- * @link https://www.advandz.com/ Advandz
+ * @link https://www.phuture.dev/ Phuture
  */
 class Url extends StaticClass
 {
@@ -22,13 +24,13 @@ class Url extends StaticClass
      *
      * Provides a consistent wrapper around the native function urlencode.
      *
-     * @param string $subject The string to encode
+     * @param string $string The string to encode
      * @return string Returns the URL-encoded string
      * @see https://www.php.net/manual/en/function.urlencode.php
      */
-    public static function encode(string $subject): string
+    public static function encode(string $string): string
     {
-        return urlencode($subject);
+        return urlencode($string);
     }
 
     /**
@@ -36,13 +38,13 @@ class Url extends StaticClass
      *
      * Provides a consistent wrapper around the native function urldecode.
      *
-     * @param string $subject The string to decode
+     * @param string $string The string to decode
      * @return string Returns the decoded string
      * @see https://www.php.net/manual/en/function.urldecode.php
      */
-    public static function decode(string $subject): string
+    public static function decode(string $string): string
     {
-        return urldecode($subject);
+        return urldecode($string);
     }
 
     /**
@@ -50,13 +52,13 @@ class Url extends StaticClass
      *
      * Provides a consistent wrapper around the native function rawurlencode.
      *
-     * @param string $subject The string to encode
+     * @param string $string The string to encode
      * @return string Returns the URL-encoded string
      * @see https://www.php.net/manual/en/function.rawurlencode.php
      */
-    public static function encodeRaw(string $subject): string
+    public static function encodeRaw(string $string): string
     {
-        return rawurlencode($subject);
+        return rawurlencode($string);
     }
 
     /**
@@ -64,13 +66,13 @@ class Url extends StaticClass
      *
      * Provides a consistent wrapper around the native function rawurldecode.
      *
-     * @param string $subject The string to decode
+     * @param string $string The string to decode
      * @return string Returns the decoded string
      * @see https://www.php.net/manual/en/function.rawurldecode.php
      */
-    public static function decodeRaw(string $subject): string
+    public static function decodeRaw(string $string): string
     {
-        return rawurldecode($subject);
+        return rawurldecode($string);
     }
 
     /**
@@ -114,13 +116,13 @@ class Url extends StaticClass
      *
      * Encodes using Base64 with URL-safe characters (- and _ instead of + and /).
      *
-     * @param string $subject The string to encode
+     * @param string $string The string to encode
      * @return string Returns the URL-safe Base64 encoded string
      * @see https://www.php.net/manual/en/function.base64-encode.php
      */
-    public static function base64Encode(string $subject): string
+    public static function base64Encode(string $string): string
     {
-        return rtrim(strtr(base64_encode($subject), '+/', '-_'), '=');
+        return rtrim(strtr(base64_encode($string), '+/', '-_'), '=');
     }
 
     /**
@@ -128,12 +130,12 @@ class Url extends StaticClass
      *
      * Decodes Base64 with URL-safe characters (- and _ instead of + and /).
      *
-     * @param string $subject The URL-safe Base64 string to decode
+     * @param string $string The URL-safe Base64 string to decode
      * @return string|false Returns the decoded string or false on failure
      * @see https://www.php.net/manual/en/function.base64-decode.php
      */
-    public static function base64Decode(string $subject): string|false
+    public static function base64Decode(string $string): string|false
     {
-        return base64_decode(strtr($subject, '-_', '+/'));
+        return base64_decode(strtr($string, '-_', '+/'));
     }
 }
