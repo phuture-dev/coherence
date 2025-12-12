@@ -58,7 +58,7 @@ abstract class SingletonClass
     /**
      * Class is singleton and cannot be serialized.
      */
-    public function __sleep()
+    public function __serialize()
     {
         $class = get_class($this);
         throw new SerializationException(
@@ -69,7 +69,7 @@ abstract class SingletonClass
     /**
      * Class is singleton and cannot be unserialized.
      */
-    public function __wakeup()
+    public function __unserialize(array $data)
     {
         $class = get_class($this);
         throw new SerializationException(

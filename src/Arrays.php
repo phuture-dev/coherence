@@ -55,8 +55,8 @@ class Arrays extends StaticClass
      * // Returns: true
      *
      * Arrays::accessible('text string');
-     *
      * // Returns: false
+     *
      * Arrays::accessible(new stdClass());
      * // Returns: false
      *
@@ -73,57 +73,45 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Adds key-value pairs to an array if the keys don't exist or are null.
+     * Appends key-value pairs to an array if the keys don't exist.
      *
-     * This method inserts new key-value pairs into an array, but only when each key is either
-     * missing from the array or its current value is null. If a key already exists with a
-     * non-null value, it remains unchanged. The array is modified by reference.
+     * This method appends new key-value pairs into an array at the end.
      *
-     * This is useful for setting default values in arrays without overwriting existing data,
-     * similar to providing fallback values in configuration arrays or user inputs.
+     * If a key already exists, it remains unchanged. The array is modified by reference.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
      *
      * $array = ['name' => 'Desk'];
-     * Arrays::add($array, ['price' => 100]);
+     * Arrays::append($array, ['price' => 100]);
      * // Result: ['name' => 'Desk', 'price' => 100]
      *
      * $array = ['name' => 'Desk', 'price' => null];
-     * Arrays::add($array, ['price' => 100, 'color' => 'brown']);
-     * // Result: ['name' => 'Desk', 'price' => 100, 'color' => 'brown']
+     * Arrays::append($array, ['price' => 100, 'color' => 'brown']);
+     * // Result: ['name' => 'Desk', 'price' => null, 'color' => 'brown']
      *
-     * $array = ['name' => 'Desk', 'price' => 50];
-     * Arrays::add($array, ['price' => 100, 'stock' => 10]);
-     * // Result: ['name' => 'Desk', 'price' => 50, 'stock' => 10]
-     *
-     * // Multiple pairs
      * $array = [];
-     * Arrays::add($array, ['user' => 'demo', 'email' => 'example@example.com']);
+     * Arrays::append($array, ['user' => 'demo', 'email' => 'example@example.com']);
      * // Result: ['user' => 'demo', 'email' => 'example@example.com']
      * ```
      *
      * @param array $array The array to add key-value pairs to (passed by reference)
-     * @param array $items Associative array of key-value pairs to add
-     * @see Arrays::addBefore()
-     * @see Arrays::addAfter()
+     * @param array $items Associative array of key-value pairs to append
+     * @see Arrays::prepend()
      */
-    public static function add(array &$array, array $items): void
+    public static function append(array &$array, array $items): void
     {
-        foreach ($items as $key => $value) {
-            if (!isset($array[$key]) || is_null($array[$key])) {
-                $array[$key] = $value;
-            }
-        }
+        NetteArrays::insertAfter($array, null, $items);
     }
 
     /**
      * Inserts elements after a specified key in an array.
      *
      * This method inserts new key-value pairs into an array at a position immediately after
-     * the specified key. If the key doesn't exist or is null, the elements are appended to
-     * the end of the array. The array is modified by reference.
+     * the specified key.
+     *
+     * If a key already exists, it remains unchanged. The array is modified by reference.
      *
      * Example:
      * ```php
@@ -133,11 +121,6 @@ class Arrays extends StaticClass
      * Arrays::addAfter($array, 'first', ['hello' => 'world']);
      * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
      *
-     * // Insert at end when key is null
-     * $array = ['first' => 10, 'second' => 20];
-     * Arrays::addAfter($array, null, ['last' => 30]);
-     * // Result: ['first' => 10, 'second' => 20, 'last' => 30]
-     *
      * // Insert after non-existent key (appends)
      * $array = ['first' => 10];
      * Arrays::addAfter($array, 'missing', ['new' => 20]);
@@ -145,11 +128,11 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to insert into (passed by reference)
-     * @param string|int|null $key The reference key to insert after, or null to append
+     * @param string|int $key The reference key to insert after, or null to append
      * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::add()
+     * @see Arrays::addBefore()
      */
-    public static function addAfter(array &$array, string|int|null $key, array $items): void
+    public static function addAfter(array &$array, string|int $key, array $items): void
     {
         NetteArrays::insertAfter($array, $key, $items);
     }
@@ -158,8 +141,9 @@ class Arrays extends StaticClass
      * Inserts elements before a specified key in an array.
      *
      * This method inserts new key-value pairs into an array at a position immediately before
-     * the specified key. If the key doesn't exist or is null, the elements are prepended to
-     * the beginning of the array. The array is modified by reference.
+     * the specified key.
+     *
+     * If a key already exists, it remains unchanged. The array is modified by reference.
      *
      * Example:
      * ```php
@@ -169,11 +153,6 @@ class Arrays extends StaticClass
      * Arrays::addBefore($array, 'second', ['hello' => 'world']);
      * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
      *
-     * // Insert at beginning when key is null
-     * $array = ['first' => 10, 'second' => 20];
-     * Arrays::addBefore($array, null, ['start' => 0]);
-     * // Result: ['start' => 0, 'first' => 10, 'second' => 20]
-     *
      * // Insert before non-existent key (prepends)
      * $array = ['first' => 10];
      * Arrays::addBefore($array, 'missing', ['new' => 5]);
@@ -181,66 +160,13 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to insert into (passed by reference)
-     * @param string|int|null $key The reference key to insert before, or null to prepend
+     * @param string|int $key The reference key to insert before, or null to prepend
      * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::add()
+     * @see Arrays::addAfter()
      */
-    public static function addBefore(array &$array, string|int|null $key, array $items): void
+    public static function addBefore(array &$array, string|int $key, array $items): void
     {
         NetteArrays::insertBefore($array, $key, $items);
-    }
-
-    /**
-     * Creates a fluent wrapper for array manipulation with method chaining.
-     *
-     * This method wraps an array in a Types\Arrays instance, which enables fluent method chaining
-     * for array operations. Instead of calling static methods one at a time, you can chain multiple
-     * operations together and call get() at the end to retrieve the final result.
-     *
-     * **Important**: Only methods where the first parameter is an array and the return type is also
-     * an array can be chained.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Using fluent chaining (chainable methods return arrays)
-     * $result = Arrays::array([1, 2, 3, 4, 5])
-     *     ->filter(fn($v) => $v > 2) // Returns array - chainable
-     *     ->reverse() // Returns array - chainable
-     *     ->values() // Returns array - chainable
-     *     ->get();
-     * // Returns: [5, 4, 3]
-     *
-     * // Equivalent to calling static methods individually:
-     * $filtered = Arrays::filter([1, 2, 3, 4, 5], fn($v) => $v > 2);
-     * $reversed = Arrays::reverse($filtered);
-     * $result = Arrays::values($reversed);
-     *
-     * // Process associative arrays
-     * $users = [
-     *     ['name' => 'John', 'age' => 30],
-     *     ['name' => 'Jane', 'age' => 25],
-     *     ['name' => 'Bob', 'age' => 35]
-     * ];
-     * $names = Arrays::array($users)
-     *     ->column('name') // Returns array - chainable
-     *     ->get();
-     * // Returns: ['John', 'Jane', 'Bob']
-     *
-     * // Methods that don't return arrays cannot be chained:
-     * $data = Arrays::array([1, 2, 3]);
-     * $count = $data->length(); // Returns int - NOT chainable
-     * $hasValue = $data->contains(2); // Returns bool - NOT chainable
-     * ```
-     *
-     * @param array $array The array to wrap for fluent operations
-     * @return Types\Arrays A fluent wrapper instance that enables method chaining
-     * @see \Phuture\Coherence\Types\Arrays For the fluent wrapper implementation
-     */
-    public static function array(array $array): Types\Arrays
-    {
-        return new Types\Arrays($array);
     }
 
     /**
@@ -331,6 +257,7 @@ class Arrays extends StaticClass
      * @param array $values Array of values to use
      * @return array Returns an associative array combining the keys and values
      * @throws InvalidArgumentException When arrays have different lengths
+     * @throws InvalidDataTypeException When keys contain non-string or non-integer values
      */
     public static function combine(array $keys, array $values): array
     {
@@ -338,6 +265,14 @@ class Arrays extends StaticClass
             throw new InvalidArgumentException(
                 'Both arrays must have the same number of elements'
             );
+        }
+
+        foreach ($keys as $value) {
+            if (!is_int($value) && !is_string($value)) {
+                throw new InvalidDataTypeException(
+                    'Only arrays with string and integer values can be used as keys'
+                );
+            }
         }
 
         return array_combine($keys, $values);
@@ -379,11 +314,12 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Flattens a multi-dimensional array into a single level.
+     * Collapses one level of a multi-dimensional array.
      *
-     * This method takes an array containing other arrays and merges them all into
-     * one single array. It's useful when you have multiple arrays that you want
-     * to combine into one flat list.
+     * This method takes an array containing other arrays and merges them into one
+     * single array by flattening only one level of nesting. It's useful when you have
+     * multiple arrays that you want to combine into a single list while preserving
+     * any deeper nested array structures.
      *
      * Unlike flatten() which recursively traverses through ALL levels of nesting,
      * collapse() only merges one level of arrays and preserves the array structure.
@@ -559,6 +495,55 @@ class Arrays extends StaticClass
     public static function changeKeyCase(array $array, int $case = CASE_LOWER): array
     {
         return array_change_key_case($array, $case);
+    }
+
+    /**
+     * Expands a flattened array with dot notation keys (denotes) back into a multi-dimensional array.
+     *
+     * This method takes a flat array where keys use dot notation to represent nested paths
+     * and converts it back into a multi-dimensional array structure. For example, a key like
+     * 'user.address.city' becomes ['user']['address']['city'].
+     *
+     * This is the reverse operation of the flatten method and is useful when you need to
+     * reconstruct complex nested structures from simple key-value pairs.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $flat = [
+     *     'name' => 'John',
+     *     'address.city' => 'NYC',
+     *     'address.zip' => '10001'
+     * ];
+     * $nested = Arrays::denote($flat);
+     *
+     * // Returns: ['name' => 'John', 'address' => ['city' => 'NYC', 'zip' => '10001']]
+     * ```
+     *
+     * @param array $array The flattened array with dot notation keys
+     * @return array Returns a multi-dimensional array with nested structure
+     * @see Arrays::notation()
+     */
+    public static function denote(array $array): array
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            $keys = explode('.', $key);
+            $temp = &$result;
+
+            foreach ($keys as $k) {
+                if (!isset($temp[$k]) || !is_array($temp[$k])) {
+                    $temp[$k] = [];
+                }
+                $temp = &$temp[$k];
+            }
+
+            $temp = $value;
+        }
+
+        return $result;
     }
 
     /**
@@ -846,7 +831,7 @@ class Arrays extends StaticClass
      */
     public static function every(array $array, callable $callback): bool
     {
-        return NetteArrays::every($array, $callback);
+        return array_all($array, $callback);
     }
 
     /**
@@ -1349,6 +1334,21 @@ class Arrays extends StaticClass
         }
 
         return [];
+    }
+
+    /**
+     * Converts a string into an array by splitting it with a separator.
+     *
+     * This method takes a string and splits it into an array using the specified separator.
+     *
+     * @param string $string The string to split into an array
+     * @param string $separator The character or string to split on (default: space)
+     * @param int $limit The maximum number of array elements to return (default: PHP's default)
+     * @return array An array of string parts
+     */
+    public static function fromString(string $string, string $separator = ' ', int $limit = PHP_INT_MAX): array
+    {
+        return explode($separator, $string, $limit);
     }
 
     /**
@@ -2478,75 +2478,62 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Converts all arrays in a multidimensional array to objects recursively.
+     * Creates a fluent wrapper for array manipulation with method chaining.
      *
-     * This method transforms an array and all its nested arrays into stdClass objects.
-     * This is the opposite of the normalize() method, which converts objects to arrays.
-     * Each array level becomes an object with properties matching the array keys.
-     *
-     * This is useful when you need to work with object notation for accessing
-     * nested data structures, especially when dealing with JSON data or configuration
-     * that you want to access with arrow syntax (->) instead of bracket notation ([]).
+     * This method wraps an array in a Types\Arrays instance, which enables fluent method chaining
+     * for array operations. Instead of calling static methods one at a time, you can chain multiple
+     * operations together and call get() or toArray() at the end to retrieve the final result.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
      *
-     * // Simple array to object
-     * $array = ['name' => 'John', 'age' => 30];
-     * $obj = Arrays::toObject($array);
-     * // Returns: { name: "John", age: 30 }
+     * // Using fluent chaining (chainable methods return arrays)
+     * $result = Arrays::of([1, 2, 3, 4, 5])
+     *     ->filter(fn($v) => $v > 2) // Returns array - chainable
+     *     ->reverse() // Returns array - chainable
+     *     ->values() // Returns array - chainable
+     *     ->get();
+     * // Returns: [5, 4, 3]
      *
-     * // Multidimensional array to objects
-     * $data = [
-     *     'user' => [
-     *         'name' => 'Jane',
-     *         'address' => [
-     *             'street' => '123 Main St',
-     *             'city' => 'NYC'
-     *         ]
-     *     ],
-     *     'settings' => ['theme' => 'dark']
+     * // Equivalent to calling static methods individually:
+     * $filtered = Arrays::filter([1, 2, 3, 4, 5], fn($v) => $v > 2);
+     * $reversed = Arrays::reverse($filtered);
+     * $result = Arrays::values($reversed);
+     *
+     * // Alternative methods
+     * $users = [
+     *     ['name' => 'John', 'age' => 30],
+     *     ['name' => 'Jane', 'age' => 25],
+     *     ['name' => 'Bob', 'age' => 35]
      * ];
-     * $obj = Arrays::toObject($data);
-     * // Returns:
-     * // {
-     * //     user: {
-     * //         name: "Jane",
-     * //         address: { street: "123 Main St", city: "NYC" }
-     * //     },
-     * //     settings: { theme: "dark" }
-     * // }
      *
-     * // Accessing properties
-     * echo $obj->user->name; // Outputs: Jane
-     * echo $obj->user->address->city; // Outputs: NYC
+     * // You can also use toArray to get the final result
+     * $names = Arrays::of($users)
+     *     ->column('name')
+     *     ->toArray();
+     * // Returns: ['John', 'Jane', 'Bob']
+     *
+     * // Or, call the object as a function to get the final result
+     * $names = Arrays::of($users)
+     *     ->column('name')();
+     * // Returns: ['John', 'Jane', 'Bob']
+     *
+     * // Or, use the object as an array
+     * $names = Arrays::of($users)
+     *     ->column('name');
+     *
+     * $name = $names[0];
+     * // Returns 'John'
      * ```
      *
-     * @param array $array The array to convert to objects, which may contain nested arrays
-     * @return object Returns a stdClass object with all nested arrays converted to objects
-     * @see Arrays::from()
-     * @see Arrays::normalize()
+     * @param array $array The array to wrap for fluent operations
+     * @return Types\Arrays A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Types\Arrays For the fluent wrapper implementation
      */
-    public static function toObject(array $array): object
+    public static function of(array $array): Types\Arrays
     {
-        $result = new \stdClass();
-
-        foreach ($array as $key => $value) {
-            if ($value instanceof \stdClass) {
-                $value = (array) $value;
-            }
-
-            if (is_array($value) && ! self::isList($value)) {
-                // Recursively convert nested arrays to objects
-                $result->{$key} = self::toObject($value);
-            } else {
-                // Keep scalar values
-                $result->{$key} = $value;
-            }
-        }
-
-        return $result;
+        return new Types\Arrays($array);
     }
 
     /**
@@ -2633,6 +2620,40 @@ class Arrays extends StaticClass
     public static function pad(array $array, int $length, mixed $value): array
     {
         return array_pad($array, $length, $value);
+    }
+
+    /**
+     * Prepends key-value pairs to an array.
+     *
+     * This method prepends new key-value pairs into an array at the beginning.
+     *
+     * Unlike Arrays::append() which preserves existing keys, prepend() will overwrite
+     * any existing keys with the new values. The array is modified by reference.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $array = ['name' => 'John'];
+     * Arrays::prepend($array, ['age' => 30, 'city' => 'NYC']);
+     * // Result: ['age' => 30, 'city' => 'NYC', 'name' => 'John']
+     *
+     * $array = ['name' => 'John', 'age' => null];
+     * Arrays::prepend($array, ['age' => 30, 'city' => 'NYC']);
+     * // Result: ['age' => 30, 'city' => 'NYC', 'name' => 'John']
+     *
+     * $array = [];
+     * Arrays::prepend($array, ['user' => 'demo', 'email' => 'example@example.com']);
+     * // Result: ['user' => 'demo', 'email' => 'example@example.com']
+     * ```
+     *
+     * @param array $array The array to add key-value pairs to (passed by reference)
+     * @param array $items Associative array of key-value pairs to prepend
+     * @see Arrays::append()
+     */
+    public static function prepend(array &$array, array $items): void
+    {
+        NetteArrays::insertBefore($array, null, $items);
     }
 
     /**
@@ -3285,7 +3306,7 @@ class Arrays extends StaticClass
      */
     public static function some(array $array, callable $callback): bool
     {
-        return NetteArrays::some($array, $callback);
+        return array_any($array, $callback);
     }
 
     /**
@@ -3576,49 +3597,72 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Expands a flattened array with dot notation keys (denotes) back into a multi-dimensional array.
+     * Converts all arrays in a multidimensional array to objects recursively.
      *
-     * This method takes a flat array where keys use dot notation to represent nested paths
-     * and converts it back into a multi-dimensional array structure. For example, a key like
-     * 'user.address.city' becomes ['user']['address']['city'].
+     * This method transforms an array and all its nested arrays into stdClass objects.
+     * This is the opposite of the normalize() method, which converts objects to arrays.
+     * Each array level becomes an object with properties matching the array keys.
      *
-     * This is the reverse operation of the flatten method and is useful when you need to
-     * reconstruct complex nested structures from simple key-value pairs.
+     * This is useful when you need to work with object notation for accessing
+     * nested data structures, especially when dealing with JSON data or configuration
+     * that you want to access with arrow syntax (->) instead of bracket notation ([]).
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
      *
-     * $flat = [
-     *     'name' => 'John',
-     *     'address.city' => 'NYC',
-     *     'address.zip' => '10001'
-     * ];
-     * $nested = Arrays::denote($flat);
+     * // Simple array to object
+     * $array = ['name' => 'John', 'age' => 30];
+     * $obj = Arrays::toObject($array);
+     * // Returns: { name: "John", age: 30 }
      *
-     * // Returns: ['name' => 'John', 'address' => ['city' => 'NYC', 'zip' => '10001']]
+     * // Multidimensional array to objects
+     * $data = [
+     *     'user' => [
+     *         'name' => 'Jane',
+     *         'address' => [
+     *             'street' => '123 Main St',
+     *             'city' => 'NYC'
+     *         ]
+     *     ],
+     *     'settings' => ['theme' => 'dark']
+     * ];
+     * $obj = Arrays::toObject($data);
+     * // Returns:
+     * // {
+     * //     user: {
+     * //         name: "Jane",
+     * //         address: { street: "123 Main St", city: "NYC" }
+     * //     },
+     * //     settings: { theme: "dark" }
+     * // }
+     *
+     * // Accessing properties
+     * echo $obj->user->name; // Outputs: Jane
+     * echo $obj->user->address->city; // Outputs: NYC
      * ```
      *
-     * @param array $array The flattened array with dot notation keys
-     * @return array Returns a multi-dimensional array with nested structure
-     * @see Arrays::notation()
+     * @param array $array The array to convert to objects, which may contain nested arrays
+     * @return object Returns a stdClass object with all nested arrays converted to objects
+     * @see Arrays::from()
+     * @see Arrays::normalize()
      */
-    public static function denote(array $array): array
+    public static function toObject(array $array): object
     {
-        $result = [];
+        $result = new \stdClass();
 
         foreach ($array as $key => $value) {
-            $keys = explode('.', $key);
-            $temp = &$result;
-
-            foreach ($keys as $k) {
-                if (!isset($temp[$k]) || !is_array($temp[$k])) {
-                    $temp[$k] = [];
-                }
-                $temp = &$temp[$k];
+            if ($value instanceof \stdClass) {
+                $value = (array) $value;
             }
 
-            $temp = $value;
+            if (is_array($value) && ! self::isList($value)) {
+                // Recursively convert nested arrays to objects
+                $result->{$key} = self::toObject($value);
+            } else {
+                // Keep scalar values
+                $result->{$key} = $value;
+            }
         }
 
         return $result;

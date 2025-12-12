@@ -18,8 +18,8 @@
     ],
     "require": {
         "php": "^8.1",
-        "nette/php-generator": "~4.2.0",
         "nette/utils": "~4.0.0",
+        "nette/php-generator": "~4.2.0",
         "symfony/polyfill-php82": "~v1.33.0",
         "symfony/polyfill-php83": "~v1.33.0",
         "symfony/polyfill-php84": "~v1.33.0",
@@ -36,6 +36,7 @@
     "require-dev": {
         "nette/tester": "^2.5",
         "phpstan/phpstan": "^1.10",
+        "consolidation/robo": "^4.0.0",
         "squizlabs/php_codesniffer": "^3.7"
     },
     "autoload": {

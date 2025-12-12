@@ -36,25 +36,25 @@ class ArraysTest extends TestCase
         Assert::false(Arrays::accessible(new \stdClass()));
     }
 
-    public function testAdd(): void
+    public function testAppend(): void
     {
         $array = ['name' => 'John'];
-        Arrays::add($array, ['age' => 30, 'city' => 'NYC']);
+        Arrays::append($array, ['age' => 30, 'city' => 'NYC']);
         Assert::same(['name' => 'John', 'age' => 30, 'city' => 'NYC'], $array);
     }
 
-    public function testAddDoesNotOverwrite(): void
+    public function testAppendDoesNotOverwrite(): void
     {
         $array = ['name' => 'John', 'age' => 25];
-        Arrays::add($array, ['age' => 30, 'city' => 'NYC']);
+        Arrays::append($array, ['age' => 30, 'city' => 'NYC']);
         Assert::same(['name' => 'John', 'age' => 25, 'city' => 'NYC'], $array);
     }
 
-    public function testAddWithNullValues(): void
+    public function testAppendWithNullValues(): void
     {
         $array = ['name' => null];
-        Arrays::add($array, ['name' => 'John']);
-        Assert::same(['name' => 'John'], $array);
+        Arrays::append($array, ['name' => 'John']);
+        Assert::same(['name' => null], $array);
     }
 
     public function testAddBefore(): void
@@ -110,20 +110,6 @@ class ArraysTest extends TestCase
     {
         Assert::false(Arrays::some([], fn() => true));
     }
-
-    public function testArray(): void
-    {
-        $result = Arrays::array([1, 2, 3]);
-        Assert::type('Phuture\Coherence\Types\Arrays', $result);
-        Assert::same([1, 2, 3], $result->get());
-    }
-
-    /*public function testArrayReverseFluent(): void
-    {
-        $result = Arrays::array([1, 2, 3]);
-        Assert::type('Phuture\Coherence\Types\Arrays', $result);
-        Assert::same([3, 2, 1], $result->reverse(false)->get());
-    }*/
 
     public function testAssociate(): void
     {
@@ -899,6 +885,18 @@ class ArraysTest extends TestCase
         Assert::same(['method' => 'toArray'], $result);
     }
 
+    public function testFromString(): void
+    {
+        $result = Arrays::fromString('John|Diego|Steve', '|');
+        Assert::same(['John', 'Diego', 'Steve'], $result);
+    }
+
+    public function testFromStringWithLimit(): void
+    {
+        $result = Arrays::fromString('John|Diego|Steve', '|', 2);
+        Assert::same(['John', 'Diego|Steve'], $result);
+    }
+
     public function testGet(): void
     {
         $array = ['name' => 'John', 'age' => 30];
@@ -1552,6 +1550,23 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
+    public function testOf(): void
+    {
+        $result = Arrays::of([1, 2, 3]);
+        Assert::type('Phuture\Coherence\Types\Arrays', $result);
+        Assert::same([1, 2, 3], $result->get());
+        Assert::same([1, 2, 3], $result->toArray());
+        Assert::same([1, 2, 3], $result());
+        Assert::same(1, $result[0]);
+    }
+
+    public function testOfReverseFluent(): void
+    {
+        $result = Arrays::of([1, 2, 3]);
+        Assert::type('Phuture\Coherence\Types\Arrays', $result);
+        Assert::same([3, 2, 1], $result->reverse(false)->get());
+    }
+
     public function testToObject(): void
     {
         $array = ['name' => 'John', 'age' => 30];
@@ -1760,6 +1775,27 @@ class ArraysTest extends TestCase
         $array = [1, 2, 3];
         $result = Arrays::pad($array, 2, 0);
         Assert::same([1, 2, 3], $result);
+    }
+
+    public function testPrepend(): void
+    {
+        $array = ['name' => 'John'];
+        Arrays::prepend($array, ['age' => 30, 'city' => 'NYC']);
+        Assert::same(['age' => 30, 'city' => 'NYC', 'name' => 'John'], $array);
+    }
+
+    public function testPrependDoesNotOverwrite(): void
+    {
+        $array = ['name' => 'John', 'age' => null];
+        Arrays::prepend($array, ['age' => 30, 'city' => 'NYC']);
+        Assert::same(['age' => 30, 'city' => 'NYC', 'name' => 'John'], $array);
+    }
+
+    public function testPrependWithNullValues(): void
+    {
+        $array = ['name' => null];
+        Arrays::prepend($array, ['name' => 'John']);
+        Assert::same(['name' => 'John'], $array);
     }
 
     public function testProduct(): void
