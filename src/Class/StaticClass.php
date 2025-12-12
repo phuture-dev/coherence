@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Class;
 
 use Phuture\Coherence\Exception\MemberAccessException;
-use Throwable;
 
 /**
  * Static base class that prevents instantiation and enforces static-only usage.
@@ -52,7 +51,7 @@ abstract class StaticClass
     {
         try {
             return static::callStatic($name, $args);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             throw new MemberAccessException($e->getMessage(), $e->getCode());
         }
     }
