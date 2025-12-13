@@ -57,60 +57,6 @@ class ArraysTest extends TestCase
         Assert::same(['name' => null], $array);
     }
 
-    public function testAddBefore(): void
-    {
-        $array = ['a' => 1, 'c' => 3];
-        Arrays::addBefore($array, 'c', ['b' => 2]);
-        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
-    }
-
-    public function testAddBeforeAtBeginning(): void
-    {
-        $array = ['b' => 2, 'c' => 3];
-        Arrays::addBefore($array, 'b', ['a' => 1]);
-        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
-    }
-
-    public function testAddBeforeNonExistentKey(): void
-    {
-        $array = ['a' => 1];
-        Arrays::addBefore($array, 'z', ['b' => 2]);
-        Assert::same(['b' => 2, 'a' => 1], $array);
-    }
-
-    public function testAddAfter(): void
-    {
-        $array = ['a' => 1, 'c' => 3];
-        Arrays::addAfter($array, 'a', ['b' => 2]);
-        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
-    }
-
-    public function testAddAfterAtEnd(): void
-    {
-        $array = ['a' => 1, 'b' => 2];
-        Arrays::addAfter($array, 'b', ['c' => 3]);
-        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
-    }
-
-    public function testAddAfterNonExistentKey(): void
-    {
-        $array = ['a' => 1];
-        Arrays::addAfter($array, 'z', ['b' => 2]);
-        Assert::same(['a' => 1, 'b' => 2], $array);
-    }
-
-    public function testSome(): void
-    {
-        $array = [1, 2, 3];
-        Assert::true(Arrays::some($array, fn($v) => $v > 2));
-        Assert::false(Arrays::some($array, fn($v) => $v > 10));
-    }
-
-    public function testSomeEmpty(): void
-    {
-        Assert::false(Arrays::some([], fn() => true));
-    }
-
     public function testAssociate(): void
     {
         $array = [
@@ -306,7 +252,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::crossJoin([1, 2, 3]),
-            OutOfBoundsException::class,
+            InvalidArgumentException::class,
             'At least two arrays are required'
         );
     }
@@ -993,6 +939,48 @@ class ArraysTest extends TestCase
         Assert::true(Arrays::has($array, 0));
         Assert::true(Arrays::has($array, 5));
         Assert::false(Arrays::has($array, 1));
+    }
+
+    public function testAddAfter(): void
+    {
+        $array = ['a' => 1, 'c' => 3];
+        Arrays::insertAfter($array, 'a', ['b' => 2]);
+        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
+    }
+
+    public function testAddAfterAtEnd(): void
+    {
+        $array = ['a' => 1, 'b' => 2];
+        Arrays::insertAfter($array, 'b', ['c' => 3]);
+        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
+    }
+
+    public function testAddAfterNonExistentKey(): void
+    {
+        $array = ['a' => 1];
+        Arrays::insertAfter($array, 'z', ['b' => 2]);
+        Assert::same(['a' => 1, 'b' => 2], $array);
+    }
+
+    public function testAddBefore(): void
+    {
+        $array = ['a' => 1, 'c' => 3];
+        Arrays::insertBefore($array, 'c', ['b' => 2]);
+        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
+    }
+
+    public function testAddBeforeAtBeginning(): void
+    {
+        $array = ['b' => 2, 'c' => 3];
+        Arrays::insertBefore($array, 'b', ['a' => 1]);
+        Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
+    }
+
+    public function testAddBeforeNonExistentKey(): void
+    {
+        $array = ['a' => 1];
+        Arrays::insertBefore($array, 'z', ['b' => 2]);
+        Assert::same(['b' => 2, 'a' => 1], $array);
     }
 
     /*public function testIntersect(): void
@@ -1912,7 +1900,7 @@ class ArraysTest extends TestCase
     public function testReverse(): void
     {
         $array = [1, 2, 3];
-        $result = Arrays::reverse($array);
+        $result = Arrays::reverse($array, false);
         Assert::same([3, 2, 1], $result);
     }
 
@@ -2036,6 +2024,18 @@ class ArraysTest extends TestCase
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
         $result = Arrays::slice($array, 1, 1, true);
         Assert::same(['b' => 2], $result);
+    }
+
+    public function testSome(): void
+    {
+        $array = [1, 2, 3];
+        Assert::true(Arrays::some($array, fn($v) => $v > 2));
+        Assert::false(Arrays::some($array, fn($v) => $v > 10));
+    }
+
+    public function testSomeEmpty(): void
+    {
+        Assert::false(Arrays::some([], fn() => true));
     }
 
     public function testSplice(): void
@@ -2164,6 +2164,225 @@ class ArraysTest extends TestCase
             'address' => [
                 'city' => 'NYC',
                 'zip' => '10001'
+            ]
+        ], $result);
+    }
+
+    public function testDenoteScalarOverwrittenByArrayNonStrict(): void
+    {
+        // In non-strict mode, scalar value is silently replaced by array
+        $array = [
+            'user' => 'John', // scalar value
+            'user.name' => 'Jane' // needs 'user' to be an array
+        ];
+        $result = Arrays::denote($array);
+
+        // Scalar 'John' is lost, replaced by array
+        Assert::same([
+            'user' => [
+                'name' => 'Jane'
+            ]
+        ], $result);
+    }
+
+    public function testDenoteScalarOverwrittenByArrayStrict(): void
+    {
+        $array = [
+            'user' => 'John', // scalar value
+            'user.name' => 'Jane' // needs 'user' to be an array
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array, true),
+            LogicException::class,
+            "Data conflict at path 'user': Cannot convert scalar value to array"
+        );
+    }
+
+    public function testDenoteNestedStructureOverwrittenByScalarNonStrict(): void
+    {
+        // In non-strict mode, nested structure is silently overwritten
+        $array = [
+            'user.name.first' => 'Jane',
+            'user.name.last' => 'Doe',
+            'user.name' => 'John' // processed last, overwrites nested structure
+        ];
+        $result = Arrays::denote($array);
+
+        // Nested 'first' and 'last' keys are lost
+        Assert::same([
+            'user' => [
+                'name' => 'John'
+            ]
+        ], $result);
+    }
+
+    public function testDenoteNestedStructureOverwrittenByScalarStrict(): void
+    {
+        $array = [
+            'user.name.first' => 'Jane',
+            'user.name.last' => 'Doe',
+            'user.name' => 'John' // processed last, overwrites nested structure
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array, true),
+            LogicException::class,
+            "Data conflict at path 'user.name': Cannot overwrite nested structure with scalar value"
+        );
+    }
+
+    public function testDenoteIntermediatePathValueLossNonStrict(): void
+    {
+        // Path serves as both final value and intermediate path
+        $array = [
+            'config.db' => 'mysql',
+            'config.db.host' => 'localhost'
+        ];
+        $result = Arrays::denote($array);
+
+        // 'mysql' is lost when 'db' is converted to array
+        Assert::same([
+            'config' => [
+                'db' => [
+                    'host' => 'localhost'
+                ]
+            ]
+        ], $result);
+    }
+
+    public function testDenoteIntermediatePathValueLossStrict(): void
+    {
+        $array = [
+            'config.db' => 'mysql',
+            'config.db.host' => 'localhost'
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array, true),
+            LogicException::class,
+            "Data conflict at path 'config.db': Cannot convert scalar value to array"
+        );
+    }
+
+    public function testDenoteOrderDependentConflictA(): void
+    {
+        // Order A: nested path first, then parent
+        $array = [
+            'a.b.c' => 1,
+            'a.b' => 2
+        ];
+        $result = Arrays::denote($array);
+
+        // Nested value is lost
+        Assert::same([
+            'a' => [
+                'b' => 2
+            ]
+        ], $result);
+    }
+
+    public function testDenoteOrderDependentConflictB(): void
+    {
+        // Order B: parent first, then nested path
+        $array = [
+            'a.b' => 2,
+            'a.b.c' => 1
+        ];
+        $result = Arrays::denote($array);
+
+        // Parent value is lost
+        Assert::same([
+            'a' => [
+                'b' => [
+                    'c' => 1
+                ]
+            ]
+        ], $result);
+    }
+
+    public function testDenoteStrictPreventsOrderDependentConflict(): void
+    {
+        $array1 = [
+            'a.b.c' => 1,
+            'a.b' => 2
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array1, true),
+            LogicException::class
+        );
+
+        $array2 = [
+            'a.b' => 2,
+            'a.b.c' => 1
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array2, true),
+            LogicException::class
+        );
+    }
+
+    public function testDenoteNoConflictInStrictMode(): void
+    {
+        // Valid data without conflicts should work in strict mode
+        $array = [
+            'name' => 'John',
+            'address.city' => 'NYC',
+            'address.zip' => '10001',
+            'contact.email' => 'john@example.com',
+            'contact.phone' => '555-1234'
+        ];
+
+        $result = Arrays::denote($array, true);
+        Assert::same([
+            'name' => 'John',
+            'address' => [
+                'city' => 'NYC',
+                'zip' => '10001'
+            ],
+            'contact' => [
+                'email' => 'john@example.com',
+                'phone' => '555-1234'
+            ]
+        ], $result);
+    }
+
+    public function testDenoteMultipleConflicts(): void
+    {
+        // Multiple conflicts - strict mode should catch the first one
+        $array = [
+            'a' => 'scalar1',
+            'a.b' => 'value1',
+            'c.d' => 'value2',
+            'c.d.e' => 'value3'
+        ];
+
+        Assert::exception(
+            fn() => Arrays::denote($array, true),
+            LogicException::class,
+            "Data conflict at path 'a': Cannot convert scalar value to array"
+        );
+    }
+
+    public function testDenoteEmptyArrayPath(): void
+    {
+        // Edge case: empty intermediate arrays
+        $array = [
+            'a.b.c.d.e' => 'deep value'
+        ];
+
+        $result = Arrays::denote($array, true);
+        Assert::same([
+            'a' => [
+                'b' => [
+                    'c' => [
+                        'd' => [
+                            'e' => 'deep value'
+                        ]
+                    ]
+                ]
             ]
         ], $result);
     }

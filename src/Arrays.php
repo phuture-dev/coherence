@@ -69,7 +69,9 @@ class Arrays extends StaticClass
      */
     public static function accessible(mixed $value): bool
     {
-        return is_array($value) || $value instanceof \ArrayAccess;
+        return is_array($value)
+            || $value instanceof \ArrayAccess
+            || $value instanceof Arrayable;
     }
 
     /**
@@ -103,70 +105,6 @@ class Arrays extends StaticClass
     public static function append(array &$array, array $items): void
     {
         NetteArrays::insertAfter($array, null, $items);
-    }
-
-    /**
-     * Inserts elements after a specified key in an array.
-     *
-     * This method inserts new key-value pairs into an array at a position immediately after
-     * the specified key.
-     *
-     * If a key already exists, it remains unchanged. The array is modified by reference.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $array = ['first' => 10, 'second' => 20];
-     * Arrays::addAfter($array, 'first', ['hello' => 'world']);
-     * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
-     *
-     * // Insert after non-existent key (appends)
-     * $array = ['first' => 10];
-     * Arrays::addAfter($array, 'missing', ['new' => 20]);
-     * // Result: ['first' => 10, 'new' => 20]
-     * ```
-     *
-     * @param array $array The array to insert into (passed by reference)
-     * @param string|int $key The reference key to insert after, or null to append
-     * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::addBefore()
-     */
-    public static function addAfter(array &$array, string|int $key, array $items): void
-    {
-        NetteArrays::insertAfter($array, $key, $items);
-    }
-
-    /**
-     * Inserts elements before a specified key in an array.
-     *
-     * This method inserts new key-value pairs into an array at a position immediately before
-     * the specified key.
-     *
-     * If a key already exists, it remains unchanged. The array is modified by reference.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $array = ['first' => 10, 'second' => 20];
-     * Arrays::addBefore($array, 'second', ['hello' => 'world']);
-     * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
-     *
-     * // Insert before non-existent key (prepends)
-     * $array = ['first' => 10];
-     * Arrays::addBefore($array, 'missing', ['new' => 5]);
-     * // Result: ['new' => 5, 'first' => 10]
-     * ```
-     *
-     * @param array $array The array to insert into (passed by reference)
-     * @param string|int $key The reference key to insert before, or null to prepend
-     * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::addAfter()
-     */
-    public static function addBefore(array &$array, string|int $key, array $items): void
-    {
-        NetteArrays::insertBefore($array, $key, $items);
     }
 
     /**
@@ -419,10 +357,10 @@ class Arrays extends StaticClass
      * // Basic cross join with equal length arrays
      * $result = Arrays::crossJoin([1, 2], ['a', 'b']);
      * // Returns: [
-     * //   [1, 'a'],
-     * //   [1, 'b'],
-     * //   [2, 'a'],
-     * //   [2, 'b']
+     * //     [1, 'a'],
+     * //     [1, 'b'],
+     * //     [2, 'a'],
+     * //     [2, 'b']
      * // ]
      *
      * // Cross join with three arrays
@@ -431,10 +369,6 @@ class Arrays extends StaticClass
      * $types = ['shirt', 'pants'];
      * $result = Arrays::crossJoin($sizes, $colors, $types);
      * // Returns 8 combinations: ['S', 'red', 'shirt'], ['S', 'red', 'pants'], etc.
-     *
-     * // Different length arrays - throws exception
-     * Arrays::crossJoin([1, 2, 3], ['a', 'b']);
-     * // Throws: InvalidArgumentException
      * ```
      *
      * @param array ...$arrays Two or more arrays to cross join
@@ -444,9 +378,7 @@ class Arrays extends StaticClass
     public static function crossJoin(array ...$arrays): array
     {
         if (count($arrays) < 2) {
-            throw new OutOfBoundsException(
-                'At least two arrays are required'
-            );
+            throw new InvalidArgumentException("At least two arrays are required");
         }
 
         // Start with the first array
@@ -507,6 +439,9 @@ class Arrays extends StaticClass
      * This is the reverse operation of the flatten method and is useful when you need to
      * reconstruct complex nested structures from simple key-value pairs.
      *
+     * When $strict is false (default), conflicting keys will result in later values overwriting
+     * earlier ones. When $strict is true, a LogicException will be thrown if conflicts are detected.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
@@ -522,25 +457,67 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The flattened array with dot notation keys
+     * @param bool $strict If true, throws exception on data conflicts; if false, later values overwrite earlier ones
      * @return array Returns a multi-dimensional array with nested structure
+     * @throws LogicException When $strict is true and a data conflict is detected
      * @see Arrays::notation()
      */
-    public static function denote(array $array): array
+    public static function denote(array $array, bool $strict = false): array
     {
         $result = [];
 
         foreach ($array as $key => $value) {
             $keys = explode('.', $key);
             $temp = &$result;
+            $path = '';
 
-            foreach ($keys as $k) {
-                if (!isset($temp[$k]) || !is_array($temp[$k])) {
-                    $temp[$k] = [];
+            foreach ($keys as $index => $k) {
+                $path .= ($path ? '.' : '') . $k;
+                $isLastKey = ($index === count($keys) - 1);
+
+                if (!isset($temp[$k])) {
+                    // Key doesn't exist yet
+                    if ($isLastKey) {
+                        // We're at the final key, set the value
+                        $temp[$k] = $value;
+                    } else {
+                        // Intermediate key, create array
+                        $temp[$k] = [];
+                    }
+                } elseif (!is_array($temp[$k])) {
+                    // Key exists as a scalar value
+                    if ($strict) {
+                        throw new LogicException(
+                            "Data conflict at path '{$path}': Cannot convert scalar value to array"
+                        );
+                    }
+
+                    // In non-strict mode, overwrite scalar with array
+                    if ($isLastKey) {
+                        $temp[$k] = $value;
+                    } else {
+                        $temp[$k] = [];
+                    }
+                } else {
+                    // Key exists as an array
+                    if ($isLastKey) {
+                        // We're trying to set a scalar at a path that already has nested data
+                        if ($strict && !empty($temp[$k])) {
+                            throw new LogicException(
+                                "Data conflict at path '{$path}': Cannot overwrite nested structure with scalar value"
+                            );
+                        }
+
+                        // In non-strict mode, overwrite array with scalar
+                        $temp[$k] = $value;
+                    }
+                    // Continue traversing
                 }
-                $temp = &$temp[$k];
-            }
 
-            $temp = $value;
+                if (!$isLastKey) {
+                    $temp = &$temp[$k];
+                }
+            }
         }
 
         return $result;
@@ -831,7 +808,7 @@ class Arrays extends StaticClass
      */
     public static function every(array $array, callable $callback): bool
     {
-        return array_all($array, $callback);
+        return NetteArrays::every($array, $callback);
     }
 
     /**
@@ -1550,6 +1527,70 @@ class Arrays extends StaticClass
 
         // Handle simple key
         return array_key_exists($key, $array);
+    }
+
+    /**
+     * Inserts elements after a specified key in an array.
+     *
+     * This method inserts new key-value pairs into an array at a position immediately after
+     * the specified key.
+     *
+     * If a key already exists, it remains unchanged. The array is modified by reference.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $array = ['first' => 10, 'second' => 20];
+     * Arrays::insertAfter($array, 'first', ['hello' => 'world']);
+     * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
+     *
+     * // Insert after non-existent key (appends)
+     * $array = ['first' => 10];
+     * Arrays::insertAfter($array, 'missing', ['new' => 20]);
+     * // Result: ['first' => 10, 'new' => 20]
+     * ```
+     *
+     * @param array $array The array to insert into (passed by reference)
+     * @param string|int $key The reference key to insert after, or null to append
+     * @param array $items Associative array of key-value pairs to insert
+     * @see Arrays::insertBefore()
+     */
+    public static function insertAfter(array &$array, string|int $key, array $items): void
+    {
+        NetteArrays::insertAfter($array, $key, $items);
+    }
+
+    /**
+     * Inserts elements before a specified key in an array.
+     *
+     * This method inserts new key-value pairs into an array at a position immediately before
+     * the specified key.
+     *
+     * If a key already exists, it remains unchanged. The array is modified by reference.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $array = ['first' => 10, 'second' => 20];
+     * Arrays::insertBefore($array, 'second', ['hello' => 'world']);
+     * // Result: ['first' => 10, 'hello' => 'world', 'second' => 20]
+     *
+     * // Insert before non-existent key (prepends)
+     * $array = ['first' => 10];
+     * Arrays::insertBefore($array, 'missing', ['new' => 5]);
+     * // Result: ['new' => 5, 'first' => 10]
+     * ```
+     *
+     * @param array $array The array to insert into (passed by reference)
+     * @param string|int $key The reference key to insert before, or null to prepend
+     * @param array $items Associative array of key-value pairs to insert
+     * @see Arrays::insertAfter()
+     */
+    public static function insertBefore(array &$array, string|int $key, array $items): void
+    {
+        NetteArrays::insertBefore($array, $key, $items);
     }
 
     /**
@@ -2994,7 +3035,7 @@ class Arrays extends StaticClass
      */
     public static function reverse(array $array, bool $preserveKeys = true): array
     {
-        return $preserveKeys ? array_reverse($array) : array_values(array_reverse($array));
+        return $preserveKeys ? array_reverse($array, true) : array_values(array_reverse($array));
     }
 
     /**
@@ -3306,7 +3347,7 @@ class Arrays extends StaticClass
      */
     public static function some(array $array, callable $callback): bool
     {
-        return array_any($array, $callback);
+        return NetteArrays::some($array, $callback);
     }
 
     /**
@@ -3597,11 +3638,12 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Converts all arrays in a multidimensional array to objects recursively.
+     * Converts associative arrays to objects recursively, leaving lists untouched.
      *
-     * This method transforms an array and all its nested arrays into stdClass objects.
-     * This is the opposite of the normalize() method, which converts objects to arrays.
-     * Each array level becomes an object with properties matching the array keys.
+     * This method transforms an associative array and all its nested associative arrays
+     * into stdClass objects. List arrays (indexed arrays without string keys) are preserved
+     * as arrays and not converted to objects. This is the opposite of the normalize() method,
+     * which converts objects to arrays.
      *
      * This is useful when you need to work with object notation for accessing
      * nested data structures, especially when dealing with JSON data or configuration
@@ -3640,10 +3682,19 @@ class Arrays extends StaticClass
      * // Accessing properties
      * echo $obj->user->name; // Outputs: Jane
      * echo $obj->user->address->city; // Outputs: NYC
+     *
+     * // Lists are preserved as arrays
+     * $data = [
+     *     'user' => 'John',
+     *     'tags' => ['php', 'arrays', 'objects']  // list array
+     * ];
+     * $obj = Arrays::toObject($data);
+     * // Returns: { user: "John", tags: ["php", "arrays", "objects"] }
+     * // Note: tags remains an array, not converted to object
      * ```
      *
      * @param array $array The array to convert to objects, which may contain nested arrays
-     * @return object Returns a stdClass object with all nested arrays converted to objects
+     * @return object Returns a stdClass object with associative arrays converted to objects and lists preserved
      * @see Arrays::from()
      * @see Arrays::normalize()
      */
