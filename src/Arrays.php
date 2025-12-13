@@ -39,6 +39,11 @@ use Phuture\Coherence\Exception\InvalidDataTypeException;
 class Arrays extends StaticClass
 {
     /**
+     * Maximum recursion depth for nested array operations to prevent infinite recursion.
+     */
+    public const RECURSION_LIMIT = 100000;
+
+    /**
      * Checks if a value can be accessed like an array.
      *
      * This method determines if a given value supports array-style access using square brackets.
@@ -201,14 +206,14 @@ class Arrays extends StaticClass
     {
         if (count($keys) !== count($values)) {
             throw new InvalidArgumentException(
-                'Both arrays must have the same number of elements'
+                "Invalid Argument: Both arrays must have the same number of elements"
             );
         }
 
         foreach ($keys as $value) {
             if (!is_int($value) && !is_string($value)) {
                 throw new InvalidDataTypeException(
-                    'Only arrays with string and integer values can be used as keys'
+                    "Invalid Argument: Only arrays with string and integer values can be used as keys"
                 );
             }
         }
@@ -378,7 +383,9 @@ class Arrays extends StaticClass
     public static function crossJoin(array ...$arrays): array
     {
         if (count($arrays) < 2) {
-            throw new InvalidArgumentException("At least two arrays are required");
+            throw new InvalidArgumentException(
+                "Invalid Argument: At least two no empty arrays are required"
+            );
         }
 
         // Start with the first array
@@ -467,7 +474,7 @@ class Arrays extends StaticClass
         $result = [];
 
         foreach ($array as $key => $value) {
-            $keys = explode('.', $key);
+            $keys = explode('.', (string) $key);
             $temp = &$result;
             $path = '';
 
@@ -574,6 +581,7 @@ class Arrays extends StaticClass
      *  The callback has the signature `function (mixed $a, mixed $b): int`
      * @param array ...$arrays Arrays to compare against
      * @return array Returns values from the first array not found in other arrays
+     * @throws InvalidArgumentException When less than two arrays are provided
      * @see Arrays::differenceAssoc()
      * @see Arrays::differenceKeys()
      */
@@ -584,8 +592,8 @@ class Arrays extends StaticClass
         }
 
         if (count($arrays) < 1) {
-            throw new OutOfBoundsException(
-                'At least two arrays are required'
+            throw new InvalidArgumentException(
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
@@ -691,21 +699,21 @@ class Arrays extends StaticClass
         // Throw an exception if only one array has been passed
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
         // Throw an exception if a comparator has not been provided when using callbacks
         if (is_null($compareAgainst) && is_callable($callback)) {
             throw new InvalidArgumentException(
-                'An ArrayComparator is required when using callbacks'
+                "Invalid Argument: An ArrayComparator is required when using callbacks"
             );
         }
 
         // If two callbacks have been provided, the comparator must be ArrayComparator::Both
         if ($compareAgainst !== ArrayComparator::Both && is_callable($callback) && is_callable($secondCallback)) {
             throw new InvalidArgumentException(
-                "When using two callbacks the ArrayComparator must be ArrayComparator::Both"
+                "Invalid Argument: When using two callbacks the ArrayComparator must be ArrayComparator::Both"
             );
         }
 
@@ -769,7 +777,7 @@ class Arrays extends StaticClass
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
@@ -875,7 +883,7 @@ class Arrays extends StaticClass
     {
         if ($count <= 0) {
             throw new InvalidArgumentException(
-                'Count must be greater than zero'
+                "Invalid Argument: \$count must be greater than zero"
             );
         }
 
@@ -916,7 +924,7 @@ class Arrays extends StaticClass
     {
         if (empty($keys)) {
             throw new InvalidArgumentException(
-                'Keys array cannot be empty'
+                "Invalid Argument: Keys array must be a no empty array"
             );
         }
 
@@ -1074,7 +1082,7 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
@@ -1115,7 +1123,7 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
@@ -1189,7 +1197,7 @@ class Arrays extends StaticClass
         foreach ($array as $value) {
             if (!is_int($value) && !is_string($value)) {
                 throw new InvalidDataTypeException(
-                    'Only arrays with string and integer values can be flipped'
+                    "Invalid Data Type: Only arrays with string and integer values can be flipped"
                 );
             }
         }
@@ -1374,9 +1382,10 @@ class Arrays extends StaticClass
      */
     public static function get(array $array, string|int|array $key, mixed $default = null): mixed
     {
-        $hasDefault = func_num_args() >= 3;
-        if (!$hasDefault && !self::has($array, $key)) {
-            throw new OutOfBoundsException('Missing item in array and no default value provided');
+        if (func_num_args() < 3 && !self::has($array, $key)) {
+            throw new OutOfBoundsException(
+                "Out Of Bounds: Missing item in array and no default value provided"
+            );
         }
 
         return NetteArrays::get($array, $key, $default);
@@ -1426,7 +1435,9 @@ class Arrays extends StaticClass
         try {
             return NetteArrays::getRef($array, $key);
         } catch (\InvalidArgumentException $e) {
-            throw new InvalidArgumentException("The traversed item is not an array", $e->getCode());
+            throw new InvalidArgumentException(
+                "Invalid Argument: The traversed item is not an array"
+            );
         }
     }
 
@@ -1467,7 +1478,9 @@ class Arrays extends StaticClass
         try {
             return NetteArrays::grep($array, $pattern, $invert);
         } catch (\Exception $e) {
-            throw new LogicException("The regular expression pattern \"{$pattern}\" is invalid", $e->getCode());
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
         }
     }
 
@@ -1658,7 +1671,7 @@ class Arrays extends StaticClass
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
@@ -1778,21 +1791,21 @@ class Arrays extends StaticClass
         // Throw an exception if only one array has been passed
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
         // Throw an exception if a comparator has not been provided when using callbacks
         if (is_null($compareAgainst) && is_callable($callback)) {
             throw new InvalidArgumentException(
-                'An ArrayComparator is required when using callbacks'
+                "Invalid Argument: An ArrayComparator is required when using callbacks"
             );
         }
 
         // If two callbacks have been provided, the comparator must be ArrayComparator::Both
         if ($compareAgainst !== ArrayComparator::Both && is_callable($callback) && is_callable($secondCallback)) {
             throw new InvalidArgumentException(
-                "When using two callbacks the ArrayComparator must be ArrayComparator::Both"
+                "Invalid Argument: When using two callbacks the ArrayComparator must be ArrayComparator::Both"
             );
         }
 
@@ -1855,7 +1868,7 @@ class Arrays extends StaticClass
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
@@ -2058,7 +2071,7 @@ class Arrays extends StaticClass
     {
         if (count($arrays) < 2) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two arrays are required"
             );
         }
 
@@ -2135,7 +2148,7 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
@@ -2176,7 +2189,7 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
@@ -2360,7 +2373,7 @@ class Arrays extends StaticClass
 
             if (!is_array($mapped) || count($mapped) !== 1) {
                 throw new InvalidArgumentException(
-                    'Callback must return an array with exactly one key-value pair'
+                    "Invalid Argument: Callback must return an array with exactly one key-value pair"
                 );
             }
 
@@ -2403,7 +2416,7 @@ class Arrays extends StaticClass
     {
         if (count($arrays) < 2) {
             throw new InvalidArgumentException(
-                'At least two arrays are required'
+                "Invalid Argument: At least two no empty arrays are required"
             );
         }
 
@@ -2453,21 +2466,41 @@ class Arrays extends StaticClass
     public static function normalize(array $array): array
     {
         $result = [];
+        self::normalizeRecursive($array, $result, 0);
+
+        return $result;
+    }
+
+    /**
+     * Helper method to recursively normalize an array by converting objects to arrays.
+     *
+     * @param array $array The array to normalize
+     * @param array $result The result array passed by reference
+     * @param int $depth Current recursion depth
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     */
+    private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
 
         foreach ($array as $key => $value) {
             if (is_object($value)) {
                 // Convert object to array and recursively normalize
-                $result[$key] = self::normalize((array) $value);
+                $result[$key] = [];
+                self::normalizeRecursive((array) $value, $result[$key], $depth + 1);
             } elseif (is_array($value)) {
                 // Recursively normalize nested arrays
-                $result[$key] = self::normalize($value);
+                $result[$key] = [];
+                self::normalizeRecursive($value, $result[$key], $depth + 1);
             } else {
                 // Keep scalar values as-is
                 $result[$key] = $value;
             }
         }
-
-        return $result;
     }
 
     /**
@@ -2476,6 +2509,8 @@ class Arrays extends StaticClass
      * This method takes a nested array (arrays within arrays) and converts it into a flat array
      * where the keys represent the path to each value using dots as separators. For example,
      * if you have a value at ['user']['name'], it becomes 'user.name' in the flattened array.
+     *
+     * Empty arrays are treated as leaf values and preserved in the output.
      *
      * This is useful for configuration arrays, deeply nested data structures, or when you need
      * to convert complex arrays into a simple list format.
@@ -2494,28 +2529,55 @@ class Arrays extends StaticClass
      * $flat = Arrays::notation($nested);
      *
      * // Returns: ['name' => 'John', 'address.city' => 'NYC', 'address.zip' => '10001']
+     *
+     * // Empty arrays are preserved
+     * $data = ['key' => 'value', 'empty' => []];
+     * $flat = Arrays::notation($data);
+     * // Returns: ['key' => 'value', 'empty' => []]
      * ```
      *
      * @param array $array The multi-dimensional array to flatten
-     * @param string $prefix Optional prefix to prepend to all keys
+     * @param string $prefix Optional prefix to prepend to all keys (for internal recursion)
      * @return array Returns a flattened single-level array with dot notation keys
      * @see Arrays::denote()
      */
     public static function notation(array $array, string $prefix = ''): array
     {
         $result = [];
+        self::flattenToNotation($array, $prefix, $result);
+
+        return $result;
+    }
+
+    /**
+     * Helper method to recursively flatten an array using dot notation.
+     *
+     * @param array $array The array to flatten
+     * @param string $prefix The current key prefix
+     * @param array $result The result array passed by reference
+     * @param int $depth Current recursion depth
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     */
+    private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
 
         foreach ($array as $key => $value) {
-            $newKey = $prefix === '' ? $key : $prefix . '.' . $key;
+            // Build the new key
+            $newKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
 
-            if (is_array($value) && !empty($value)) {
-                $result = array_merge($result, self::notation($value, $newKey));
+            // Check if value is a non-empty array that should be flattened
+            if (is_array($value) && $value !== []) {
+                self::flattenToNotation($value, $newKey, $result, $depth + 1);
             } else {
+                // Keep scalar values as-is
                 $result[$newKey] = $value;
             }
         }
-
-        return $result;
     }
 
     /**
@@ -2727,7 +2789,7 @@ class Arrays extends StaticClass
      *
      * This method removes the last element from an array and returns it. The array is modified
      * by reference, meaning the original array is shortened by one element. If the array is
-     * empty, it returns null. This is commonly used for implementing stack data structures
+     * empty, an exception is thrown. This is commonly used for implementing stack data structures
      * (LIFO - Last In, First Out) or removing the most recently added item.
      *
      * Example:
@@ -2746,19 +2808,26 @@ class Arrays extends StaticClass
      * // $last contains: 30
      * // $data is now: ['name' => 'John', 'email' => 'john@example.com']
      *
-     * // Empty array returns null
+     * // Empty array throws exception
      * $empty = [];
      * $result = Arrays::pull($empty);
-     * // Returns: null
+     * // Throws: OutOfBoundsException
      * ```
      *
      * @param array $array The array to remove the last element from (passed by reference)
-     * @return mixed Returns the last element, or null if the array is empty
+     * @return mixed Returns the last element
+     * @throws OutOfBoundsException If the array is empty
      * @see Arrays::push()
      * @see Arrays::shift()
      */
     public static function pull(array &$array): mixed
     {
+        if (empty($array)) {
+            throw new OutOfBoundsException(
+                "Out Of Bounds: \$array must be a no empty array"
+            );
+        }
+
         return array_pop($array);
     }
 
@@ -2841,7 +2910,7 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
@@ -2888,14 +2957,14 @@ class Arrays extends StaticClass
     {
         if (empty($array)) {
             throw new OutOfBoundsException(
-                'Array cannot be empty'
+                "Out Of Bounds: \$array must be a no empty array"
             );
         }
 
         $arraySize = count($array);
         if ($num < 1 || $num > $arraySize) {
             throw new OutOfBoundsException(
-                "Number of keys must be between 1 and {$arraySize}"
+                "Out Of Bounds: Number of keys must be between 1 and {$arraySize}"
             );
         }
 
@@ -3137,14 +3206,18 @@ class Arrays extends StaticClass
         // Navigate to the parent array containing the key to rename
         foreach ($path as $segment) {
             if (!is_array($current) || !array_key_exists($segment, $current)) {
-                throw new OutOfBoundsException('Missing item in array');
+                throw new OutOfBoundsException(
+                    "Out Of Bounds: Missing item in array"
+                );
             }
             $current = &$current[$segment];
         }
 
         // Check if the old key exists
         if (!array_key_exists($keyToRename, $current)) {
-            throw new OutOfBoundsException('Missing item in array');
+            throw new OutOfBoundsException(
+                "Out Of Bounds: Missing item in array"
+            );
         }
 
         // Preserve key order by rebuilding the array
@@ -3441,7 +3514,7 @@ class Arrays extends StaticClass
     {
         if ($length < 1) {
             throw new InvalidArgumentException(
-                'Length must be at least 1'
+                "Invalid Argument: Length must be at least 1"
             );
         }
 
@@ -3701,6 +3774,25 @@ class Arrays extends StaticClass
     public static function toObject(array $array): object
     {
         $result = new \stdClass();
+        self::toObjectRecursive($array, $result, 0);
+
+        return $result;
+    }
+
+    /**
+     * Helper method to recursively convert arrays to objects.
+     *
+     * @param array $array The array to convert
+     * @param \stdClass $result The result object passed by reference
+     * @param int $depth Current recursion depth
+     */
+    private static function toObjectRecursive(array $array, \stdClass &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
 
         foreach ($array as $key => $value) {
             if ($value instanceof \stdClass) {
@@ -3709,14 +3801,13 @@ class Arrays extends StaticClass
 
             if (is_array($value) && ! self::isList($value)) {
                 // Recursively convert nested arrays to objects
-                $result->{$key} = self::toObject($value);
+                $result->{$key} = new \stdClass();
+                self::toObjectRecursive($value, $result->{$key}, $depth + 1);
             } else {
                 // Keep scalar values
                 $result->{$key} = $value;
             }
         }
-
-        return $result;
     }
 
     /**

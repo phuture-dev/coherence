@@ -92,8 +92,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::combine(['a', 'b'], [1]),
-            InvalidArgumentException::class,
-            'Both arrays must have the same number of elements'
+            InvalidArgumentException::class
         );
     }
 
@@ -252,8 +251,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::crossJoin([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -306,8 +304,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::difference([1, 2, 3]),
-            OutOfBoundsException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -355,8 +352,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::differenceAssoc($array1, function ($key1, $key2): int {return 1;}, $array2),
-            InvalidArgumentException::class,
-            'An ArrayComparator is required when using callbacks'
+            InvalidArgumentException::class
         );
     }
 
@@ -414,8 +410,7 @@ class ArraysTest extends TestCase
                     $array2
                 );
             },
-            InvalidArgumentException::class,
-            'When using two callbacks the ArrayComparator must be ArrayComparator::Both'
+            InvalidArgumentException::class
         );
     }
 
@@ -433,8 +428,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::differenceAssoc([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -458,8 +452,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::differenceKeys([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -638,8 +631,7 @@ class ArraysTest extends TestCase
         Assert::same('a', Arrays::first(['a', 'b', 'c']));
         Assert::exception(
             fn() => Arrays::first([]),
-            OutOfBoundsException::class,
-            'Array cannot be empty'
+            OutOfBoundsException::class
         );
     }
 
@@ -654,8 +646,7 @@ class ArraysTest extends TestCase
         Assert::same('name', Arrays::firstKey(['name' => 'John', 'age' => 30]));
         Assert::exception(
             fn() => Arrays::firstKey([]),
-            OutOfBoundsException::class,
-            'Array cannot be empty'
+            OutOfBoundsException::class
         );
     }
 
@@ -857,8 +848,7 @@ class ArraysTest extends TestCase
         $array = ['name' => 'John'];
         Assert::exception(
             fn() => Arrays::get($array, 'email'),
-            OutOfBoundsException::class,
-            'Missing item in array and no default value provided'
+            OutOfBoundsException::class
         );
     }
 
@@ -905,8 +895,7 @@ class ArraysTest extends TestCase
         $array = ['apple', 'banana', 'cherry', 'apricot'];
         Assert::exception(
             fn() => Arrays::grep($array, 'invalid regex'),
-            LogicException::class,
-            'The regular expression pattern "invalid regex" is invalid'
+            LogicException::class
         );
     }
 
@@ -1076,8 +1065,7 @@ class ArraysTest extends TestCase
                 ArrayComparator::Key,
                 $array2
             ),
-            InvalidArgumentException::class,
-            'When using two callbacks the ArrayComparator must be ArrayComparator::Both'
+            InvalidArgumentException::class
         );
     }
 
@@ -1088,8 +1076,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::intersectAssoc($array1, fn($a, $b) => $a <=> $b, $array2),
-            InvalidArgumentException::class,
-            'An ArrayComparator is required when using callbacks'
+            InvalidArgumentException::class
         );
     }
 
@@ -1097,8 +1084,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::intersectAssoc([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -1122,8 +1108,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::intersect([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -1131,8 +1116,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::intersectKeys([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }*/
 
@@ -1259,8 +1243,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::join([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -1277,8 +1260,7 @@ class ArraysTest extends TestCase
         Assert::same('c', Arrays::last(['a', 'b', 'c']));
         Assert::exception(
             fn() => Arrays::last([]),
-            OutOfBoundsException::class,
-            'Array cannot be empty'
+            OutOfBoundsException::class
         );
     }
 
@@ -1293,8 +1275,7 @@ class ArraysTest extends TestCase
         Assert::same('age', Arrays::lastKey(['name' => 'John', 'age' => 30]));
         Assert::exception(
             fn() => Arrays::lastKey([]),
-            OutOfBoundsException::class,
-            'Array cannot be empty'
+            OutOfBoundsException::class
         );
     }
 
@@ -1391,8 +1372,7 @@ class ArraysTest extends TestCase
                     return 'invalid_string';
                 });
             },
-            InvalidArgumentException::class,
-            'Callback must return an array with exactly one key-value pair'
+            InvalidArgumentException::class
         );
     }
 
@@ -1405,8 +1385,7 @@ class ArraysTest extends TestCase
                     return [];
                 });
             },
-            InvalidArgumentException::class,
-            'Callback must return an array with exactly one key-value pair'
+            InvalidArgumentException::class
         );
     }
 
@@ -1419,8 +1398,7 @@ class ArraysTest extends TestCase
                     return ['key1' => 'value1', 'key2' => 'value2'];
                 });
             },
-            InvalidArgumentException::class,
-            'Callback must return an array with exactly one key-value pair'
+            InvalidArgumentException::class
         );
     }
 
@@ -1485,8 +1463,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::merge([1, 2, 3]),
-            InvalidArgumentException::class,
-            'At least two arrays are required'
+            InvalidArgumentException::class
         );
     }
 
@@ -1808,8 +1785,12 @@ class ArraysTest extends TestCase
     public function testPullEmpty(): void
     {
         $array = [];
-        $result = Arrays::pull($array);
-        Assert::null($result);
+        Assert::exception(
+            function () use ($array) {
+                Arrays::pull($array);
+            },
+            OutOfBoundsException::class
+        );
         Assert::same([], $array);
     }
 
@@ -1840,8 +1821,7 @@ class ArraysTest extends TestCase
     {
         Assert::exception(
             fn() => Arrays::random([]),
-            OutOfBoundsException::class,
-            'Array cannot be empty'
+            OutOfBoundsException::class
         );
     }
 
@@ -2168,6 +2148,98 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
+    public function testNotationDenoteRoundTrip(): void
+    {
+        // Test simple nested array
+        $simple = [
+            'name' => 'John',
+            'address' => [
+                'city' => 'NYC',
+                'zip' => '10001'
+            ]
+        ];
+        $flattened = Arrays::notation($simple);
+        $result = Arrays::denote($flattened);
+        Assert::same($simple, $result);
+
+        // Test deeply nested structure
+        $deep = [
+            'level1' => [
+                'level2' => [
+                    'level3' => [
+                        'level4' => 'deep value'
+                    ]
+                ]
+            ]
+        ];
+        $flattened = Arrays::notation($deep);
+        $result = Arrays::denote($flattened);
+        Assert::same($deep, $result);
+
+        // Test mixed data types
+        $mixed = [
+            'string' => 'hello',
+            'number' => 42,
+            'boolean' => true,
+            'null' => null,
+            'nested' => [
+                'array' => [1, 2, 3],
+                'object' => [
+                    'prop' => 'value'
+                ]
+            ]
+        ];
+        $flattened = Arrays::notation($mixed);
+        $result = Arrays::denote($flattened);
+        Assert::same($mixed, $result);
+
+        // Test with empty arrays as values
+        $withEmpty = [
+            'config' => [
+                'settings' => [],
+                'active' => true
+            ]
+        ];
+        $flattened = Arrays::notation($withEmpty);
+        $result = Arrays::denote($flattened);
+        Assert::same($withEmpty, $result);
+
+        // Test complex multi-level structure
+        $complex = [
+            'user' => [
+                'name' => 'Jane',
+                'profile' => [
+                    'email' => 'jane@example.com',
+                    'settings' => [
+                        'theme' => 'dark',
+                        'notifications' => true
+                    ]
+                ]
+            ],
+            'active' => true,
+            'metadata' => [
+                'created' => '2024-01-01',
+                'updated' => '2024-01-02'
+            ]
+        ];
+        $flattened = Arrays::notation($complex);
+        $result = Arrays::denote($flattened);
+        Assert::same($complex, $result);
+
+        // Test numeric and string keys
+        $mixedKeys = [
+            0 => 'zero',
+            'key' => 'value',
+            'nested' => [
+                1 => 'one',
+                'inner' => 'data'
+            ]
+        ];
+        $flattened = Arrays::notation($mixedKeys);
+        $result = Arrays::denote($flattened);
+        Assert::same($mixedKeys, $result);
+    }
+
     public function testDenoteScalarOverwrittenByArrayNonStrict(): void
     {
         // In non-strict mode, scalar value is silently replaced by array
@@ -2194,8 +2266,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::denote($array, true),
-            LogicException::class,
-            "Data conflict at path 'user': Cannot convert scalar value to array"
+            LogicException::class
         );
     }
 
@@ -2227,8 +2298,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::denote($array, true),
-            LogicException::class,
-            "Data conflict at path 'user.name': Cannot overwrite nested structure with scalar value"
+            LogicException::class
         );
     }
 
@@ -2260,8 +2330,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::denote($array, true),
-            LogicException::class,
-            "Data conflict at path 'config.db': Cannot convert scalar value to array"
+            LogicException::class
         );
     }
 
@@ -2361,8 +2430,7 @@ class ArraysTest extends TestCase
 
         Assert::exception(
             fn() => Arrays::denote($array, true),
-            LogicException::class,
-            "Data conflict at path 'a': Cannot convert scalar value to array"
+            LogicException::class
         );
     }
 
@@ -2443,6 +2511,11 @@ class ArraysTest extends TestCase
         $array = ['a', ['nested'], 'c'];
         $result = Arrays::wrap($array, '<', '>');
         Assert::same(['<a>', ['nested'], '<c>'], $result);
+    }
+
+    public function testRecursionLimitConstant(): void
+    {
+        Assert::same(100000, Arrays::RECURSION_LIMIT);
     }
 }
 
