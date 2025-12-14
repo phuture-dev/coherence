@@ -312,122 +312,91 @@ class ArraysTest extends TestCase
     {
         $array1 = ['a', 'B', 'c'];
         $array2 = ['A', 'b'];
-        $result = Arrays::difference($array1, fn($a, $b) => strcasecmp($a, $b), $array2);
+        $result = Arrays::difference($array1, $array2, fn($a, $b) => strcasecmp($a, $b));
         Assert::same([2 => 'c'], $result);
     }
 
     public function testDifferenceAssoc(): void
     {
         $array1 = ['a' => 1, 'b' => 2, 'c' => 3];
-        $array2 = ['a' => 1, 'b' => 3];
-        $array3 = ['a' => 2, 'd' => 4];
-
-        $result = Arrays::differenceAssoc($array1, $array2, $array3);
-
+        $array2 = ['a' => 1, 'd' => 4];
+        $result = Arrays::differenceAssoc($array1, $array2);
         Assert::same(['b' => 2, 'c' => 3], $result);
     }
 
-    public function testDifferenceAssocWithOneCallback(): void
+    public function testDifferenceAssocWithCallback(): void
     {
-        $array1 = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry', 'd' => 'date'];
-        $array2 = ['a' => 'apple', 'x' => 'banana', 'c' => 'cherry', 'y' => 'fig'];
-
+        $array1 = ['name' => 'John', 'AGE' => 30];
+        $array2 = ['name' => 'JOHN'];
         $result = Arrays::differenceAssoc(
             $array1,
-            function ($key1, $key2): int {
-                // Case-insensitive comparison
-                $key1 = strtolower($key1);
-                $key2 = strtolower($key2);
+            $array2,
+            ArrayComparator::Value,
+            fn($a, $b) => strcasecmp((string) $a, (string) $b)
+        );
+        Assert::same(['AGE' => 30], $result);
+    }
 
-                if ($key1 == $key2) {
-                    return 0;
-                }
-
-                return ($key1 < $key2) ? -1 : 1;
-            },
+    public function testDifferenceAssocWithKeyComparator(): void
+    {
+        $array1 = ['Apple' => 100, 'Banana' => 200];
+        $array2 = ['apple' => 100];
+        $result = Arrays::differenceAssoc(
+            $array1,
+            $array2,
             ArrayComparator::Key,
-            $array2
+            fn($a, $b) => strcasecmp((string) $a, (string) $b)
         );
-        Assert::same(['b' => 'banana', 'd' => 'date'], $result);
-
-        Assert::exception(
-            fn() => Arrays::differenceAssoc($array1, function ($key1, $key2): int {return 1;}, $array2),
-            InvalidArgumentException::class
-        );
+        Assert::same(['Banana' => 200], $result);
     }
 
-    public function testDifferenceAssocWithTwoCallbacks(): void
+    public function testDifferenceAssocWithBothComparator(): void
     {
-        $array1 = [
-            'apple'  => ['name' => 'Apple', 'price' => 1.50, 'color' => 'red'],
-            'banana' => ['name' => 'Banana', 'price' => 0.75, 'color' => 'yellow'],
-            'cherry' => ['name' => 'Cherry', 'price' => 2.00, 'color' => 'red'],
-            'grape'  => ['name' => 'Grape', 'price' => 1.25, 'color' => 'purple']
-        ];
-
-        $array2 = [
-            'apple'  => ['name' => 'Apple', 'price' => 1.50, 'color' => 'red'],
-            'orange' => ['name' => 'Orange', 'price' => 0.80, 'color' => 'orange'],
-            'cherry' => ['name' => 'Cherry', 'price' => 2.00, 'color' => 'red'],
-            'mango'  => ['name' => 'Mango', 'price' => 1.50, 'color' => 'orange']
-        ];
-
+        $array1 = ['Name' => 'John', 'Age' => 30];
+        $array2 = ['name' => 'JOHN', 'age' => 25];
         $result = Arrays::differenceAssoc(
             $array1,
-            function ($value1, $value2) {
-                if ($value1['name'] != $value2['name']) {
-                    return strcmp($value1['name'], $value2['name']);
-                }
-
-                if ($value1['price'] != $value2['price']) {
-                    return $value1['price'] <=> $value2['price'];
-                }
-
-                return 0;
-            },
-            function ($key1, $key2) {
-                return strcasecmp($key1, $key2);
-            },
+            $array2,
             ArrayComparator::Both,
-            $array2
+            fn($a, $b) => strcasecmp((string) $a, (string) $b), // value comparison
+            fn($a, $b) => strcasecmp((string) $a, (string) $b)  // key comparison
         );
-        Assert::same([
-            'banana' => ['name' => 'Banana', 'price' => 0.75, 'color' => 'yellow'],
-            'grape' => ['name' => 'Grape', 'price' => 1.25, 'color' => 'purple']
-        ], $result);
-
-        Assert::exception(
-            function() use ($array1, $array2) {
-                Arrays::differenceAssoc(
-                    $array1,
-                    function ($key1, $key2): int {
-                        return 1;
-                    },
-                    function ($key1, $key2): int {
-                        return 1;
-                    },
-                    ArrayComparator::Key,
-                    $array2
-                );
-            },
-            InvalidArgumentException::class
-        );
+        Assert::same(['Age' => 30], $result);
     }
 
-    public function testDifferenceAssocWithNoCallbackAndNoComparator(): void
+    public function testDifferenceAssocWithMultipleArrays(): void
     {
         $array1 = ['a' => 1, 'b' => 2, 'c' => 3];
-        $array2 = ['a' => 1, 'b' => 3];
-
-        $result = Arrays::differenceAssoc($array1, null, null, null, $array2);
-
-        Assert::same(['b' => 2, 'c' => 3], $result);
+        $array2 = ['a' => 1, 'd' => 4];
+        $array3 = ['c' => 3, 'e' => 5];
+        $result = Arrays::differenceAssoc($array1, $array2, $array3);
+        Assert::same(['b' => 2], $result);
     }
 
-    public function testDifferenceAssocThrowsWithSingleArray(): void
+    public function testDifferenceAssocThrowsWithNoComparisonArray(): void
     {
         Assert::exception(
-            fn() => Arrays::differenceAssoc([1, 2, 3]),
+            fn() => Arrays::differenceAssoc(['a' => 1]),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testDifferenceAssocThrowsWithCallbacksButNoComparator(): void
+    {
+        Assert::exception(
+            fn() => Arrays::differenceAssoc(['a' => 1], ['b' => 2], fn($a, $b) => $a <=> $b),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testDifferenceAssocThrowsWithMissingComparator(): void
+    {
+        Assert::exception(
+            fn() => Arrays::differenceAssoc(
+                ['a' => 1],
+                ['b' => 2],
+                fn($a, $b) => $a <=> $b
+            ),
             InvalidArgumentException::class
         );
     }
@@ -444,7 +413,7 @@ class ArraysTest extends TestCase
     {
         $array1 = ['A' => 1, 'b' => 2, 'C' => 3];
         $array2 = ['a' => 10];
-        $result = Arrays::differenceKeys($array1, fn($a, $b) => strcasecmp($a, $b), $array2);
+        $result = Arrays::differenceKeys($array1, $array2, fn($a, $b) => strcasecmp($a, $b));
         Assert::same(['b' => 2, 'C' => 3], $result);
     }
 

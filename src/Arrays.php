@@ -38,6 +38,8 @@ use Phuture\Coherence\Exception\InvalidDataTypeException;
  */
 class Arrays extends StaticClass
 {
+    use Trait\ArgumentExtractor;
+
     /**
      * Maximum recursion depth for nested array operations to prevent infinite recursion.
      */
@@ -535,7 +537,10 @@ class Arrays extends StaticClass
      *
      * This method compares values across multiple arrays and returns only those values from
      * the first array that don't appear in any of the other arrays. Keys are preserved.
-     * You can optionally provide a custom comparison function.
+     *
+     * You can optionally provide a custom comparison function as the last parameter.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
      *
      * Example:
      * ```php
@@ -545,18 +550,16 @@ class Arrays extends StaticClass
      * $array1 = ['a', 'b', 'c', 'd'];
      * $array2 = ['b', 'd'];
      * $array3 = ['e', 'f'];
-     *
      * $result = Arrays::difference($array1, $array2, $array3);
      * // Returns: [0 => 'a', 2 => 'c']
      *
      * // With custom comparison function (case-insensitive)
      * $array1 = ['Apple', 'Banana', 'Cherry'];
      * $array2 = ['banana', 'APPLE'];
-     *
      * $result = Arrays::difference(
      *     $array1,
-     *     fn($a, $b) => strcasecmp($a, $b),
-     *     $array2
+     *     $array2,
+     *     fn($a, $b) => strcasecmp($a, $b)
      * );
      * // Returns: [2 => 'Cherry']
      *
@@ -567,166 +570,158 @@ class Arrays extends StaticClass
      *     (object)['id' => 3, 'name' => 'Keyboard']
      * ];
      * $products2 = [(object)['id' => 2, 'name' => 'Mouse']];
-     *
      * $result = Arrays::difference(
      *     $products1,
-     *     fn($a, $b) => $a->id <=> $b->id,
-     *     $products2
+     *     $products2,
+     *     fn($a, $b) => $a->id <=> $b->id
      * );
      * // Returns: [0 => Laptop object, 2 => Keyboard object]
      * ```
      *
      * @param array $array The array to compare from
-     * @param callable|array|null $callback Optional comparison function that returns <0, 0, or >0
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
      * @param array ...$arrays Arrays to compare against
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return array Returns values from the first array not found in other arrays
-     * @throws InvalidArgumentException When less than two arrays are provided
+     * @throws InvalidArgumentException When a comparison array is not provided
      * @see Arrays::differenceAssoc()
      * @see Arrays::differenceKeys()
      */
-    public static function difference(array $array, callable|array|null $callback = null, array ...$arrays): array
+    public static function difference(array $array, ...$arrays): array
     {
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
+        $callbacks = self::getCallbacksFromArguments($arrays, 1);
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        if (!is_null($callback) && is_callable($callback)) {
-            return array_udiff($array, ...$arrays, ...[$callback]);
+        if ($callbacks !== []) {
+            return array_udiff($array, ...$arrays, ...$callbacks);
         }
 
         return array_diff($array, ...$arrays);
     }
 
     /**
-     * Computes the difference of arrays with additional index check.
+     * Returns elements from the first array that are not present in other arrays,
+     * comparing both keys and values with optional custom comparison.
      *
-     * This method returns an array containing all the values from array that are not present
-     * in any of the other arrays, with keys being compared as well as values. You can optionally
-     * provide custom callback functions to define how keys and values are compared for complex
-     * data structures or case-insensitive comparisons.
+     * This method computes the difference of arrays with additional index check, meaning
+     * both the keys and values must match for an element to be considered present in other
+     * arrays. You can optionally provide custom comparison functions and specify what to compare
+     * (keys, values, or both) using the ArrayComparator enum.
      *
-     * Examples:
+     * The method supports flexible parameter order where callbacks and the comparator can
+     * be provided at the end of the argument list.
+     *
+     * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
      * use Phuture\Coherence\Enum\ArrayComparator;
      *
      * // Basic usage
-     * $result = Arrays::differenceAssoc(['a' => 1, 'b' => 2], ['a' => 1]);
-     * // Returns: ['b' => 2]
+     * $array1 = ['a' => 1, 'b' => 2, 'c' => 3];
+     * $array2 = ['a' => 1, 'd' => 4];
+     * $result = Arrays::differenceAssoc($array1, $array2);
+     * // Returns: ['b' => 2, 'c' => 3]
      *
-     * // With one callback for key comparison
+     * // With custom value comparison and comparator
+     * $array1 = ['name' => 'John', 'AGE' => 30];
+     * $array2 = ['name' => 'JOHN'];
+     * $result = Arrays::differenceAssoc(
+     *     $array1,
+     *     $array2,
+     *     ArrayComparator::Value, // compare values using callback
+     *     fn($a, $b) => strcasecmp($a, $b) // callback for case-insensitive comparison
+     * );
+     * // Returns: ['AGE' => 30]
+     *
+     * // With custom key comparison
      * $array1 = ['Apple' => 100, 'Banana' => 200];
      * $array2 = ['apple' => 100];
      * $result = Arrays::differenceAssoc(
      *     $array1,
-     *     function ($key1, $key2): int {
-     *         return strcasecmp($key1, $key2);
-     *     },
-     *     ArrayComparator::Key,
-     *     $array2
+     *     $array2,
+     *     ArrayComparator::Key, // compare keys using callback
+     *     fn($a, $b) => strcasecmp($a, $b) // callback for case-insensitive key comparison
      * );
      * // Returns: ['Banana' => 200]
      *
-     * // With two callbacks for both key and value comparison
-     * $array1 = [
-     *     'apple'  => ['name' => 'Apple', 'price' => 1.50],
-     *     'banana' => ['name' => 'Banana', 'price' => 0.75],
-     *     'cherry' => ['name' => 'Cherry', 'price' => 2.00]
-     * ];
-     * $array2 = [
-     *     'apple'  => ['name' => 'Apple', 'price' => 1.50],
-     *     'orange' => ['name' => 'Orange', 'price' => 0.80]
-     * ];
+     * // With custom comparison for both keys and values
+     * $array1 = ['Name' => 'John', 'Age' => 30];
+     * $array2 = ['name' => 'JOHN', 'age' => 25];
      * $result = Arrays::differenceAssoc(
      *     $array1,
-     *     function ($value1, $value2) {
-     *         if ($value1['name'] != $value2['name']) {
-     *             return strcmp($value1['name'], $value2['name']);
-     *         }
-     *         return $value1['price'] <=> $value2['price'];
-     *     },
-     *     function ($key1, $key2) {
-     *         return strcasecmp($key1, $key2);
-     *     },
-     *     ArrayComparator::Both,
-     *     $array2
+     *     $array2,
+     *     ArrayComparator::Both, // compare both keys and values using callbacks
+     *     fn($a, $b) => strcasecmp($a, $b), // callback for value comparison
+     *     fn($a, $b) => strcasecmp($a, $b)  // callback for key comparison
      * );
-     * // Returns: ['banana' => ['name' => 'Banana', 'price' => 0.75], 'cherry' => ['name' => 'Cherry', 'price' => 2.00]]
+     * // Returns: ['Age' => 30]
      * ```
      *
-     * @param array $array The main array to compare
-     * @param callable|array|null $callback First callback function for value or key comparison
-     *  The callback has the signature `function (mixed $value1, mixed $value2): int`
-     * @param ArrayComparator|callable|array|null $secondCallback Second callback function for key comparison when using two callbacks
-     *  The callback has the signature `function (mixed $key1, mixed $key2): int`
-     * @param ArrayComparator|array|null $compareAgainst Comparison mode or additional array
-     * @param array ...$arrays Additional arrays to compare against
-     * @return array Returns an array containing all the entries from an array that are not present
-     *  in any of the other arrays
+     * @param array $array The array to compare from
+     * @param array ...$arrays Arrays to compare against
+     * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
+     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @return array Returns key-value pairs from the first array not found in other arrays
+     * @throws InvalidArgumentException When no comparison arrays are provided
+     * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
+     * @throws LogicException When no ArrayComparator enum is provided when needed
      * @see Arrays::difference()
      * @see Arrays::differenceKeys()
+     * @see \Phuture\Coherence\Enum\ArrayComparator
      */
-    public static function differenceAssoc(
-        array $array,
-        callable|array|null $callback = null,
-        ArrayComparator|callable|array|null $secondCallback = null,
-        ArrayComparator|array|null $compareAgainst = null,
-        array ...$arrays
-    ): array {
-        // Support flexible parameter order: if callback, secondCallback, or compareAgainst
-        // are arrays instead of their expected types, treat them as additional arrays
-        if ($secondCallback instanceof ArrayComparator) {
-            $arrays = array_merge([$compareAgainst], $arrays);
-            $compareAgainst = $secondCallback;
-        }
-        if (is_array($compareAgainst)) {
-            $arrays = array_merge([$compareAgainst], $arrays);
-        }
-        if (is_array($secondCallback)) {
-            $arrays = array_merge([$secondCallback], $arrays);
-        }
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
+    public static function differenceAssoc(array $array, ...$arrays): array
+    {
+        $callbacks = self::getCallbacksFromArguments($arrays, 2);
+        $enums = self::getEnumsFromArguments($arrays, ArrayComparator::class, 1);
 
-        // Throw an exception if only one array has been passed
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        // Throw an exception if a comparator has not been provided when using callbacks
-        if (is_null($compareAgainst) && is_callable($callback)) {
+        if ($callbacks !== [] && $enums == []) {
             throw new InvalidArgumentException(
-                "Invalid Argument: An ArrayComparator is required when using callbacks"
+                "Invalid Argument: When providing custom callbacks, an ArrayComparator must be provided"
             );
         }
 
-        // If two callbacks have been provided, the comparator must be ArrayComparator::Both
-        if ($compareAgainst !== ArrayComparator::Both && is_callable($callback) && is_callable($secondCallback)) {
+        if (count($callbacks) > 2) {
             throw new InvalidArgumentException(
-                "Invalid Argument: When using two callbacks the ArrayComparator must be ArrayComparator::Both"
+                "Invalid Argument: Only two callbacks are allowed"
             );
         }
 
-        // Process array
-        if (!is_null($callback) && is_callable($callback)) {
-            return match ($compareAgainst) {
-                ArrayComparator::Key => array_diff_uassoc($array, ...$arrays, ...[$callback]),
-                ArrayComparator::Value => array_udiff_assoc($array, ...$arrays, ...[$callback]),
-                ArrayComparator::Both => array_udiff_uassoc($array, ...$arrays, ...[$callback, $secondCallback]),
+        if ($callbacks !== []) {
+            $comparator = $enums[0] ?? throw new LogicException(
+                "Invalid Comparator: No ArrayComparator enum provided"
+            );
+
+            if (count($callbacks) === 2 && $comparator !== ArrayComparator::Both) {
+                throw new LogicException(
+                    "Invalid Comparator: Only ArrayComparator::Both can be used with two callbacks"
+                );
+            }
+
+            if (count($callbacks) < 2 && $comparator == ArrayComparator::Both) {
+                throw new LogicException(
+                    "Invalid Comparator: ArrayComparator::Both can be used only with two callbacks"
+                );
+            }
+
+            return match ($comparator) {
+                ArrayComparator::Key => array_diff_uassoc($array, ...$arrays, ...$callbacks),
+                ArrayComparator::Value => array_udiff_assoc($array, ...$arrays, ...$callbacks),
+                ArrayComparator::Both => array_udiff_uassoc($array, ...$arrays, ...$callbacks),
             };
-        } else {
-            return array_diff_assoc($array, ...$arrays);
         }
+
+        return array_diff_assoc($array, ...$arrays);
     }
 
     /**
@@ -734,7 +729,10 @@ class Arrays extends StaticClass
      *
      * This method compares only the keys (not values) across multiple arrays and returns
      * key-value pairs from the first array whose keys don't appear in any of the other arrays.
-     * You can optionally provide a custom comparison function for keys.
+     *
+     * You can optionally provide a custom comparison function as the last parameter.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
      *
      * Example:
      * ```php
@@ -754,38 +752,35 @@ class Arrays extends StaticClass
      *
      * $result = Arrays::differenceKeys(
      *     $array1,
-     *     fn($a, $b) => (string)$a <=> (string)$b,
-     *     $array2
+     *     $array2,
+     *     fn($a, $b) => (string)$a <=> (string)$b
      * );
      * // Returns: [3 => 'three']
      * // (numeric keys 1 and 2 match string keys '1' and '2' when compared as strings)
      * ```
      *
      * @param array $array The array to compare from
-     * @param callable|array|null $callback Optional comparison function for keys that returns <0, 0, or >0
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
      * @param array ...$arrays Arrays to compare against
+     * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are not found in other arrays
      * @see Arrays::difference()
      * @see Arrays::differenceAssoc()
      */
-    public static function differenceKeys(array $array, callable|array|null $callback = null, array ...$arrays): array
+    public static function differenceKeys(array $array, ...$arrays): array
     {
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
+        $callbacks = self::getCallbacksFromArguments($arrays, 1);
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        if (!is_null($callback) && is_callable($callback)) {
-            return array_diff_ukey($array, ...$arrays, ...[$callback]);
-        } else {
-            return array_diff_key($array, ...$arrays);
+        if ($callbacks !== []) {
+            return array_diff_ukey($array, ...$arrays, ...$callbacks);
         }
+
+        return array_diff_key($array, ...$arrays);
     }
 
     /**
