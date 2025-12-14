@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Exception;
 
+use Phuture\Coherence\Interface\Exception;
+
 /**
  * Exception thrown when a value is not a valid key or when accessing an array
  * with an invalid offset or index.
- *
  * Common scenarios where this exception is thrown:
  * - Accessing an array with an offset that doesn't exist
  * - Using negative indices with collections that don't support them

@@ -266,23 +266,6 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Fills an array with values using the specified keys.
-     *
-     * This method creates a new array where each key from the provided array of keys is
-     * mapped to the same value, useful for creating lookup tables or initializing arrays.
-     *
-     * @param array $keys Array of values to be used as keys
-     * @param mixed $value The value to fill the array with
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function fillKeys(array $keys, mixed $value): self
-    {
-        $this->data = Transformer::fillKeys($keys, $value);
-
-        return $this;
-    }
-
-    /**
      * Filters elements of an array using a callback function.
      *
      * This method iterates over each value in the array passing them to the callback function.

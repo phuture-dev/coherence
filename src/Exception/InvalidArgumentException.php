@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Exception;
 
+use Phuture\Coherence\Interface\Exception;
+
 /**
  * Exception thrown when an invalid argument is provided to a method.
- *
  * Common scenarios where this exception is thrown:
  * - A required parameter is missing, and no default value was provided
  * - An argument value is outside the expected range or format

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Exception;
+namespace Phuture\Coherence\Interface;
 
 use Throwable;
 
