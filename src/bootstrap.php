@@ -413,10 +413,11 @@ if (!function_exists('get')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_GET);
         }
 
@@ -444,10 +445,11 @@ if (!function_exists('post')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_POST);
         }
 
@@ -475,10 +477,11 @@ if (!function_exists('files')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_FILES);
         }
 
@@ -506,10 +509,11 @@ if (!function_exists('server')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_SERVER);
         }
 
@@ -537,10 +541,11 @@ if (!function_exists('cookie')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_COOKIE);
         }
 
@@ -568,10 +573,11 @@ if (!function_exists('session')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_SESSION);
         }
 
@@ -599,10 +605,11 @@ if (!function_exists('request')) {
     {
         if ($key === null) {
             $recursive = function ($array) use (&$recursive, $filter) {
-                return array_map(fn($value) => is_array($value)
+                return array_map(fn ($value) => is_array($value)
                     ? $recursive($value)
                     : (is_scalar($value) ? filter_var($value, $filter) : $value), $array);
             };
+
             return $recursive($_REQUEST);
         }
 

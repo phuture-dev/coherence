@@ -38,6 +38,8 @@ return (new Config())
         ],
         'no_unused_imports' => true,
         'blank_line_after_opening_tag' => true,
-        'blank_line_after_namespace' => true
+        'blank_line_after_namespace' => true,
+        'blank_line_before_statement' => ['statements' => ['return']],
+        'array_syntax' => ['syntax' => 'short']
     ])
     ->setFinder($finder);

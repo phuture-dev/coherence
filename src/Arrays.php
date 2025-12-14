@@ -479,7 +479,7 @@ class Arrays extends StaticClass
         }
 
         // Start with the first array
-        $combinations = array_map(fn($item) => [$item], $arrays[0]);
+        $combinations = array_map(fn ($item) => [$item], $arrays[0]);
 
         // Process remaining arrays
         for ($i = 1; $i < count($arrays); $i++) {
@@ -1022,7 +1022,7 @@ class Arrays extends StaticClass
     public static function filter(array $array, ?callable $callback = null): array
     {
         if (is_null($callback)) {
-            $callback = fn($value) => (bool) $value;
+            $callback = fn ($value) => (bool) $value;
         }
 
         return NetteArrays::filter($array, $callback);
@@ -1428,6 +1428,7 @@ class Arrays extends StaticClass
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -3270,8 +3271,9 @@ class Arrays extends StaticClass
     ): bool {
         if (!is_null($callback) && is_callable($callback)) {
             if ($reverse) {
-                return usort($array, fn($a, $b) => $callback($b, $a));
+                return usort($array, fn ($a, $b) => $callback($b, $a));
             }
+
             return usort($array, $callback);
         }
 
@@ -3313,8 +3315,9 @@ class Arrays extends StaticClass
     ): bool {
         if (!is_null($callback) && is_callable($callback)) {
             if ($reverse) {
-                return uasort($array, fn($a, $b) => $callback($b, $a));
+                return uasort($array, fn ($a, $b) => $callback($b, $a));
             }
+
             return uasort($array, $callback);
         }
 
@@ -3355,8 +3358,9 @@ class Arrays extends StaticClass
     ): bool {
         if (!is_null($callback) && is_callable($callback)) {
             if ($reverse) {
-                return uksort($array, fn($a, $b) => $callback($b, $a));
+                return uksort($array, fn ($a, $b) => $callback($b, $a));
             }
+
             return uksort($array, $callback);
         }
 

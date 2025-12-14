@@ -238,6 +238,7 @@ class MultibyteStrings extends StaticClass
                 $pattern = '/' . preg_quote($srch, '/') . '/ui';
                 $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
                     $count++;
+
                     return $repl;
                 }, $subj);
             }
@@ -505,6 +506,7 @@ class MultibyteStrings extends StaticClass
                 $pattern = '/' . preg_quote($srch, '/') . '/u';
                 $subj = preg_replace_callback($pattern, function () use ($repl, &$count) {
                     $count++;
+
                     return $repl;
                 }, $subj);
             }

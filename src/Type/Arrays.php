@@ -53,6 +53,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param string|int $key The field to use as the associative array key
      * @param string|int|null $value Optional field to use as the value. If null, uses the entire item
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::associate()
      */
     public function associate(string|int $key, string|int|null $value = null): self
     {
@@ -69,6 +70,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param int $case The case to convert keys to (CASE_LOWER or CASE_UPPER, default: CASE_LOWER)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::changeKeyCase()
      */
     public function changeKeyCase(int $case = CASE_LOWER): self
     {
@@ -84,6 +86,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * single array by flattening only one level of nesting, preserving deeper nested structures.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::collapse()
      */
     public function collapse(): self
     {
@@ -102,6 +105,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param int|string|null $column The column name or index to extract
      * @param int|string|null $index Optional column to use as keys in the result (default: null)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::column()
      */
     public function column(int|string|null $column, int|string|null $index = null): self
     {
@@ -119,6 +123,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param array $values Array of values to use
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::combine()
      */
     public function combine(array $values): self
     {
@@ -142,12 +147,27 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Compute the Cartesian product of the array with the given arrays.
+     *
+     * @param array ...$arrays Arrays to cross join with
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::crossJoin()
+     */
+    public function crossJoin(array ...$arrays): self
+    {
+        $this->data = Transformer::crossJoin($this->data, ...$arrays);
+
+        return $this;
+    }
+
+    /**
      * Expands a flattened array with dot notation keys back into a multi-dimensional array.
      *
      * This method takes a flat array where keys use dot notation to represent nested paths
      * and converts it back into a multi-dimensional array structure.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::denote()
      */
     public function denote(): self
     {
@@ -165,6 +185,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param array ...$arrays Additional arrays to compare against
      * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::difference()
      */
     public function difference(...$arrays): self
     {
@@ -185,6 +206,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::differenceAssoc()
      */
     public function differenceAssoc(...$arrays): self
     {
@@ -202,6 +224,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param array ...$arrays Additional arrays to compare against
      * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::differenceKeys()
      */
     public function differenceKeys(...$arrays): self
     {
@@ -218,6 +241,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param callable|null $callback The callback function to use for filtering (default: null)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::filter()
      */
     public function filter(?callable $callback = null): self
     {
@@ -233,6 +257,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * traversing through ALL levels of nesting and collecting only the scalar values.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::flatten()
      */
     public function flatten(): self
     {
@@ -248,6 +273,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * If multiple values are the same, only the last key will be preserved in the result.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::flip()
      */
     public function flip(): self
     {
@@ -278,6 +304,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param string $pattern The regular expression pattern to match
      * @param bool $invert If true, returns elements that do not match the pattern (default: false)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::grep()
      */
     public function grep(string $pattern, bool $invert = false): self
     {
@@ -295,6 +322,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param array ...$arrays Additional arrays to intersect with
      * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::intersect()
      */
     public function intersect(...$arrays): self
     {
@@ -314,6 +342,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::intersectAssoc()
      */
     public function intersectAssoc(...$arrays): self
     {
@@ -331,10 +360,25 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param array ...$arrays Additional arrays to intersect with
      * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::intersectKeys()
      */
     public function intersectKeys(...$arrays): self
     {
         $this->data = Transformer::intersectKeys($this->data, ...$arrays);
+
+        return $this;
+    }
+
+    /**
+     * Join the array with the given arrays by concatenating elements.
+     *
+     * @param array ...$arrays Arrays to join with
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::join()
+     */
+    public function join(array ...$arrays): self
+    {
+        $this->data = Transformer::join($this->data, ...$arrays);
 
         return $this;
     }
@@ -347,6 +391,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * numeric keys starting from 0.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::keys()
      */
     public function keys(): self
     {
@@ -363,6 +408,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param callable $callback The callback function to apply to each element
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::map()
      */
     public function map(callable $callback): self
     {
@@ -379,6 +425,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param callable $callback The callback function to apply to each key
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::mapKeys()
      */
     public function mapKeys(callable $callback): self
     {
@@ -395,10 +442,25 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param callable $callback The callback function that returns key/value pairs
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::mapWithKeys()
      */
     public function mapWithKeys(callable $callback): self
     {
         $this->data = Transformer::mapWithKeys($this->data, $callback);
+
+        return $this;
+    }
+
+    /**
+     * Merge the array with the given arrays.
+     *
+     * @param array ...$arrays Arrays to merge with
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::merge()
+     */
+    public function merge(array ...$arrays): self
+    {
+        $this->data = Transformer::merge($this->data, ...$arrays);
 
         return $this;
     }
@@ -410,6 +472,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * useful when working with data that might contain mixed object and array structures.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::normalize()
      */
     public function normalize(): self
     {
@@ -426,6 +489,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param string $prefix Optional prefix to prepend to each key (default: empty string)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::notation()
      */
     public function notation(string $prefix = ''): self
     {
@@ -501,6 +565,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param array $keys Array of keys to include in the result
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::only()
      */
     public function only(array $keys): self
     {
@@ -518,10 +583,26 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param int $length The size to pad the array to
      * @param mixed $value The value to pad the array with
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::pad()
      */
     public function pad(int $length, mixed $value): self
     {
         $this->data = Transformer::pad($this->data, $length, $value);
+
+        return $this;
+    }
+
+    /**
+     * Rename keys in the array.
+     *
+     * @param string|int|array $oldKey Old key name or array of key mappings
+     * @param string|int $newKey New key name (when $oldKey is not an array)
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::rename()
+     */
+    public function rename(string|int|array $oldKey, string|int $newKey): self
+    {
+        Transformer::rename($this->data, $oldKey, $newKey);
 
         return $this;
     }
@@ -535,6 +616,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param bool $recursive Whether to perform recursive replacement (default: false)
      * @param array ...$replacements Arrays containing elements to replace
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::replace()
      */
     public function replace(bool $recursive = false, array ...$replacements): self
     {
@@ -553,6 +635,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param bool $preserveKeys Whether to preserve numeric keys (default: true)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::reverse()
      */
     public function reverse(bool $preserveKeys = true): self
     {
@@ -571,10 +654,70 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param int|null $length The maximum length of the slice (default: null for all remaining elements)
      * @param bool $preserve_keys Whether to preserve original keys (default: false)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::slice()
      */
     public function slice(int $offset, ?int $length = null, bool $preserve_keys = false): self
     {
         $this->data = Transformer::slice($this->data, $offset, $length, $preserve_keys);
+
+        return $this;
+    }
+
+    /**
+     * Sort the array values using a callback function.
+     *
+     * @param callable|null $callback Custom comparison function
+     * @param bool $reverse Whether to sort in reverse order
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sort()
+     */
+    public function sort(?callable $callback = null, bool $reverse = false): self
+    {
+        Transformer::sort($this->data, $callback, $reverse);
+
+        return $this;
+    }
+
+    /**
+     * Sort an associative array by values while maintaining key association.
+     *
+     * @param callable|null $callback Custom comparison function
+     * @param bool $reverse Whether to sort in reverse order
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sortAssoc()
+     */
+    public function sortAssoc(?callable $callback = null, bool $reverse = false): self
+    {
+        Transformer::sortAssoc($this->data, $callback, $reverse);
+
+        return $this;
+    }
+
+    /**
+     * Sort the array by keys.
+     *
+     * @param callable|null $callback Custom comparison function for keys
+     * @param bool $reverse Whether to sort in reverse order
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sortKeys()
+     */
+    public function sortKeys(?callable $callback = null, bool $reverse = false): self
+    {
+        Transformer::sortKeys($this->data, $callback, $reverse);
+
+        return $this;
+    }
+
+    /**
+     * Sort the array using natural ordering algorithm.
+     *
+     * @param bool $case_insensitive Whether to perform case-insensitive comparison
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sortNatural()
+     */
+    public function sortNatural(bool $case_insensitive = false): self
+    {
+        Transformer::sortNatural($this->data, $case_insensitive);
 
         return $this;
     }
@@ -588,6 +731,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param int $length The maximum size of each chunk
      * @param bool $preserveKeys Whether to preserve original keys in each chunk (default: false)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::split()
      */
     public function split(int $length, bool $preserveKeys = false): self
     {
@@ -616,6 +760,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @param int $flags The comparison flags to use for uniqueness (default: SORT_STRING)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::unique()
      */
     public function unique(int $flags = SORT_STRING): self
     {
@@ -632,6 +777,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * re-indexes the array sequentially.
      *
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::values()
      */
     public function values(): self
     {
@@ -649,6 +795,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param string $prefix The string to prepend to each element (default: empty string)
      * @param string $suffix The string to append to each element (default: empty string)
      * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::wrap()
      */
     public function wrap(string $prefix = '', string $suffix = ''): self
     {
