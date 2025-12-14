@@ -20,74 +20,31 @@ use Phuture\Coherence\Support\StaticClass;
 class Url extends StaticClass
 {
     /**
-     * URL-encodes a string.
+     * Decodes a URL-safe Base64 encoded string.
      *
-     * Provides a consistent wrapper around the native function urlencode.
+     * Decodes Base64 with URL-safe characters (- and _ instead of + and /).
+     *
+     * @param string $string The URL-safe Base64 string to decode
+     * @return string|false Returns the decoded string or false on failure
+     * @see https://www.php.net/manual/en/function.base64-decode.php
+     */
+    public static function base64Decode(string $string): string|false
+    {
+        return base64_decode(strtr($string, '-_', '+/'));
+    }
+
+    /**
+     * Encodes a string to URL-safe Base64.
+     *
+     * Encodes using Base64 with URL-safe characters (- and _ instead of + and /).
      *
      * @param string $string The string to encode
-     * @return string Returns the URL-encoded string
-     * @see https://www.php.net/manual/en/function.urlencode.php
+     * @return string Returns the URL-safe Base64 encoded string
+     * @see https://www.php.net/manual/en/function.base64-encode.php
      */
-    public static function encode(string $string): string
+    public static function base64Encode(string $string): string
     {
-        return urlencode($string);
-    }
-
-    /**
-     * Decodes a URL-encoded string.
-     *
-     * Provides a consistent wrapper around the native function urldecode.
-     *
-     * @param string $string The string to decode
-     * @return string Returns the decoded string
-     * @see https://www.php.net/manual/en/function.urldecode.php
-     */
-    public static function decode(string $string): string
-    {
-        return urldecode($string);
-    }
-
-    /**
-     * URL-encodes a string according to RFC 3986.
-     *
-     * Provides a consistent wrapper around the native function rawurlencode.
-     *
-     * @param string $string The string to encode
-     * @return string Returns the URL-encoded string
-     * @see https://www.php.net/manual/en/function.rawurlencode.php
-     */
-    public static function encodeRaw(string $string): string
-    {
-        return rawurlencode($string);
-    }
-
-    /**
-     * Decodes a URL-encoded string according to RFC 3986.
-     *
-     * Provides a consistent wrapper around the native function rawurldecode.
-     *
-     * @param string $string The string to decode
-     * @return string Returns the decoded string
-     * @see https://www.php.net/manual/en/function.rawurldecode.php
-     */
-    public static function decodeRaw(string $string): string
-    {
-        return rawurldecode($string);
-    }
-
-    /**
-     * Parses a URL and returns its components.
-     *
-     * Provides a consistent wrapper around the native function parse_url.
-     *
-     * @param string $url The URL to parse
-     * @param int $component Specific component to retrieve (default: -1 for all)
-     * @return int|string|array|null|false Returns the requested component(s) or false on failure
-     * @see https://www.php.net/manual/en/function.parse-url.php
-     */
-    public static function parse(string $url, int $component = -1): int|string|array|null|false
-    {
-        return parse_url($url, $component);
+        return rtrim(strtr(base64_encode($string), '+/', '-_'), '=');
     }
 
     /**
@@ -112,30 +69,72 @@ class Url extends StaticClass
     }
 
     /**
-     * Encodes a string to URL-safe Base64.
+     * Decodes a URL-encoded string.
      *
-     * Encodes using Base64 with URL-safe characters (- and _ instead of + and /).
+     * Provides a consistent wrapper around the native function urldecode.
      *
-     * @param string $string The string to encode
-     * @return string Returns the URL-safe Base64 encoded string
-     * @see https://www.php.net/manual/en/function.base64-encode.php
+     * @param string $string The string to decode
+     * @return string Returns the decoded string
+     * @see https://www.php.net/manual/en/function.urldecode.php
      */
-    public static function base64Encode(string $string): string
+    public static function decode(string $string): string
     {
-        return rtrim(strtr(base64_encode($string), '+/', '-_'), '=');
+        return urldecode($string);
     }
 
     /**
-     * Decodes a URL-safe Base64 encoded string.
+     * Decodes a URL-encoded string according to RFC 3986.
      *
-     * Decodes Base64 with URL-safe characters (- and _ instead of + and /).
+     * Provides a consistent wrapper around the native function rawurldecode.
      *
-     * @param string $string The URL-safe Base64 string to decode
-     * @return string|false Returns the decoded string or false on failure
-     * @see https://www.php.net/manual/en/function.base64-decode.php
+     * @param string $string The string to decode
+     * @return string Returns the decoded string
+     * @see https://www.php.net/manual/en/function.rawurldecode.php
      */
-    public static function base64Decode(string $string): string|false
+    public static function decodeRaw(string $string): string
     {
-        return base64_decode(strtr($string, '-_', '+/'));
+        return rawurldecode($string);
+    }
+    /**
+     * URL-encodes a string.
+     *
+     * Provides a consistent wrapper around the native function urlencode.
+     *
+     * @param string $string The string to encode
+     * @return string Returns the URL-encoded string
+     * @see https://www.php.net/manual/en/function.urlencode.php
+     */
+    public static function encode(string $string): string
+    {
+        return urlencode($string);
+    }
+
+    /**
+     * URL-encodes a string according to RFC 3986.
+     *
+     * Provides a consistent wrapper around the native function rawurlencode.
+     *
+     * @param string $string The string to encode
+     * @return string Returns the URL-encoded string
+     * @see https://www.php.net/manual/en/function.rawurlencode.php
+     */
+    public static function encodeRaw(string $string): string
+    {
+        return rawurlencode($string);
+    }
+
+    /**
+     * Parses a URL and returns its components.
+     *
+     * Provides a consistent wrapper around the native function parse_url.
+     *
+     * @param string $url The URL to parse
+     * @param int $component Specific component to retrieve (default: -1 for all)
+     * @return int|string|array|null|false Returns the requested component(s) or false on failure
+     * @see https://www.php.net/manual/en/function.parse-url.php
+     */
+    public static function parse(string $url, int $component = -1): int|string|array|null|false
+    {
+        return parse_url($url, $component);
     }
 }

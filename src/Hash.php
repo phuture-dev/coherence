@@ -21,6 +21,36 @@ use Phuture\Coherence\Support\StaticClass;
 class Hash extends StaticClass
 {
     /**
+     * Generates an Adler-32 hash of the given data.
+     *
+     * Provides a consistent wrapper around the native function hash.
+     *
+     * @param string $data The data to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the hash as a hex string or raw binary data
+     * @see https://www.php.net/manual/en/function.hash.php
+     */
+    public static function adler32(string $data, bool $binary = false): string
+    {
+        return hash('adler32', $data, $binary);
+    }
+
+    /**
+     * Generates a CRC32 hash of the given data.
+     *
+     * Provides a consistent wrapper around the native function hash.
+     *
+     * @param string $data The data to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the hash as a hex string or raw binary data
+     * @see https://www.php.net/manual/en/function.hash.php
+     */
+    public static function crc32(string $data, bool $binary = false): string
+    {
+        return hash('crc32', $data, $binary);
+    }
+
+    /**
      * Generates an MD2 hash of the given data.
      *
      * Provides a consistent wrapper around the native function hash.
@@ -123,35 +153,5 @@ class Hash extends StaticClass
     public static function sha512(string $data, bool $binary = false): string
     {
         return hash('sha512', $data, $binary);
-    }
-
-    /**
-     * Generates an Adler-32 hash of the given data.
-     *
-     * Provides a consistent wrapper around the native function hash.
-     *
-     * @param string $data The data to hash
-     * @param bool $binary Whether to output raw binary data (default: false for hex string)
-     * @return string Returns the hash as a hex string or raw binary data
-     * @see https://www.php.net/manual/en/function.hash.php
-     */
-    public static function adler32(string $data, bool $binary = false): string
-    {
-        return hash('adler32', $data, $binary);
-    }
-
-    /**
-     * Generates a CRC32 hash of the given data.
-     *
-     * Provides a consistent wrapper around the native function hash.
-     *
-     * @param string $data The data to hash
-     * @param bool $binary Whether to output raw binary data (default: false for hex string)
-     * @return string Returns the hash as a hex string or raw binary data
-     * @see https://www.php.net/manual/en/function.hash.php
-     */
-    public static function crc32(string $data, bool $binary = false): string
-    {
-        return hash('crc32', $data, $binary);
     }
 }

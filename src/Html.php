@@ -41,6 +41,23 @@ class Html extends StaticClass
     }
 
     /**
+     * Converts special HTML entities back to characters.
+     *
+     * Provides a consistent wrapper around the native function htmlspecialchars_decode.
+     *
+     * @param string $string The string to decode
+     * @param int $flags Flags for controlling conversion behavior (default: ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)
+     * @return string Returns the decoded string
+     * @see https://www.php.net/manual/en/function.htmlspecialchars-decode.php
+     */
+    public static function specialCharsDecode(
+        string $string,
+        int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401
+    ): string {
+        return htmlspecialchars_decode($string, $flags);
+    }
+
+    /**
      * Converts special characters to HTML entities.
      *
      * Provides a consistent wrapper around the native function htmlspecialchars.
@@ -59,23 +76,6 @@ class Html extends StaticClass
         bool $double_encode = true
     ): string {
         return htmlspecialchars($string, $flags, $encoding, $double_encode);
-    }
-
-    /**
-     * Converts special HTML entities back to characters.
-     *
-     * Provides a consistent wrapper around the native function htmlspecialchars_decode.
-     *
-     * @param string $string The string to decode
-     * @param int $flags Flags for controlling conversion behavior (default: ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)
-     * @return string Returns the decoded string
-     * @see https://www.php.net/manual/en/function.htmlspecialchars-decode.php
-     */
-    public static function specialCharsDecode(
-        string $string,
-        int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401
-    ): string {
-        return htmlspecialchars_decode($string, $flags);
     }
 
     /**

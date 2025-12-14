@@ -49,6 +49,18 @@ abstract class SingletonClass
     private static ?SingletonClass $instance = null;
 
     /**
+     * Call to undefined static method.
+     */
+    public static function __callStatic(string $name, array $args): mixed
+    {
+        try {
+            return static::callStatic($name, $args);
+        } catch (Throwable $e) {
+            throw new MemberAccessException($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
      * Class is singleton and cannot be cloned.
      */
     private function __clone()
@@ -83,26 +95,14 @@ abstract class SingletonClass
      * On the first run, it creates a singleton instance and places it into a private static field.
      * On subsequent runs, it returns the existing instance previously stored in the static field.
      *
-     * @return \Phuture\Coherence\Class\SingletonClass A single instance of the current class
+     * @return self A single instance of the current class
      */
-    public static function getInstance(): SingletonClass
+    public static function getInstance(): self
     {
         if (static::$instance === null) {
             static::$instance = new static();
         }
 
         return static::$instance;
-    }
-
-    /**
-     * Call to undefined static method.
-     */
-    public static function __callStatic(string $name, array $args): mixed
-    {
-        try {
-            return static::callStatic($name, $args);
-        } catch (Throwable $e) {
-            throw new MemberAccessException($e->getMessage(), $e->getCode());
-        }
     }
 }

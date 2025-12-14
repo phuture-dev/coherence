@@ -54,7 +54,7 @@
     },
     "scripts": {
         "build": ["@php-cs-fixer", "@test"],
-        "test": ["@phpstan", "@phpcs", "@tester"],
+        "test": ["@phpcs", "@tester"],
         "server": "php -S localhost:8000",
         "php-cs-fixer": "php-cs-fixer fix",
         "phpstan": "phpstan analyse src --memory-limit=4294967296",

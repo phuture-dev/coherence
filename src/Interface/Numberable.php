@@ -57,21 +57,21 @@ namespace Phuture\Coherence\Interface;
 interface Numberable
 {
     /**
-     * Converts the object to either an integer or float.
+     * Converts the object to a float.
      *
-     * This method should return the most appropriate numeric representation
-     * of the object. If the value contains decimal places, it should return
-     * a float; otherwise, it should return an integer.
+     * This method should convert the object to a floating-point number.
+     * Use this method when you need decimal precision or want to ensure
+     * the result can contain fractional parts.
      *
      * Example:
      * ```php
      * $number = new SomeNumberableObject();
-     * $value = $number->toNumber(); // Returns: 42 or 42.5
+     * $value = $number->toFloat(); // Returns: 42.0 or 42.5
      * ```
      *
-     * @return int|float The numeric representation of the object
+     * @return float The float representation of the object
      */
-    public function toNumber(): int|float;
+    public function toFloat(): float;
 
     /**
      * Converts the object to an integer.
@@ -91,19 +91,19 @@ interface Numberable
     public function toInt(): int;
 
     /**
-     * Converts the object to a float.
+     * Converts the object to either an integer or float.
      *
-     * This method should convert the object to a floating-point number.
-     * Use this method when you need decimal precision or want to ensure
-     * the result can contain fractional parts.
+     * This method should return the most appropriate numeric representation
+     * of the object. If the value contains decimal places, it should return
+     * a float; otherwise, it should return an integer.
      *
      * Example:
      * ```php
      * $number = new SomeNumberableObject();
-     * $value = $number->toFloat(); // Returns: 42.0 or 42.5
+     * $value = $number->toNumber(); // Returns: 42 or 42.5
      * ```
      *
-     * @return float The float representation of the object
+     * @return int|float The numeric representation of the object
      */
-    public function toFloat(): float;
+    public function toNumber(): int|float;
 }

@@ -18,6 +18,15 @@ namespace Phuture\Coherence\Enum;
 enum ArrayComparator
 {
     /**
+     * Compare arrays based on both keys and values.
+     *
+     * When using this comparator, both the keys and their associated values are
+     * considered during comparison operations. This provides the most comprehensive
+     * comparison, requiring both the structure (keys) and content (values) to match.
+     */
+    case Both;
+
+    /**
      * Compare arrays based on their keys only.
      *
      * When using this comparator, only the keys of the arrays are considered
@@ -33,13 +42,4 @@ enum ArrayComparator
      * be relevant depending on the specific operation.
      */
     case Value;
-
-    /**
-     * Compare arrays based on both keys and values.
-     *
-     * When using this comparator, both the keys and their associated values are
-     * considered during comparison operations. This provides the most comprehensive
-     * comparison, requiring both the structure (keys) and content (values) to match.
-     */
-    case Both;
 }

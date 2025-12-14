@@ -63,13 +63,6 @@ abstract class FluentClass
     protected mixed $data;
 
     /**
-     * The fully qualified class name whose methods will be called.
-     *
-     * @var string|null
-     */
-    protected ?string $class = null;
-
-    /**
      * Initializes the fluent class with optional data.
      *
      * @param mixed $data The initial data to wrap

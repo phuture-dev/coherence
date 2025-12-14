@@ -53,6 +53,56 @@ class Arrays extends StaticClass
     public const RECURSION_LIMIT = 100000;
 
     /**
+     * Retrieves a reference to an array element by key.
+     *
+     * This method returns a reference to an array element, allowing you to modify it directly.
+     * If the element doesn't exist, it will be created with a null value. This is useful for
+     * dynamically building or modifying array structures.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $config = [
+     *     'database' => [
+     *         'host' => 'localhost'
+     *     ]
+     * ];
+     *
+     * // Get reference to existing value
+     * $hostRef = &Arrays::getReference($config, ['database', 'host']);
+     * $hostRef = '127.0.0.1';
+     * // $config['database']['host'] is now '127.0.0.1'
+     *
+     * // Get reference to non-existent value (creates it)
+     * $portRef = &Arrays::getReference($config, ['database', 'port']);
+     * $portRef = 3306;
+     * // $config['database']['port'] is now 3306
+     *
+     * // Simple key reference
+     * $debugRef = &Arrays::getReference($config, 'debug');
+     * $debugRef = true;
+     * // $config['debug'] is now true
+     * ```
+     *
+     * @param array $array The array to retrieve the reference from (passed by reference)
+     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path)
+     * @return mixed Returns a reference to the array element
+     * @throws InvalidArgumentException If the traversed item is not an array
+     * @see Arrays::get()
+     */
+    public static function &getReference(array &$array, string|int|array $key): mixed
+    {
+        try {
+            return NetteArrays::getRef($array, $key);
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The traversed item is not an array"
+            );
+        }
+    }
+
+    /**
      * Checks if a value can be accessed like an array.
      *
      * This method determines if a given value supports array-style access using square brackets.
@@ -182,6 +232,108 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Changes the case of all keys in an array.
+     *
+     * This method converts all string keys in an array to either lowercase or uppercase.
+     * Numeric keys remain unchanged. This is useful when you need to normalize array
+     * keys for case-insensitive comparisons or standardize data from external sources.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $array = ['Name' => 'John', 'EMAIL' => 'john@example.com', 'Age' => 30];
+     *
+     * // Convert to lowercase (default)
+     * $lower = Arrays::changeKeyCase($array);
+     * // Returns: ['name' => 'John', 'email' => 'john@example.com', 'age' => 30]
+     *
+     * // Convert to uppercase
+     * $upper = Arrays::changeKeyCase($array, CASE_UPPER);
+     * // Returns: ['NAME' => 'John', 'EMAIL' => 'john@example.com', 'AGE' => 30]
+     * ```
+     *
+     * @param array $array The array whose keys to change case
+     * @param int $case Either CASE_LOWER (default) or CASE_UPPER
+     * @return array Returns a new array with case-changed keys
+     */
+    public static function changeKeyCase(array $array, int $case = CASE_LOWER): array
+    {
+        return array_change_key_case($array, $case);
+    }
+
+    /**
+     * Collapses one level of a multi-dimensional array.
+     *
+     * This method takes an array containing other arrays and merges them into one
+     * single array by flattening only one level of nesting. It's useful when you have
+     * multiple arrays that you want to combine into a single list while preserving
+     * any deeper nested array structures.
+     *
+     * Unlike flatten() which recursively traverses through ALL levels of nesting,
+     * collapse() only merges one level of arrays and preserves the array structure.
+     *
+     * Later values overwrite earlier ones for duplicate keys.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $arrays = [[1, 2], [3, 4], [5, 6]];
+     * $result = Arrays::collapse($arrays);
+     * // Returns: [1, 2, 3, 4, 5, 6]
+     *
+     * // With associative arrays
+     * $arrays = [['a' => 1], ['b' => 2], ['c' => 3]];
+     * $result = Arrays::collapse($arrays);
+     * // Returns: ['a' => 1, 'b' => 2, 'c' => 3]
+     * ```
+     *
+     * @param array $array An array containing other arrays to merge
+     * @return array Returns a single flattened array with all values from the nested arrays
+     * @see Arrays::flatten()
+     */
+    public static function collapse(array $array): array
+    {
+        return array_merge([], ...$array);
+    }
+
+    /**
+     * Extracts values from a single column in a multi-dimensional array.
+     *
+     * This method pulls out values from a specific field across all rows in an array,
+     * similar to selecting a column from a spreadsheet. Useful when working with
+     * database results or arrays of objects.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $users = [
+     *     ['id' => 1, 'name' => 'John'],
+     *     ['id' => 2, 'name' => 'Jane'],
+     *     ['id' => 3, 'name' => 'Bob']
+     * ];
+     *
+     * $names = Arrays::column($users, 'name');
+     * // Returns: ['John', 'Jane', 'Bob']
+     *
+     * // Index by another column
+     * $indexed = Arrays::column($users, 'name', 'id');
+     * // Returns: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
+     * ```
+     *
+     * @param array $array The multi-dimensional array to extract from
+     * @param int|string|null $column The column name or index to extract
+     * @param int|string|null $index Optional column to use as keys in the result (default: null)
+     * @return array Returns an array of values from the specified column
+     */
+    public static function column(array $array, int|string|null $column, int|string|null $index = null): array
+    {
+        return array_column($array, $column, $index);
+    }
+
+    /**
      * Creates an array by pairing keys with values from two separate arrays.
      *
      * This method takes one array of keys and another array of values, and combines them
@@ -228,77 +380,6 @@ class Arrays extends StaticClass
         }
 
         return array_combine($keys, $values);
-    }
-
-    /**
-     * Extracts values from a single column in a multi-dimensional array.
-     *
-     * This method pulls out values from a specific field across all rows in an array,
-     * similar to selecting a column from a spreadsheet. Useful when working with
-     * database results or arrays of objects.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $users = [
-     *     ['id' => 1, 'name' => 'John'],
-     *     ['id' => 2, 'name' => 'Jane'],
-     *     ['id' => 3, 'name' => 'Bob']
-     * ];
-     *
-     * $names = Arrays::column($users, 'name');
-     * // Returns: ['John', 'Jane', 'Bob']
-     *
-     * // Index by another column
-     * $indexed = Arrays::column($users, 'name', 'id');
-     * // Returns: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
-     * ```
-     *
-     * @param array $array The multi-dimensional array to extract from
-     * @param int|string|null $column The column name or index to extract
-     * @param int|string|null $index Optional column to use as keys in the result (default: null)
-     * @return array Returns an array of values from the specified column
-     */
-    public static function column(array $array, int|string|null $column, int|string|null $index = null): array
-    {
-        return array_column($array, $column, $index);
-    }
-
-    /**
-     * Collapses one level of a multi-dimensional array.
-     *
-     * This method takes an array containing other arrays and merges them into one
-     * single array by flattening only one level of nesting. It's useful when you have
-     * multiple arrays that you want to combine into a single list while preserving
-     * any deeper nested array structures.
-     *
-     * Unlike flatten() which recursively traverses through ALL levels of nesting,
-     * collapse() only merges one level of arrays and preserves the array structure.
-     *
-     * Later values overwrite earlier ones for duplicate keys.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $arrays = [[1, 2], [3, 4], [5, 6]];
-     * $result = Arrays::collapse($arrays);
-     * // Returns: [1, 2, 3, 4, 5, 6]
-     *
-     * // With associative arrays
-     * $arrays = [['a' => 1], ['b' => 2], ['c' => 3]];
-     * $result = Arrays::collapse($arrays);
-     * // Returns: ['a' => 1, 'b' => 2, 'c' => 3]
-     * ```
-     *
-     * @param array $array An array containing other arrays to merge
-     * @return array Returns a single flattened array with all values from the nested arrays
-     * @see Arrays::flatten()
-     */
-    public static function collapse(array $array): array
-    {
-        return array_merge([], ...$array);
     }
 
     /**
@@ -412,37 +493,6 @@ class Arrays extends StaticClass
         }
 
         return $combinations;
-    }
-
-    /**
-     * Changes the case of all keys in an array.
-     *
-     * This method converts all string keys in an array to either lowercase or uppercase.
-     * Numeric keys remain unchanged. This is useful when you need to normalize array
-     * keys for case-insensitive comparisons or standardize data from external sources.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $array = ['Name' => 'John', 'EMAIL' => 'john@example.com', 'Age' => 30];
-     *
-     * // Convert to lowercase (default)
-     * $lower = Arrays::changeKeyCase($array);
-     * // Returns: ['name' => 'John', 'email' => 'john@example.com', 'age' => 30]
-     *
-     * // Convert to uppercase
-     * $upper = Arrays::changeKeyCase($array, CASE_UPPER);
-     * // Returns: ['NAME' => 'John', 'EMAIL' => 'john@example.com', 'AGE' => 30]
-     * ```
-     *
-     * @param array $array The array whose keys to change case
-     * @param int $case Either CASE_LOWER (default) or CASE_UPPER
-     * @return array Returns a new array with case-changed keys
-     */
-    public static function changeKeyCase(array $array, int $case = CASE_LOWER): array
-    {
-        return array_change_key_case($array, $case);
     }
 
     /**
@@ -1282,56 +1332,6 @@ class Arrays extends StaticClass
         }
 
         return NetteArrays::get($array, $key, $default);
-    }
-
-    /**
-     * Retrieves a reference to an array element by key.
-     *
-     * This method returns a reference to an array element, allowing you to modify it directly.
-     * If the element doesn't exist, it will be created with a null value. This is useful for
-     * dynamically building or modifying array structures.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $config = [
-     *     'database' => [
-     *         'host' => 'localhost'
-     *     ]
-     * ];
-     *
-     * // Get reference to existing value
-     * $hostRef = &Arrays::getReference($config, ['database', 'host']);
-     * $hostRef = '127.0.0.1';
-     * // $config['database']['host'] is now '127.0.0.1'
-     *
-     * // Get reference to non-existent value (creates it)
-     * $portRef = &Arrays::getReference($config, ['database', 'port']);
-     * $portRef = 3306;
-     * // $config['database']['port'] is now 3306
-     *
-     * // Simple key reference
-     * $debugRef = &Arrays::getReference($config, 'debug');
-     * $debugRef = true;
-     * // $config['debug'] is now true
-     * ```
-     *
-     * @param array $array The array to retrieve the reference from (passed by reference)
-     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path)
-     * @return mixed Returns a reference to the array element
-     * @throws InvalidArgumentException If the traversed item is not an array
-     * @see Arrays::get()
-     */
-    public static function &getReference(array &$array, string|int|array $key): mixed
-    {
-        try {
-            return NetteArrays::getRef($array, $key);
-        } catch (\InvalidArgumentException $e) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The traversed item is not an array"
-            );
-        }
     }
 
     /**
@@ -2355,38 +2355,6 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Helper method to recursively normalize an array by converting objects to arrays.
-     *
-     * @param array $array The array to normalize
-     * @param array $result The result array passed by reference
-     * @param int $depth Current recursion depth
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
-     */
-    private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
-    {
-        if ($depth >= self::RECURSION_LIMIT) {
-            throw new LogicException(
-                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
-            );
-        }
-
-        foreach ($array as $key => $value) {
-            if (is_object($value)) {
-                // Convert object to array and recursively normalize
-                $result[$key] = [];
-                self::normalizeRecursive((array) $value, $result[$key], $depth + 1);
-            } elseif (is_array($value)) {
-                // Recursively normalize nested arrays
-                $result[$key] = [];
-                self::normalizeRecursive($value, $result[$key], $depth + 1);
-            } else {
-                // Keep scalar values as-is
-                $result[$key] = $value;
-            }
-        }
-    }
-
-    /**
      * Flattens a multi-dimensional array into a single-level array using dot notation.
      *
      * This method takes a nested array (arrays within arrays) and converts it into a flat array
@@ -2430,37 +2398,6 @@ class Arrays extends StaticClass
         self::flattenToNotation($array, $prefix, $result);
 
         return $result;
-    }
-
-    /**
-     * Helper method to recursively flatten an array using dot notation.
-     *
-     * @param array $array The array to flatten
-     * @param string $prefix The current key prefix
-     * @param array $result The result array passed by reference
-     * @param int $depth Current recursion depth
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
-     */
-    private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
-    {
-        if ($depth >= self::RECURSION_LIMIT) {
-            throw new LogicException(
-                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
-            );
-        }
-
-        foreach ($array as $key => $value) {
-            // Build the new key
-            $newKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
-
-            // Check if value is a non-empty array that should be flattened
-            if (is_array($value) && $value !== []) {
-                self::flattenToNotation($value, $newKey, $result, $depth + 1);
-            } else {
-                // Keep scalar values as-is
-                $result[$newKey] = $value;
-            }
-        }
     }
 
     /**
@@ -2889,93 +2826,6 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Replaces elements from passed arrays into the first array.
-     *
-     * This method replaces values in the first array with values from subsequent arrays based on
-     * matching keys. Elements with matching keys in later arrays overwrite those in earlier arrays.
-     * When recursive mode is enabled, the method will also traverse nested arrays and perform
-     * replacement operations recursively. This is useful for merging configuration arrays, updating
-     * settings, or applying default values while preserving structure.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Basic replacement
-     * $base = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
-     * $replacement = ['b' => 'blueberry', 'c' => 'coconut'];
-     * $result = Arrays::replace($base, false, $replacement);
-     * // Returns: ['a' => 'apple', 'b' => 'blueberry', 'c' => 'coconut']
-     *
-     * // Recursive replacement
-     * $base = ['user' => ['name' => 'John', 'email' => 'john@example.com']];
-     * $replacement = ['user' => ['email' => 'john.doe@example.com']];
-     * $result = Arrays::replace($base, true, $replacement);
-     * // Returns: ['user' => ['name' => 'John', 'email' => 'john.doe@example.com']]
-     *
-     * // Multiple replacement arrays
-     * $base = ['a' => 1, 'b' => 2];
-     * $result = Arrays::replace($base, false, ['b' => 3], ['c' => 4]);
-     * // Returns: ['a' => 1, 'b' => 3, 'c' => 4]
-     * ```
-     *
-     * @param array $array The base array whose elements will be replaced
-     * @param bool $recursive Whether to recursively replace nested arrays (default: false)
-     * @param array ...$replacements One or more arrays containing replacement values
-     * @return array Returns the modified array with replaced values
-     */
-    public static function replace(array $array, bool $recursive = false, array ...$replacements): array
-    {
-        if ($recursive) {
-            return array_replace_recursive($array, ...$replacements);
-        } else {
-            return array_replace($array, ...$replacements);
-        }
-    }
-
-    /**
-     * Returns an array with elements in reverse order.
-     *
-     * This method reverses the order of elements in an array. The first element becomes the last,
-     * and the last element becomes the first. By default, numeric keys are renumbered starting from 0,
-     * while string keys are always preserved. Set the preserveKeys parameter to true to maintain the
-     * original numeric key associations.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Basic reversal (reindexes numeric keys)
-     * $array = ['first', 'second', 'third'];
-     * $result = Arrays::reverse($array);
-     * // Returns: ['third', 'second', 'first']
-     *
-     * // Preserves numeric keys
-     * $array = ['first', 'second', 'third'];
-     * $result = Arrays::reverse($array);
-     * // Returns: [2 => 'third', 1 => 'second', 0 => 'first']
-     *
-     * // Preserves string keys
-     * $array = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
-     * $result = Arrays::reverse($array);
-     * // Returns: ['cherry', 'banana', 'apple']
-     *
-     * // Without key preservation
-     * $array = [0 => 'zero', 'name' => 'John', 1 => 'one'];
-     * $result = Arrays::reverse($array, false);
-     * // Returns: ['one', 'John', 'zero']
-     * ```
-     *
-     * @param array $array The array to reverse
-     * @param bool $preserveKeys Whether to preserve numeric keys (default: true)
-     * @return array Returns a new array with elements in reverse order
-     */
-    public static function reverse(array $array, bool $preserveKeys = true): array
-    {
-        return $preserveKeys ? array_reverse($array, true) : array_values(array_reverse($array));
-    }
-
-    /**
      * Removes a key-value pair from an array.
      *
      * This method removes a key from an array, including deeply nested keys by passing
@@ -3099,6 +2949,93 @@ class Arrays extends StaticClass
         }
 
         $current = $result;
+    }
+
+    /**
+     * Replaces elements from passed arrays into the first array.
+     *
+     * This method replaces values in the first array with values from subsequent arrays based on
+     * matching keys. Elements with matching keys in later arrays overwrite those in earlier arrays.
+     * When recursive mode is enabled, the method will also traverse nested arrays and perform
+     * replacement operations recursively. This is useful for merging configuration arrays, updating
+     * settings, or applying default values while preserving structure.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Basic replacement
+     * $base = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
+     * $replacement = ['b' => 'blueberry', 'c' => 'coconut'];
+     * $result = Arrays::replace($base, false, $replacement);
+     * // Returns: ['a' => 'apple', 'b' => 'blueberry', 'c' => 'coconut']
+     *
+     * // Recursive replacement
+     * $base = ['user' => ['name' => 'John', 'email' => 'john@example.com']];
+     * $replacement = ['user' => ['email' => 'john.doe@example.com']];
+     * $result = Arrays::replace($base, true, $replacement);
+     * // Returns: ['user' => ['name' => 'John', 'email' => 'john.doe@example.com']]
+     *
+     * // Multiple replacement arrays
+     * $base = ['a' => 1, 'b' => 2];
+     * $result = Arrays::replace($base, false, ['b' => 3], ['c' => 4]);
+     * // Returns: ['a' => 1, 'b' => 3, 'c' => 4]
+     * ```
+     *
+     * @param array $array The base array whose elements will be replaced
+     * @param bool $recursive Whether to recursively replace nested arrays (default: false)
+     * @param array ...$replacements One or more arrays containing replacement values
+     * @return array Returns the modified array with replaced values
+     */
+    public static function replace(array $array, bool $recursive = false, array ...$replacements): array
+    {
+        if ($recursive) {
+            return array_replace_recursive($array, ...$replacements);
+        } else {
+            return array_replace($array, ...$replacements);
+        }
+    }
+
+    /**
+     * Returns an array with elements in reverse order.
+     *
+     * This method reverses the order of elements in an array. The first element becomes the last,
+     * and the last element becomes the first. By default, numeric keys are renumbered starting from 0,
+     * while string keys are always preserved. Set the preserveKeys parameter to true to maintain the
+     * original numeric key associations.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Basic reversal (reindexes numeric keys)
+     * $array = ['first', 'second', 'third'];
+     * $result = Arrays::reverse($array);
+     * // Returns: ['third', 'second', 'first']
+     *
+     * // Preserves numeric keys
+     * $array = ['first', 'second', 'third'];
+     * $result = Arrays::reverse($array);
+     * // Returns: [2 => 'third', 1 => 'second', 0 => 'first']
+     *
+     * // Preserves string keys
+     * $array = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
+     * $result = Arrays::reverse($array);
+     * // Returns: ['cherry', 'banana', 'apple']
+     *
+     * // Without key preservation
+     * $array = [0 => 'zero', 'name' => 'John', 1 => 'one'];
+     * $result = Arrays::reverse($array, false);
+     * // Returns: ['one', 'John', 'zero']
+     * ```
+     *
+     * @param array $array The array to reverse
+     * @param bool $preserveKeys Whether to preserve numeric keys (default: true)
+     * @return array Returns a new array with elements in reverse order
+     */
+    public static function reverse(array $array, bool $preserveKeys = true): array
+    {
+        return $preserveKeys ? array_reverse($array, true) : array_values(array_reverse($array));
     }
 
     /**
@@ -3292,6 +3229,170 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Sorts an array in ascending or descending order with optional index preservation.
+     *
+     * This method arranges array values from lowest to highest (ascending) or highest
+     * to lowest (descending). You can provide a custom comparison function to define
+     * your own sorting logic. Note that array keys are not preserved - elements are
+     * re-indexed with sequential numeric keys starting from 0.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [5, 2, 8, 1, 9];
+     * Arrays::sort($numbers);
+     *
+     * // $numbers is now: [1, 2, 5, 8, 9]
+     *
+     * // Sort in reverse (descending) order
+     * Arrays::sort($numbers, null, true);
+     *
+     * // $numbers is now: [9, 8, 5, 2, 1]
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param callable|null $callback Optional custom comparison function
+     *  The callback has the signature `function (mixed $a, mixed $b): int`
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sortKeys()
+     * @see Arrays::sortAssoc()
+     * @see Arrays::sortNatural()
+     * @see Arrays::sortMultidimensional()
+     */
+    public static function sort(
+        array &$array,
+        ?callable $callback = null,
+        bool $reverse = false,
+        int $flags = SORT_REGULAR
+    ): bool {
+        if (!is_null($callback) && is_callable($callback)) {
+            if ($reverse) {
+                return usort($array, fn($a, $b) => $callback($b, $a));
+            }
+            return usort($array, $callback);
+        }
+
+        return $reverse ? rsort($array, $flags) : sort($array, $flags);
+    }
+
+    /**
+     * Sorts an array in ascending or descending order while maintaining index association.
+     *
+     * This method arranges array values from lowest to highest (ascending) or highest
+     * to lowest (descending) while keeping the original keys paired with their values.
+     * Unlike the regular sort method, this preserves the relationship between keys and
+     * values. You can provide a custom comparison function to define your own sorting logic.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $scores = ['John' => 85, 'Alice' => 92, 'Bob' => 78];
+     * Arrays::sortAssoc($scores);
+     *
+     * // $scores is now: ['Bob' => 78, 'John' => 85, 'Alice' => 92]
+     * // Keys are preserved with their values
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param callable|null $callback Optional custom comparison function for values
+     *  The callback has the signature `function (mixed $a, mixed $b): int`
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     */
+    public static function sortAssoc(
+        array &$array,
+        ?callable $callback = null,
+        bool $reverse = false,
+        int $flags = SORT_REGULAR
+    ): bool {
+        if (!is_null($callback) && is_callable($callback)) {
+            if ($reverse) {
+                return uasort($array, fn($a, $b) => $callback($b, $a));
+            }
+            return uasort($array, $callback);
+        }
+
+        return $reverse ? arsort($array, $flags) : asort($array, $flags);
+    }
+
+    /**
+     * Sorts an array by keys in ascending or descending order.
+     *
+     * This method arranges an array based on its keys rather than its values. Keys
+     * are sorted from lowest to highest (ascending) or highest to lowest (descending).
+     * The association between keys and values is maintained. You can provide a custom
+     * comparison function to define your own sorting logic for the keys.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $ages = ['John' => 25, 'Alice' => 30, 'Bob' => 20];
+     * Arrays::sortKeys($ages);
+     *
+     * // $ages is now: ['Alice' => 30, 'Bob' => 20, 'John' => 25]
+     * ```
+     *
+     * @param array $array The array to sort by keys (passed by reference)
+     * @param callable|null $callback Optional custom comparison function for keys
+     *  The callback has the signature `function (mixed $a, mixed $b): int`
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     */
+    public static function sortKeys(
+        array &$array,
+        ?callable $callback = null,
+        bool $reverse = false,
+        int $flags = SORT_REGULAR
+    ): bool {
+        if (!is_null($callback) && is_callable($callback)) {
+            if ($reverse) {
+                return uksort($array, fn($a, $b) => $callback($b, $a));
+            }
+            return uksort($array, $callback);
+        }
+
+        return $reverse ? krsort($array, $flags) : ksort($array, $flags);
+    }
+
+    /**
+     * Sorts an array using natural order algorithm.
+     *
+     * This method sorts strings in the way a human would naturally order them, which
+     * is especially useful for sorting filenames or version numbers. For example, it
+     * will sort "file2.txt" before "file10.txt" (whereas a regular sort would put
+     * "file10.txt" first). Optionally ignore letter case when sorting.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $files = ['file10.txt', 'file2.txt', 'file1.txt', 'file20.txt'];
+     * Arrays::sortNatural($files);
+     *
+     * // $files is now: ['file1.txt', 'file2.txt', 'file10.txt', 'file20.txt']
+     * // Notice that file2.txt comes before file10.txt
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param bool $case_insensitive Whether to ignore case when sorting (default: false)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     */
+    public static function sortNatural(array &$array, bool $case_insensitive = false): bool
+    {
+        return $case_insensitive ? natcasesort($array) : natsort($array);
+    }
+
+    /**
      * Removes a portion of an array and optionally replaces it with new elements.
      *
      * This method removes elements from an array starting at a specified offset and continuing for
@@ -3387,170 +3488,6 @@ class Arrays extends StaticClass
         }
 
         return array_chunk($array, $length, $preserveKeys);
-    }
-
-    /**
-     * Sorts an array in ascending or descending order with optional index preservation.
-     *
-     * This method arranges array values from lowest to highest (ascending) or highest
-     * to lowest (descending). You can provide a custom comparison function to define
-     * your own sorting logic. Note that array keys are not preserved - elements are
-     * re-indexed with sequential numeric keys starting from 0.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $numbers = [5, 2, 8, 1, 9];
-     * Arrays::sort($numbers);
-     *
-     * // $numbers is now: [1, 2, 5, 8, 9]
-     *
-     * // Sort in reverse (descending) order
-     * Arrays::sort($numbers, null, true);
-     *
-     * // $numbers is now: [9, 8, 5, 2, 1]
-     * ```
-     *
-     * @param array $array The array to sort (passed by reference)
-     * @param callable|null $callback Optional custom comparison function
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
-     * @param bool $reverse Whether to sort in descending order (default: false)
-     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
-     * @return bool Returns true on success, false on failure
-     * @see Arrays::sortKeys()
-     * @see Arrays::sortAssoc()
-     * @see Arrays::sortNatural()
-     * @see Arrays::sortMultidimensional()
-     */
-    public static function sort(
-        array &$array,
-        ?callable $callback = null,
-        bool $reverse = false,
-        int $flags = SORT_REGULAR
-    ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
-            if ($reverse) {
-                return usort($array, fn($a, $b) => $callback($b, $a));
-            }
-            return usort($array, $callback);
-        }
-
-        return $reverse ? rsort($array, $flags) : sort($array, $flags);
-    }
-
-    /**
-     * Sorts an array by keys in ascending or descending order.
-     *
-     * This method arranges an array based on its keys rather than its values. Keys
-     * are sorted from lowest to highest (ascending) or highest to lowest (descending).
-     * The association between keys and values is maintained. You can provide a custom
-     * comparison function to define your own sorting logic for the keys.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $ages = ['John' => 25, 'Alice' => 30, 'Bob' => 20];
-     * Arrays::sortKeys($ages);
-     *
-     * // $ages is now: ['Alice' => 30, 'Bob' => 20, 'John' => 25]
-     * ```
-     *
-     * @param array $array The array to sort by keys (passed by reference)
-     * @param callable|null $callback Optional custom comparison function for keys
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
-     * @param bool $reverse Whether to sort in descending order (default: false)
-     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
-     * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
-     */
-    public static function sortKeys(
-        array &$array,
-        ?callable $callback = null,
-        bool $reverse = false,
-        int $flags = SORT_REGULAR
-    ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
-            if ($reverse) {
-                return uksort($array, fn($a, $b) => $callback($b, $a));
-            }
-            return uksort($array, $callback);
-        }
-
-        return $reverse ? krsort($array, $flags) : ksort($array, $flags);
-    }
-
-    /**
-     * Sorts an array in ascending or descending order while maintaining index association.
-     *
-     * This method arranges array values from lowest to highest (ascending) or highest
-     * to lowest (descending) while keeping the original keys paired with their values.
-     * Unlike the regular sort method, this preserves the relationship between keys and
-     * values. You can provide a custom comparison function to define your own sorting logic.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $scores = ['John' => 85, 'Alice' => 92, 'Bob' => 78];
-     * Arrays::sortAssoc($scores);
-     *
-     * // $scores is now: ['Bob' => 78, 'John' => 85, 'Alice' => 92]
-     * // Keys are preserved with their values
-     * ```
-     *
-     * @param array $array The array to sort (passed by reference)
-     * @param callable|null $callback Optional custom comparison function for values
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
-     * @param bool $reverse Whether to sort in descending order (default: false)
-     * @param int $flags Sorting behavior flags (default: SORT_REGULAR)
-     * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
-     */
-    public static function sortAssoc(
-        array &$array,
-        ?callable $callback = null,
-        bool $reverse = false,
-        int $flags = SORT_REGULAR
-    ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
-            if ($reverse) {
-                return uasort($array, fn($a, $b) => $callback($b, $a));
-            }
-            return uasort($array, $callback);
-        }
-
-        return $reverse ? arsort($array, $flags) : asort($array, $flags);
-    }
-
-    /**
-     * Sorts an array using natural order algorithm.
-     *
-     * This method sorts strings in the way a human would naturally order them, which
-     * is especially useful for sorting filenames or version numbers. For example, it
-     * will sort "file2.txt" before "file10.txt" (whereas a regular sort would put
-     * "file10.txt" first). Optionally ignore letter case when sorting.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $files = ['file10.txt', 'file2.txt', 'file1.txt', 'file20.txt'];
-     * Arrays::sortNatural($files);
-     *
-     * // $files is now: ['file1.txt', 'file2.txt', 'file10.txt', 'file20.txt']
-     * // Notice that file2.txt comes before file10.txt
-     * ```
-     *
-     * @param array $array The array to sort (passed by reference)
-     * @param bool $case_insensitive Whether to ignore case when sorting (default: false)
-     * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
-     */
-    public static function sortNatural(array &$array, bool $case_insensitive = false): bool
-    {
-        return $case_insensitive ? natcasesort($array) : natsort($array);
     }
 
     /**
@@ -3764,37 +3701,6 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Helper method to recursively convert arrays to objects.
-     *
-     * @param array $array The array to convert
-     * @param stdClass $result The result object passed by reference
-     * @param int $depth Current recursion depth
-     */
-    private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
-    {
-        if ($depth >= self::RECURSION_LIMIT) {
-            throw new LogicException(
-                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
-            );
-        }
-
-        foreach ($array as $key => $value) {
-            if ($value instanceof stdClass) {
-                $value = (array) $value;
-            }
-
-            if (is_array($value) && ! self::isList($value)) {
-                // Recursively convert nested arrays to objects
-                $result->{$key} = new stdClass();
-                self::toObjectRecursive($value, $result->{$key}, $depth + 1);
-            } else {
-                // Keep scalar values
-                $result->{$key} = $value;
-            }
-        }
-    }
-
-    /**
      * Removes duplicate values from an array.
      *
      * This method filters an array to keep only unique values, removing any duplicates.
@@ -3951,5 +3857,99 @@ class Arrays extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Helper method to recursively flatten an array using dot notation.
+     *
+     * @param array $array The array to flatten
+     * @param string $prefix The current key prefix
+     * @param array $result The result array passed by reference
+     * @param int $depth Current recursion depth
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     */
+    private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
+        foreach ($array as $key => $value) {
+            // Build the new key
+            $newKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
+
+            // Check if value is a non-empty array that should be flattened
+            if (is_array($value) && $value !== []) {
+                self::flattenToNotation($value, $newKey, $result, $depth + 1);
+            } else {
+                // Keep scalar values as-is
+                $result[$newKey] = $value;
+            }
+        }
+    }
+
+    /**
+     * Helper method to recursively normalize an array by converting objects to arrays.
+     *
+     * @param array $array The array to normalize
+     * @param array $result The result array passed by reference
+     * @param int $depth Current recursion depth
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     */
+    private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
+        foreach ($array as $key => $value) {
+            if (is_object($value)) {
+                // Convert object to array and recursively normalize
+                $result[$key] = [];
+                self::normalizeRecursive((array) $value, $result[$key], $depth + 1);
+            } elseif (is_array($value)) {
+                // Recursively normalize nested arrays
+                $result[$key] = [];
+                self::normalizeRecursive($value, $result[$key], $depth + 1);
+            } else {
+                // Keep scalar values as-is
+                $result[$key] = $value;
+            }
+        }
+    }
+
+    /**
+     * Helper method to recursively convert arrays to objects.
+     *
+     * @param array $array The array to convert
+     * @param stdClass $result The result object passed by reference
+     * @param int $depth Current recursion depth
+     */
+    private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
+    {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
+        foreach ($array as $key => $value) {
+            if ($value instanceof stdClass) {
+                $value = (array) $value;
+            }
+
+            if (is_array($value) && ! self::isList($value)) {
+                // Recursively convert nested arrays to objects
+                $result->{$key} = new stdClass();
+                self::toObjectRecursive($value, $result->{$key}, $depth + 1);
+            } else {
+                // Keep scalar values
+                $result->{$key} = $value;
+            }
+        }
     }
 }

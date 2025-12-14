@@ -45,105 +45,6 @@ use Phuture\Coherence\Arrays as Transformer;
 class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, IteratorAggregate
 {
     /**
-     * Converts the object to a native PHP array.
-     *
-     * This method returns the internal data as a plain PHP array, which can be
-     * used with any native PHP array function or passed to other APIs that expect arrays.
-     *
-     * @return array The internal data as a native PHP array
-     */
-    public function toArray(): array
-    {
-        return (array) $this->data;
-    }
-
-    /**
-     * Returns an iterator for the array data.
-     *
-     * This method allows the Arrays object to be used in foreach loops and other
-     * iterator contexts. It creates an ArrayIterator from the internal array data.
-     *
-     * @return Traversable An iterator that can be used to traverse the array elements
-     */
-    public function getIterator(): Traversable
-    {
-        return new ArrayIterator($this->toArray());
-    }
-
-    /**
-     * Checks if a specific key or index exists in the array.
-     *
-     * This method determines whether the given offset (key) exists in the array.
-     * It's part of the ArrayAccess interface that allows array-like access using [] notation.
-     *
-     * @param mixed $offset The key or index to check for existence
-     * @return bool Returns true if the offset exists, false otherwise
-     */
-    public function offsetExists(mixed $offset): bool
-    {
-        return array_key_exists($offset, $this->toArray());
-    }
-
-    /**
-     * Retrieves a value from the array by its key or index.
-     *
-     * This method gets the value stored at the given offset. If the offset doesn't exist,
-     * it returns null instead of throwing an error. This is part of the ArrayAccess interface.
-     *
-     * @param mixed $offset The key or index of the value to retrieve
-     * @return mixed The value at the given offset, or null if the offset doesn't exist
-     */
-    public function offsetGet(mixed $offset): mixed
-    {
-        return $this->toArray()[$offset] ?? null;
-    }
-
-    /**
-     * Sets or modifies a value in the array at a specific key or index.
-     *
-     * This method assigns a value to the given offset. If the offset is null, the value
-     * is appended to the end of the array. This is part of the ArrayAccess interface.
-     *
-     * @param mixed $offset The key or index where to store the value (null to append)
-     * @param mixed $value The value to store in the array
-     */
-    public function offsetSet(mixed $offset, mixed $value): void
-    {
-        if ($offset === null) {
-            $this->data[] = $value;
-        } else {
-            $this->data[$offset] = $value;
-        }
-    }
-
-    /**
-     * Removes a value from the array by its key or index.
-     *
-     * This method deletes the element at the given offset from the array.
-     * If the offset doesn't exist, no action is taken. This is part of the ArrayAccess interface.
-     *
-     * @param mixed $offset The key or index of the element to remove
-     */
-    public function offsetUnset(mixed $offset): void
-    {
-        unset($this->data[$offset]);
-    }
-
-    /**
-     * Counts the number of elements in the array.
-     *
-     * This method returns the total number of items stored in the array.
-     * It's part of the Countable interface, allowing the object to be used with
-     * PHP's built-in count() function.
-     *
-     * @return int The number of elements in the array
-     */
-    public function count(): int
-    {
-        return count($this->toArray());
-    }
-
-    /**
      * Transforms an array into an associative array according to a specified key.
      *
      * You can specify which field to use as the key, and optionally which field to use as the value.
@@ -161,18 +62,32 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Creates an array by pairing keys with values from two separate arrays.
+     * Changes the case of all keys in an array.
      *
-     * This method takes an array of values and combines them with the current array
-     * into a single associative array where the current array provides the keys and the provided
-     * array the values. Both arrays must have the same number of elements.
+     * This method converts all string keys in the array to either uppercase or lowercase,
+     * which is useful for standardizing key formats when working with data from different sources.
      *
-     * @param array $values Array of values to use
+     * @param int $case The case to convert keys to (CASE_LOWER or CASE_UPPER, default: CASE_LOWER)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function combine(array $values): self
+    public function changeKeyCase(int $case = CASE_LOWER): self
     {
-        $this->data = Transformer::combine($this->data, $values);
+        $this->data = Transformer::changeKeyCase($this->data, $case);
+
+        return $this;
+    }
+
+    /**
+     * Collapses an array of arrays into a single array.
+     *
+     * This method takes an array containing other arrays and merges them into one
+     * single array by flattening only one level of nesting, preserving deeper nested structures.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function collapse(): self
+    {
+        $this->data = Transformer::collapse($this->data);
 
         return $this;
     }
@@ -196,17 +111,47 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Changes the case of all keys in an array.
+     * Creates an array by pairing keys with values from two separate arrays.
      *
-     * This method converts all string keys in the array to either uppercase or lowercase,
-     * which is useful for standardizing key formats when working with data from different sources.
+     * This method takes an array of values and combines them with the current array
+     * into a single associative array where the current array provides the keys and the provided
+     * array the values. Both arrays must have the same number of elements.
      *
-     * @param int $case The case to convert keys to (CASE_LOWER or CASE_UPPER, default: CASE_LOWER)
+     * @param array $values Array of values to use
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function changeKeyCase(int $case = CASE_LOWER): self
+    public function combine(array $values): self
     {
-        $this->data = Transformer::changeKeyCase($this->data, $case);
+        $this->data = Transformer::combine($this->data, $values);
+
+        return $this;
+    }
+
+    /**
+     * Counts the number of elements in the array.
+     *
+     * This method returns the total number of items stored in the array.
+     * It's part of the Countable interface, allowing the object to be used with
+     * PHP's built-in count() function.
+     *
+     * @return int The number of elements in the array
+     */
+    public function count(): int
+    {
+        return count($this->toArray());
+    }
+
+    /**
+     * Expands a flattened array with dot notation keys back into a multi-dimensional array.
+     *
+     * This method takes a flat array where keys use dot notation to represent nested paths
+     * and converts it back into a multi-dimensional array structure.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function denote(): self
+    {
+        $this->data = Transformer::denote($this->data);
 
         return $this;
     }
@@ -282,6 +227,49 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Flattens a multidimensional array into a single level.
+     *
+     * This method recursively flattens all nested arrays into a single-dimensional array,
+     * traversing through ALL levels of nesting and collecting only the scalar values.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function flatten(): self
+    {
+        $this->data = Transformer::flatten($this->data);
+
+        return $this;
+    }
+
+    /**
+     * Swaps keys and values in an array.
+     *
+     * This method exchanges keys and values so that values become keys and keys become values.
+     * If multiple values are the same, only the last key will be preserved in the result.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function flip(): self
+    {
+        $this->data = Transformer::flip($this->data);
+
+        return $this;
+    }
+
+    /**
+     * Returns an iterator for the array data.
+     *
+     * This method allows the Arrays object to be used in foreach loops and other
+     * iterator contexts. It creates an ArrayIterator from the internal array data.
+     *
+     * @return Traversable An iterator that can be used to traverse the array elements
+     */
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->toArray());
+    }
+
+    /**
      * Filters array elements using regular expression matching.
      *
      * This method searches each element in the array for matches to the regular expression
@@ -352,6 +340,22 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Returns all the keys from an array.
+     *
+     * This method extracts all keys from an array and returns them as a new indexed array.
+     * The keys can be strings, integers, or a mix of both. The resulting array will have
+     * numeric keys starting from 0.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function keys(): self
+    {
+        $this->data = Transformer::keys($this->data);
+
+        return $this;
+    }
+
+    /**
      * Applies a callback function to all elements of the array.
      *
      * This method returns an array containing all elements of the current array after
@@ -400,6 +404,21 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Normalizes a multi-dimensional array by converting all objects to arrays.
+     *
+     * This method recursively processes an array and converts any objects into plain arrays,
+     * useful when working with data that might contain mixed object and array structures.
+     *
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function normalize(): self
+    {
+        $this->data = Transformer::normalize($this->data);
+
+        return $this;
+    }
+
+    /**
      * Flattens a multi-dimensional array into dot notation.
      *
      * This method converts nested arrays into a flat structure using dot-separated keys,
@@ -413,6 +432,65 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
         $this->data = Transformer::notation($this->data, $prefix);
 
         return $this;
+    }
+
+    /**
+     * Checks if a specific key or index exists in the array.
+     *
+     * This method determines whether the given offset (key) exists in the array.
+     * It's part of the ArrayAccess interface that allows array-like access using [] notation.
+     *
+     * @param mixed $offset The key or index to check for existence
+     * @return bool Returns true if the offset exists, false otherwise
+     */
+    public function offsetExists(mixed $offset): bool
+    {
+        return array_key_exists($offset, $this->toArray());
+    }
+
+    /**
+     * Retrieves a value from the array by its key or index.
+     *
+     * This method gets the value stored at the given offset. If the offset doesn't exist,
+     * it returns null instead of throwing an error. This is part of the ArrayAccess interface.
+     *
+     * @param mixed $offset The key or index of the value to retrieve
+     * @return mixed The value at the given offset, or null if the offset doesn't exist
+     */
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->toArray()[$offset] ?? null;
+    }
+
+    /**
+     * Sets or modifies a value in the array at a specific key or index.
+     *
+     * This method assigns a value to the given offset. If the offset is null, the value
+     * is appended to the end of the array. This is part of the ArrayAccess interface.
+     *
+     * @param mixed $offset The key or index where to store the value (null to append)
+     * @param mixed $value The value to store in the array
+     */
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        if ($offset === null) {
+            $this->data[] = $value;
+        } else {
+            $this->data[$offset] = $value;
+        }
+    }
+
+    /**
+     * Removes a value from the array by its key or index.
+     *
+     * This method deletes the element at the given offset from the array.
+     * If the offset doesn't exist, no action is taken. This is part of the ArrayAccess interface.
+     *
+     * @param mixed $offset The key or index of the element to remove
+     */
+    public function offsetUnset(mixed $offset): void
+    {
+        unset($this->data[$offset]);
     }
 
     /**
@@ -517,6 +595,18 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
 
         return $this;
     }
+    /**
+     * Converts the object to a native PHP array.
+     *
+     * This method returns the internal data as a plain PHP array, which can be
+     * used with any native PHP array function or passed to other APIs that expect arrays.
+     *
+     * @return array The internal data as a native PHP array
+     */
+    public function toArray(): array
+    {
+        return (array) $this->data;
+    }
 
     /**
      * Removes duplicate values from an array.
@@ -530,54 +620,6 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     public function unique(int $flags = SORT_STRING): self
     {
         $this->data = Transformer::unique($this->data, $flags);
-
-        return $this;
-    }
-
-    /**
-     * Wraps each element of an array with a prefix and suffix.
-     *
-     * This method adds the specified prefix and suffix to each element in the array,
-     * useful for formatting strings or adding markup.
-     *
-     * @param string $prefix The string to prepend to each element (default: empty string)
-     * @param string $suffix The string to append to each element (default: empty string)
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function wrap(string $prefix = '', string $suffix = ''): self
-    {
-        $this->data = Transformer::wrap($this->data, $prefix, $suffix);
-
-        return $this;
-    }
-
-    /**
-     * Swaps keys and values in an array.
-     *
-     * This method exchanges keys and values so that values become keys and keys become values.
-     * If multiple values are the same, only the last key will be preserved in the result.
-     *
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function flip(): self
-    {
-        $this->data = Transformer::flip($this->data);
-
-        return $this;
-    }
-
-    /**
-     * Returns all the keys from an array.
-     *
-     * This method extracts all keys from an array and returns them as a new indexed array.
-     * The keys can be strings, integers, or a mix of both. The resulting array will have
-     * numeric keys starting from 0.
-     *
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function keys(): self
-    {
-        $this->data = Transformer::keys($this->data);
 
         return $this;
     }
@@ -599,61 +641,18 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Collapses an array of arrays into a single array.
+     * Wraps each element of an array with a prefix and suffix.
      *
-     * This method takes an array containing other arrays and merges them into one
-     * single array by flattening only one level of nesting, preserving deeper nested structures.
+     * This method adds the specified prefix and suffix to each element in the array,
+     * useful for formatting strings or adding markup.
      *
+     * @param string $prefix The string to prepend to each element (default: empty string)
+     * @param string $suffix The string to append to each element (default: empty string)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function collapse(): self
+    public function wrap(string $prefix = '', string $suffix = ''): self
     {
-        $this->data = Transformer::collapse($this->data);
-
-        return $this;
-    }
-
-    /**
-     * Flattens a multidimensional array into a single level.
-     *
-     * This method recursively flattens all nested arrays into a single-dimensional array,
-     * traversing through ALL levels of nesting and collecting only the scalar values.
-     *
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function flatten(): self
-    {
-        $this->data = Transformer::flatten($this->data);
-
-        return $this;
-    }
-
-    /**
-     * Normalizes a multi-dimensional array by converting all objects to arrays.
-     *
-     * This method recursively processes an array and converts any objects into plain arrays,
-     * useful when working with data that might contain mixed object and array structures.
-     *
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function normalize(): self
-    {
-        $this->data = Transformer::normalize($this->data);
-
-        return $this;
-    }
-
-    /**
-     * Expands a flattened array with dot notation keys back into a multi-dimensional array.
-     *
-     * This method takes a flat array where keys use dot notation to represent nested paths
-     * and converts it back into a multi-dimensional array structure.
-     *
-     * @return self An instance of the Arrays class with the transformed array
-     */
-    public function denote(): self
-    {
-        $this->data = Transformer::denote($this->data);
+        $this->data = Transformer::wrap($this->data, $prefix, $suffix);
 
         return $this;
     }
