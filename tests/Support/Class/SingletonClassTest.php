@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
+use Throwable;
+use Tester\Assert;
+use ReflectionClass;
+use Tester\TestCase;
+use Phuture\Coherence\Support\SingletonClass;
 use Phuture\Coherence\Exception\MemberAccessException;
 use Phuture\Coherence\Exception\SerializationException;
-use Phuture\Coherence\Support\SingletonClass;
-use Tester\Assert;
-use Tester\TestCase;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/../../bootstrap.php';
 
 class SingletonClassTest extends TestCase
 {
@@ -39,17 +41,17 @@ class SingletonClassTest extends TestCase
     {
         Assert::exception(function () {
             // Attempt to instantiate directly
-            $reflection = new \ReflectionClass(TestSingletonClass::class);
+            $reflection = new ReflectionClass(TestSingletonClass::class);
             $constructor = $reflection->getConstructor();
             $constructor->setAccessible(true);
             $constructor->newInstance();
-        }, \Throwable::class);
+        }, Throwable::class);
     }
 
     public function testClassIsAbstract(): void
     {
         // Verify that SingletonClass itself is not meant to be instantiated
-        $reflection = new \ReflectionClass(SingletonClass::class);
+        $reflection = new ReflectionClass(SingletonClass::class);
         Assert::true($reflection->isAbstract());
     }
 
@@ -60,7 +62,7 @@ class SingletonClassTest extends TestCase
         Assert::exception(function () use ($instance) {
             // Attempt to clone
             $clone = clone $instance;
-        }, \Throwable::class);
+        }, Throwable::class);
     }
 
     public function testCannotSerialize(): void

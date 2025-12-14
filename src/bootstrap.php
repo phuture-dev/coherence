@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Nette\PhpGenerator\GlobalFunction;
 use Nette\PhpGenerator\Literal;
+use Nette\PhpGenerator\GlobalFunction;
 
 if (!function_exists('int')) {
     /**

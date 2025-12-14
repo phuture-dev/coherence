@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Types;
+namespace Phuture\Coherence\Type;
 
-use Phuture\Coherence\Arrays as Transformer;
+use Countable;
+use ArrayAccess;
+use Traversable;
+use ArrayIterator;
+use IteratorAggregate;
 use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Support\FluentClass;
+use Phuture\Coherence\Arrays as Transformer;
 
 /**
  * A fluent, array-like wrapper that provides object-oriented array manipulation.
@@ -36,7 +41,7 @@ use Phuture\Coherence\Support\FluentClass;
  *     ->toArray();
  * ```
  */
-class Arrays extends FluentClass implements Arrayable, \ArrayAccess, \Countable, \IteratorAggregate
+class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, IteratorAggregate
 {
     /**
      * Converts the object to a native PHP array.
@@ -57,11 +62,11 @@ class Arrays extends FluentClass implements Arrayable, \ArrayAccess, \Countable,
      * This method allows the Arrays object to be used in foreach loops and other
      * iterator contexts. It creates an ArrayIterator from the internal array data.
      *
-     * @return \Traversable An iterator that can be used to traverse the array elements
+     * @return Traversable An iterator that can be used to traverse the array elements
      */
-    public function getIterator(): \Traversable
+    public function getIterator(): Traversable
     {
-        return new \ArrayIterator($this->toArray());
+        return new ArrayIterator($this->toArray());
     }
 
     /**

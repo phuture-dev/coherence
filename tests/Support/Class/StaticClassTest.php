@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
-use Phuture\Coherence\Exception\MemberAccessException;
-use Phuture\Coherence\Support\StaticClass;
+use Error;
 use Tester\Assert;
+use ReflectionClass;
 use Tester\TestCase;
+use ReflectionMethod;
+use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Exception\MemberAccessException;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/../../bootstrap.php';
 
 class StaticClassTest extends TestCase
 {
@@ -18,18 +21,18 @@ class StaticClassTest extends TestCase
         Assert::exception(function () {
             // Attempt to instantiate directly
             new TestStaticClass();
-        }, \Error::class);
+        }, Error::class);
     }
 
     public function testCannotInstantiateWithReflection(): void
     {
         Assert::exception(function () {
             // Attempt to instantiate via reflection
-            $reflection = new \ReflectionClass(TestStaticClass::class);
+            $reflection = new ReflectionClass(TestStaticClass::class);
             $constructor = $reflection->getConstructor();
             $constructor->setAccessible(true);
             $constructor->newInstance();
-        }, \Error::class);
+        }, Error::class);
     }
 
     public function testStaticMethodCall(): void
@@ -89,14 +92,14 @@ class StaticClassTest extends TestCase
         Assert::true(method_exists(TestStaticClass::class, 'privateMethod'));
 
         // Verify it's actually private
-        $method = new \ReflectionMethod(TestStaticClass::class, 'privateMethod');
+        $method = new ReflectionMethod(TestStaticClass::class, 'privateMethod');
         Assert::true($method->isPrivate());
     }
 
     public function testClassIsAbstract(): void
     {
         // Verify that StaticClass itself is not meant to be instantiated
-        $reflection = new \ReflectionClass(StaticClass::class);
+        $reflection = new ReflectionClass(StaticClass::class);
         Assert::true($reflection->isAbstract());
     }
 

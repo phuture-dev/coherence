@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
+use Throwable;
 use Phuture\Coherence\Exception\MemberAccessException;
 use Phuture\Coherence\Exception\SerializationException;
 
@@ -100,7 +101,7 @@ abstract class SingletonClass
     {
         try {
             return static::callStatic($name, $args);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new MemberAccessException($e->getMessage(), $e->getCode());
         }
     }

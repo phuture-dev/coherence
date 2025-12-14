@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
-use Phuture\Coherence\Support\FluentClass;
 use Tester\Assert;
+use ReflectionClass;
 use Tester\TestCase;
+use Phuture\Coherence\Support\FluentClass;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/../../bootstrap.php';
 
 class FluentClassTest extends TestCase
 {
@@ -48,7 +49,7 @@ class FluentClassTest extends TestCase
     public function testClassIsAbstract(): void
     {
         // Verify that FluentClass itself is not meant to be instantiated
-        $reflection = new \ReflectionClass(FluentClass::class);
+        $reflection = new ReflectionClass(FluentClass::class);
         Assert::true($reflection->isAbstract());
     }
 }

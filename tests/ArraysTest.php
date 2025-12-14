@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests;
 
-use Phuture\Coherence\Arrays;
-use Phuture\Coherence\Enum\ArrayComparator;
-use Phuture\Coherence\Exception\InvalidArgumentException;
-use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Exception\OutOfBoundsException;
+use stdClass;
+use ArrayObject;
 use Tester\Assert;
 use Tester\TestCase;
+use JsonSerializable;
+use Phuture\Coherence\Arrays;
+use Phuture\Coherence\Enum\ArrayComparator;
+use Phuture\Coherence\Exception\LogicException;
+use Phuture\Coherence\Exception\OutOfBoundsException;
+use Phuture\Coherence\Exception\InvalidArgumentException;
 
 require __DIR__ . '/bootstrap.php';
 
@@ -24,7 +27,7 @@ class ArraysTest extends TestCase
 
     public function testAccessibleWithArrayObject(): void
     {
-        $object = new \ArrayObject([1, 2, 3]);
+        $object = new ArrayObject([1, 2, 3]);
         Assert::true(Arrays::accessible($object));
     }
 
@@ -33,7 +36,7 @@ class ArraysTest extends TestCase
         Assert::false(Arrays::accessible('string'));
         Assert::false(Arrays::accessible(123));
         Assert::false(Arrays::accessible(null));
-        Assert::false(Arrays::accessible(new \stdClass()));
+        Assert::false(Arrays::accessible(new stdClass()));
     }
 
     public function testAppend(): void
@@ -184,14 +187,14 @@ class ArraysTest extends TestCase
 
     public function testContainsWithObjects(): void
     {
-        $obj1 = new \stdClass();
+        $obj1 = new stdClass();
         $obj1->id = 1;
-        $obj2 = new \stdClass();
+        $obj2 = new stdClass();
         $obj2->id = 2;
         $array = [$obj1, $obj2];
 
         Assert::true(Arrays::contains($array, $obj1, true));
-        Assert::false(Arrays::contains($array, new \stdClass()));
+        Assert::false(Arrays::contains($array, new stdClass()));
     }
 
     public function testCount(): void
@@ -674,7 +677,7 @@ class ArraysTest extends TestCase
 
     public function testFromWithStdClass(): void
     {
-        $object = new \stdClass();
+        $object = new stdClass();
         $object->name = 'John';
         $object->age = 30;
         $object->active = true;
@@ -685,7 +688,7 @@ class ArraysTest extends TestCase
 
     public function testFromWithJsonSerializable(): void
     {
-        $object = new class implements \JsonSerializable {
+        $object = new class implements JsonSerializable {
             public function jsonSerialize(): array
             {
                 return ['name' => 'Jane', 'age' => 25];
@@ -899,49 +902,49 @@ class ArraysTest extends TestCase
         Assert::false(Arrays::has($array, 1));
     }
 
-    public function testAddAfter(): void
+    public function testInsertAfter(): void
     {
         $array = ['a' => 1, 'c' => 3];
         Arrays::insertAfter($array, 'a', ['b' => 2]);
         Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
     }
 
-    public function testAddAfterAtEnd(): void
+    public function testInsertAfterAtEnd(): void
     {
         $array = ['a' => 1, 'b' => 2];
         Arrays::insertAfter($array, 'b', ['c' => 3]);
         Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
     }
 
-    public function testAddAfterNonExistentKey(): void
+    public function testInsertAfterNonExistentKey(): void
     {
         $array = ['a' => 1];
         Arrays::insertAfter($array, 'z', ['b' => 2]);
         Assert::same(['a' => 1, 'b' => 2], $array);
     }
 
-    public function testAddBefore(): void
+    public function testInsertBefore(): void
     {
         $array = ['a' => 1, 'c' => 3];
         Arrays::insertBefore($array, 'c', ['b' => 2]);
         Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
     }
 
-    public function testAddBeforeAtBeginning(): void
+    public function testInsertBeforeAtBeginning(): void
     {
         $array = ['b' => 2, 'c' => 3];
         Arrays::insertBefore($array, 'b', ['a' => 1]);
         Assert::same(['a' => 1, 'b' => 2, 'c' => 3], $array);
     }
 
-    public function testAddBeforeNonExistentKey(): void
+    public function testInsertBeforeNonExistentKey(): void
     {
         $array = ['a' => 1];
         Arrays::insertBefore($array, 'z', ['b' => 2]);
         Assert::same(['b' => 2, 'a' => 1], $array);
     }
 
-    /*public function testIntersect(): void
+    public function testIntersect(): void
     {
         $array1 = [1, 2, 3, 4];
         $array2 = [2, 3, 5];
@@ -960,8 +963,16 @@ class ArraysTest extends TestCase
     {
         $array1 = ['a', 'B', 'c'];
         $array2 = ['A', 'C'];
-        $result = Arrays::intersect($array1, fn($a, $b) => strcasecmp($a, $b), $array2);
+        $result = Arrays::intersect($array1, $array2, fn($a, $b) => strcasecmp($a, $b));
         Assert::same([0 => 'a', 2 => 'c'], $result);
+    }
+
+    public function testIntersectThrowsWithSingleArray(): void
+    {
+        Assert::exception(
+            fn() => Arrays::intersect([1, 2, 3]),
+            InvalidArgumentException::class
+        );
     }
 
     public function testIntersectAssoc(): void
@@ -974,22 +985,25 @@ class ArraysTest extends TestCase
 
     public function testIntersectAssocWithOneCallback(): void
     {
-        $array1 = ['A' => 1, 'B' => 2];
-        $array2 = ['a' => 1, 'c' => 3];
+        $array1 = ['A' => 'hello', 'B' => 'world'];
+        $array2 = ['A' => 'HELLO', 'C' => 'test'];
 
         $result = Arrays::intersectAssoc(
             $array1,
-            fn($a, $b) => strcasecmp($a, $b),
+            $array2,
             ArrayComparator::Value,
-            $array2
+            fn($a, $b) => strcasecmp($a, $b)
         );
-        Assert::same(['A' => 1], $result);
+        Assert::same(['A' => 'hello'], $result);
+
+        $array1 = ['A' => 1, 'B' => 2, 'C' => 3];
+        $array2 = ['a' => 1, 'b' => 5, 'd' => 4];
 
         $result = Arrays::intersectAssoc(
             $array1,
-            fn($a, $b) => (string)$a <=> (string)$b,
+            $array2,
             ArrayComparator::Key,
-            $array2
+            fn($a, $b) => strcasecmp($a, $b)
         );
         Assert::same(['A' => 1], $result);
     }
@@ -1002,21 +1016,11 @@ class ArraysTest extends TestCase
 
         $result = Arrays::intersectAssoc(
             $array1,
-            fn($a, $b) => $a <=> $b,
-            fn($key1, $key2) => strcasecmp($key1, $key2),
-            ArrayComparator::Both,
             $array2,
-            $array3
-        );
-        Assert::same(['a' => 1], $result);
-
-        $result = Arrays::intersectAssoc(
-            $array1,
-            fn($a, $b) => $a <=> $b,
-            fn($key1, $key2) => strcmp($key1, $key2),
+            $array3,
             ArrayComparator::Both,
-            $array2,
-            $array3
+            fn($a, $b) => $a <=> $b,
+            fn($key1, $key2) => strcasecmp($key1, $key2)
         );
         Assert::same(['a' => 1], $result);
     }
@@ -1029,12 +1033,12 @@ class ArraysTest extends TestCase
         Assert::exception(
             fn() => Arrays::intersectAssoc(
                 $array1,
-                fn($a, $b) => $a <=> $b,
-                fn($key1, $key2) => $key1 <=> $key2,
+                $array2,
                 ArrayComparator::Key,
-                $array2
+                fn($a, $b) => $a <=> $b,
+                fn($key1, $key2) => $key1 <=> $key2
             ),
-            InvalidArgumentException::class
+            LogicException::class
         );
     }
 
@@ -1044,7 +1048,7 @@ class ArraysTest extends TestCase
         $array2 = ['a' => 1, 'c' => 3];
 
         Assert::exception(
-            fn() => Arrays::intersectAssoc($array1, fn($a, $b) => $a <=> $b, $array2),
+            fn() => Arrays::intersectAssoc($array1, $array2, fn($a, $b) => $a <=> $b),
             InvalidArgumentException::class
         );
     }
@@ -1069,16 +1073,8 @@ class ArraysTest extends TestCase
     {
         $array1 = ['A' => 1, 'b' => 2, 'C' => 3];
         $array2 = ['a' => 10, 'c' => 30];
-        $result = Arrays::intersectKeys($array1, fn($a, $b) => strcasecmp($a, $b), $array2);
+        $result = Arrays::intersectKeys($array1, $array2, fn($a, $b) => strcasecmp($a, $b));
         Assert::same(['A' => 1, 'C' => 3], $result);
-    }
-
-    public function testIntersectThrowsWithSingleArray(): void
-    {
-        Assert::exception(
-            fn() => Arrays::intersect([1, 2, 3]),
-            InvalidArgumentException::class
-        );
     }
 
     public function testIntersectKeysThrowsWithSingleArray(): void
@@ -1087,7 +1083,7 @@ class ArraysTest extends TestCase
             fn() => Arrays::intersectKeys([1, 2, 3]),
             InvalidArgumentException::class
         );
-    }*/
+    }
 
     public function testIsList(): void
     {
@@ -1438,7 +1434,7 @@ class ArraysTest extends TestCase
 
     public function testNormalize(): void
     {
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $obj->name = 'John';
         $obj->age = 30;
         $array = ['user' => $obj];
@@ -1448,9 +1444,9 @@ class ArraysTest extends TestCase
 
     public function testNormalizeRecursive(): void
     {
-        $inner = new \stdClass();
+        $inner = new stdClass();
         $inner->city = 'NYC';
-        $outer = new \stdClass();
+        $outer = new stdClass();
         $outer->address = $inner;
         $array = ['user' => $outer];
         $result = Arrays::normalize($array);
@@ -1487,7 +1483,7 @@ class ArraysTest extends TestCase
     public function testOf(): void
     {
         $result = Arrays::of([1, 2, 3]);
-        Assert::type('Phuture\Coherence\Types\Arrays', $result);
+        Assert::type('Phuture\Coherence\Type\Arrays', $result);
         Assert::same([1, 2, 3], $result->get());
         Assert::same([1, 2, 3], $result->toArray());
         Assert::same([1, 2, 3], $result());
@@ -1497,7 +1493,7 @@ class ArraysTest extends TestCase
     public function testOfReverseFluent(): void
     {
         $result = Arrays::of([1, 2, 3]);
-        Assert::type('Phuture\Coherence\Types\Arrays', $result);
+        Assert::type('Phuture\Coherence\Type\Arrays', $result);
         Assert::same([3, 2, 1], $result->reverse(false)->get());
     }
 
@@ -1506,7 +1502,7 @@ class ArraysTest extends TestCase
         $array = ['name' => 'John', 'age' => 30];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
+        Assert::type(stdClass::class, $result);
         Assert::same('John', $result->name);
         Assert::same(30, $result->age);
     }
@@ -1525,13 +1521,13 @@ class ArraysTest extends TestCase
         ];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
-        Assert::type(\stdClass::class, $result->user);
+        Assert::type(stdClass::class, $result);
+        Assert::type(stdClass::class, $result->user);
         Assert::same('Jane', $result->user->name);
-        Assert::type(\stdClass::class, $result->user->address);
+        Assert::type(stdClass::class, $result->user->address);
         Assert::same('123 Main St', $result->user->address->street);
         Assert::same('NYC', $result->user->address->city);
-        Assert::type(\stdClass::class, $result->settings);
+        Assert::type(stdClass::class, $result->settings);
         Assert::same('dark', $result->settings->theme);
     }
 
@@ -1540,7 +1536,7 @@ class ArraysTest extends TestCase
         $array = [];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
+        Assert::type(stdClass::class, $result);
         Assert::same([], (array) $result);
     }
 
@@ -1558,14 +1554,14 @@ class ArraysTest extends TestCase
         ];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
+        Assert::type(stdClass::class, $result);
         Assert::same('hello', $result->string);
         Assert::same(42, $result->number);
         Assert::same(true, $result->boolean);
         Assert::same(null, $result->null);
-        Assert::type(\stdClass::class, $result->nested);
+        Assert::type(stdClass::class, $result->nested);
         Assert::same([1, 2, 3], $result->nested->array);
-        Assert::type(\stdClass::class, $result->nested->object);
+        Assert::type(stdClass::class, $result->nested->object);
         Assert::same(23, $result->nested->object->prop->value);
     }
 
@@ -1600,7 +1596,7 @@ class ArraysTest extends TestCase
         ];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
+        Assert::type(stdClass::class, $result);
         Assert::same('value', $result->string);
         // Numeric keys become properties that need to be accessed differently
         $resultArray = (array) $result;
@@ -1623,11 +1619,11 @@ class ArraysTest extends TestCase
         ];
         $result = Arrays::toObject($array);
 
-        Assert::type(\stdClass::class, $result);
-        Assert::type(\stdClass::class, $result->level1);
-        Assert::type(\stdClass::class, $result->level1->level2);
-        Assert::type(\stdClass::class, $result->level1->level2->level3);
-        Assert::type(\stdClass::class, $result->level1->level2->level3->level4);
+        Assert::type(stdClass::class, $result);
+        Assert::type(stdClass::class, $result->level1);
+        Assert::type(stdClass::class, $result->level1->level2);
+        Assert::type(stdClass::class, $result->level1->level2->level3);
+        Assert::type(stdClass::class, $result->level1->level2->level3->level4);
         Assert::same('value', $result->level1->level2->level3->level4->deep);
     }
 

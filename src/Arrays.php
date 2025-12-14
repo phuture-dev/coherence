@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
+use WeakMap;
+use stdClass;
+use Exception;
+use ArrayAccess;
+use Traversable;
+use JsonSerializable;
 use Nette\Utils\Arrays as NetteArrays;
+use Phuture\Coherence\Interface\Jsonable;
+use Phuture\Coherence\Interface\Arrayable;
+use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Enum\ArrayComparator;
+use Phuture\Coherence\Exception\LogicException;
+use Phuture\Coherence\Support\ArgumentExtractor;
+use Phuture\Coherence\Exception\OutOfBoundsException;
 use Phuture\Coherence\Exception\InvalidArgumentException;
 use Phuture\Coherence\Exception\InvalidDataTypeException;
-use Phuture\Coherence\Exception\OutOfBoundsException;
-use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Interface\Arrayable;
-use Phuture\Coherence\Interface\Jsonable;
-use Phuture\Coherence\Support\StaticClass;
-use Phuture\Coherence\Support\ArgumentExtractor;
 
 /**
  * Comprehensive array manipulation and utility helper class.
@@ -78,7 +84,7 @@ class Arrays extends StaticClass
     public static function accessible(mixed $value): bool
     {
         return is_array($value)
-            || $value instanceof \ArrayAccess
+            || $value instanceof ArrayAccess
             || $value instanceof Arrayable;
     }
 
@@ -616,6 +622,8 @@ class Arrays extends StaticClass
      * The method supports flexible parameter order where callbacks and the comparator can
      * be provided at the end of the argument list.
      *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
@@ -670,7 +678,9 @@ class Arrays extends StaticClass
      * @return array Returns key-value pairs from the first array not found in other arrays
      * @throws InvalidArgumentException When no comparison arrays are provided
      * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
+     * @throws InvalidArgumentException When more than two callbacks are provided
      * @throws LogicException When no ArrayComparator enum is provided when needed
+     * @throws LogicException When ArrayComparator::Both is not used with exactly two callbacks
      * @see Arrays::difference()
      * @see Arrays::differenceKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
@@ -719,6 +729,7 @@ class Arrays extends StaticClass
                 ArrayComparator::Key => array_diff_uassoc($array, ...$arrays, ...$callbacks),
                 ArrayComparator::Value => array_udiff_assoc($array, ...$arrays, ...$callbacks),
                 ArrayComparator::Both => array_udiff_uassoc($array, ...$arrays, ...$callbacks),
+                default => array_diff_assoc($array, ...$arrays)
             };
         }
 
@@ -762,7 +773,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to compare from
      * @param array ...$arrays Arrays to compare against
-     * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0
+     * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0 (optional)
      * @return array Returns key-value pairs whose keys are not found in other arrays
      * @see Arrays::difference()
      * @see Arrays::differenceAssoc()
@@ -932,7 +943,9 @@ class Arrays extends StaticClass
      *
      * This method creates a new array containing only the elements that pass a test
      * you provide. The callback function receives each element and should return true
-     * to keep it or false to remove it. If no callback is provided, it removes all
+     * to keep it or false to remove it.
+     *
+     * If no callback is provided, it removes all
      * elements that evaluate to false (like null, 0, false, empty string).
      *
      * Example:
@@ -1282,17 +1295,17 @@ class Arrays extends StaticClass
         }
 
         // Handle WeakMap objects
-        if ($value instanceof \WeakMap) {
+        if ($value instanceof WeakMap) {
             return iterator_to_array($value, false);
         }
 
         // Handle Traversable objects
-        if ($value instanceof \Traversable) {
+        if ($value instanceof Traversable) {
             return iterator_to_array($value);
         }
 
         // Handle JsonSerializable objects
-        if ($value instanceof \JsonSerializable) {
+        if ($value instanceof JsonSerializable) {
             return json_decode(json_encode($value), true);
         }
 
@@ -1473,7 +1486,7 @@ class Arrays extends StaticClass
     {
         try {
             return NetteArrays::grep($array, $pattern, $invert);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new LogicException(
                 "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
             );
@@ -1606,8 +1619,11 @@ class Arrays extends StaticClass
      * Returns elements that are present in all provided arrays.
      *
      * This method compares values across multiple arrays and returns only those values
-     * that appear in every array. Keys are preserved from the first array. You can optionally
-     * provide a custom comparison function for complex value comparisons.
+     * that appear in every array. Keys are preserved from the first array.
+     *
+     * You can optionally provide a custom comparison function as the last parameter.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
      *
      * Example:
      * ```php
@@ -1627,8 +1643,8 @@ class Arrays extends StaticClass
      *
      * $result = Arrays::intersect(
      *     $array1,
-     *     fn($a, $b) => strcasecmp($a, $b),
-     *     $array2
+     *     $array2,
+     *     fn($a, $b) => strcasecmp($a, $b)
      * );
      * // Returns: [1 => 'Banana', 2 => 'Cherry']
      *
@@ -1645,176 +1661,164 @@ class Arrays extends StaticClass
      *
      * $result = Arrays::intersect(
      *     $users1,
-     *     fn($a, $b) => $a->id <=> $b->id,
-     *     $users2
+     *     $users2,
+     *     fn($a, $b) => $a->id <=> $b->id
      * );
      * // Returns: [1 => Jane object] (only user with id=2 exists in both)
      * ```
      *
      * @param array $array The array to compare from
-     * @param callable|array|null $callback Optional comparison function that returns <0, 0, or >0
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
      * @param array ...$arrays Arrays to compare against
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return array Returns values present in all arrays with keys preserved from the first array
      * @see Arrays::intersectAssoc()
      * @see Arrays::intersectKeys()
      */
-    public static function intersect(array $array, callable|array|null $callback = null, array ...$arrays): array
+    public static function intersect(array $array, ...$arrays): array
     {
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
+        $callbacks = self::getCallbacksFromArguments($arrays, 1);
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        if (!is_null($callback) && is_callable($callback)) {
-            return array_uintersect($array, ...$arrays, ...[$callback]);
-        } else {
-            return array_intersect($array, ...$arrays);
+        if ($callbacks !== []) {
+            return array_uintersect($array, ...$arrays, ...$callbacks);
         }
+
+        return array_intersect($array, ...$arrays);
     }
 
     /**
-     * Returns elements present in all arrays, comparing both keys and values.
+     * Returns elements that present in all provided arrays, comparing both keys and values,
+     * with optional custom comparison.
      *
      * This method is like intersect() but also checks that the keys match. An element is only
      * included if both its key and value from the first array exist as a pair in all other arrays.
      * You can provide custom comparison functions for values, keys, or both.
      *
+     * The method supports flexible parameter order where callbacks and the comparator can
+     * be provided at the end of the argument list.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
+     * use Phuture\Coherence\Enum\ArrayComparator;
      *
+     * // Basic usage
      * $array1 = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
      * $array2 = ['a' => 'apple', 'b' => 'banana', 'd' => 'date'];
      * $array3 = ['a' => 'apple', 'c' => 'coconut'];
-     *
      * $result = Arrays::intersectAssoc($array1, $array2, $array3);
      * // Returns: ['a' => 'apple']
      * // (only key 'a' with value 'apple' exists in all arrays)
      *
-     * // With callback for case-insensitive value comparison
+     * // With custom value comparison and comparator
      * $array1 = ['a' => 'Apple', 'b' => 'Banana'];
      * $array2 = ['a' => 'APPLE', 'b' => 'orange'];
-     *
      * $result = Arrays::intersectAssoc(
      *     $array1,
-     *     fn($a, $b) => strcasecmp($a, $b),
-     *     null,
-     *     'data',
-     *     $array2
+     *     $array2,
+     *     ArrayComparator::Value, // compare values using callback
+     *     fn($a, $b) => strcasecmp($a, $b) // callback for case-insensitive comparison
      * );
      * // Returns: ['a' => 'Apple']
      * // (key 'a' with case-insensitive value 'apple' exists in both)
      *
-     * // With callback for custom key comparison (type-insensitive)
+     * // With custom key comparison
      * $array1 = [1 => 'one', 2 => 'two', 3 => 'three'];
      * $array2 = ['1' => 'one', '2' => 'two'];
-     *
      * $result = Arrays::intersectAssoc(
      *     $array1,
-     *     fn($a, $b) => (string)$a <=> (string)$b,
-     *     null,
-     *     'index',
-     *     $array2
+     *     $array2,
+     *     ArrayComparator::Key, // compare keys using callback
+     *     fn($a, $b) => (string)$a <=> (string)$b // callback for key comparison
      * );
      * // Returns: [1 => 'one', 2 => 'two']
      * // (keys 1 and 2 match when compared as strings)
      *
-     * // With callbacks for both keys and values
+     * // With custom comparison for both keys and values
      * $array1 = [1 => 'Apple', 2 => 'Banana'];
      * $array2 = ['1' => 'APPLE', '2' => 'BANANA'];
-     *
      * $result = Arrays::intersectAssoc(
      *     $array1,
-     *     fn($a, $b) => strcasecmp($a, $b),           // Compare values case-insensitively
-     *     fn($a, $b) => (string)$a <=> (string)$b,    // Compare keys as strings
-     *     'both',
-     *     $array2
+     *     $array2,
+     *     ArrayComparator::Both, // compare both keys and values using callbacks
+     *     fn($a, $b) => strcasecmp($a, $b), // callback for value comparison
+     *     fn($a, $b) => (string)$a <=> (string)$b // callback for key comparison
      * );
      * // Returns: [1 => 'Apple', 2 => 'Banana']
      * // (both key-value pairs match with custom comparisons)
      * ```
      *
      * @param array $array The array to compare from
-     * @param callable|null $callback Optional comparison function for values or keys
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
-     * @param callable|null $secondCallback Optional second comparison function when comparing both
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
-     * @param string|null $compareAgainst What to compare: 'index', 'data', or 'both' (default: 'index')
      * @param array ...$arrays Arrays to compare against
+     * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
+     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return array Returns key-value pairs present in all arrays
+     * @throws InvalidArgumentException When no comparison arrays are provided
+     * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
+     * @throws InvalidArgumentException When more than two callbacks are provided
+     * @throws LogicException When no ArrayComparator enum is provided when needed
+     * @throws LogicException When ArrayComparator::Both is not used with exactly two callbacks
      * @see Arrays::intersect()
+     * @see Arrays::intersectKeys()
+     * @see \Phuture\Coherence\Enum\ArrayComparator
      */
-    public static function intersectAssoc(
-        array $array,
-        callable|array|null $callback = null,
-        ArrayComparator|callable|array|null $secondCallback = null,
-        ArrayComparator|array|null $compareAgainst = null,
-        array ...$arrays
-    ): array {
-        // Support flexible parameter order: if callback, secondCallback, or compareAgainst
-        // are arrays instead of their expected types, treat them as additional arrays
+    public static function intersectAssoc(array $array, ...$arrays): array
+    {
+        $callbacks = self::getCallbacksFromArguments($arrays, 2);
+        $enums = self::getEnumsFromArguments($arrays, ArrayComparator::class, 1);
 
-        // Handle the case where ArrayComparator is passed as secondCallback
-        if ($secondCallback instanceof ArrayComparator) {
-            // If compareAgainst is an array, it should be added to arrays list first
-            if (is_array($compareAgainst)) {
-                $arrays = array_merge([$compareAgainst], $arrays);
-            }
-            // Move the ArrayComparator from secondCallback to compareAgainst
-            $compareAgainst = $secondCallback;
-            $secondCallback = null;
-        }
-
-        // Handle remaining array parameters
-        if (is_array($compareAgainst)) {
-            $arrays = array_merge([$compareAgainst], $arrays);
-            $compareAgainst = null;
-        }
-        if (is_array($secondCallback)) {
-            $arrays = array_merge([$secondCallback], $arrays);
-            $secondCallback = null;
-        }
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
-
-        // Throw an exception if only one array has been passed
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        // Throw an exception if a comparator has not been provided when using callbacks
-        if (is_null($compareAgainst) && is_callable($callback)) {
+        if ($callbacks !== [] && $enums == []) {
             throw new InvalidArgumentException(
-                "Invalid Argument: An ArrayComparator is required when using callbacks"
+                "Invalid Argument: When providing custom callbacks, an ArrayComparator must be provided"
             );
         }
 
-        // If two callbacks have been provided, the comparator must be ArrayComparator::Both
-        if ($compareAgainst !== ArrayComparator::Both && is_callable($callback) && is_callable($secondCallback)) {
+        if (count($callbacks) > 2) {
             throw new InvalidArgumentException(
-                "Invalid Argument: When using two callbacks the ArrayComparator must be ArrayComparator::Both"
+                "Invalid Argument: Only two callbacks are allowed"
             );
         }
 
-        // Process array
-        if (!is_null($callback) && is_callable($callback)) {
-            return match ($compareAgainst) {
-                ArrayComparator::Key => array_intersect_uassoc($array, ...$arrays, ...[$callback]),
-                ArrayComparator::Value => array_uintersect_assoc($array, ...$arrays, ...[$callback]),
-                ArrayComparator::Both => array_uintersect_uassoc($array, ...$arrays, ...[$callback, $secondCallback])
+        if ($callbacks !== []) {
+            $comparator = $enums[0] ?? throw new LogicException(
+                "Invalid Comparator: No ArrayComparator enum provided"
+            );
+
+            if (count($callbacks) === 2 && $comparator !== ArrayComparator::Both) {
+                throw new LogicException(
+                    "Invalid Comparator: Only ArrayComparator::Both can be used with two callbacks"
+                );
+            }
+
+            if (count($callbacks) < 2 && $comparator == ArrayComparator::Both) {
+                throw new LogicException(
+                    "Invalid Comparator: ArrayComparator::Both can be used only with two callbacks"
+                );
+            }
+
+            return match ($comparator) {
+                ArrayComparator::Key => array_intersect_uassoc($array, ...$arrays, ...$callbacks),
+                ArrayComparator::Value => array_uintersect_assoc($array, ...$arrays, ...$callbacks),
+                ArrayComparator::Both => array_uintersect_uassoc($array, ...$arrays, ...$callbacks),
+                default => array_intersect_assoc($array, ...$arrays)
             };
-        } else {
-            return array_intersect_assoc($array, ...$arrays);
         }
+
+        return array_intersect_assoc($array, ...$arrays);
     }
 
     /**
@@ -1823,6 +1827,8 @@ class Arrays extends StaticClass
      * This method compares only the keys (not values) across multiple arrays and returns
      * key-value pairs from the first array whose keys appear in all other arrays. The values
      * don't need to match, only the keys. You can optionally provide a custom comparison function for keys.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
      *
      * Example:
      * ```php
@@ -1850,29 +1856,26 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to compare from
-     * @param callable|array|null $callback Optional comparison function for custom key comparison
-     *  The callback has the signature `function (mixed $a, mixed $b): int`
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @param array ...$arrays Arrays to compare against
      * @return array Returns key-value pairs whose keys are found in all arrays
      * @see Arrays::intersect()
      */
-    public static function intersectKeys(array $array, callable|array|null $callback = null, array ...$arrays): array
+    public static function intersectKeys(array $array, ...$arrays): array
     {
-        if (is_array($callback)) {
-            $arrays = array_merge([$callback], $arrays);
-        }
+        $callbacks = self::getCallbacksFromArguments($arrays, 1);
 
         if (count($arrays) < 1) {
             throw new InvalidArgumentException(
-                "Invalid Argument: At least two no empty arrays are required"
+                "Invalid Argument: At least one comparison array is required"
             );
         }
 
-        if (!is_null($callback) && is_callable($callback)) {
-            return array_intersect_ukey($array, ...$arrays, ...[$callback]);
-        } else {
-            return array_intersect_key($array, ...$arrays);
+        if ($callbacks !== []) {
+            return array_intersect_ukey($array, ...$arrays, ...$callbacks);
         }
+
+        return array_intersect_key($array, ...$arrays);
     }
 
     /**
@@ -2578,15 +2581,12 @@ class Arrays extends StaticClass
 
     /**
      * Creates a fluent wrapper for array manipulation with method chaining.
-     *
      * This method wraps an array in a Types\Arrays instance, which enables fluent method chaining
      * for array operations. Instead of calling static methods one at a time, you can chain multiple
      * operations together and call get() or toArray() at the end to retrieve the final result.
-     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
-     *
      * // Using fluent chaining (chainable methods return arrays)
      * $result = Arrays::of([1, 2, 3, 4, 5])
      *     ->filter(fn($v) => $v > 2) // Returns array - chainable
@@ -2594,59 +2594,50 @@ class Arrays extends StaticClass
      *     ->values() // Returns array - chainable
      *     ->get();
      * // Returns: [5, 4, 3]
-     *
      * // Equivalent to calling static methods individually:
      * $filtered = Arrays::filter([1, 2, 3, 4, 5], fn($v) => $v > 2);
      * $reversed = Arrays::reverse($filtered);
      * $result = Arrays::values($reversed);
-     *
      * // Alternative methods
      * $users = [
      *     ['name' => 'John', 'age' => 30],
      *     ['name' => 'Jane', 'age' => 25],
      *     ['name' => 'Bob', 'age' => 35]
      * ];
-     *
      * // You can also use toArray to get the final result
      * $names = Arrays::of($users)
      *     ->column('name')
      *     ->toArray();
      * // Returns: ['John', 'Jane', 'Bob']
-     *
      * // Or, call the object as a function to get the final result
      * $names = Arrays::of($users)
      *     ->column('name')();
      * // Returns: ['John', 'Jane', 'Bob']
-     *
      * // Or, use the object as an array
      * $names = Arrays::of($users)
      *     ->column('name');
-     *
      * $name = $names[0];
      * // Returns 'John'
      * ```
      *
      * @param array $array The array to wrap for fluent operations
-     * @return Types\Arrays A fluent wrapper instance that enables method chaining
-     * @see \Phuture\Coherence\Types\Arrays For the fluent wrapper implementation
+     * @return Type\Arrays A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Type\Arrays For the fluent wrapper implementation
      */
-    public static function of(array $array): Types\Arrays
+    public static function of(array $array): Type\Arrays
     {
-        return new Types\Arrays($array);
+        return new Type\Arrays($array);
     }
 
     /**
      * Gets a subset of the items from the given array.
-     *
      * This method returns a new array containing only the items whose keys
      * are specified in the $keys parameter. Keys that don't exist in the
      * original array will be ignored. This is useful when you need to extract
      * specific fields from a larger data structure.
-     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
-     *
      * $user = [
      *     'id' => 1,
      *     'name' => 'John Doe',
@@ -2654,15 +2645,12 @@ class Arrays extends StaticClass
      *     'password' => 'secret',
      *     'created_at' => '2023-01-01'
      * ];
-     *
      * // Extract only specific fields
      * $safeUser = Arrays::only($user, ['id', 'name', 'email']);
      * // Result: ['id' => 1, 'name' => 'John Doe', 'email' => 'john@example.com']
-     *
      * // Keys that don't exist are ignored
      * $partial = Arrays::only($user, ['id', 'name', 'nonexistent']);
      * // Result: ['id' => 1, 'name' => 'John Doe']
-     *
      * // Empty keys array returns empty array
      * $empty = Arrays::only($user, []);
      * // Result: []
@@ -3769,7 +3757,7 @@ class Arrays extends StaticClass
      */
     public static function toObject(array $array): object
     {
-        $result = new \stdClass();
+        $result = new stdClass();
         self::toObjectRecursive($array, $result, 0);
 
         return $result;
@@ -3779,10 +3767,10 @@ class Arrays extends StaticClass
      * Helper method to recursively convert arrays to objects.
      *
      * @param array $array The array to convert
-     * @param \stdClass $result The result object passed by reference
+     * @param stdClass $result The result object passed by reference
      * @param int $depth Current recursion depth
      */
-    private static function toObjectRecursive(array $array, \stdClass &$result, int $depth = 0): void
+    private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
     {
         if ($depth >= self::RECURSION_LIMIT) {
             throw new LogicException(
@@ -3791,13 +3779,13 @@ class Arrays extends StaticClass
         }
 
         foreach ($array as $key => $value) {
-            if ($value instanceof \stdClass) {
+            if ($value instanceof stdClass) {
                 $value = (array) $value;
             }
 
             if (is_array($value) && ! self::isList($value)) {
                 // Recursively convert nested arrays to objects
-                $result->{$key} = new \stdClass();
+                $result->{$key} = new stdClass();
                 self::toObjectRecursive($value, $result->{$key}, $depth + 1);
             } else {
                 // Keep scalar values

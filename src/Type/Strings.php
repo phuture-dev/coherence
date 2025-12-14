@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Types;
+namespace Phuture\Coherence\Type;
 
 use Phuture\Coherence\Support\FluentClass;
 
