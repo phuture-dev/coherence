@@ -31,8 +31,11 @@ trait ArgumentExtractor
      * extracting callable functions from the end until it encounters a non-callable.
      * The extracted callbacks are removed from the original arguments array.
      *
+     * Note: ALL trailing callbacks at the end of the array will be removed, regardless of the limit.
+     * The limit only affects how many callbacks are returned in the result.
+     *
      * @param array $arguments The arguments array to process, passed by reference
-     * @param int $limit Maximum number of callbacks to extract. Default: 2
+     * @param int $limit Maximum number of callbacks to extract and return. Default: 2
      * @return array Array of extracted callback functions, maintaining original order
      */
     private static function getCallbacksFromArguments(array &$arguments, int $limit = 2): array
@@ -61,9 +64,12 @@ trait ArgumentExtractor
      * and extracts enum values that match the specified enum type. The extracted
      * enums are removed from the original arguments array.
      *
+     * Note: ALL trailing enums at the end of the array will be removed, regardless of the limit.
+     * The limit only affects how many enums are returned in the result.
+     *
      * @param array $arguments The arguments array to search through (passed by reference)
      * @param string $enum The fully qualified enum class name
-     * @param int $limit Maximum number of enum values to extract (default: 1)
+     * @param int $limit Maximum number of enum values to extract and return (default: 1)
      * @return array Array of extracted enum values in original order
      */
     private static function getEnumsFromArguments(array &$arguments, string $enum, int $limit = 1): array
