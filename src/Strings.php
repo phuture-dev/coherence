@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use Phuture\Coherence\Class\StaticClass;
+use Phuture\Coherence\Support\StaticClass;
 
 /**
  * String utility class providing consistent wrappers around native PHP string functions.

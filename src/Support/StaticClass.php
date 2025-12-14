@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Class;
+namespace Phuture\Coherence\Support;
 
 use Phuture\Coherence\Exception\MemberAccessException;
 

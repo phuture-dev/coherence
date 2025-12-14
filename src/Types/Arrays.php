@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Types;
 
-use Phuture\Coherence\Class\FluentClass;
-use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Arrays as Transformer;
+use Phuture\Coherence\Interface\Arrayable;
+use Phuture\Coherence\Support\FluentClass;
 
 /**
  * A fluent, array-like wrapper that provides object-oriented array manipulation.

@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Phuture\Coherence;
 
 use Nette\Utils\Arrays as NetteArrays;
-use Phuture\Coherence\Class\StaticClass;
-use Phuture\Coherence\Interface\Jsonable;
-use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Enum\ArrayComparator;
-use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Exception\OutOfBoundsException;
 use Phuture\Coherence\Exception\InvalidArgumentException;
 use Phuture\Coherence\Exception\InvalidDataTypeException;
+use Phuture\Coherence\Exception\OutOfBoundsException;
+use Phuture\Coherence\Exception\LogicException;
+use Phuture\Coherence\Interface\Arrayable;
+use Phuture\Coherence\Interface\Jsonable;
+use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Support\ArgumentExtractor;
 
 /**
  * Comprehensive array manipulation and utility helper class.
@@ -38,7 +39,7 @@ use Phuture\Coherence\Exception\InvalidDataTypeException;
  */
 class Arrays extends StaticClass
 {
-    use Trait\ArgumentExtractor;
+    use ArgumentExtractor;
 
     /**
      * Maximum recursion depth for nested array operations to prevent infinite recursion.

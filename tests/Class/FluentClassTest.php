@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
-use Phuture\Coherence\Class\FluentClass;
+use Phuture\Coherence\Support\FluentClass;
 use Tester\Assert;
 use Tester\TestCase;
 

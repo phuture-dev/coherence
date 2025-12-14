@@ -59,7 +59,7 @@ All utility classes in `./src` (excluding subdirectories) follow these rules:
 **All methods MUST follow this argument ordering:**
 
 ```
-($data, [required], [callables], [optional], [variadics])
+($data, [required], [optional], [variadics])
 ```
 
 ### Detailed Breakdown
@@ -83,7 +83,7 @@ Arrays::search(array $array, mixed $needle, bool $strict = false)
 Strings::position(string $subject, string $search, int $offset = 0)
 ```
 
-#### 2. Required Operation Parameters
+#### 2. Required Parameters
 
 Search terms, needle values, patterns, or other required operation data:
 
@@ -93,17 +93,7 @@ Strings::contains(string $subject, string $search, ...)
 Hash::md5(string $data, ...)
 ```
 
-#### 3. Callable Parameters
-
-Callback functions, comparison functions, or any callable parameter:
-
-```php
-Arrays::filter(array $array, ?callable $callback, ...)
-Arrays::map(array $array, ?callable $callback, ...)
-Arrays::reduce(array $array, callable $callback, mixed $initial = null)
-```
-
-#### 4. Optional Parameters
+#### 3. Optional Parameters
 
 Flags, modes, offsets, encoding, and other optional modifiers:
 
@@ -114,7 +104,7 @@ MultibyteStrings::position(string $subject, string $search, int $offset = 0, ?st
 Hash::md5(string $data, bool $binary = false)
 ```
 
-#### 5. Variadic Parameters (ALWAYS LAST)
+#### 4. Variadic Parameters (ALWAYS LAST)
 
 Variadic parameters using the `...` operator must always be the last parameter:
 
@@ -129,7 +119,7 @@ Arrays::difference(array $array, ?callable $callback = null, array ...$arrays)
 
 ### CamelCase Naming
 
-All method names use camelCase, wrapping PHP's snake_case native functions:
+All method names use camelCase:
 
 | Native PHP Function  | Coherence Method | Class            |
 |----------------------|------------------|------------------|
@@ -562,7 +552,7 @@ public function testContainsKey(): void
 
 2. **Extend `StaticClass`**
    ```php
-   use Phuture\Coherence\Class\StaticClass;
+use Phuture\Coherence\Support\Class\StaticClass;
 
    class NewUtility extends StaticClass
    {
@@ -609,7 +599,7 @@ public function testContainsKey(): void
 
 namespace Phuture\Coherence;
 
-use Phuture\Coherence\Class\StaticClass;
+use Phuture\Coherence\Support\StaticClass;
 
 /**
  * Brief description of the utility class purpose.

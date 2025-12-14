@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
-use Phuture\Coherence\Class\StaticClass;
 use Phuture\Coherence\Exception\MemberAccessException;
+use Phuture\Coherence\Support\StaticClass;
 use Tester\Assert;
 use Tester\TestCase;
 
@@ -108,7 +108,7 @@ class StaticClassTest extends TestCase
 
     public function testClassName(): void
     {
-        Assert::same('Phuture\Coherence\Class\StaticClass', StaticClass::class);
+        Assert::same('Phuture\Coherence\Support\StaticClass', StaticClass::class);
         Assert::same('Phuture\Coherence\Tests\Class\TestStaticClass', TestStaticClass::class);
     }
 

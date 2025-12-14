@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Class;
 
-use Phuture\Coherence\Class\SingletonClass;
 use Phuture\Coherence\Exception\MemberAccessException;
 use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Support\SingletonClass;
 use Tester\Assert;
 use Tester\TestCase;
 

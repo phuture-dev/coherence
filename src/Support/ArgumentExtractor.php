@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Trait;
+namespace Phuture\Coherence\Support;
 
 use Phuture\Coherence\Exception\InvalidArgumentException;
 
