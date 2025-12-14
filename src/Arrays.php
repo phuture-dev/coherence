@@ -22,22 +22,22 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
 use Phuture\Coherence\Exception\InvalidDataTypeException;
 
 /**
- * Comprehensive array manipulation and utility helper class.
+ * Comprehensive array manipulation framework providing advanced data processing capabilities.
  *
- * This class provides a complete toolkit for working with arrays and performing common data
- * manipulation operations. It offers a clean, intuitive API with consistent parameter ordering,
- * descriptive method names, and enhanced functionality for everyday array tasks.
+ * This static utility class offers an extensive toolkit for array manipulation.
+ * It provides fluent integration, recursive operations with built-in safety limits, and supports complex
+ * data transformations including dot notation, associative array operations, and sophisticated sorting
+ * with custom comparators.
  *
- * **Features:**
- *
- * - **Access & Retrieval**: Safe access to nested arrays with default values and reference support
- * - **Modification**: Add, remove, rename, insert elements at specific positions
- * - **Searching & Filtering**: Find elements, filter by callbacks or patterns, check existence
- * - **Transformation**: Map, flatten, normalize, wrap, associate arrays by keys
- * - **Sorting**: Sort by values, keys, naturally, or with custom comparators
- * - **Set Operations**: Difference, intersection, merge, combine arrays
- * - **Aggregation**: Sum, product, count, reduce operations
- * - **Structure**: Split, join, slice, splice, chunk arrays
+ * Key Features:
+ * - Fluent interface integration
+ * - Recursive operations with built-in recursion limit protection
+ * - Comprehensive sorting capabilities with custom comparators and flags
+ * - Set operations (difference, intersect) with key/value comparison modes
+ * - Data transformation utilities (normalize, flatten, associate, notation)
+ * - Safe navigation methods with configurable defaults
+ * - Extensive filtering and querying capabilities, including regex-based grep
+ * - Performance-optimized reference-based operations for memory efficiency
  *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
