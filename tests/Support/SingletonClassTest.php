@@ -12,7 +12,7 @@ use Phuture\Coherence\Support\SingletonClass;
 use Phuture\Coherence\Exception\MemberAccessException;
 use Phuture\Coherence\Exception\SerializationException;
 
-require __DIR__ . '/../../bootstrap.php';
+require __DIR__ . '/../bootstrap.php';
 
 class SingletonClassTest extends TestCase
 {

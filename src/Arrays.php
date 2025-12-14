@@ -1215,122 +1215,6 @@ class Arrays extends StaticClass
     }
 
     /**
-     * This method converts various input types into an array.
-     *
-     * It supports various data types to arrays using smart conversion rules.
-     * It handles objects with toArray() or toJson() methods, JsonSerializable objects,
-     * existing arrays, scalar values, and JSON strings.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // From object with toArray method
-     * $obj = new class { public function toArray() { return ['a' => 1]; } };
-     * $result = Arrays::from($obj);
-     * // Returns: ['a' => 1]
-     *
-     * // From object with toJson method
-     * $obj = new class { public function toJson() { return '{"b": 2}'; } };
-     * $result = Arrays::from($obj);
-     * // Returns: ['b' => 2]
-     *
-     * // From JsonSerializable
-     * $obj = new class implements \JsonSerializable {
-     *     public function jsonSerialize() { return ['c' => 3]; }
-     * };
-     * $result = Arrays::from($obj);
-     * // Returns: ['c' => 3]
-     *
-     * // From existing array
-     * $result = Arrays::from([1, 2, 3]);
-     * // Returns: [1, 2, 3]
-     *
-     * // From scalar values
-     * $result = Arrays::from('hello');
-     * // Returns: ['hello']
-     *
-     * $result = Arrays::from(42);
-     * // Returns: [42]
-     *
-     * // From null
-     * $result = Arrays::from(null);
-     * // Returns: []
-     *
-     * // From stdClass
-     * $obj = new \stdClass();
-     * $obj->name = 'John';
-     * $result = Arrays::from($obj);
-     * // Returns: ['name' => 'John']
-     *
-     * // From JSON string
-     * $result = Arrays::from('{"name": "Jane", "age": 25}');
-     * // Returns: ['name' => 'Jane', 'age' => 25]
-     * ```
-     *
-     * @param mixed $value The value to convert to array
-     * @return array Returns the converted array
-     * @see Arrays::toObject()
-     */
-    public static function from(mixed $value): array
-    {
-        // Handle null
-        if ($value === null) {
-            return [];
-        }
-
-        // Handle existing arrays
-        if (is_array($value)) {
-            return $value;
-        }
-
-        // Handle Arrayable objects
-        if ($value instanceof Arrayable || (is_object($value) && method_exists($value, 'toArray'))) {
-            return $value->toArray();
-        }
-
-        // Handle Jsonable objects
-        if ($value instanceof Jsonable || (is_object($value) && method_exists($value, 'toJson'))) {
-            return json_decode($value->toJson(), true);
-        }
-
-        // Handle WeakMap objects
-        if ($value instanceof WeakMap) {
-            return iterator_to_array($value, false);
-        }
-
-        // Handle Traversable objects
-        if ($value instanceof Traversable) {
-            return iterator_to_array($value);
-        }
-
-        // Handle JsonSerializable objects
-        if ($value instanceof JsonSerializable) {
-            return json_decode(json_encode($value), true);
-        }
-
-        // Handle objects
-        if (is_object($value)) {
-            return (array) $value;
-        }
-
-        // Handle JSON strings
-        if (is_string($value)) {
-            $decoded = json_decode($value, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return $decoded;
-            }
-        }
-
-        // Handle scalar values
-        if (is_scalar($value)) {
-            return [$value];
-        }
-
-        return [];
-    }
-
-    /**
      * Converts a string into an array by splitting it with a separator.
      *
      * This method takes a string and splits it into an array using the specified separator.
@@ -3695,6 +3579,122 @@ class Arrays extends StaticClass
     }
 
     /**
+     * This method converts various input types into an array.
+     *
+     * It supports various data types to arrays using smart conversion rules.
+     * It handles objects with toArray() or toJson() methods, JsonSerializable objects,
+     * existing arrays, scalar values, and JSON strings.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // From object with toArray method
+     * $obj = new class { public function toArray() { return ['a' => 1]; } };
+     * $result = Arrays::toArray($obj);
+     * // Returns: ['a' => 1]
+     *
+     * // From object with toJson method
+     * $obj = new class { public function toJson() { return '{"b": 2}'; } };
+     * $result = Arrays::toArray($obj);
+     * // Returns: ['b' => 2]
+     *
+     * // From JsonSerializable
+     * $obj = new class implements \JsonSerializable {
+     *     public function jsonSerialize() { return ['c' => 3]; }
+     * };
+     * $result = Arrays::toArray($obj);
+     * // Returns: ['c' => 3]
+     *
+     * // From existing array
+     * $result = Arrays::toArray([1, 2, 3]);
+     * // Returns: [1, 2, 3]
+     *
+     * // From scalar values
+     * $result = Arrays::toArray('hello');
+     * // Returns: ['hello']
+     *
+     * $result = Arrays::toArray(42);
+     * // Returns: [42]
+     *
+     * // From null
+     * $result = Arrays::toArray(null);
+     * // Returns: []
+     *
+     * // From stdClass
+     * $obj = new \stdClass();
+     * $obj->name = 'John';
+     * $result = Arrays::toArray($obj);
+     * // Returns: ['name' => 'John']
+     *
+     * // From JSON string
+     * $result = Arrays::toArray('{"name": "Jane", "age": 25}');
+     * // Returns: ['name' => 'Jane', 'age' => 25]
+     * ```
+     *
+     * @param mixed $value The value to convert to array
+     * @return array Returns the converted array
+     * @see Arrays::toObject()
+     */
+    public static function toArray(mixed $value): array
+    {
+        // Handle null
+        if ($value === null) {
+            return [];
+        }
+
+        // Handle existing arrays
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // Handle Arrayable objects
+        if ($value instanceof Arrayable || (is_object($value) && method_exists($value, 'toArray'))) {
+            return $value->toArray();
+        }
+
+        // Handle Jsonable objects
+        if ($value instanceof Jsonable || (is_object($value) && method_exists($value, 'toJson'))) {
+            return json_decode($value->toJson(), true);
+        }
+
+        // Handle WeakMap objects
+        if ($value instanceof WeakMap) {
+            return iterator_to_array($value, false);
+        }
+
+        // Handle Traversable objects
+        if ($value instanceof Traversable) {
+            return iterator_to_array($value);
+        }
+
+        // Handle JsonSerializable objects
+        if ($value instanceof JsonSerializable) {
+            return json_decode(json_encode($value), true);
+        }
+
+        // Handle objects
+        if (is_object($value)) {
+            return (array) $value;
+        }
+
+        // Handle JSON strings
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Handle scalar values
+        if (is_scalar($value)) {
+            return [$value];
+        }
+
+        return [];
+    }
+
+    /**
      * Converts associative arrays to objects recursively, leaving lists untouched.
      *
      * This method transforms an associative array and all its nested associative arrays
@@ -3752,7 +3752,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to convert to objects, which may contain nested arrays
      * @return object Returns a stdClass object with associative arrays converted to objects and lists preserved
-     * @see Arrays::from()
+     * @see Arrays::toArray()
      * @see Arrays::normalize()
      */
     public static function toObject(array $array): object

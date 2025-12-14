@@ -41,7 +41,7 @@ namespace Phuture\Coherence\Support;
  *     }
  * }
  *
- * $result = (new FluentString('  hello  '))
+ * $result = FluentString::from('  hello  ')
  *     ->trim()
  *     ->upper()
  *     ->reverse()
@@ -103,6 +103,21 @@ abstract class FluentClass
     public function __invoke(): mixed
     {
         return $this->data;
+    }
+
+    /**
+     * Creates a new fluent instance from the given data.
+     *
+     * This static factory method provides a convenient way to create a new
+     * instance of the fluent class with initial data. It's the preferred
+     * way to instantiate fluent classes.
+     *
+     * @param mixed $data The initial data to wrap in the fluent instance
+     * @return static A new fluent instance containing the provided data
+     */
+    public static function from(mixed $data): static
+    {
+        return new static($data);
     }
 
     /**

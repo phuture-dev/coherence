@@ -11,6 +11,7 @@ use ArrayIterator;
 use IteratorAggregate;
 use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Support\FluentClass;
+use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Arrays as Transformer;
 
 /**
@@ -216,13 +217,33 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * This method compares arrays and returns the values from the current array that are not
      * present in any of the other arrays, preserving keys and checking both value and key.
      *
-     * @param callable|array|null $callback Optional comparison function or array for simple comparison (default: null)
      * @param array ...$arrays Additional arrays to compare against
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function difference(callable|array|null $callback = null, array ...$arrays): self
+    public function difference(...$arrays): self
     {
-        $this->data = Transformer::difference($this->data, $callback, ...$arrays);
+        $this->data = Transformer::difference($this->data, ...$arrays);
+
+        return $this;
+    }
+
+    /**
+     * Computes the difference of arrays with additional index check.
+     *
+     * This method compares the array against other arrays and returns the values
+     * in the first array that are not present in any of the other arrays,
+     * checking both keys and values for equality.
+     *
+     * @param array ...$arrays Arrays to compare against
+     * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
+     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function differenceAssoc(...$arrays): self
+    {
+        $this->data = Transformer::differenceAssoc($this->data, ...$arrays);
 
         return $this;
     }
@@ -233,13 +254,13 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * This method compares arrays based on their keys and returns the key/value pairs from the
      * current array whose keys are not present in any of the other arrays.
      *
-     * @param callable|array|null $callback Optional comparison function or array for simple comparison (default: null)
      * @param array ...$arrays Additional arrays to compare against
+     * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function differenceKeys(callable|array|null $callback = null, array ...$arrays): self
+    public function differenceKeys(...$arrays): self
     {
-        $this->data = Transformer::differenceKeys($this->data, $callback, ...$arrays);
+        $this->data = Transformer::differenceKeys($this->data, ...$arrays);
 
         return $this;
     }
@@ -300,13 +321,13 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * This method compares arrays and returns the values from the current array that are
      * present in all of the other arrays, preserving keys and checking both value and key.
      *
-     * @param callable|array|null $callback Optional comparison function or array for simple comparison (default: null)
      * @param array ...$arrays Additional arrays to intersect with
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function intersect(callable|array|null $callback = null, array ...$arrays): self
+    public function intersect(...$arrays): self
     {
-        $this->data = Transformer::intersect($this->data, $callback, ...$arrays);
+        $this->data = Transformer::intersect($this->data, ...$arrays);
 
         return $this;
     }
@@ -317,13 +338,32 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * This method compares arrays based on their keys and returns the key/value pairs from the
      * current array whose keys are present in all of the other arrays.
      *
-     * @param callable|array|null $callback Optional comparison function or array for simple comparison (default: null)
      * @param array ...$arrays Additional arrays to intersect with
+     * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
+     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
      * @return self An instance of the Arrays class with the transformed array
      */
-    public function intersectKeys(callable|array|null $callback = null, array ...$arrays): self
+    public function intersectAssoc(...$arrays): self
     {
-        $this->data = Transformer::intersectKeys($this->data, $callback, ...$arrays);
+        $this->data = Transformer::intersectAssoc($this->data, ...$arrays);
+
+        return $this;
+    }
+
+    /**
+     * Computes the intersection of arrays using keys for comparison.
+     *
+     * This method compares arrays based on their keys and returns the key/value pairs from the
+     * current array whose keys are present in all of the other arrays.
+     *
+     * @param array ...$arrays Additional arrays to intersect with
+     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @return self An instance of the Arrays class with the transformed array
+     */
+    public function intersectKeys(...$arrays): self
+    {
+        $this->data = Transformer::intersectKeys($this->data, ...$arrays);
 
         return $this;
     }

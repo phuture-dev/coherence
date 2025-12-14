@@ -9,7 +9,7 @@ use ReflectionClass;
 use Tester\TestCase;
 use Phuture\Coherence\Support\FluentClass;
 
-require __DIR__ . '/../../bootstrap.php';
+require __DIR__ . '/../bootstrap.php';
 
 class FluentClassTest extends TestCase
 {
@@ -17,6 +17,10 @@ class FluentClassTest extends TestCase
     {
         // Test with initial data
         $fluent = new TestFluentClass('hello');
+        Assert::same('hello', $fluent->get());
+
+        // Test with initial data and static method
+        $fluent = TestFluentClass::from('hello');
         Assert::same('hello', $fluent->get());
 
         // Test with no data

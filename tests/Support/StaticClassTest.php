@@ -12,7 +12,7 @@ use ReflectionMethod;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\MemberAccessException;
 
-require __DIR__ . '/../../bootstrap.php';
+require __DIR__ . '/../bootstrap.php';
 
 class StaticClassTest extends TestCase
 {

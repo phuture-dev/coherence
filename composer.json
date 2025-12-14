@@ -53,10 +53,13 @@
         }
     },
     "scripts": {
-        "test": "tester tests -C",
-        "analyze": "phpstan analyse src --memory-limit=4294967296",
-        "check": "phpcs --standard=PSR12 src",
-        "format": "php-cs-fixer fix"
+        "build": ["@php-cs-fixer", "@test"],
+        "test": ["@phpstan", "@phpcs", "@tester"],
+        "server": "php -S localhost:8000",
+        "php-cs-fixer": "php-cs-fixer fix",
+        "phpstan": "phpstan analyse src --memory-limit=4294967296",
+        "phpcs": "phpcs --standard=PSR12 src",
+        "tester": "tester tests -C"
     },
     "config": {
         "sort-packages": true,

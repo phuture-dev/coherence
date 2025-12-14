@@ -636,164 +636,6 @@ class ArraysTest extends TestCase
         Assert::same([1 => 'b', 2 => 'c'], $result);
     }
 
-    public function testFromWithNull(): void
-    {
-        $result = Arrays::from(null);
-        Assert::same([], $result);
-    }
-
-    public function testFromWithExistingArray(): void
-    {
-        $array = [1, 2, 3];
-        $result = Arrays::from($array);
-        Assert::same([1, 2, 3], $result);
-
-        $assocArray = ['name' => 'John', 'age' => 30];
-        $result = Arrays::from($assocArray);
-        Assert::same(['name' => 'John', 'age' => 30], $result);
-    }
-
-    public function testFromWithScalarValues(): void
-    {
-        // String
-        $result = Arrays::from('hello');
-        Assert::same(['hello'], $result);
-
-        // Integer
-        $result = Arrays::from(42);
-        Assert::same([42], $result);
-
-        // Float
-        $result = Arrays::from(3.14);
-        Assert::same([3.14], $result);
-
-        // Boolean
-        $result = Arrays::from(true);
-        Assert::same([true], $result);
-
-        $result = Arrays::from(false);
-        Assert::same([false], $result);
-    }
-
-    public function testFromWithStdClass(): void
-    {
-        $object = new stdClass();
-        $object->name = 'John';
-        $object->age = 30;
-        $object->active = true;
-
-        $result = Arrays::from($object);
-        Assert::same(['name' => 'John', 'age' => 30, 'active' => true], $result);
-    }
-
-    public function testFromWithJsonSerializable(): void
-    {
-        $object = new class implements JsonSerializable {
-            public function jsonSerialize(): array
-            {
-                return ['name' => 'Jane', 'age' => 25];
-            }
-        };
-
-        $result = Arrays::from($object);
-        Assert::same(['name' => 'Jane', 'age' => 25], $result);
-    }
-
-    public function testFromWithToObjectMethod(): void
-    {
-        $object = new class {
-            public function toArray(): array
-            {
-                return ['id' => 1, 'title' => 'Test Article'];
-            }
-        };
-
-        $result = Arrays::from($object);
-        Assert::same(['id' => 1, 'title' => 'Test Article'], $result);
-    }
-
-    public function testFromWithToJsonMethod(): void
-    {
-        $object = new class {
-            public function toJson(): string
-            {
-                return '{"product": "Laptop", "price": 999.99}';
-            }
-        };
-
-        $result = Arrays::from($object);
-        Assert::same(['product' => 'Laptop', 'price' => 999.99], $result);
-    }
-
-    public function testFromWithJsonString(): void
-    {
-        // Valid JSON object
-        $result = Arrays::from('{"name": "Alice", "age": 28}');
-        Assert::same(['name' => 'Alice', 'age' => 28], $result);
-
-        // Valid JSON array
-        $result = Arrays::from('["apple", "banana", "cherry"]');
-        Assert::same(['apple', 'banana', 'cherry'], $result);
-
-        // Nested JSON
-        $result = Arrays::from('{"user": {"name": "Bob", "email": "bob@example.com"}, "active": true}');
-        Assert::same(['user' => ['name' => 'Bob', 'email' => 'bob@example.com'], 'active' => true], $result);
-    }
-
-    public function testFromWithInvalidJsonString(): void
-    {
-        // Invalid JSON should be treated as regular string
-        $result = Arrays::from('{"invalid": json}');
-        Assert::same(['{"invalid": json}'], $result);
-
-        // Non-object JSON array should be wrapped
-        $result = Arrays::from('"just a string"');
-        Assert::same(['"just a string"'], $result);
-
-        // JSON null should be wrapped
-        $result = Arrays::from('null');
-        Assert::same(['null'], $result);
-    }
-
-    public function testFromWithRegularString(): void
-    {
-        $result = Arrays::from('regular text');
-        Assert::same(['regular text'], $result);
-
-        $result = Arrays::from('');
-        Assert::same([''], $result);
-
-        $result = Arrays::from('123');
-        Assert::same(['123'], $result);
-    }
-
-    public function testFromWithEmptyValues(): void
-    {
-        Assert::same([], Arrays::from(null));
-        Assert::same([''], Arrays::from(''));
-        Assert::same([0], Arrays::from(0));
-        Assert::same([0.0], Arrays::from(0.0));
-    }
-
-    public function testFromPrecedence(): void
-    {
-        // Test that toArray() takes precedence over other methods
-        $object = new class {
-            public function toArray(): array
-            {
-                return ['method' => 'toArray'];
-            }
-
-            public function toJson(): string
-            {
-                return '{"method": "toJson"}';
-            }
-        };
-
-        $result = Arrays::from($object);
-        Assert::same(['method' => 'toArray'], $result);
-    }
-
     public function testFromString(): void
     {
         $result = Arrays::fromString('John|Diego|Steve', '|');
@@ -1495,6 +1337,164 @@ class ArraysTest extends TestCase
         $result = Arrays::of([1, 2, 3]);
         Assert::type('Phuture\Coherence\Type\Arrays', $result);
         Assert::same([3, 2, 1], $result->reverse(false)->get());
+    }
+
+    public function testToArrayWithNull(): void
+    {
+        $result = Arrays::toArray(null);
+        Assert::same([], $result);
+    }
+
+    public function testToArrayWithExistingArray(): void
+    {
+        $array = [1, 2, 3];
+        $result = Arrays::toArray($array);
+        Assert::same([1, 2, 3], $result);
+
+        $assocArray = ['name' => 'John', 'age' => 30];
+        $result = Arrays::toArray($assocArray);
+        Assert::same(['name' => 'John', 'age' => 30], $result);
+    }
+
+    public function testToArrayWithScalarValues(): void
+    {
+        // String
+        $result = Arrays::toArray('hello');
+        Assert::same(['hello'], $result);
+
+        // Integer
+        $result = Arrays::toArray(42);
+        Assert::same([42], $result);
+
+        // Float
+        $result = Arrays::toArray(3.14);
+        Assert::same([3.14], $result);
+
+        // Boolean
+        $result = Arrays::toArray(true);
+        Assert::same([true], $result);
+
+        $result = Arrays::toArray(false);
+        Assert::same([false], $result);
+    }
+
+    public function testToArrayWithStdClass(): void
+    {
+        $object = new stdClass();
+        $object->name = 'John';
+        $object->age = 30;
+        $object->active = true;
+
+        $result = Arrays::toArray($object);
+        Assert::same(['name' => 'John', 'age' => 30, 'active' => true], $result);
+    }
+
+    public function testToArrayWithJsonSerializable(): void
+    {
+        $object = new class implements JsonSerializable {
+            public function jsonSerialize(): array
+            {
+                return ['name' => 'Jane', 'age' => 25];
+            }
+        };
+
+        $result = Arrays::toArray($object);
+        Assert::same(['name' => 'Jane', 'age' => 25], $result);
+    }
+
+    public function testToArrayWithToObjectMethod(): void
+    {
+        $object = new class {
+            public function toArray(): array
+            {
+                return ['id' => 1, 'title' => 'Test Article'];
+            }
+        };
+
+        $result = Arrays::toArray($object);
+        Assert::same(['id' => 1, 'title' => 'Test Article'], $result);
+    }
+
+    public function testToArrayWithToJsonMethod(): void
+    {
+        $object = new class {
+            public function toJson(): string
+            {
+                return '{"product": "Laptop", "price": 999.99}';
+            }
+        };
+
+        $result = Arrays::toArray($object);
+        Assert::same(['product' => 'Laptop', 'price' => 999.99], $result);
+    }
+
+    public function testToArrayWithJsonString(): void
+    {
+        // Valid JSON object
+        $result = Arrays::toArray('{"name": "Alice", "age": 28}');
+        Assert::same(['name' => 'Alice', 'age' => 28], $result);
+
+        // Valid JSON array
+        $result = Arrays::toArray('["apple", "banana", "cherry"]');
+        Assert::same(['apple', 'banana', 'cherry'], $result);
+
+        // Nested JSON
+        $result = Arrays::toArray('{"user": {"name": "Bob", "email": "bob@example.com"}, "active": true}');
+        Assert::same(['user' => ['name' => 'Bob', 'email' => 'bob@example.com'], 'active' => true], $result);
+    }
+
+    public function testToArrayWithInvalidJsonString(): void
+    {
+        // Invalid JSON should be treated as regular string
+        $result = Arrays::toArray('{"invalid": json}');
+        Assert::same(['{"invalid": json}'], $result);
+
+        // Non-object JSON array should be wrapped
+        $result = Arrays::toArray('"just a string"');
+        Assert::same(['"just a string"'], $result);
+
+        // JSON null should be wrapped
+        $result = Arrays::toArray('null');
+        Assert::same(['null'], $result);
+    }
+
+    public function testToArrayWithRegularString(): void
+    {
+        $result = Arrays::toArray('regular text');
+        Assert::same(['regular text'], $result);
+
+        $result = Arrays::toArray('');
+        Assert::same([''], $result);
+
+        $result = Arrays::toArray('123');
+        Assert::same(['123'], $result);
+    }
+
+    public function testToArrayWithEmptyValues(): void
+    {
+        Assert::same([], Arrays::toArray(null));
+        Assert::same([''], Arrays::toArray(''));
+        Assert::same([0], Arrays::toArray(0));
+        Assert::same([0.0], Arrays::toArray(0.0));
+    }
+
+    public function testToArrayPrecedence(): void
+    {
+        // Test that toArray() takes precedence over other methods
+        $object = new class {
+            public function toArray(): array
+            {
+                return ['method' => 'toArray'];
+            }
+
+            public function toJson(): string
+            {
+                return '{"method": "toJson"}';
+            }
+        };
+
+        $result = Arrays::toArray($object);
+        Assert::same(['method' => 'toArray'], $result);
     }
 
     public function testToObject(): void
