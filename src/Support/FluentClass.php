@@ -118,7 +118,7 @@ abstract class FluentClass
      *
      * @return mixed The wrapped data after all transformations
      */
-    final public function get(): mixed
+    public function get(): mixed
     {
         return $this->data;
     }

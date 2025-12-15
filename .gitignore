@@ -3,3 +3,4 @@
 /tests/output/
 /tests/*/output/
 /.php-cs-fixer.cache
+/debug_*.php

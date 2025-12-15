@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Tests\Class;
+namespace Phuture\Coherence\Tests\Support;
 
 use Tester\Assert;
 use ReflectionClass;
@@ -13,6 +13,12 @@ require __DIR__ . '/../bootstrap.php';
 
 class FluentClassTest extends TestCase
 {
+    public function testClassIsAbstract(): void
+    {
+        // Verify that FluentClass itself is not meant to be instantiated
+        $reflection = new ReflectionClass(FluentClass::class);
+        Assert::true($reflection->isAbstract());
+    }
     public function testConstructor(): void
     {
         // Test with initial data
@@ -49,13 +55,6 @@ class FluentClassTest extends TestCase
 
         Assert::same('OLLEH', $result);
     }
-
-    public function testClassIsAbstract(): void
-    {
-        // Verify that FluentClass itself is not meant to be instantiated
-        $reflection = new ReflectionClass(FluentClass::class);
-        Assert::true($reflection->isAbstract());
-    }
 }
 
 /**
@@ -63,21 +62,23 @@ class FluentClassTest extends TestCase
  */
 class TestFluentClass extends FluentClass
 {
+    public function reverse(): self
+    {
+        $this->data = strrev($this->data);
+
+        return $this;
+    }
     public function trim(): self
     {
         $this->data = trim($this->data);
+
         return $this;
     }
 
     public function upper(): self
     {
         $this->data = strtoupper($this->data);
-        return $this;
-    }
 
-    public function reverse(): self
-    {
-        $this->data = strrev($this->data);
         return $this;
     }
 }

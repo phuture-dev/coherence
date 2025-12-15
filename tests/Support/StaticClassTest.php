@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Tests\Class;
+namespace Phuture\Coherence\Tests\Support;
 
 use Error;
 use Tester\Assert;
@@ -35,41 +35,23 @@ class StaticClassTest extends TestCase
         }, Error::class);
     }
 
-    public function testStaticMethodCall(): void
+    public function testClassExistsAndIsAccessible(): void
     {
-        // Test that static method calls work normally
-        $result = TestStaticClass::testMethod('hello');
-        Assert::same('hello', $result);
-
-        // Test with multiple parameters
-        $result = TestStaticClass::testMethodWithParams(5, 10);
-        Assert::same(15, $result);
-
-        // Test method that returns boolean
-        Assert::true(TestStaticClass::testBooleanMethod(true));
-        Assert::false(TestStaticClass::testBooleanMethod(false));
+        Assert::true(class_exists(StaticClass::class));
+        Assert::true(class_exists(TestStaticClass::class));
     }
 
-    public function testUndefinedStaticMethodCall(): void
+    public function testClassIsAbstract(): void
     {
-        Assert::exception(function () {
-            TestStaticClass::nonExistentMethod();
-        }, MemberAccessException::class);
+        // Verify that StaticClass itself is not meant to be instantiated
+        $reflection = new ReflectionClass(StaticClass::class);
+        Assert::true($reflection->isAbstract());
     }
 
-    public function testStaticPropertyAccess(): void
+    public function testClassName(): void
     {
-        // Test accessing static properties works
-        Assert::same('default', TestStaticClass::$staticProperty);
-
-        // Test modifying static property
-        TestStaticClass::$staticProperty = 'modified';
-        Assert::same('modified', TestStaticClass::$staticProperty);
-    }
-
-    public function testStaticConstantAccess(): void
-    {
-        Assert::same('CONSTANT_VALUE', TestStaticClass::TEST_CONSTANT);
+        Assert::same('Phuture\Coherence\Support\StaticClass', StaticClass::class);
+        Assert::same('Phuture\Coherence\Tests\Support\TestStaticClass', TestStaticClass::class);
     }
 
     public function testInheritanceWorks(): void
@@ -81,6 +63,13 @@ class StaticClassTest extends TestCase
         // Test that parent methods are accessible
         $result = ExtendedStaticClass::testMethod('parent');
         Assert::same('parent', $result);
+    }
+
+    public function testIsInstanceofStaticClass(): void
+    {
+        // Even though static classes aren't instantiated, we can check class hierarchy
+        Assert::true(is_a(TestStaticClass::class, StaticClass::class, true));
+        Assert::true(is_a(ExtendedStaticClass::class, StaticClass::class, true));
     }
 
     public function testMethodVisibility(): void
@@ -96,30 +85,41 @@ class StaticClassTest extends TestCase
         Assert::true($method->isPrivate());
     }
 
-    public function testClassIsAbstract(): void
+    public function testStaticConstantAccess(): void
     {
-        // Verify that StaticClass itself is not meant to be instantiated
-        $reflection = new ReflectionClass(StaticClass::class);
-        Assert::true($reflection->isAbstract());
+        Assert::same('CONSTANT_VALUE', TestStaticClass::TEST_CONSTANT);
     }
 
-    public function testClassExistsAndIsAccessible(): void
+    public function testStaticMethodCall(): void
     {
-        Assert::true(class_exists(StaticClass::class));
-        Assert::true(class_exists(TestStaticClass::class));
+        // Test that static method calls work normally
+        $result = TestStaticClass::testMethod('hello');
+        Assert::same('hello', $result);
+
+        // Test with multiple parameters
+        $result = TestStaticClass::testMethodWithParams(5, 10);
+        Assert::same(15, $result);
+
+        // Test method that returns boolean
+        Assert::true(TestStaticClass::testBooleanMethod(true));
+        Assert::false(TestStaticClass::testBooleanMethod(false));
     }
 
-    public function testClassName(): void
+    public function testStaticPropertyAccess(): void
     {
-        Assert::same('Phuture\Coherence\Support\StaticClass', StaticClass::class);
-        Assert::same('Phuture\Coherence\Tests\Class\TestStaticClass', TestStaticClass::class);
+        // Test accessing static properties works
+        Assert::same('default', TestStaticClass::$staticProperty);
+
+        // Test modifying static property
+        TestStaticClass::$staticProperty = 'modified';
+        Assert::same('modified', TestStaticClass::$staticProperty);
     }
 
-    public function testIsInstanceofStaticClass(): void
+    public function testUndefinedStaticMethodCall(): void
     {
-        // Even though static classes aren't instantiated, we can check class hierarchy
-        Assert::true(is_a(TestStaticClass::class, StaticClass::class, true));
-        Assert::true(is_a(ExtendedStaticClass::class, StaticClass::class, true));
+        Assert::exception(function () {
+            TestStaticClass::nonExistentMethod();
+        }, MemberAccessException::class);
     }
 }
 
@@ -128,9 +128,18 @@ class StaticClassTest extends TestCase
  */
 class TestStaticClass extends StaticClass
 {
+    public const TEST_CONSTANT = 'CONSTANT_VALUE';
     public static string $staticProperty = 'default';
 
-    const TEST_CONSTANT = 'CONSTANT_VALUE';
+    public static function publicMethod(): string
+    {
+        return 'public';
+    }
+
+    public static function testBooleanMethod(bool $input): bool
+    {
+        return $input;
+    }
 
     public static function testMethod(string $input): string
     {
@@ -140,16 +149,6 @@ class TestStaticClass extends StaticClass
     public static function testMethodWithParams(int $a, int $b): int
     {
         return $a + $b;
-    }
-
-    public static function testBooleanMethod(bool $input): bool
-    {
-        return $input;
-    }
-
-    public static function publicMethod(): string
-    {
-        return 'public';
     }
 
     private static function privateMethod(): string

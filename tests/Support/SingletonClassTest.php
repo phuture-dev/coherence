@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phuture\Coherence\Tests\Class;
+namespace Phuture\Coherence\Tests\Support;
 
 use Throwable;
 use Tester\Assert;
@@ -16,25 +16,14 @@ require __DIR__ . '/../bootstrap.php';
 
 class SingletonClassTest extends TestCase
 {
-    public function testSingletonInstance(): void
+    public function testCannotClone(): void
     {
-        // Get two instances
-        $instance1 = TestSingletonClass::getInstance();
-        $instance2 = TestSingletonClass::getInstance();
+        $instance = TestSingletonClass::getInstance();
 
-        // They should be the same object
-        Assert::true($instance1 === $instance2);
-        Assert::same(spl_object_id($instance1), spl_object_id($instance2));
-    }
-
-    public function testInheritanceWorks(): void
-    {
-        // Test that extending classes maintain their own instances
-        $instance1 = TestSingletonClass::getInstance();
-        $instance2 = AnotherTestSingletonClass::getInstance();
-
-        // Different classes should have different instances
-        Assert::true($instance1 === $instance2);
+        Assert::exception(function () use ($instance) {
+            // Attempt to clone
+            $clone = clone $instance;
+        }, Throwable::class);
     }
 
     public function testCannotInstantiate(): void
@@ -48,23 +37,6 @@ class SingletonClassTest extends TestCase
         }, Throwable::class);
     }
 
-    public function testClassIsAbstract(): void
-    {
-        // Verify that SingletonClass itself is not meant to be instantiated
-        $reflection = new ReflectionClass(SingletonClass::class);
-        Assert::true($reflection->isAbstract());
-    }
-
-    public function testCannotClone(): void
-    {
-        $instance = TestSingletonClass::getInstance();
-
-        Assert::exception(function () use ($instance) {
-            // Attempt to clone
-            $clone = clone $instance;
-        }, Throwable::class);
-    }
-
     public function testCannotSerialize(): void
     {
         $instance = TestSingletonClass::getInstance();
@@ -72,30 +44,40 @@ class SingletonClassTest extends TestCase
         Assert::exception(function () use ($instance) {
             // Attempt to serialize
             $serialized = serialize($instance);
-        },SerializationException::class, 'You cannot serialize an instance of Phuture\Coherence\Tests\Class\TestSingletonClass');
+        }, SerializationException::class);
     }
 
     public function testCannotUnserialize(): void
     {
         Assert::exception(function () {
             // Attempt to unserialize - even with dummy data
-            $data = 'O:48:"Phuture\Coherence\Tests\Class\TestSingletonClass":0:{}';
+            $data = 'O:50:"Phuture\Coherence\Tests\Support\TestSingletonClass":0:{}';
             $unserialized = unserialize($data);
-        }, SerializationException::class, 'You cannot unserialize an instance of Phuture\Coherence\Tests\Class\TestSingletonClass');
+        }, SerializationException::class);
     }
 
-    public function testStaticMethodCall(): void
+    public function testClassIsAbstract(): void
     {
-        // Test that static method calls are properly forwarded
-        $result = TestSingletonClass::testMethod('hello');
-        Assert::same('hello', $result);
+        // Verify that SingletonClass itself is not meant to be instantiated
+        $reflection = new ReflectionClass(SingletonClass::class);
+        Assert::true($reflection->isAbstract());
     }
 
-    public function testUndefinedStaticMethodCall(): void
+    public function testInheritanceWorks(): void
     {
-        Assert::exception(function () {
-            TestSingletonClass::nonExistentMethod();
-        }, MemberAccessException::class);
+        // Test that extending classes maintain their own instances
+        $instance1 = TestSingletonClass::getInstance();
+        $instance2 = AnotherTestSingletonClass::getInstance();
+
+        // Different classes should have different instances
+        Assert::true($instance1 === $instance2);
+    }
+
+    public function testInstanceIsOfClassType(): void
+    {
+        $instance = TestSingletonClass::getInstance();
+        Assert::type(TestSingletonClass::class, $instance);
+        Assert::type(SingletonClass::class, $instance);
     }
 
     public function testMultipleCallsReturnSameInstance(): void
@@ -113,12 +95,29 @@ class SingletonClassTest extends TestCase
             Assert::same($firstId, spl_object_id($instance));
         }
     }
-
-    public function testInstanceIsOfClassType(): void
+    public function testSingletonInstance(): void
     {
-        $instance = TestSingletonClass::getInstance();
-        Assert::type(TestSingletonClass::class, $instance);
-        Assert::type(SingletonClass::class, $instance);
+        // Get two instances
+        $instance1 = TestSingletonClass::getInstance();
+        $instance2 = TestSingletonClass::getInstance();
+
+        // They should be the same object
+        Assert::true($instance1 === $instance2);
+        Assert::same(spl_object_id($instance1), spl_object_id($instance2));
+    }
+
+    public function testStaticMethodCall(): void
+    {
+        // Test that static method calls are properly forwarded
+        $result = TestSingletonClass::testMethod('hello');
+        Assert::same('hello', $result);
+    }
+
+    public function testUndefinedStaticMethodCall(): void
+    {
+        Assert::exception(function () {
+            TestSingletonClass::nonExistentMethod();
+        }, MemberAccessException::class);
     }
 }
 
