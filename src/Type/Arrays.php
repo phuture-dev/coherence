@@ -666,14 +666,14 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     /**
      * Sort the array values using a callback function.
      *
-     * @param callable|null $callback Custom comparison function
      * @param bool $reverse Whether to sort in reverse order
+     * @param callable|null $callback Custom comparison function
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::sort()
      */
-    public function sort(?callable $callback = null, bool $reverse = false): self
+    public function sort(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sort($this->data, $callback, $reverse);
+        Transformer::sort($this->data, $reverse, $callback);
 
         return $this;
     }
@@ -681,14 +681,14 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     /**
      * Sort an associative array by values while maintaining key association.
      *
-     * @param callable|null $callback Custom comparison function
      * @param bool $reverse Whether to sort in reverse order
+     * @param callable|null $callback Custom comparison function
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::sortAssoc()
      */
-    public function sortAssoc(?callable $callback = null, bool $reverse = false): self
+    public function sortAssoc(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sortAssoc($this->data, $callback, $reverse);
+        Transformer::sortAssoc($this->data, $reverse, $callback);
 
         return $this;
     }
@@ -696,14 +696,14 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     /**
      * Sort the array by keys.
      *
-     * @param callable|null $callback Custom comparison function for keys
      * @param bool $reverse Whether to sort in reverse order
+     * @param callable|null $callback Custom comparison function for keys
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::sortKeys()
      */
-    public function sortKeys(?callable $callback = null, bool $reverse = false): self
+    public function sortKeys(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sortKeys($this->data, $callback, $reverse);
+        Transformer::sortKeys($this->data, $reverse, $callback);
 
         return $this;
     }

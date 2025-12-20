@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Support;
 
-use Tester\Assert;
 use ReflectionClass;
-use Tester\TestCase;
+use Tester\{Assert, TestCase};
 use Phuture\Coherence\Support\FluentClass;
 
 require __DIR__ . '/../bootstrap.php';

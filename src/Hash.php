@@ -7,8 +7,7 @@ namespace Phuture\Coherence;
 use HashContext;
 use Random\RandomException;
 use Phuture\Coherence\Support\StaticClass;
-use Phuture\Coherence\Exception\RuntimeException;
-use Phuture\Coherence\Exception\InvalidArgumentException;
+use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 /**
  * Comprehensive cryptographic hash utility class.
@@ -1307,7 +1306,7 @@ class Hash extends StaticClass
      *
      * @param string $password The password to derive the key from
      * @param string|null $salt Optional salt value (default: null to generate random salt)
-     * @param int $iterations Number of hash iterations (default: 10000)
+     * @param int $iterations Number of hash iterations (default: 100000)
      * @param int $length Desired length of derived key in bytes (default: 32)
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return string Returns the derived key as raw binary data
@@ -1315,7 +1314,7 @@ class Hash extends StaticClass
     public static function pbkdf2(
         string $password,
         string $salt = null,
-        int $iterations = 10000,
+        int $iterations = self::RECURSION_LIMIT,
         int $length = 32,
         string $algo = 'sha256'
     ): string {

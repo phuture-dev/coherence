@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests\Support;
 
 use Error;
-use Tester\Assert;
 use ReflectionClass;
-use Tester\TestCase;
 use ReflectionMethod;
+use Tester\{Assert, TestCase};
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\MemberAccessException;
 

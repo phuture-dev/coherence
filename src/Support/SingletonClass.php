@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Support;
 
 use Throwable;
-use Phuture\Coherence\Exception\MemberAccessException;
-use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.

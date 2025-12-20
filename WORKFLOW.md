@@ -22,8 +22,7 @@ This document establishes the workflow, coding standards, and architectural patt
 
 ## Project Overview
 
-**Phuture Coherence** is a consistency-focused PHP utility library that provides standardized, predictable, and uniform
-function wrappers and polyfills. The library enables cleaner APIs and more maintainable codebases without modifying native PHP behavior.
+**Coherence** is a modern PHP utility library that brings consistency and elegance to your codebase with well-thought helpers.
 
 ### Key Principles
 

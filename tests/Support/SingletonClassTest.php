@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests\Support;
 
 use Throwable;
-use Tester\Assert;
 use ReflectionClass;
-use Tester\TestCase;
+use Tester\{Assert, TestCase};
 use Phuture\Coherence\Support\SingletonClass;
-use Phuture\Coherence\Exception\MemberAccessException;
-use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
 
 require __DIR__ . '/../bootstrap.php';
 

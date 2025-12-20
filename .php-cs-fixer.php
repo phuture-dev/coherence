@@ -11,6 +11,8 @@ $finder = Finder::create()
 return (new Config())
     ->setRules([
         '@PSR12' => true,
+        'group_import' => true,
+        'single_import_per_statement' => false,
         'ordered_imports' => [
             'sort_algorithm' => 'length',
             'imports_order' => [

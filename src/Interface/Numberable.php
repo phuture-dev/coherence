@@ -12,44 +12,6 @@ namespace Phuture\Coherence\Interface;
  * can be treated as numbers in various contexts, allowing for flexible
  * type conversion and numeric operations.
  *
- * Example:
- * ```php
- * namespace Phuture\Coherence;
- *
- * use Phuture\Coherence\Interface\Numberable;
- *
- * class Price implements Numberable
- * {
- *     public function __construct(private string $value) {}
- *
- *     public function toNumber(): int|float
- *     {
- *         return (float) $this->value;
- *     }
- *
- *     public function toInt(): int
- *     {
- *         return (int) $this->value;
- *     }
- *
- *     public function toFloat(): float
- *     {
- *         return (float) $this->value;
- *     }
- * }
- *
- * $price = new Price('19.99');
- *
- * // Get the most appropriate numeric type
- * $value = $price->toNumber(); // Returns: 19.99 (float)
- *
- * // Get integer representation (truncates decimals)
- * $wholePrice = $price->toInt(); // Returns: 19 (int)
- *
- * // Get float representation
- * $floatPrice = $price->toFloat(); // Returns: 19.99 (float)
- * ```
- *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture

@@ -11,26 +11,6 @@ namespace Phuture\Coherence\Interface;
  * to their array representation, making it easier to work with different
  * data types consistently.
  *
- * Example:
- * ```php
- * namespace Phuture\Coherence;
- *
- * use Phuture\Coherence\Interface\Arrayable;
- *
- * class User implements Arrayable
- * {
- *     public function __construct(private string $name, private int $age) {}
- *
- *     public function toArray(): array
- *     {
- *         return ['name' => $this->name, 'age' => $this->age];
- *     }
- * }
- *
- * $user = new User('John', 30);
- * $array = $user->toArray(); // ['name' => 'John', 'age' => 30]
- * ```
- *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture

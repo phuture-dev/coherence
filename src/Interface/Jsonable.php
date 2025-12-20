@@ -11,26 +11,6 @@ namespace Phuture\Coherence\Interface;
  * to their JSON representation, making it easier to serialize objects
  * for API responses, storage, or transmission.
  *
- * Example:
- * ```php
- * namespace Phuture\Coherence;
- *
- * use Phuture\Coherence\Interface\Jsonable;
- *
- * class Product implements Jsonable
- * {
- *     public function __construct(private string $name, private float $price) {}
- *
- *     public function toJson(): string
- *     {
- *         return json_encode(['name' => $this->name, 'price' => $this->price]);
- *     }
- * }
- *
- * $product = new Product('Laptop', 999.99);
- * $json = $product->toJson(); // {"name":"Laptop","price":999.99}
- * ```
- *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture

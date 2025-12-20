@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests\Support;
 
 use stdClass;
-use Tester\Assert;
-use Tester\TestCase;
+use Tester\{Assert, TestCase};
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Support\ArgumentExtractor;
 use Phuture\Coherence\Exception\InvalidArgumentException;

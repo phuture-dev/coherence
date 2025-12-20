@@ -6,14 +6,11 @@ namespace Phuture\Coherence\Tests;
 
 use stdClass;
 use ArrayObject;
-use Tester\Assert;
-use Tester\TestCase;
 use JsonSerializable;
 use Phuture\Coherence\Arrays;
+use Tester\{Assert, TestCase};
 use Phuture\Coherence\Enum\ArrayComparator;
-use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Exception\OutOfBoundsException;
-use Phuture\Coherence\Exception\InvalidArgumentException;
+use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException, OutOfBoundsException};
 
 require __DIR__ . '/bootstrap.php';
 
@@ -1822,7 +1819,7 @@ class ArraysTest extends TestCase
 
     public function testRecursionLimitConstant(): void
     {
-        Assert::same(100000, Arrays::RECURSION_LIMIT);
+        Assert::same(1000, Arrays::RECURSION_LIMIT);
     }
 
     public function testReduce(): void
@@ -1952,9 +1949,10 @@ class ArraysTest extends TestCase
     public function testShiftEmpty(): void
     {
         $array = [];
-        $result = Arrays::shift($array);
-        Assert::null($result);
-        Assert::same([], $array);
+        Assert::exception(
+            fn () => Arrays::shift($array),
+            OutOfBoundsException::class
+        );
     }
 
     public function testShuffle(): void
@@ -2018,7 +2016,7 @@ class ArraysTest extends TestCase
     public function testSortAssocReverse(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        Arrays::sortAssoc($array, null, true);
+        Arrays::sortAssoc($array, true);
         Assert::same(['c' => 3, 'b' => 2, 'a' => 1], $array);
     }
 
@@ -2032,14 +2030,14 @@ class ArraysTest extends TestCase
     public function testSortKeysReverse(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        Arrays::sortKeys($array, null, true);
+        Arrays::sortKeys($array, true);
         Assert::same(['c' => 3, 'b' => 2, 'a' => 1], $array);
     }
 
     public function testSortKeysWithCallback(): void
     {
         $array = ['B' => 2, 'a' => 1, 'C' => 3];
-        Arrays::sortKeys($array, fn ($a, $b) => strcasecmp($a, $b));
+        Arrays::sortKeys($array, false, fn ($a, $b) => strcasecmp($a, $b));
         Assert::same(['a' => 1, 'B' => 2, 'C' => 3], $array);
     }
 
@@ -2062,14 +2060,14 @@ class ArraysTest extends TestCase
     public function testSortReverse(): void
     {
         $array = [1, 3, 2];
-        Arrays::sort($array, null, true);
+        Arrays::sort($array, true);
         Assert::same([3, 2, 1], $array);
     }
 
     public function testSortWithCallback(): void
     {
         $array = ['a', 'B', 'c'];
-        Arrays::sort($array, fn ($a, $b) => strcasecmp($a, $b));
+        Arrays::sort($array, false, fn ($a, $b) => strcasecmp($a, $b));
         Assert::same(['a', 'B', 'c'], $array);
     }
 

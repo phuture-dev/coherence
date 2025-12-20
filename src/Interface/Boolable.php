@@ -11,33 +11,6 @@ namespace Phuture\Coherence\Interface;
  * to their boolean representation, making it easier to evaluate objects
  * in conditional statements or logical operations.
  *
- * Example:
- * ```php
- * namespace Phuture\Coherence;
- *
- * use Phuture\Coherence\Interface\Boolable;
- *
- * class Permission implements Boolable
- * {
- *     public function __construct(private bool $granted) {}
- *
- *     public function toBool(): bool
- *     {
- *         return $this->granted;
- *     }
- *
- *     public function isGranted(): bool
- *     {
- *         return $this->toBool();
- *     }
- * }
- *
- * $permission = new Permission(true);
- * if ($permission->toBool()) {
- *     echo "Access granted";
- * }
- * ```
- *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture

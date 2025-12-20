@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests;
 
 use stdClass;
-use Tester\Assert;
-use Tester\TestCase;
 use Phuture\Coherence\Hash;
-use Phuture\Coherence\Exception\RuntimeException;
-use Phuture\Coherence\Exception\InvalidArgumentException;
+use Tester\{Assert, TestCase};
+use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 require __DIR__ . '/bootstrap.php';
 
@@ -601,22 +599,6 @@ class HashTest extends TestCase
         Assert::true(in_array('sha256', $algorithms), 'SHA256 should be available for PBKDF2');
     }
 
-    public function testPbkdf2Supports(): void
-    {
-        // Test supported algorithms
-        Assert::true(Hash::pbkdf2Supports('sha256'));
-        Assert::true(Hash::pbkdf2Supports('sha1'));
-        Assert::true(Hash::pbkdf2Supports('sha512'));
-
-        // Test unsupported algorithms
-        Assert::false(Hash::pbkdf2Supports('md5'));
-        Assert::false(Hash::pbkdf2Supports('invalid_algorithm'));
-        Assert::false(Hash::pbkdf2Supports(''));
-
-        // Test case sensitivity
-        Assert::false(Hash::pbkdf2Supports('SHA256')); // Should be lowercase
-    }
-
     public function testPbkdf2ErrorCases(): void
     {
         // Test invalid iterations
@@ -645,6 +627,22 @@ class HashTest extends TestCase
         Assert::exception(function () {
             Hash::pbkdf2('password', 'salt', 1000, 32, 'invalid_algorithm');
         }, InvalidArgumentException::class, 'Invalid Argument: Algorithm invalid_algorithm is not supported for PBKDF2');
+    }
+
+    public function testPbkdf2Supports(): void
+    {
+        // Test supported algorithms
+        Assert::true(Hash::pbkdf2Supports('sha256'));
+        Assert::true(Hash::pbkdf2Supports('sha1'));
+        Assert::true(Hash::pbkdf2Supports('sha512'));
+
+        // Test unsupported algorithms
+        Assert::false(Hash::pbkdf2Supports('md5'));
+        Assert::false(Hash::pbkdf2Supports('invalid_algorithm'));
+        Assert::false(Hash::pbkdf2Supports(''));
+
+        // Test case sensitivity
+        Assert::false(Hash::pbkdf2Supports('SHA256')); // Should be lowercase
     }
 
     public function testRandom(): void

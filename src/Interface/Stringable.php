@@ -11,26 +11,6 @@ namespace Phuture\Coherence\Interface;
  * to their string representation, making it easier to display, log, or
  * serialize objects as text.
  *
- * Example:
- * ```php
- * namespace Phuture\Coherence;
- *
- * use Phuture\Coherence\Interface\Stringable;
- *
- * class Money implements Stringable
- * {
- *     public function __construct(private float $amount, private string $currency) {}
- *
- *     public function toString(): string
- *     {
- *         return sprintf('%s %.2f', $this->currency, $this->amount);
- *     }
- * }
- *
- * $money = new Money(123.45, 'USD');
- * echo $money->toString(); // USD 123.45
- * ```
- *
  * @copyright Copyright (c) 2025, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
