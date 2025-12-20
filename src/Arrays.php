@@ -83,7 +83,7 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to retrieve the reference from (passed by reference)
-     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path)
+     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path).
      * @return mixed Returns a reference to the array element
      * @throws InvalidArgumentException If the traversed item is not an array
      * @see Arrays::get()
@@ -125,7 +125,7 @@ class Arrays extends StaticClass
      * // Returns: true
      * ```
      *
-     * @param mixed $value The value to check for array accessibility
+     * @param mixed $value The value to check for array accessibility.
      * @return bool Returns true if the value can be accessed as an array, false otherwise
      */
     public static function accessible(mixed $value): bool
@@ -159,7 +159,7 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to add key-value pairs to (passed by reference)
-     * @param array $items Associative array of key-value pairs to append
+     * @param array $items Associative array of key-value pairs to append.
      * @see Arrays::prepend()
      */
     public static function append(array &$array, array $items): void
@@ -196,9 +196,9 @@ class Arrays extends StaticClass
      * // Returns: [1 => ['id' => 1, ...], 2 => ['id' => 2, ...]]
      * ```
      *
-     * @param array $array The array to transform
-     * @param string|int $key The field to use as the associative array key
-     * @param string|int|null $value Optional field to use as the value. If null, uses the entire item
+     * @param array $array The array to transform.
+     * @param string|int $key The field to use as the associative array key.
+     * @param string|int|null $value Optional field to use as the value. If null, uses the entire item.
      * @return array Returns an associative array indexed by the specified key
      */
     public static function associate(array $array, string|int $key, string|int|null $value = null): array
@@ -249,8 +249,8 @@ class Arrays extends StaticClass
      * // Returns: ['NAME' => 'John', 'EMAIL' => 'john@example.com', 'AGE' => 30]
      * ```
      *
-     * @param array $array The array whose keys to change case
-     * @param int $case Either CASE_LOWER (default) or CASE_UPPER
+     * @param array $array The array whose keys to change case.
+     * @param int $case Either CASE_LOWER (default) or CASE_UPPER.
      * @return array Returns a new array with case-changed keys
      */
     public static function changeKeyCase(array $array, int $case = CASE_LOWER): array
@@ -285,7 +285,7 @@ class Arrays extends StaticClass
      * // Returns: ['a' => 1, 'b' => 2, 'c' => 3]
      * ```
      *
-     * @param array $array An array containing other arrays to merge
+     * @param array $array An array containing other arrays to merge.
      * @return array Returns a single flattened array with all values from the nested arrays
      * @see Arrays::flatten()
      */
@@ -319,9 +319,9 @@ class Arrays extends StaticClass
      * // Returns: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
      * ```
      *
-     * @param array $array The multidimensional array to extract from
-     * @param int|string|null $column The column name or index to extract
-     * @param int|string|null $index Optional column to use as keys in the result (default: null)
+     * @param array $array The multidimensional array to extract from.
+     * @param int|string|null $column The column name or index to extract.
+     * @param int|string|null $index Optional column to use as keys in the result (default: null).
      * @return array Returns an array of values from the specified column
      */
     public static function column(array $array, int|string|null $column, int|string|null $index = null): array
@@ -401,8 +401,8 @@ class Arrays extends StaticClass
      * // Returns: true
      * ```
      *
-     * @param array $array The array to search in
-     * @param mixed $value The value to search for
+     * @param array $array The array to search in.
+     * @param mixed $value The value to search for.
      * @return bool Returns true if the value exists in the array, false otherwise
      * @see Arrays::exists()
      * @see Arrays::search()
@@ -432,7 +432,7 @@ class Arrays extends StaticClass
      * // Returns: [1 => 1, 2 => 2, 3 => 3]
      * ```
      *
-     * @param array $array The array whose values to count
+     * @param array $array The array whose values to count.
      * @return array Returns an associative array with values as keys and occurrence counts as values
      * @see Arrays::length()
      */
@@ -499,7 +499,7 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Expands a flattened array with dot notation keys (denotes) back into a multidimensional array.
+     * Expands a flattened array with dot notation keys back into a multidimensional array.
      *
      * This method takes a flat array where keys use dot notation to represent nested paths
      * and converts it back into a multidimensional array structure. For example, a key like
@@ -525,7 +525,7 @@ class Arrays extends StaticClass
      * // Returns: ['name' => 'John', 'address' => ['city' => 'NYC', 'zip' => '10001']]
      * ```
      *
-     * @param array $array The flattened array with dot notation keys
+     * @param array $array The flattened array with dot notation keys.
      * @param bool $strict If true, throws exception on data conflicts; if false, later values overwrite earlier ones
      * @return array Returns a multidimensional array with nested structure
      * @throws LogicException When $strict is true and a data conflict is detected
@@ -617,9 +617,9 @@ class Arrays extends StaticClass
      * // Returns: [0 => Laptop object, 2 => Keyboard object]
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
-     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values from the first array not found in other arrays
      * @throws InvalidArgumentException When a comparison array is not provided
      * @see Arrays::differenceAssoc()
@@ -702,11 +702,11 @@ class Arrays extends StaticClass
      * // Returns: ['Age' => 30]
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
      * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
-     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
-     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
+     * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs from the first array not found in other arrays
      * @throws InvalidArgumentException When no comparison arrays are provided
      * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
@@ -803,9 +803,9 @@ class Arrays extends StaticClass
      * // (numeric keys 1 and 2 match string keys '1' and '2' when compared as strings)
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
-     * @param callable $callback Optional comparison function for keys that returns <0, 0, or >0 (optional)
+     * @param callable|null $callback Optional comparison function for keys that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are not found in other arrays
      * @see Arrays::difference()
      * @see Arrays::differenceAssoc()
@@ -847,7 +847,7 @@ class Arrays extends StaticClass
      * // Returns: false (16 < 18)
      * ```
      *
-     * @param array $array The array whose elements to test
+     * @param array $array The array whose elements to test.
      * @param callable $callback A function that receives each element and returns true if it passes the test
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return bool Returns true if ALL elements pass the callback test, false otherwise
@@ -996,7 +996,7 @@ class Arrays extends StaticClass
      * // Returns: [1 => 1, 3 => 2, 5 => 3]
      * ```
      *
-     * @param array $array The array to filter
+     * @param array $array The array to filter.
      * @param callable|null $callback Optional function to test each element (default: removes falsy values)
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return array Returns a new array containing only the filtered elements
@@ -1042,7 +1042,7 @@ class Arrays extends StaticClass
      * // Returns: null
      * ```
      *
-     * @param array $array The array to search through
+     * @param array $array The array to search through.
      * @param callable $callback Function that tests each element, returns true to select it
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return mixed Returns the first matching element, or null if none found
@@ -1084,7 +1084,7 @@ class Arrays extends StaticClass
      * // Returns: null
      * ```
      *
-     * @param array $array The array to search through
+     * @param array $array The array to search through.
      * @param callable $callback Function that tests each element, returns true to select it
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return mixed Returns the key of the first matching element, or null if none found
@@ -1121,7 +1121,7 @@ class Arrays extends StaticClass
      * // Throws: OutOfBoundsException
      * ```
      *
-     * @param array $array The array to get the first value from
+     * @param array $array The array to get the first value from.
      * @return mixed Returns the first value
      * @throws OutOfBoundsException When the array is empty
      * @see Arrays::last()
@@ -1162,7 +1162,7 @@ class Arrays extends StaticClass
      * // Throws: OutOfBoundsException
      * ```
      *
-     * @param array $array The array to get the first key from
+     * @param array $array The array to get the first key from.
      * @return string|int Returns the first key
      * @throws OutOfBoundsException When the array is empty
      * @see Arrays::lastKey()
@@ -1236,9 +1236,10 @@ class Arrays extends StaticClass
      * // Returns: ['same' => 'b', 'different' => 'c']
      * ```
      *
-     * @param array $array The array to flip
+     * @param array $array The array to flip.
      * @return array Returns a new array with flipped keys and values
      * @throws InvalidDataTypeException If one of the values is not a string nor integer
+     * @see Arrays::reverse()
      */
     public static function flip(array $array): array
     {
@@ -1257,11 +1258,31 @@ class Arrays extends StaticClass
      * Converts a string into an array by splitting it with a separator.
      *
      * This method takes a string and splits it into an array using the specified separator.
+     * It provides a convenient wrapper around PHP's explode() function with consistent
+     * parameter ordering and sensible defaults.
      *
-     * @param string $string The string to split into an array
-     * @param string $separator The character or string to split on (default: space)
-     * @param int $limit The maximum number of array elements to return (default: PHP's default)
-     * @return array An array of string parts
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Basic usage with space separator
+     * $words = Arrays::fromString('Hello world from Arrays');
+     * // Returns: ['Hello', 'world', 'from', 'Arrays']
+     *
+     * // Using custom separator
+     * $fruits = Arrays::fromString('apple,banana,cherry', ',');
+     * // Returns: ['apple', 'banana', 'cherry']
+     *
+     * // With limit
+     * $parts = Arrays::fromString('one-two-three-four', '-', 3);
+     * // Returns: ['one', 'two', 'three-four']
+     * ```
+     *
+     * @param string $string The string to split into an array.
+     * @param string $separator The character or string to split on (default: space).
+     * @param int $limit The maximum number of array elements to return (default: PHP's default).
+     * @return array An array of string parts.
+     * @see Arrays::toString()
      */
     public static function fromString(string $string, string $separator = ' ', int $limit = PHP_INT_MAX): array
     {
@@ -1305,8 +1326,8 @@ class Arrays extends StaticClass
      * // Throws: OutOfBoundsException
      * ```
      *
-     * @param array $array The array to retrieve the value from
-     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path)
+     * @param array $array The array to retrieve the value from.
+     * @param string|int|array $key The key to access (string/int for direct access, array for a nested path).
      * @param mixed $default Optional default value to return if the key is not found
      * @return mixed Returns the value at the specified key, or the default value if provided and the key doesn't exist
      * @throws OutOfBoundsException When the key doesn't exist and no default value is provided
@@ -1349,7 +1370,7 @@ class Arrays extends StaticClass
      * // Returns: ['apple']
      * ```
      *
-     * @param array $array The array to filter
+     * @param array $array The array to filter.
      * @param string $pattern Regular expression pattern to match against
      * @param bool $invert When true, returns elements that do NOT match the pattern (default: false)
      * @return array Returns filtered array with matching elements
@@ -1402,8 +1423,8 @@ class Arrays extends StaticClass
      * // Returns: false
      * ```
      *
-     * @param array $array The array to check for key existence
-     * @param string|int|array $key The key to check (string/int for simple key, array for nested path)
+     * @param array $array The array to check. for key existence
+     * @param string|int|array $key The key to check (string/int for simple key, array for nested path).
      * @return bool Returns true if the key exists, false otherwise
      */
     public static function has(array $array, string|int|array $key): bool
@@ -1447,7 +1468,7 @@ class Arrays extends StaticClass
      * // Result: ['first' => 10, 'new' => 20]
      * ```
      *
-     * @param array $array The array to insert into (passed by reference)
+     * @param array $array The array to insert into (passed by reference).
      * @param string|int $key The reference key to insert after, or null to append
      * @param array $items Associative array of key-value pairs to insert
      * @see Arrays::insertBefore()
@@ -1479,7 +1500,7 @@ class Arrays extends StaticClass
      * // Result: ['new' => 5, 'first' => 10]
      * ```
      *
-     * @param array $array The array to insert into (passed by reference)
+     * @param array $array The array to insert into (passed by reference).
      * @param string|int $key The reference key to insert before, or null to prepend
      * @param array $items Associative array of key-value pairs to insert
      * @see Arrays::insertAfter()
@@ -1541,9 +1562,9 @@ class Arrays extends StaticClass
      * // Returns: [1 => Jane object] (only user with id=2 exists in both)
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
-     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values present in all arrays with keys preserved from the first array
      * @see Arrays::intersectAssoc()
      * @see Arrays::intersectKeys()
@@ -1629,11 +1650,11 @@ class Arrays extends StaticClass
      * // (both key-value pairs match with custom comparisons)
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
      * @param ArrayComparator $comparator The comparator to use with the provided callback(s) (required with callbacks)
-     * @param callable $firstCallback Optional comparison function that returns <0, 0, or >0 (optional)
-     * @param callable $secondCallback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
+     * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs present in all arrays
      * @throws InvalidArgumentException When no comparison arrays are provided
      * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
@@ -1729,9 +1750,9 @@ class Arrays extends StaticClass
      * // (numeric keys 1 and 2 match string keys '1' and '2' when compared as strings)
      * ```
      *
-     * @param array $array The array to compare from
+     * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
-     * @param callable $callback Optional comparison function that returns <0, 0, or >0 (optional)
+     * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are found in all arrays
      * @see Arrays::intersect()
      */
@@ -1773,7 +1794,7 @@ class Arrays extends StaticClass
      * Arrays::isAssoc([0 => 'first', 1 => 'second', 2 => 'third']);
      * ```
      *
-     * @param array $array The array to check
+     * @param array $array The array to check.
      * @return bool Returns true if the array is associative, false if it's a list
      * @see Arrays::isList()
      */
@@ -1801,7 +1822,7 @@ class Arrays extends StaticClass
      * Arrays::isBlank(['name' => 'John']);
      * ```
      *
-     * @param array $array The array to check
+     * @param array $array The array to check.
      * @return bool Returns true if the array is empty, false otherwise
      * @see Arrays::isFilled()
      */
@@ -1830,7 +1851,7 @@ class Arrays extends StaticClass
      * Arrays::isFilled([]);
      * ```
      *
-     * @param array $array The array to check
+     * @param array $array The array to check.
      * @return bool Returns true if the array is not empty, false otherwise
      * @see Arrays::isBlank()
      */
@@ -1859,7 +1880,7 @@ class Arrays extends StaticClass
      * // Returns: false (has string keys)
      * ```
      *
-     * @param array $array The array to check
+     * @param array $array The array to check.
      * @return bool Returns true if the array is a list, false otherwise
      * @see Arrays::isAssoc()
      */
@@ -1880,12 +1901,24 @@ class Arrays extends StaticClass
      * ```php
      * use Phuture\Coherence\Arrays;
      *
+     * // Basic iteration
      * $prices = [10, 20, 30];
      * Arrays::iterate($prices, function(&$value, $key) {
      *     $value = $value * 1.1; // Add 10% tax
      * });
-     *
      * // $prices is now: [11, 22, 33]
+     *
+     * // Recursive iteration on nested arrays
+     * $data = [
+     *     'user' => ['name' => 'John', 'age' => 30],
+     *     'settings' => ['theme' => 'dark', 'notifications' => true]
+     * ];
+     * Arrays::iterate($data, function(&$value, $key) {
+     *     if (is_string($value)) {
+     *         $value = strtoupper($value);
+     *     }
+     * }, true);
+     * // $data is now with all string values in uppercase
      * ```
      *
      * @param array|object $array The array or object to iterate over (passed by reference)
@@ -2541,10 +2574,8 @@ class Arrays extends StaticClass
     /**
      * Prepends key-value pairs to an array.
      *
-     * This method prepends new key-value pairs into an array at the beginning.
-     *
-     * Unlike Arrays::append() which preserves existing keys, prepend() will overwrite
-     * any existing keys with the new values. The array is modified by reference.
+     * This method prepends new key-value pairs to the beginning of an array. If keys already exist,
+     * they will be overwritten. The array is modified by reference.
      *
      * Example:
      * ```php
@@ -3045,7 +3076,11 @@ class Arrays extends StaticClass
      */
     public static function reverse(array $array, bool $preserveKeys = true): array
     {
-        return $preserveKeys ? array_reverse($array, true) : array_values(array_reverse($array));
+        if (!$preserveKeys) {
+            $array = array_values($array);
+        }
+
+        return array_reverse($array, $preserveKeys);
     }
 
     /**
@@ -3152,10 +3187,26 @@ class Arrays extends StaticClass
      * ```php
      * use Phuture\Coherence\Arrays;
      *
+     * // Basic card shuffle
      * $cards = ['Ace', 'King', 'Queen', 'Jack'];
      * Arrays::shuffle($cards);
-     *
      * // $cards might now be: ['Queen', 'Ace', 'Jack', 'King']
+     *
+     * // Practical use case: random quiz questions
+     * $questions = [
+     *     'What is 2 + 2?',
+     *     'What is the capital of France?',
+     *     'Who wrote Romeo and Juliet?',
+     *     'What is H2O?'
+     * ];
+     * Arrays::shuffle($questions);
+     * // Now questions appear in random order for each quiz attempt
+     *
+     * // Creating a random password from character sets
+     * $chars = ['a', 'b', 'c', '1', '2', '3', '!', '@', '#'];
+     * Arrays::shuffle($chars);
+     * $password = implode('', array_slice($chars, 0, 6));
+     * // Generates random 6-character password
      * ```
      *
      * @param array $array The array to shuffle (passed by reference)
@@ -3234,7 +3285,7 @@ class Arrays extends StaticClass
      * // Returns: false (none are 18 or older)
      * ```
      *
-     * @param array $array The array whose elements to test
+     * @param array $array The array whose elements to test.
      * @param callable $callback A function that receives each element and returns true if it passes the test
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return bool Returns true if ANY element passes the callback test, false if none pass
@@ -3937,13 +3988,18 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Helper method to recursively flatten an array using dot notation.
+     * Recursively flattens a multidimensional array using dot notation keys.
      *
-     * @param array $array The array to flatten
-     * @param string $prefix The current key prefix
-     * @param array $result The result array passed by reference
-     * @param int $depth Current recursion depth
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     * This private helper method traverses through nested arrays, building dot-separated
+     * keys that represent the path to each value. For example, ['user' => ['name' => 'John']]
+     * becomes ['user.name' => 'John']. The method protects against infinite recursion by
+     * enforcing the RECURSION_LIMIT constant.
+     *
+     * @param array $array The multidimensional array to flatten.
+     * @param string $prefix The current key prefix for nested elements (starts empty).
+     * @param array $result The result array passed by reference where flattened key-value pairs are stored.
+     * @param int $depth Current recursion depth to prevent stack overflow.
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
     {
@@ -3968,12 +4024,17 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Helper method to recursively normalize an array by converting objects to arrays.
+     * Recursively normalizes an array by converting all objects to arrays.
      *
-     * @param array $array The array to normalize
-     * @param array $result The result array passed by reference
-     * @param int $depth Current recursion depth
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT
+     * This private helper method traverses through nested arrays and objects, converting
+     * any objects to their array representation while preserving the overall structure.
+     * This ensures that the entire data structure becomes a pure multidimensional array.
+     * The method protects against infinite recursion by enforcing the RECURSION_LIMIT constant.
+     *
+     * @param array $array The array to normalize (may contain objects).
+     * @param array $result The result array passed by reference containing only array values.
+     * @param int $depth Current recursion depth to prevent stack overflow.
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
     {
@@ -4000,11 +4061,18 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Helper method to recursively convert arrays to objects.
+     * Recursively converts arrays to stdClass objects.
      *
-     * @param array $array The array to convert
-     * @param stdClass $result The result object passed by reference
-     * @param int $depth Current recursion depth
+     * This private helper method transforms a multidimensional array into a nested
+     * object structure where each array becomes a stdClass instance. This is useful
+     * for converting array-based data structures into object-based ones while preserving
+     * the nested hierarchy. The method protects against infinite recursion by enforcing
+     * the RECURSION_LIMIT constant.
+     *
+     * @param array $array The array to convert (may contain nested arrays).
+     * @param stdClass $result The result object passed by reference containing the converted structure.
+     * @param int $depth Current recursion depth to prevent stack overflow.
+     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
     {
