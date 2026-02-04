@@ -51,7 +51,7 @@ class Arrays extends StaticClass
     /**
      * Maximum number of elements allowed in cross join results to prevent memory exhaustion.
      */
-    public const CROSS_JOIN_LIMIT = 1_000_000;
+    public const CROSS_JOIN_LIMIT = 1000000;
 
     /**
      * Retrieves a reference to an array element by key.
