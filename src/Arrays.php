@@ -499,6 +499,17 @@ class Arrays extends StaticClass
             );
         }
 
+        // Calculate potential result size to prevent memory exhaustion
+        $expectedSize = 1;
+        foreach ($arrays as $arr) {
+            $expectedSize *= count($arr);
+            if ($expectedSize > 1000000) {
+                throw new LogicException(
+                    "Invalid Argument: Cross join would produce too many elements (over 1,000,000 limit)"
+                );
+            }
+        }
+
         // Start with the first array
         $combinations = array_map(fn ($item) => [$item], $arrays[0]);
 
@@ -555,6 +566,14 @@ class Arrays extends StaticClass
 
         foreach ($array as $key => $value) {
             $keys = explode('.', (string) $key);
+
+            // Add recursion limit protection
+            if (count($keys) >= self::RECURSION_LIMIT) {
+                throw new LogicException(
+                    "Limit Exceeded: Key depth exceeds limit of " . self::RECURSION_LIMIT
+                );
+            }
+
             $lastIndex = count($keys) - 1;
             $temp = &$result;
 
@@ -1228,14 +1247,23 @@ class Arrays extends StaticClass
      * @return array Returns a single-dimensional array containing all scalar values from the nested structure
      * @see Arrays::collapse()
      */
-    public static function flatten(array $array): array
+    public static function flatten(array $array, int $depth = 0): array
     {
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
         $result = [];
 
         foreach ($array as $value) {
             if (is_array($value)) {
                 if (!empty($value)) {
-                    $result = array_merge($result, self::flatten($value));
+                    // Optimize: avoid array_merge() overhead by using loop
+                    foreach (self::flatten($value, $depth + 1) as $item) {
+                        $result[] = $item;
+                    }
                 }
             } else {
                 $result[] = $value;
@@ -1427,22 +1455,26 @@ class Arrays extends StaticClass
      */
     public static function grep(array $array, string $pattern, bool $invert = false): array
     {
+        // Validate pattern once before the loop
+        set_error_handler(function ($errno, $errstr) use ($pattern) {
+            restore_error_handler();
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
+        });
+
+        $testResult = @preg_match($pattern, '');
+        restore_error_handler();
+
+        if ($testResult === false) {
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
+        }
+
         $result = [];
-
         foreach ($array as $key => $value) {
-            set_error_handler(function ($errno, $errstr) use ($pattern) {
-                restore_error_handler();
-                throw new LogicException(
-                    "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
-                );
-            });
-
-            try {
-                $match = preg_match($pattern, (string)$value) === 1;
-            } finally {
-                restore_error_handler();
-            }
-
+            $match = preg_match($pattern, (string)$value) === 1;
             if ($invert !== $match) {
                 $result[$key] = $value;
             }
@@ -2709,7 +2741,26 @@ class Arrays extends StaticClass
         if (empty($items)) {
             return;
         }
-        $array = $items + $array;
+
+        // Check if we have string keys that need to be preserved
+        $hasStringKeys = count(array_filter(array_keys($array), 'is_string')) > 0 ||
+                         count(array_filter(array_keys($items), 'is_string')) > 0;
+
+        if (!$hasStringKeys) {
+            // Fast path for numeric-only arrays: use array_unshift in reverse
+            foreach (array_reverse($items, true) as $value) {
+                array_unshift($array, $value);
+            }
+            return;
+        }
+
+        // For string keys: clear and rebuild the array in-place
+        // This ensures the reference is properly updated
+        $merged = $items + $array;
+        $array = [];
+        foreach ($merged as $key => $value) {
+            $array[$key] = $value;
+        }
     }
 
     /**
@@ -3859,7 +3910,7 @@ class Arrays extends StaticClass
 
         // Handle JSON strings
         if (is_string($value)) {
-            $decoded = json_decode($value, true);
+            $decoded = json_decode($value, true, self::RECURSION_LIMIT);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
