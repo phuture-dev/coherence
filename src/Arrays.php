@@ -49,6 +49,11 @@ class Arrays extends StaticClass
     public const RECURSION_LIMIT = 1000;
 
     /**
+     * Maximum number of elements allowed in cross join results to prevent memory exhaustion.
+     */
+    public const CROSS_JOIN_LIMIT = 1_000_000;
+
+    /**
      * Retrieves a reference to an array element by key.
      *
      * This method returns a reference to an array element, allowing you to modify it directly.
@@ -503,9 +508,9 @@ class Arrays extends StaticClass
         $expectedSize = 1;
         foreach ($arrays as $arr) {
             $expectedSize *= count($arr);
-            if ($expectedSize > 1000000) {
+            if ($expectedSize > self::CROSS_JOIN_LIMIT) {
                 throw new LogicException(
-                    "Invalid Argument: Cross join would produce too many elements (over 1,000,000 limit)"
+                    "Invalid Argument: Cross join would produce too many elements (over " . number_format(self::CROSS_JOIN_LIMIT) . " limit)"
                 );
             }
         }
