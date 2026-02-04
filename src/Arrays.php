@@ -11,7 +11,6 @@ use TypeError;
 use ArrayAccess;
 use Traversable;
 use JsonSerializable;
-use Nette\Utils\Arrays as NetteArrays;
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
 use Phuture\Coherence\Interface\{Arrayable, Jsonable};
@@ -90,13 +89,28 @@ class Arrays extends StaticClass
      */
     public static function &getReference(array &$array, string|int|array $key): mixed
     {
-        try {
-            return NetteArrays::getRef($array, $key);
-        } catch (\InvalidArgumentException $e) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The traversed item is not an array"
-            );
+        $keys = is_array($key) ? $key : [$key];
+        $current = &$array;
+
+        foreach ($keys as $i => $k) {
+            if (!array_key_exists($k, $current)) {
+                // For intermediate keys, create an array; for final key, create null
+                $current[$k] = ($i < count($keys) - 1) ? [] : null;
+            }
+
+            if ($i < count($keys) - 1) {
+                if (!is_array($current[$k])) {
+                    throw new InvalidArgumentException(
+                        "Invalid Argument: The traversed item is not an array"
+                    );
+                }
+                $current = &$current[$k];
+            } else {
+                $current = &$current[$k];
+            }
         }
+
+        return $current;
     }
 
     /**
@@ -164,7 +178,11 @@ class Arrays extends StaticClass
      */
     public static function append(array &$array, array $items): void
     {
-        NetteArrays::insertAfter($array, null, $items);
+        foreach ($items as $k => $v) {
+            if (!array_key_exists($k, $array)) {
+                $array[$k] = $v;
+            }
+        }
     }
 
     /**
@@ -855,7 +873,12 @@ class Arrays extends StaticClass
      */
     public static function every(array $array, callable $callback): bool
     {
-        return NetteArrays::every($array, $callback);
+        foreach ($array as $key => $value) {
+            if (!$callback($value, $key)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1009,7 +1032,7 @@ class Arrays extends StaticClass
             $callback = fn ($value) => (bool) $value;
         }
 
-        return NetteArrays::filter($array, $callback);
+        return array_filter($array, $callback, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
@@ -1207,7 +1230,19 @@ class Arrays extends StaticClass
      */
     public static function flatten(array $array): array
     {
-        return NetteArrays::flatten($array);
+        $result = [];
+
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                if (!empty($value)) {
+                    $result = array_merge($result, self::flatten($value));
+                }
+            } else {
+                $result[] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1341,7 +1376,21 @@ class Arrays extends StaticClass
             );
         }
 
-        return NetteArrays::get($array, $key, $default);
+        if (is_array($key)) {
+            foreach ($key as $segment) {
+                if (!is_array($array) || !array_key_exists($segment, $array)) {
+                    return $default;
+                }
+                $array = $array[$segment];
+            }
+            return $array;
+        }
+
+        if (array_key_exists($key, $array)) {
+            return $array[$key];
+        }
+
+        return $default;
     }
 
     /**
@@ -1378,13 +1427,28 @@ class Arrays extends StaticClass
      */
     public static function grep(array $array, string $pattern, bool $invert = false): array
     {
-        try {
-            return NetteArrays::grep($array, $pattern, $invert);
-        } catch (Exception $e) {
-            throw new LogicException(
-                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
-            );
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            set_error_handler(function ($errno, $errstr) use ($pattern) {
+                restore_error_handler();
+                throw new LogicException(
+                    "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+                );
+            });
+
+            try {
+                $match = preg_match($pattern, (string)$value) === 1;
+            } finally {
+                restore_error_handler();
+            }
+
+            if ($invert !== $match) {
+                $result[$key] = $value;
+            }
         }
+
+        return $result;
     }
 
     /**
@@ -1475,7 +1539,30 @@ class Arrays extends StaticClass
      */
     public static function insertAfter(array &$array, string|int $key, array $items): void
     {
-        NetteArrays::insertAfter($array, $key, $items);
+        if (empty($items)) {
+            return;
+        }
+
+        if (!array_key_exists($key, $array)) {
+            foreach ($items as $k => $v) {
+                $array[$k] = $v;
+            }
+            return;
+        }
+
+        $keys = array_keys($array);
+        $position = array_search($key, $keys, true);
+
+        if ($position === false) {
+            foreach ($items as $k => $v) {
+                $array[$k] = $v;
+            }
+            return;
+        }
+
+        $before = array_slice($array, 0, $position + 1, true);
+        $after = array_slice($array, $position + 1, null, true);
+        $array = $before + $items + $after;
     }
 
     /**
@@ -1507,7 +1594,26 @@ class Arrays extends StaticClass
      */
     public static function insertBefore(array &$array, string|int $key, array $items): void
     {
-        NetteArrays::insertBefore($array, $key, $items);
+        if (empty($items)) {
+            return;
+        }
+
+        if (!array_key_exists($key, $array)) {
+            $array = $items + $array;
+            return;
+        }
+
+        $keys = array_keys($array);
+        $position = array_search($key, $keys, true);
+
+        if ($position === false) {
+            $array = $items + $array;
+            return;
+        }
+
+        $before = array_slice($array, 0, $position, true);
+        $after = array_slice($array, $position, null, true);
+        $array = $before + $items + $after;
     }
 
     /**
@@ -2600,7 +2706,10 @@ class Arrays extends StaticClass
      */
     public static function prepend(array &$array, array $items): void
     {
-        NetteArrays::insertBefore($array, null, $items);
+        if (empty($items)) {
+            return;
+        }
+        $array = $items + $array;
     }
 
     /**
@@ -3293,7 +3402,12 @@ class Arrays extends StaticClass
      */
     public static function some(array $array, callable $callback): bool
     {
-        return NetteArrays::some($array, $callback);
+        foreach ($array as $key => $value) {
+            if ($callback($value, $key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
