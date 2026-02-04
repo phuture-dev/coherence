@@ -3535,6 +3535,113 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Sorts an array by a given key or multiple keys.
+     *
+     * This method sorts a multidimensional array (array of arrays or objects) by one or more keys.
+     * You can sort by a single key, multiple keys for multi-level sorting, or provide a custom callback
+     * to determine the sort value. The original keys are not preserved - the array is re-indexed.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Sort by a single key
+     * $users = [
+     *     ['name' => 'John', 'age' => 30],
+     *     ['name' => 'Alice', 'age' => 25],
+     *     ['name' => 'Bob', 'age' => 35]
+     * ];
+     * Arrays::sortBy($users, 'age');
+     * // Result: [
+     * //     ['name' => 'Alice', 'age' => 25],
+     * //     ['name' => 'John', 'age' => 30],
+     * //     ['name' => 'Bob', 'age' => 35]
+     * // ]
+     *
+     * // Sort by multiple keys (age ascending, then name descending)
+     * Arrays::sortBy($users, ['age', 'name']);
+     * // First sorts by age, then for equal ages, sorts by name
+     *
+     * // Sort in descending order
+     * Arrays::sortBy($users, 'age', true);
+     * // Result: [
+     * //     ['name' => 'Bob', 'age' => 35],
+     * //     ['name' => 'John', 'age' => 30],
+     * //     ['name' => 'Alice', 'age' => 25]
+     * // ]
+     *
+     * // Sort array of objects by property
+     * $products = [
+     *     (object)['name' => 'Apple', 'price' => 1.50],
+     *     (object)['name' => 'Banana', 'price' => 0.75],
+     *     (object)['name' => 'Cherry', 'price' => 2.00]
+     * ];
+     * Arrays::sortBy($products, 'price');
+     * // Sorted by price ascending
+     *
+     * // Sort with custom callback for complex sorting
+     * $words = ['apple', 'Banana', 'CHERRY', 'date'];
+     * Arrays::sortBy($words, fn($item) => strtolower($item));
+     * // Case-insensitive sort
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param string|array|callable $criteria The key(s) to sort by, or a callback that returns the sort value
+     *  - string: Single key name (e.g., 'age', 'name')
+     *  - array: Multiple keys for multi-level sorting (e.g., ['age', 'name'])
+     *  - callable: Function that receives ($item) and returns the sort value
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param int $flags Sort flags for natural sorting (optional, e.g., SORT_NATURAL)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     * @see Arrays::sortAssoc()
+     * @see Arrays::sortKeys()
+     */
+    public static function sortBy(
+        array &$array,
+        string|array|callable $criteria,
+        bool $reverse = false,
+        int $flags = 0
+    ): bool {
+        $comparator = function ($a, $b) use ($criteria, $flags) {
+            $criteriaArray = is_array($criteria) ? $criteria : [$criteria];
+
+            foreach ($criteriaArray as $criterion) {
+                // Get the values to compare
+                if (is_callable($criterion)) {
+                    $aValue = $criterion($a);
+                    $bValue = $criterion($b);
+                } else {
+                    $aValue = is_array($a) ? ($a[$criterion] ?? null) : ($a->{$criterion} ?? null);
+                    $bValue = is_array($b) ? ($b[$criterion] ?? null) : ($b->{$criterion} ?? null);
+                }
+
+                // Apply flags for natural string comparison
+                if ($flags & SORT_NATURAL) {
+                    $comparison = strnatcmp((string) $aValue, (string) $bValue);
+                } elseif ($flags & SORT_FLAG_CASE) {
+                    $comparison = strcasecmp((string) $aValue, (string) $bValue);
+                } else {
+                    $comparison = $aValue <=> $bValue;
+                }
+
+                // If values are equal, continue to next criterion
+                if ($comparison !== 0) {
+                    return $comparison;
+                }
+            }
+
+            return 0;
+        };
+
+        if ($reverse) {
+            return usort($array, fn ($a, $b) => $comparator($b, $a));
+        }
+
+        return usort($array, $comparator);
+    }
+
+    /**
      * Sorts an array in ascending or descending order while maintaining index association.
      *
      * This method arranges array values from lowest to highest (ascending) or highest

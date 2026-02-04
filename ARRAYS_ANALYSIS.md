@@ -121,7 +121,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 | `some()` | `some()` | ✅ Same | |
 | `sort()` | `sort()` | ✅ Same | |
 | `sortDesc()` | `sort($reverse=true)` | ✅ Same | |
-| `sortBy()` | N/A | ❌ Missing | **Notable Gap** - multi-column sort |
+| `sortBy()` | `sortBy()` | ✅ Implemented | Supports multi-column sort |
 | `sortKeys()` | `sortKeys()` | ✅ Same | |
 | `sortKeysDesc()` | `sortKeys($reverse=true)` | ✅ Same | |
 | `splice()` | `splice()` | ✅ Same | |
@@ -267,30 +267,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
    }
    ```
 
-4. **`sortBy()` with multiple columns** - Multi-column sorting
-   ```php
-   // Proposed implementation
-   public static function sortBy(array $array, string|array $criteria): array
-   {
-       $criteria = (array) $criteria;
-
-       usort($array, function ($a, $b) use ($criteria) {
-           foreach ($criteria as $column) {
-               $aVal = is_array($a) ? $a[$column] : $a->{$column};
-               $bVal = is_array($b) ? $b[$column] : $b->{$column};
-
-               if ($aVal !== $bVal) {
-                   return $aVal <=> $bVal;
-               }
-           }
-           return 0;
-       });
-
-       return $array;
-   }
-   ```
-
-5. **`pluck()` with nested path support** - Enhanced `column()`
+4. **`pluck()` with nested path support** - Enhanced `column()`
    ```php
    // Proposed enhancement to column()
    public static function pluck(array $array, string $path): array
@@ -857,7 +834,6 @@ All critical and high-priority security issues have been fixed:
 - Missing `groupBy()` - critical for data aggregation
 - Missing `partition()` - useful for splitting arrays
 - Missing `where()` variants - limited filtering options
-- Missing `sortBy()` with multiple columns
 
 ### Performance Score: 8/10
 
@@ -901,6 +877,10 @@ The `Arrays` class is a well-designed, comprehensive utility library that rivals
 - Added JSON depth limit to `toArray()`
 - Added size validation to `crossJoin()`
 - Optimized `flatten()` to avoid `array_merge()` overhead
+
+✅ **Functionality Improvements:**
+- Implemented `sortBy()` method with multi-column sorting support
+- Added `CROSS_JOIN_LIMIT` constant for consistent configuration
 
 ### Recommended Action Plan
 

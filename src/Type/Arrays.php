@@ -679,6 +679,22 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Sort the array by a given key or multiple keys.
+     *
+     * @param string|array|callable $criteria The key(s) to sort by, or a callback
+     * @param bool $reverse Whether to sort in descending order
+     * @param int $flags Sort flags for natural sorting
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sortBy()
+     */
+    public function sortBy(string|array|callable $criteria, bool $reverse = false, int $flags = 0): self
+    {
+        Transformer::sortBy($this->data, $criteria, $reverse, $flags);
+
+        return $this;
+    }
+
+    /**
      * Sort an associative array by values while maintaining key association.
      *
      * @param bool $reverse Whether to sort in reverse order
