@@ -2,11 +2,11 @@
 
 ## Arrays Class - Exhaustive Analysis
 
-**Date**: 2025-02-04
+**Date**: 2025-02-05
 **Class**: `Phuture\Coherence\Arrays`
 **Version**: Feature Branch (arrays)
-**Lines of Code**: ~4,215
-**Total Methods**: 79 public methods, 3 private helper methods
+**Lines of Code**: ~4,360
+**Total Methods**: 83 public methods, 3 private helper methods
 
 ---
 
@@ -25,7 +25,7 @@
 The `Arrays` class is a comprehensive static utility class for array manipulation in PHP. It provides a rich set of methods covering:
 
 - **Access & Navigation**: `get()`, `getReference()`, `has()`, `exists()`, `accessible()`
-- **Data Transformation**: `map()`, `mapKeys()`, `mapWithKeys()`, `filter()`, `reduce()`
+- **Data Transformation**: `map()`, `mapKeys()`, `mapWithKeys()`, `filter()`, `reduce()`, `where()`, `whereIn()`, `groupBy()`, `partition()`
 - **Set Operations**: `difference()`, `intersect()`, `union` operations via `merge()`
 - **Sorting**: `sort()`, `sortAssoc()`, `sortKeys()`, `sortNatural()`
 - **Structural Operations**: `flatten()`, `collapse()`, `notation()`, `denote()`
@@ -70,7 +70,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 | `forget()` | `remove()` | ✅ Same | |
 | `forPage()` | N/A | ❌ Missing | Pagination helper |
 | `get()` | `get()` | ✅ Same | |
-| `groupBy()` | N/A | ❌ Missing | **Notable Gap** |
+| `groupBy()` | `groupBy()` | ✅ Implemented | Supports string key and callable |
 | `has()` | `has()` | ✅ Same | |
 | `implode()` | N/A | ❌ Missing | Use native `implode()` |
 | `intersect()` | `intersect()` | ✅ Same | |
@@ -98,7 +98,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 | `nth()` | N/A | ❌ Missing | |
 | `only()` | `only()` | ✅ Same | |
 | `pad()` | `pad()` | ✅ Same | |
-| `partition()` | N/A | ❌ Missing | **Notable Gap** |
+| `partition()` | `partition()` | ✅ Implemented | Preserves keys in both results |
 | `pipe()` | N/A | ❌ Missing | Fluent pipeline helper |
 | `pluck()` | `column()` | ✅ Same | Different naming |
 | `pop()` | `pull()` | ✅ Same | Different naming |
@@ -143,9 +143,9 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 | `when()` | N/A | ❌ Missing | Conditional helper |
 | `whenEmpty()` | N/A | ❌ Missing | Conditional helper |
 | `whenNotEmpty()` | N/A | ❌ Missing | Conditional helper |
-| `where()` | `grep()` | ⚠️ Partial | `grep()` is regex only, not predicate |
+| `where()` | `where()` | ✅ Implemented | Alias for filter() with clearer naming |
 | `whereBetween()` | N/A | ❌ Missing | Range filtering |
-| `whereIn()` | N/A | ❌ Missing | In-array filtering |
+| `whereIn()` | `whereIn()` | ✅ Implemented | Key/value filtering with strict comparison |
 | `whereInstanceOf()` | N/A | ❌ Missing | Type filtering |
 | `whereNotBetween()` | N/A | ❌ Missing | Range filtering |
 | `whereNotIn()` | N/A | ❌ Missing | In-array filtering |
@@ -170,7 +170,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 | `map()` | `map()` | ✅ Same | |
 | `mapWithKeys()` | `mapWithKeys()` | ✅ Same | |
 | `mapToGroups()` | N/A | ❌ Missing | |
-| `groupBy()` | N/A | ❌ Missing | **Notable Gap** |
+| `groupBy()` | `groupBy()` | ✅ Implemented | Supports string key and callable |
 | `flatten()` | `flatten()` | ⚠️ Different | Symfony: optional preserve keys |
 | `filter()` | `filter()` | ✅ Same | |
 | `find()` | `find()` | ✅ Same | |
@@ -210,30 +210,38 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 
 ### 1.3 Notable Gaps and Recommended Solutions
 
-#### 1.3.1 High Priority Missing Features
+#### 1.3.1 ✅ Completed High Priority Features (2025-02-05)
 
-1. **`groupBy()`** - Critical for data aggregation
+1. **`groupBy()`** - Critical for data aggregation ✅ **IMPLEMENTED**
    ```php
-   // Proposed implementation
+   // Location: src/Arrays.php:1478
    public static function groupBy(array $array, callable|string $groupBy): array
    {
        $result = [];
 
        foreach ($array as $key => $item) {
-           $groupKey = is_string($groupBy)
-               ? (is_array($item) ? $item[$groupBy] : $item->{$groupBy})
-               : $groupBy($item, $key);
+           if (is_string($groupBy)) {
+               $groupKey = is_array($item) ? ($item[$groupBy] ?? null) : ($item->{$groupBy} ?? null);
+           } else {
+               $groupKey = $groupBy($item, $key);
+           }
 
-           $result[$groupKey][] = $item;
+           $arrayKey = $groupKey ?? '';
+
+           if (!isset($result[$arrayKey])) {
+               $result[$arrayKey] = [];
+           }
+
+           $result[$arrayKey][] = $item;
        }
 
        return $result;
    }
    ```
 
-2. **`partition()`** - Split array by callback
+2. **`partition()`** - Split array by callback ✅ **IMPLEMENTED**
    ```php
-   // Proposed implementation
+   // Location: src/Arrays.php:2788
    public static function partition(array $array, callable $callback): array
    {
        $passed = [];
@@ -251,23 +259,27 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
    }
    ```
 
-3. **`where()` with predicate support** - Currently only `grep()` for regex
+3. **`where()` with predicate support** ✅ **IMPLEMENTED**
    ```php
-   // Proposed implementation
+   // Location: src/Arrays.php:4340
    public static function where(array $array, callable $callback): array
    {
        return self::filter($array, $callback);
    }
 
+   // Location: src/Arrays.php:4381
    public static function whereIn(array $array, string $key, array $values): array
    {
-       return self::filter($array, fn($item) =>
-           in_array(is_array($item) ? $item[$key] : $item->{$key}, $values, true)
-       );
+       return self::filter($array, function ($item) use ($key, $values) {
+           $value = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
+           return in_array($value, $values, true);
+       });
    }
    ```
 
-4. **`pluck()` with nested path support** - Enhanced `column()`
+#### 1.3.2 Remaining High Priority Missing Features
+
+1. **`pluck()` with nested path support** - Enhanced `column()`
    ```php
    // Proposed enhancement to column()
    public static function pluck(array $array, string $path): array
@@ -282,7 +294,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
    }
    ```
 
-#### 1.3.2 Medium Priority Missing Features
+#### 1.3.3 Medium Priority Missing Features
 
 1. **`zip()`** - Pair arrays
 2. **`take()` / `skip()`** - Slice helpers
@@ -290,7 +302,7 @@ The `Arrays` class is a comprehensive static utility class for array manipulatio
 4. **`tap()`** - Fluent helper
 5. **`average()` / `median()` / `mode()`** - Statistical operations
 
-#### 1.3.3 Low Priority Missing Features
+#### 1.3.4 Low Priority Missing Features
 
 1. **Lazy evaluation** - `lazy()` for large datasets
 2. **Macro system** - Runtime method extension
@@ -822,18 +834,21 @@ All critical and high-priority security issues have been fixed:
 
 ## Summary
 
-### Functionality Score: 8/10
+### Functionality Score: 9/10
 
 **Strengths:**
 - Comprehensive coverage of array operations
 - Unique features not found in competitors (notation/denote, normalize, smart toObject)
 - Fluent interface with `Type\Arrays` wrapper
 - Good method naming consistency
+- ✅ `groupBy()` - now supports data aggregation
+- ✅ `partition()` - now supports splitting arrays
+- ✅ `where()`/`whereIn()` - predicate-based filtering now available
 
-**Gaps:**
-- Missing `groupBy()` - critical for data aggregation
-- Missing `partition()` - useful for splitting arrays
-- Missing `where()` variants - limited filtering options
+**Remaining Gaps:**
+- Missing `pluck()` with nested path support
+- Missing lazy evaluation for large datasets
+- Missing statistical methods (average, median, mode)
 
 ### Performance Score: 8/10
 
@@ -868,7 +883,7 @@ All critical and high-priority security issues have been fixed:
 
 The `Arrays` class is a well-designed, comprehensive utility library that rivals major framework implementations. The recent removal of Nette Utils dependencies improves maintainability without sacrificing functionality. All critical and high-priority security issues have been resolved (2025-02-04).
 
-### Completed Actions (2025-02-04)
+### Completed Actions (2025-02-05)
 
 ✅ **Security Fixes (All Critical Issues Resolved):**
 - Fixed `prepend()` reference bug
@@ -881,13 +896,18 @@ The `Arrays` class is a well-designed, comprehensive utility library that rivals
 ✅ **Functionality Improvements:**
 - Implemented `sortBy()` method with multi-column sorting support
 - Added `CROSS_JOIN_LIMIT` constant for consistent configuration
+- Implemented `groupBy()` method for data aggregation
+- Implemented `partition()` method for splitting arrays
+- Implemented `where()` method for predicate-based filtering
+- Implemented `whereIn()` method for key/value filtering
 
 ### Recommended Action Plan
 
 1. **Medium-term** (Functionality):
-   - Add `groupBy()` method
-   - Add `partition()` method
-   - Add `where()` variants
+   - ~~Add `groupBy()` method~~ ✅ COMPLETED (2025-02-05)
+   - ~~Add `partition()` method~~ ✅ COMPLETED (2025-02-05)
+   - ~~Add `where()` variants~~ ✅ COMPLETED (2025-02-05)
+   - Add `pluck()` with nested path support
 
 2. **Long-term** (Enhancement):
    - Add lazy evaluation support
@@ -897,7 +917,8 @@ The `Arrays` class is a well-designed, comprehensive utility library that rivals
 
 ---
 
-**Report Generated**: 2025-02-04
+**Report Generated**: 2025-02-05
+**Last Updated**: 2025-02-05
 **Analyst**: Claude Opus 4.5
 **Repository**: Phuture Coherence
 **Branch**: feature/arrays

@@ -1427,6 +1427,84 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Groups array elements by a specified key or callback function.
+     *
+     * This method organizes items in an array into groups based on a common value.
+     * You can either specify a key name (for arrays of arrays/objects) or provide
+     * a custom function that determines how items should be grouped.
+     *
+     * Think of it like sorting a deck of cards into piles by suit - all hearts go
+     * in one pile, all spades in another, and so on. Each pile keeps all the original
+     * cards together.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Group by key name
+     * $users = [
+     *     ['name' => 'John', 'department' => 'Sales'],
+     *     ['name' => 'Jane', 'department' => 'IT'],
+     *     ['name' => 'Bob', 'department' => 'Sales']
+     * ];
+     * $grouped = Arrays::groupBy($users, 'department');
+     * // Returns: [
+     * //     'Sales' => [
+     * //         ['name' => 'John', 'department' => 'Sales'],
+     * //         ['name' => 'Bob', 'department' => 'Sales']
+     * //     ],
+     * //     'IT' => [
+     * //         ['name' => 'Jane', 'department' => 'IT']
+     * //     ]
+     * // ]
+     *
+     * // Group by callback function
+     * $numbers = [1, 2, 3, 4, 5, 6];
+     * $grouped = Arrays::groupBy($numbers, fn($n) => $n % 2);
+     * // Returns: [
+     * //     1 => [1, 3, 5],  // odd numbers
+     * //     0 => [2, 4, 6]   // even numbers
+     * // ]
+     * ```
+     *
+     * @param array $array The array to group.
+     * @param callable|string $groupBy The key name to group by, or a callback function
+     *  that returns the group key. The callback has the signature `function (mixed $item, mixed $key): mixed`
+     * @return array Returns an associative array where keys are group identifiers
+     *  and values are arrays of items belonging to each group
+     * @see Arrays::associate()
+     * @see Arrays::partition()
+     */
+    public static function groupBy(array $array, callable|string $groupBy): array
+    {
+        $result = [];
+
+        foreach ($array as $key => $item) {
+            // Determine the group key based on parameter type
+            if (is_string($groupBy)) {
+                // Access by key name (supports both arrays and objects)
+                $groupKey = is_array($item) ? ($item[$groupBy] ?? null) : ($item->{$groupBy} ?? null);
+            } else {
+                // Use callback to determine group key
+                $groupKey = $groupBy($item, $key);
+            }
+
+            // Convert null to empty string to avoid deprecated array offset warning
+            $arrayKey = $groupKey ?? '';
+
+            // Initialize group array if it doesn't exist
+            if (!isset($result[$arrayKey])) {
+                $result[$arrayKey] = [];
+            }
+
+            // Add item to its group
+            $result[$arrayKey][] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
      * Filters array elements by regular expression pattern.
      *
      * This method returns only those array elements whose values match the specified
@@ -2712,6 +2790,61 @@ class Arrays extends StaticClass
     public static function pad(array $array, int $length, mixed $value): array
     {
         return array_pad($array, $length, $value);
+    }
+
+    /**
+     * Splits an array into two groups based on a callback function.
+     *
+     * This method separates items into those that pass a test and those that fail.
+     * The first array in the returned pair contains all items where the callback
+     * returns true, and the second array contains all items where it returns false.
+     *
+     * Think of it like sorting coins into two piles: one for heads and one for tails.
+     * Both piles preserve which coins came from which position in the original pile.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [1, 2, 3, 4, 5, 6];
+     *
+     * // Partition into even and odd
+     * [$even, $odd] = Arrays::partition($numbers, fn($n) => $n % 2 === 0);
+     * // $even contains: [2, 4, 6]
+     * // $odd contains: [1, 3, 5]
+     *
+     * // Partition associative array
+     * $users = [
+     *     'user1' => ['active' => true],
+     *     'user2' => ['active' => false],
+     *     'user3' => ['active' => true]
+     * ];
+     * [$active, $inactive] = Arrays::partition($users, fn($user) => $user['active']);
+     * // $active contains: ['user1' => [...], 'user3' => [...]]
+     * // $inactive contains: ['user2' => [...]]
+     * ```
+     *
+     * @param array $array The array to partition.
+     * @param callable $callback Function that returns true for the first array, false for the second.
+     *  The callback has the signature `function (mixed $value, mixed $key): bool`
+     * @return array Returns an array with two elements: [passing_items, failing_items]
+     * @see Arrays::groupBy()
+     * @see Arrays::filter()
+     */
+    public static function partition(array $array, callable $callback): array
+    {
+        $passed = [];
+        $failed = [];
+
+        foreach ($array as $key => $item) {
+            if ($callback($item, $key)) {
+                $passed[$key] = $item;
+            } else {
+                $failed[$key] = $item;
+            }
+        }
+
+        return [$passed, $failed];
     }
 
     /**
@@ -4262,6 +4395,97 @@ class Arrays extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Filters an array using a callback function.
+     *
+     * This method creates a new array containing only the elements that pass a test
+     * you provide. It is an alias for the filter method with a clearer name for
+     * predicate-based filtering scenarios.
+     *
+     * Use this method when you want to find items that match specific conditions,
+     * like finding all products above a certain price or all users with a certain status.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $users = [
+     *     ['name' => 'John', 'age' => 25, 'active' => true],
+     *     ['name' => 'Jane', 'age' => 17, 'active' => true],
+     *     ['name' => 'Bob', 'age' => 30, 'active' => false]
+     * ];
+     *
+     * // Find adults (age 18+)
+     * $adults = Arrays::where($users, fn($user) => $user['age'] >= 18);
+     * // Returns: [
+     * //     ['name' => 'John', 'age' => 25, 'active' => true],
+     * //     ['name' => 'Bob', 'age' => 30, 'active' => false]
+     * // ]
+     *
+     * // Find active users
+     * $active = Arrays::where($users, fn($user) => $user['active']);
+     * // Returns: [
+     * //     ['name' => 'John', 'age' => 25, 'active' => true],
+     * //     ['name' => 'Jane', 'age' => 17, 'active' => true]
+     * // ]
+     * ```
+     *
+     * @param array $array The array to filter.
+     * @param callable $callback Function that tests each element, returns true to keep it
+     *  The callback has the signature `function (mixed $value, mixed $key): bool`
+     * @return array Returns a new array containing only the elements that pass the test
+     * @see Arrays::filter()
+     * @see Arrays::whereIn()
+     * @see Arrays::grep()
+     */
+    public static function where(array $array, callable $callback): array
+    {
+        return self::filter($array, $callback);
+    }
+
+    /**
+     * Filters an array where a key's value is in a given list of values.
+     *
+     * This method filters an array to only include items where a specific key
+     * has a value that matches one of the values you provide. This is useful
+     * when you want to find items that belong to a certain category or match
+     * any of several possible values.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $users = [
+     *     ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+     *     ['id' => 2, 'name' => 'Jane', 'role' => 'user'],
+     *     ['id' => 3, 'name' => 'Bob', 'role' => 'admin'],
+     *     ['id' => 4, 'name' => 'Alice', 'role' => 'moderator']
+     * ];
+     *
+     * // Find admins and moderators
+     * $privileged = Arrays::whereIn($users, 'role', ['admin', 'moderator']);
+     * // Returns: [
+     * //     ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+     * //     ['id' => 3, 'name' => 'Bob', 'role' => 'admin'],
+     * //     ['id' => 4, 'name' => 'Alice', 'role' => 'moderator']
+     * // ]
+     * ```
+     *
+     * @param array $array The array to filter.
+     * @param string $key The key to check in each array item.
+     * @param array $values The list of values to match against.
+     * @return array Returns a new array containing only items where the key's value is in the values list
+     * @see Arrays::where()
+     * @see Arrays::filter()
+     */
+    public static function whereIn(array $array, string $key, array $values): array
+    {
+        return self::filter($array, function ($item) use ($key, $values) {
+            $value = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
+            return in_array($value, $values, true);
+        });
     }
 
     /**
