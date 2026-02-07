@@ -11,7 +11,6 @@ use TypeError;
 use ArrayAccess;
 use Traversable;
 use JsonSerializable;
-use Nette\Utils\Arrays as NetteArrays;
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
 use Phuture\Coherence\Interface\{Arrayable, Jsonable};
@@ -48,6 +47,11 @@ class Arrays extends StaticClass
      * Maximum recursion depth for nested array operations to prevent infinite recursion.
      */
     public const RECURSION_LIMIT = 1000;
+
+    /**
+     * Maximum number of elements allowed in cross join results to prevent memory exhaustion.
+     */
+    public const CROSS_JOIN_LIMIT = 1000000;
 
     /**
      * Retrieves a reference to an array element by key.
@@ -90,13 +94,28 @@ class Arrays extends StaticClass
      */
     public static function &getReference(array &$array, string|int|array $key): mixed
     {
-        try {
-            return NetteArrays::getRef($array, $key);
-        } catch (\InvalidArgumentException $e) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The traversed item is not an array"
-            );
+        $keys = is_array($key) ? $key : [$key];
+        $current = &$array;
+
+        foreach ($keys as $i => $k) {
+            if (!array_key_exists($k, $current)) {
+                // For intermediate keys, create an array; for final key, create null
+                $current[$k] = ($i < count($keys) - 1) ? [] : null;
+            }
+
+            if ($i < count($keys) - 1) {
+                if (!is_array($current[$k])) {
+                    throw new InvalidArgumentException(
+                        "Invalid Argument: The traversed item is not an array"
+                    );
+                }
+                $current = &$current[$k];
+            } else {
+                $current = &$current[$k];
+            }
         }
+
+        return $current;
     }
 
     /**
@@ -164,7 +183,11 @@ class Arrays extends StaticClass
      */
     public static function append(array &$array, array $items): void
     {
-        NetteArrays::insertAfter($array, null, $items);
+        foreach ($items as $k => $v) {
+            if (!array_key_exists($k, $array)) {
+                $array[$k] = $v;
+            }
+        }
     }
 
     /**
@@ -481,6 +504,17 @@ class Arrays extends StaticClass
             );
         }
 
+        // Calculate potential result size to prevent memory exhaustion
+        $expectedSize = 1;
+        foreach ($arrays as $arr) {
+            $expectedSize *= count($arr);
+            if ($expectedSize > self::CROSS_JOIN_LIMIT) {
+                throw new LogicException(
+                    "Invalid Argument: Cross join would produce too many elements (over " . number_format(self::CROSS_JOIN_LIMIT) . " limit)"
+                );
+            }
+        }
+
         // Start with the first array
         $combinations = array_map(fn ($item) => [$item], $arrays[0]);
 
@@ -537,6 +571,14 @@ class Arrays extends StaticClass
 
         foreach ($array as $key => $value) {
             $keys = explode('.', (string) $key);
+
+            // Add recursion limit protection
+            if (count($keys) >= self::RECURSION_LIMIT) {
+                throw new LogicException(
+                    "Limit Exceeded: Key depth exceeds limit of " . self::RECURSION_LIMIT
+                );
+            }
+
             $lastIndex = count($keys) - 1;
             $temp = &$result;
 
@@ -855,7 +897,12 @@ class Arrays extends StaticClass
      */
     public static function every(array $array, callable $callback): bool
     {
-        return NetteArrays::every($array, $callback);
+        foreach ($array as $key => $value) {
+            if (!$callback($value, $key)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1009,7 +1056,7 @@ class Arrays extends StaticClass
             $callback = fn ($value) => (bool) $value;
         }
 
-        return NetteArrays::filter($array, $callback);
+        return array_filter($array, $callback, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
@@ -1205,9 +1252,30 @@ class Arrays extends StaticClass
      * @return array Returns a single-dimensional array containing all scalar values from the nested structure
      * @see Arrays::collapse()
      */
-    public static function flatten(array $array): array
+    public static function flatten(array $array, int $depth = 0): array
     {
-        return NetteArrays::flatten($array);
+        if ($depth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
+        $result = [];
+
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                if (!empty($value)) {
+                    // Optimize: avoid array_merge() overhead by using loop
+                    foreach (self::flatten($value, $depth + 1) as $item) {
+                        $result[] = $item;
+                    }
+                }
+            } else {
+                $result[] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1341,7 +1409,99 @@ class Arrays extends StaticClass
             );
         }
 
-        return NetteArrays::get($array, $key, $default);
+        if (is_array($key)) {
+            foreach ($key as $segment) {
+                if (!is_array($array) || !array_key_exists($segment, $array)) {
+                    return $default;
+                }
+                $array = $array[$segment];
+            }
+            return $array;
+        }
+
+        if (array_key_exists($key, $array)) {
+            return $array[$key];
+        }
+
+        return $default;
+    }
+
+    /**
+     * Groups array elements by a specified key or callback function.
+     *
+     * This method organizes items in an array into groups based on a common value.
+     * You can either specify a key name (for arrays of arrays/objects) or provide
+     * a custom function that determines how items should be grouped.
+     *
+     * Think of it like sorting a deck of cards into piles by suit - all hearts go
+     * in one pile, all spades in another, and so on. Each pile keeps all the original
+     * cards together.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Group by key name
+     * $users = [
+     *     ['name' => 'John', 'department' => 'Sales'],
+     *     ['name' => 'Jane', 'department' => 'IT'],
+     *     ['name' => 'Bob', 'department' => 'Sales']
+     * ];
+     * $grouped = Arrays::groupBy($users, 'department');
+     * // Returns: [
+     * //     'Sales' => [
+     * //         ['name' => 'John', 'department' => 'Sales'],
+     * //         ['name' => 'Bob', 'department' => 'Sales']
+     * //     ],
+     * //     'IT' => [
+     * //         ['name' => 'Jane', 'department' => 'IT']
+     * //     ]
+     * // ]
+     *
+     * // Group by callback function
+     * $numbers = [1, 2, 3, 4, 5, 6];
+     * $grouped = Arrays::groupBy($numbers, fn($n) => $n % 2);
+     * // Returns: [
+     * //     1 => [1, 3, 5],  // odd numbers
+     * //     0 => [2, 4, 6]   // even numbers
+     * // ]
+     * ```
+     *
+     * @param array $array The array to group.
+     * @param callable|string $groupBy The key name to group by, or a callback function
+     *  that returns the group key. The callback has the signature `function (mixed $item, mixed $key): mixed`
+     * @return array Returns an associative array where keys are group identifiers
+     *  and values are arrays of items belonging to each group
+     * @see Arrays::associate()
+     * @see Arrays::partition()
+     */
+    public static function groupBy(array $array, callable|string $groupBy): array
+    {
+        $result = [];
+
+        foreach ($array as $key => $item) {
+            // Determine the group key based on parameter type
+            if (is_string($groupBy)) {
+                // Access by key name (supports both arrays and objects)
+                $groupKey = is_array($item) ? ($item[$groupBy] ?? null) : ($item->{$groupBy} ?? null);
+            } else {
+                // Use callback to determine group key
+                $groupKey = $groupBy($item, $key);
+            }
+
+            // Convert null to empty string to avoid deprecated array offset warning
+            $arrayKey = $groupKey ?? '';
+
+            // Initialize group array if it doesn't exist
+            if (!isset($result[$arrayKey])) {
+                $result[$arrayKey] = [];
+            }
+
+            // Add item to its group
+            $result[$arrayKey][] = $item;
+        }
+
+        return $result;
     }
 
     /**
@@ -1378,13 +1538,32 @@ class Arrays extends StaticClass
      */
     public static function grep(array $array, string $pattern, bool $invert = false): array
     {
-        try {
-            return NetteArrays::grep($array, $pattern, $invert);
-        } catch (Exception $e) {
+        // Validate pattern once before the loop
+        set_error_handler(function ($errno, $errstr) use ($pattern) {
+            restore_error_handler();
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
+        });
+
+        $testResult = @preg_match($pattern, '');
+        restore_error_handler();
+
+        if ($testResult === false) {
             throw new LogicException(
                 "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
             );
         }
+
+        $result = [];
+        foreach ($array as $key => $value) {
+            $match = preg_match($pattern, (string)$value) === 1;
+            if ($invert !== $match) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1475,7 +1654,30 @@ class Arrays extends StaticClass
      */
     public static function insertAfter(array &$array, string|int $key, array $items): void
     {
-        NetteArrays::insertAfter($array, $key, $items);
+        if (empty($items)) {
+            return;
+        }
+
+        if (!array_key_exists($key, $array)) {
+            foreach ($items as $k => $v) {
+                $array[$k] = $v;
+            }
+            return;
+        }
+
+        $keys = array_keys($array);
+        $position = array_search($key, $keys, true);
+
+        if ($position === false) {
+            foreach ($items as $k => $v) {
+                $array[$k] = $v;
+            }
+            return;
+        }
+
+        $before = array_slice($array, 0, $position + 1, true);
+        $after = array_slice($array, $position + 1, null, true);
+        $array = $before + $items + $after;
     }
 
     /**
@@ -1507,7 +1709,26 @@ class Arrays extends StaticClass
      */
     public static function insertBefore(array &$array, string|int $key, array $items): void
     {
-        NetteArrays::insertBefore($array, $key, $items);
+        if (empty($items)) {
+            return;
+        }
+
+        if (!array_key_exists($key, $array)) {
+            $array = $items + $array;
+            return;
+        }
+
+        $keys = array_keys($array);
+        $position = array_search($key, $keys, true);
+
+        if ($position === false) {
+            $array = $items + $array;
+            return;
+        }
+
+        $before = array_slice($array, 0, $position, true);
+        $after = array_slice($array, $position, null, true);
+        $array = $before + $items + $after;
     }
 
     /**
@@ -2572,6 +2793,61 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Splits an array into two groups based on a callback function.
+     *
+     * This method separates items into those that pass a test and those that fail.
+     * The first array in the returned pair contains all items where the callback
+     * returns true, and the second array contains all items where it returns false.
+     *
+     * Think of it like sorting coins into two piles: one for heads and one for tails.
+     * Both piles preserve which coins came from which position in the original pile.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [1, 2, 3, 4, 5, 6];
+     *
+     * // Partition into even and odd
+     * [$even, $odd] = Arrays::partition($numbers, fn($n) => $n % 2 === 0);
+     * // $even contains: [2, 4, 6]
+     * // $odd contains: [1, 3, 5]
+     *
+     * // Partition associative array
+     * $users = [
+     *     'user1' => ['active' => true],
+     *     'user2' => ['active' => false],
+     *     'user3' => ['active' => true]
+     * ];
+     * [$active, $inactive] = Arrays::partition($users, fn($user) => $user['active']);
+     * // $active contains: ['user1' => [...], 'user3' => [...]]
+     * // $inactive contains: ['user2' => [...]]
+     * ```
+     *
+     * @param array $array The array to partition.
+     * @param callable $callback Function that returns true for the first array, false for the second.
+     *  The callback has the signature `function (mixed $value, mixed $key): bool`
+     * @return array Returns an array with two elements: [passing_items, failing_items]
+     * @see Arrays::groupBy()
+     * @see Arrays::filter()
+     */
+    public static function partition(array $array, callable $callback): array
+    {
+        $passed = [];
+        $failed = [];
+
+        foreach ($array as $key => $item) {
+            if ($callback($item, $key)) {
+                $passed[$key] = $item;
+            } else {
+                $failed[$key] = $item;
+            }
+        }
+
+        return [$passed, $failed];
+    }
+
+    /**
      * Prepends key-value pairs to an array.
      *
      * This method prepends new key-value pairs to the beginning of an array. If keys already exist,
@@ -2600,7 +2876,29 @@ class Arrays extends StaticClass
      */
     public static function prepend(array &$array, array $items): void
     {
-        NetteArrays::insertBefore($array, null, $items);
+        if (empty($items)) {
+            return;
+        }
+
+        // Check if we have string keys that need to be preserved
+        $hasStringKeys = count(array_filter(array_keys($array), 'is_string')) > 0 ||
+                         count(array_filter(array_keys($items), 'is_string')) > 0;
+
+        if (!$hasStringKeys) {
+            // Fast path for numeric-only arrays: use array_unshift in reverse
+            foreach (array_reverse($items, true) as $value) {
+                array_unshift($array, $value);
+            }
+            return;
+        }
+
+        // For string keys: clear and rebuild the array in-place
+        // This ensures the reference is properly updated
+        $merged = $items + $array;
+        $array = [];
+        foreach ($merged as $key => $value) {
+            $array[$key] = $value;
+        }
     }
 
     /**
@@ -3293,7 +3591,12 @@ class Arrays extends StaticClass
      */
     public static function some(array $array, callable $callback): bool
     {
-        return NetteArrays::some($array, $callback);
+        foreach ($array as $key => $value) {
+            if ($callback($value, $key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -3362,6 +3665,113 @@ class Arrays extends StaticClass
         }
 
         return $reverse ? rsort($array) : sort($array);
+    }
+
+    /**
+     * Sorts an array by a given key or multiple keys.
+     *
+     * This method sorts a multidimensional array (array of arrays or objects) by one or more keys.
+     * You can sort by a single key, multiple keys for multi-level sorting, or provide a custom callback
+     * to determine the sort value. The original keys are not preserved - the array is re-indexed.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Sort by a single key
+     * $users = [
+     *     ['name' => 'John', 'age' => 30],
+     *     ['name' => 'Alice', 'age' => 25],
+     *     ['name' => 'Bob', 'age' => 35]
+     * ];
+     * Arrays::sortBy($users, 'age');
+     * // Result: [
+     * //     ['name' => 'Alice', 'age' => 25],
+     * //     ['name' => 'John', 'age' => 30],
+     * //     ['name' => 'Bob', 'age' => 35]
+     * // ]
+     *
+     * // Sort by multiple keys (age ascending, then name descending)
+     * Arrays::sortBy($users, ['age', 'name']);
+     * // First sorts by age, then for equal ages, sorts by name
+     *
+     * // Sort in descending order
+     * Arrays::sortBy($users, 'age', true);
+     * // Result: [
+     * //     ['name' => 'Bob', 'age' => 35],
+     * //     ['name' => 'John', 'age' => 30],
+     * //     ['name' => 'Alice', 'age' => 25]
+     * // ]
+     *
+     * // Sort array of objects by property
+     * $products = [
+     *     (object)['name' => 'Apple', 'price' => 1.50],
+     *     (object)['name' => 'Banana', 'price' => 0.75],
+     *     (object)['name' => 'Cherry', 'price' => 2.00]
+     * ];
+     * Arrays::sortBy($products, 'price');
+     * // Sorted by price ascending
+     *
+     * // Sort with custom callback for complex sorting
+     * $words = ['apple', 'Banana', 'CHERRY', 'date'];
+     * Arrays::sortBy($words, fn($item) => strtolower($item));
+     * // Case-insensitive sort
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param string|array|callable $criteria The key(s) to sort by, or a callback that returns the sort value
+     *  - string: Single key name (e.g., 'age', 'name')
+     *  - array: Multiple keys for multi-level sorting (e.g., ['age', 'name'])
+     *  - callable: Function that receives ($item) and returns the sort value
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param int $flags Sort flags for natural sorting (optional, e.g., SORT_NATURAL)
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     * @see Arrays::sortAssoc()
+     * @see Arrays::sortKeys()
+     */
+    public static function sortBy(
+        array &$array,
+        string|array|callable $criteria,
+        bool $reverse = false,
+        int $flags = 0
+    ): bool {
+        $comparator = function ($a, $b) use ($criteria, $flags) {
+            $criteriaArray = is_array($criteria) ? $criteria : [$criteria];
+
+            foreach ($criteriaArray as $criterion) {
+                // Get the values to compare
+                if (is_callable($criterion)) {
+                    $aValue = $criterion($a);
+                    $bValue = $criterion($b);
+                } else {
+                    $aValue = is_array($a) ? ($a[$criterion] ?? null) : ($a->{$criterion} ?? null);
+                    $bValue = is_array($b) ? ($b[$criterion] ?? null) : ($b->{$criterion} ?? null);
+                }
+
+                // Apply flags for natural string comparison
+                if ($flags & SORT_NATURAL) {
+                    $comparison = strnatcmp((string) $aValue, (string) $bValue);
+                } elseif ($flags & SORT_FLAG_CASE) {
+                    $comparison = strcasecmp((string) $aValue, (string) $bValue);
+                } else {
+                    $comparison = $aValue <=> $bValue;
+                }
+
+                // If values are equal, continue to next criterion
+                if ($comparison !== 0) {
+                    return $comparison;
+                }
+            }
+
+            return 0;
+        };
+
+        if ($reverse) {
+            return usort($array, fn ($a, $b) => $comparator($b, $a));
+        }
+
+        return usort($array, $comparator);
     }
 
     /**
@@ -3745,7 +4155,7 @@ class Arrays extends StaticClass
 
         // Handle JSON strings
         if (is_string($value)) {
-            $decoded = json_decode($value, true);
+            $decoded = json_decode($value, true, self::RECURSION_LIMIT);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
@@ -3985,6 +4395,97 @@ class Arrays extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Filters an array using a callback function.
+     *
+     * This method creates a new array containing only the elements that pass a test
+     * you provide. It is an alias for the filter method with a clearer name for
+     * predicate-based filtering scenarios.
+     *
+     * Use this method when you want to find items that match specific conditions,
+     * like finding all products above a certain price or all users with a certain status.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $users = [
+     *     ['name' => 'John', 'age' => 25, 'active' => true],
+     *     ['name' => 'Jane', 'age' => 17, 'active' => true],
+     *     ['name' => 'Bob', 'age' => 30, 'active' => false]
+     * ];
+     *
+     * // Find adults (age 18+)
+     * $adults = Arrays::where($users, fn($user) => $user['age'] >= 18);
+     * // Returns: [
+     * //     ['name' => 'John', 'age' => 25, 'active' => true],
+     * //     ['name' => 'Bob', 'age' => 30, 'active' => false]
+     * // ]
+     *
+     * // Find active users
+     * $active = Arrays::where($users, fn($user) => $user['active']);
+     * // Returns: [
+     * //     ['name' => 'John', 'age' => 25, 'active' => true],
+     * //     ['name' => 'Jane', 'age' => 17, 'active' => true]
+     * // ]
+     * ```
+     *
+     * @param array $array The array to filter.
+     * @param callable $callback Function that tests each element, returns true to keep it
+     *  The callback has the signature `function (mixed $value, mixed $key): bool`
+     * @return array Returns a new array containing only the elements that pass the test
+     * @see Arrays::filter()
+     * @see Arrays::whereIn()
+     * @see Arrays::grep()
+     */
+    public static function where(array $array, callable $callback): array
+    {
+        return self::filter($array, $callback);
+    }
+
+    /**
+     * Filters an array where a key's value is in a given list of values.
+     *
+     * This method filters an array to only include items where a specific key
+     * has a value that matches one of the values you provide. This is useful
+     * when you want to find items that belong to a certain category or match
+     * any of several possible values.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $users = [
+     *     ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+     *     ['id' => 2, 'name' => 'Jane', 'role' => 'user'],
+     *     ['id' => 3, 'name' => 'Bob', 'role' => 'admin'],
+     *     ['id' => 4, 'name' => 'Alice', 'role' => 'moderator']
+     * ];
+     *
+     * // Find admins and moderators
+     * $privileged = Arrays::whereIn($users, 'role', ['admin', 'moderator']);
+     * // Returns: [
+     * //     ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+     * //     ['id' => 3, 'name' => 'Bob', 'role' => 'admin'],
+     * //     ['id' => 4, 'name' => 'Alice', 'role' => 'moderator']
+     * // ]
+     * ```
+     *
+     * @param array $array The array to filter.
+     * @param string $key The key to check in each array item.
+     * @param array $values The list of values to match against.
+     * @return array Returns a new array containing only items where the key's value is in the values list
+     * @see Arrays::where()
+     * @see Arrays::filter()
+     */
+    public static function whereIn(array $array, string $key, array $values): array
+    {
+        return self::filter($array, function ($item) use ($key, $values) {
+            $value = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
+            return in_array($value, $values, true);
+        });
     }
 
     /**

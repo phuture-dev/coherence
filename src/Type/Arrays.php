@@ -267,6 +267,24 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Groups array elements by a specified key or callback function.
+     *
+     * This method organizes items in an array into groups based on a common value.
+     * You can either specify a key name (for arrays of arrays/objects) or provide
+     * a custom function that determines how items should be grouped.
+     *
+     * @param callable|string $groupBy The key name to group by, or a callback function
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::groupBy()
+     */
+    public function groupBy(callable|string $groupBy): self
+    {
+        $this->data = Transformer::groupBy($this->data, $groupBy);
+
+        return $this;
+    }
+
+    /**
      * Swaps keys and values in an array.
      *
      * This method exchanges keys and values so that values become keys and keys become values.
@@ -679,6 +697,22 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Sort the array by a given key or multiple keys.
+     *
+     * @param string|array|callable $criteria The key(s) to sort by, or a callback
+     * @param bool $reverse Whether to sort in descending order
+     * @param int $flags Sort flags for natural sorting
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::sortBy()
+     */
+    public function sortBy(string|array|callable $criteria, bool $reverse = false, int $flags = 0): self
+    {
+        Transformer::sortBy($this->data, $criteria, $reverse, $flags);
+
+        return $this;
+    }
+
+    /**
      * Sort an associative array by values while maintaining key association.
      *
      * @param bool $reverse Whether to sort in reverse order
@@ -736,6 +770,42 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     public function split(int $length, bool $preserveKeys = false): self
     {
         $this->data = Transformer::split($this->data, $length, $preserveKeys);
+
+        return $this;
+    }
+
+    /**
+     * Filters an array using a callback function.
+     *
+     * This method creates a new array containing only the elements that pass a test
+     * you provide. It is an alias for the filter method with a clearer name for
+     * predicate-based filtering scenarios.
+     *
+     * @param callable $callback Function that tests each element, returns true to keep it
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::where()
+     */
+    public function where(callable $callback): self
+    {
+        $this->data = Transformer::where($this->data, $callback);
+
+        return $this;
+    }
+
+    /**
+     * Filters an array where a key's value is in a given list of values.
+     *
+     * This method filters an array to only include items where a specific key
+     * has a value that matches one of the values you provide.
+     *
+     * @param string $key The key to check in each array item
+     * @param array $values The list of values to match against
+     * @return self An instance of the Arrays class with the transformed array
+     * @see \Phuture\Coherence\Arrays::whereIn()
+     */
+    public function whereIn(string $key, array $values): self
+    {
+        $this->data = Transformer::whereIn($this->data, $key, $values);
 
         return $this;
     }

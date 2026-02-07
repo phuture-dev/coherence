@@ -2480,6 +2480,267 @@ class ArraysTest extends TestCase
         $result = Arrays::wrap($array, '<', '>');
         Assert::same(['<a>', ['nested'], '<c>'], $result);
     }
+
+    public function testGroupByStringKey(): void
+    {
+        $users = [
+            ['name' => 'John', 'department' => 'Sales'],
+            ['name' => 'Jane', 'department' => 'IT'],
+            ['name' => 'Bob', 'department' => 'Sales']
+        ];
+        $result = Arrays::groupBy($users, 'department');
+
+        Assert::count(2, $result);
+        Assert::count(2, $result['Sales']);
+        Assert::count(1, $result['IT']);
+        Assert::same('John', $result['Sales'][0]['name']);
+        Assert::same('Bob', $result['Sales'][1]['name']);
+        Assert::same('Jane', $result['IT'][0]['name']);
+    }
+
+    public function testGroupByCallback(): void
+    {
+        $numbers = [1, 2, 3, 4, 5, 6];
+        $result = Arrays::groupBy($numbers, fn($n) => $n % 2);
+
+        Assert::count(2, $result);
+        Assert::same([1, 3, 5], $result[1]);
+        Assert::same([2, 4, 6], $result[0]);
+    }
+
+    public function testGroupByObjects(): void
+    {
+        $obj1 = new stdClass();
+        $obj1->type = 'fruit';
+        $obj1->name = 'apple';
+
+        $obj2 = new stdClass();
+        $obj2->type = 'vegetable';
+        $obj2->name = 'carrot';
+
+        $obj3 = new stdClass();
+        $obj3->type = 'fruit';
+        $obj3->name = 'banana';
+
+        $items = [$obj1, $obj2, $obj3];
+        $result = Arrays::groupBy($items, 'type');
+
+        Assert::count(2, $result);
+        Assert::count(2, $result['fruit']);
+        Assert::count(1, $result['vegetable']);
+        Assert::same('apple', $result['fruit'][0]->name);
+        Assert::same('banana', $result['fruit'][1]->name);
+        Assert::same('carrot', $result['vegetable'][0]->name);
+    }
+
+    public function testGroupByEmptyArray(): void
+    {
+        $result = Arrays::groupBy([], 'key');
+        Assert::same([], $result);
+    }
+
+    public function testGroupByMissingKey(): void
+    {
+        $items = [
+            ['name' => 'John', 'type' => 'A'],
+            ['name' => 'Jane'] // missing 'type' key
+        ];
+        $result = Arrays::groupBy($items, 'type');
+
+        Assert::count(2, $result);
+        Assert::count(1, $result['A']);
+        Assert::count(1, $result['']);
+        Assert::same('Jane', $result[''][0]['name']);
+    }
+
+    public function testGroupByPreservesAllItems(): void
+    {
+        $items = ['a', 'b', 'c', 'a', 'b', 'a'];
+        $result = Arrays::groupBy($items, fn($item) => $item);
+
+        Assert::count(3, $result);
+        Assert::count(3, $result['a']);
+        Assert::count(2, $result['b']);
+        Assert::count(1, $result['c']);
+    }
+
+    public function testPartition(): void
+    {
+        $numbers = [1, 2, 3, 4, 5, 6];
+        [$even, $odd] = Arrays::partition($numbers, fn($n) => $n % 2 === 0);
+
+        Assert::same([1 => 2, 3 => 4, 5 => 6], $even);
+        Assert::same([0 => 1, 2 => 3, 4 => 5], $odd);
+    }
+
+    public function testPartitionEmptyArray(): void
+    {
+        [$passed, $failed] = Arrays::partition([], fn($x) => true);
+
+        Assert::same([], $passed);
+        Assert::same([], $failed);
+    }
+
+    public function testPartitionAllPass(): void
+    {
+        $items = [1, 2, 3, 4];
+        [$passed, $failed] = Arrays::partition($items, fn($x) => $x > 0);
+
+        Assert::same([1, 2, 3, 4], $passed);
+        Assert::same([], $failed);
+    }
+
+    public function testPartitionAllFail(): void
+    {
+        $items = [1, 2, 3, 4];
+        [$passed, $failed] = Arrays::partition($items, fn($x) => $x > 10);
+
+        Assert::same([], $passed);
+        Assert::same([1, 2, 3, 4], $failed);
+    }
+
+    public function testPartitionPreservesKeys(): void
+    {
+        $items = [
+            'a' => ['active' => true],
+            'b' => ['active' => false],
+            'c' => ['active' => true]
+        ];
+        [$active, $inactive] = Arrays::partition($items, fn($item) => $item['active']);
+
+        Assert::same(['a', 'c'], array_keys($active));
+        Assert::same(['b'], array_keys($inactive));
+    }
+
+    public function testPartitionWithCallbackReceivingKey(): void
+    {
+        $items = ['a' => 1, 'b' => 2, 'c' => 3];
+        [$withKeyB, $withoutKeyB] = Arrays::partition($items, fn($item, $key) => $key === 'b');
+
+        Assert::same(['b' => 2], $withKeyB);
+        Assert::same(['a' => 1, 'c' => 3], $withoutKeyB);
+    }
+
+    public function testWhere(): void
+    {
+        $users = [
+            ['name' => 'John', 'age' => 25, 'active' => true],
+            ['name' => 'Jane', 'age' => 17, 'active' => true],
+            ['name' => 'Bob', 'age' => 30, 'active' => false]
+        ];
+        $adults = Arrays::where($users, fn($user) => $user['age'] >= 18);
+
+        Assert::count(2, $adults);
+        Assert::same('John', $adults[0]['name']);
+        Assert::same('Bob', $adults[2]['name']);
+    }
+
+    public function testWhereEmpty(): void
+    {
+        $numbers = [1, 2, 3, 4];
+        $result = Arrays::where($numbers, fn($n) => $n > 10);
+
+        Assert::same([], $result);
+    }
+
+    public function testWherePreservesKeys(): void
+    {
+        $items = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4];
+        $result = Arrays::where($items, fn($n) => $n % 2 === 0);
+
+        Assert::same(['b', 'd'], array_keys($result));
+        Assert::same([2, 4], array_values($result));
+    }
+
+    public function testWhereIn(): void
+    {
+        $users = [
+            ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+            ['id' => 2, 'name' => 'Jane', 'role' => 'user'],
+            ['id' => 3, 'name' => 'Bob', 'role' => 'admin'],
+            ['id' => 4, 'name' => 'Alice', 'role' => 'moderator']
+        ];
+        $result = Arrays::whereIn($users, 'role', ['admin', 'moderator']);
+
+        Assert::count(3, $result);
+        Assert::same('John', $result[0]['name']);
+        Assert::same('Bob', $result[2]['name']);
+        Assert::same('Alice', $result[3]['name']);
+    }
+
+    public function testWhereInMultipleValues(): void
+    {
+        $items = [
+            ['type' => 'A', 'value' => 1],
+            ['type' => 'B', 'value' => 2],
+            ['type' => 'C', 'value' => 3],
+            ['type' => 'D', 'value' => 4]
+        ];
+        $result = Arrays::whereIn($items, 'type', ['A', 'C', 'D']);
+
+        Assert::count(3, $result);
+        Assert::same('A', $result[0]['type']);
+        Assert::same('C', $result[2]['type']);
+        Assert::same('D', $result[3]['type']);
+    }
+
+    public function testWhereInStrictComparison(): void
+    {
+        $items = [
+            ['id' => 1],
+            ['id' => '1'],
+            ['id' => 2],
+            ['id' => true]
+        ];
+        $result = Arrays::whereIn($items, 'id', [1]);
+
+        Assert::count(1, $result);
+        Assert::same(['id' => 1], $result[0]);
+    }
+
+    public function testWhereInWithObjects(): void
+    {
+        $obj1 = new stdClass();
+        $obj1->type = 'fruit';
+
+        $obj2 = new stdClass();
+        $obj2->type = 'vegetable';
+
+        $obj3 = new stdClass();
+        $obj3->type = 'fruit';
+
+        $items = [$obj1, $obj2, $obj3];
+        $result = Arrays::whereIn($items, 'type', ['fruit']);
+
+        Assert::count(2, $result);
+        Assert::same('fruit', $result[0]->type);
+        Assert::same('fruit', $result[2]->type);
+    }
+
+    public function testWhereInEmptyValues(): void
+    {
+        $items = [
+            ['type' => 'A'],
+            ['type' => 'B']
+        ];
+        $result = Arrays::whereIn($items, 'type', []);
+
+        Assert::same([], $result);
+    }
+
+    public function testWhereInMissingKey(): void
+    {
+        $items = [
+            ['type' => 'A'],
+            ['name' => 'no type'],
+            ['type' => 'B']
+        ];
+        $result = Arrays::whereIn($items, 'type', ['A', 'B']);
+
+        Assert::count(2, $result);
+        Assert::same('A', $result[0]['type']);
+        Assert::same('B', $result[2]['type']);
+    }
 }
 
 (new ArraysTest())->run();
