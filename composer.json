@@ -50,10 +50,9 @@
         }
     },
     "scripts": {
-        "build": ["@php-cs-fixer", "@test"],
-        "test": ["@phpcs", "@tester"],
+        "test": ["@phpcs", "@phpstan", "@tester"],
+        "lint": "php-cs-fixer fix",
         "server": "php -S localhost:8000",
-        "php-cs-fixer": "php-cs-fixer fix",
         "phpstan": "phpstan analyse src --memory-limit=4294967296",
         "phpcs": "phpcs --standard=PSR12 src",
         "tester": "tester tests -C"

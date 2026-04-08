@@ -11,7 +11,7 @@ namespace Phuture\Coherence\Enum;
  * like checking equality, differences, or intersections. Each case represents
  * a specific comparison focus.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

@@ -6,7 +6,6 @@ namespace Phuture\Coherence;
 
 use WeakMap;
 use stdClass;
-use Exception;
 use TypeError;
 use ArrayAccess;
 use Traversable;
@@ -35,7 +34,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, InvalidDataTypeExcept
  * - **Filtering & Querying**: Extensive filtering capabilities including regex-based grep
  * - **Memory Optimization**: Reference-based operations for efficient memory usage
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
@@ -98,6 +97,13 @@ class Arrays extends StaticClass
         $current = &$array;
 
         foreach ($keys as $i => $k) {
+            // Validate key type - PHP arrays only accept string or int keys
+            if (!is_string($k) && !is_int($k)) {
+                throw new InvalidArgumentException(
+                    'Invalid Argument: Array keys must be strings or integers, ' . get_debug_type($k) . ' given'
+                );
+            }
+
             if (!array_key_exists($k, $current)) {
                 // For intermediate keys, create an array; for final key, create null
                 $current[$k] = ($i < count($keys) - 1) ? [] : null;
@@ -324,6 +330,9 @@ class Arrays extends StaticClass
      * similar to selecting a column from a spreadsheet. Useful when working with
      * database results or arrays of objects.
      *
+     * You can extract values from nested paths using an array of keys. For example,
+     * to get email addresses from a nested user profile structure.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
@@ -340,15 +349,68 @@ class Arrays extends StaticClass
      * // Index by another column
      * $indexed = Arrays::column($users, 'name', 'id');
      * // Returns: [1 => 'John', 2 => 'Jane', 3 => 'Bob']
+     *
+     * // Extract from nested path using array notation
+     * $users = [
+     *     ['id' => 1, 'profile' => ['email' => 'john@example.com']],
+     *     ['id' => 2, 'profile' => ['email' => 'jane@example.com']]
+     * ];
+     * $emails = Arrays::column($users, ['profile', 'email']);
+     * // Returns: ['john@example.com', 'jane@example.com']
+     *
+     * // Nested path with index
+     * $indexed = Arrays::column($users, ['profile', 'email'], 'id');
+     * // Returns: [1 => 'john@example.com', 2 => 'jane@example.com']
      * ```
      *
      * @param array $array The multidimensional array to extract from.
-     * @param int|string|null $column The column name or index to extract.
-     * @param int|string|null $index Optional column to use as keys in the result (default: null).
+     * @param int|string|array|null $column The column name, index, or nested path array to extract.
+     * @param int|string|array|null $index Optional column, index, or nested path array to use as keys (default: null).
      * @return array Returns an array of values from the specified column
+     * @throws InvalidArgumentException If the column path is not a valid list of strings
+     * @throws InvalidDataTypeException If the array contains invalid data types
      */
-    public static function column(array $array, int|string|null $column, int|string|null $index = null): array
-    {
+    public static function column(
+        array $array,
+        int|string|array|null $column,
+        int|string|array|null $index = null
+    ): array {
+        // Handle array-based column path (nested path notation)
+        if (is_array($column)) {
+            // Validate that column path is a list of strings
+            if (!self::isList($column) || array_filter($column, 'is_string') !== $column) {
+                throw new InvalidArgumentException(
+                    'Invalid Argument: Column path must be a list of strings'
+                );
+            }
+
+            $result = [];
+            foreach ($array as $item) {
+                // Convert objects to arrays (handles nested properties)
+                if (is_object($item)) {
+                    $item = json_decode(json_encode($item), true, self::RECURSION_LIMIT);
+                }
+
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $value = self::get($item, $column, null);
+
+                if ($index === null) {
+                    $result[] = $value;
+                } else {
+                    $key = self::get($item, (array) $index, null);
+                    if ($key !== null) {
+                        $result[$key] = $value;
+                    }
+                }
+            }
+
+            return $result;
+        }
+
+        // Use native array_column for simple string/int column (backward compatible)
         try {
             return array_column($array, $column, $index);
         } catch (TypeError $e) {
@@ -510,7 +572,8 @@ class Arrays extends StaticClass
             $expectedSize *= count($arr);
             if ($expectedSize > self::CROSS_JOIN_LIMIT) {
                 throw new LogicException(
-                    "Invalid Argument: Cross join would produce too many elements (over " . number_format(self::CROSS_JOIN_LIMIT) . " limit)"
+                    'Invalid Argument: Cross join would produce too many elements '
+                    . '(over ' . number_format(self::CROSS_JOIN_LIMIT) . ' limit)'
                 );
             }
         }
@@ -1658,6 +1721,7 @@ class Arrays extends StaticClass
             return;
         }
 
+        // If key doesn't exist, append the items
         if (!array_key_exists($key, $array)) {
             foreach ($items as $k => $v) {
                 $array[$k] = $v;
@@ -1665,19 +1729,22 @@ class Arrays extends StaticClass
             return;
         }
 
-        $keys = array_keys($array);
-        $position = array_search($key, $keys, true);
-
-        if ($position === false) {
-            foreach ($items as $k => $v) {
-                $array[$k] = $v;
+        // Single-pass rebuild with insertion after the matching key
+        $result = [];
+        foreach ($array as $k => $v) {
+            $result[$k] = $v;
+            if ($k === $key) {
+                foreach ($items as $itemKey => $itemValue) {
+                    $result[$itemKey] ??= $itemValue;
+                }
             }
-            return;
         }
 
-        $before = array_slice($array, 0, $position + 1, true);
-        $after = array_slice($array, $position + 1, null, true);
-        $array = $before + $items + $after;
+        // Clear and rebuild the original array by reference
+        $array = [];
+        foreach ($result as $k => $v) {
+            $array[$k] = $v;
+        }
     }
 
     /**
@@ -1713,22 +1780,28 @@ class Arrays extends StaticClass
             return;
         }
 
+        // If key doesn't exist, prepend the items
         if (!array_key_exists($key, $array)) {
             $array = $items + $array;
             return;
         }
 
-        $keys = array_keys($array);
-        $position = array_search($key, $keys, true);
-
-        if ($position === false) {
-            $array = $items + $array;
-            return;
+        // Single-pass rebuild with insertion before the matching key
+        $result = [];
+        foreach ($array as $k => $v) {
+            if ($k === $key) {
+                foreach ($items as $itemKey => $itemValue) {
+                    $result[$itemKey] ??= $itemValue;
+                }
+            }
+            $result[$k] = $v;
         }
 
-        $before = array_slice($array, 0, $position, true);
-        $after = array_slice($array, $position, null, true);
-        $array = $before + $items + $after;
+        // Clear and rebuild the original array by reference
+        $array = [];
+        foreach ($result as $k => $v) {
+            $array[$k] = $v;
+        }
     }
 
     /**
@@ -2505,7 +2578,17 @@ class Arrays extends StaticClass
                 );
             }
 
-            $result[key($mapped)] = current($mapped);
+            $newKey = key($mapped);
+
+            // Validate that the key is a valid PHP array key type
+            if (!is_string($newKey) && !is_int($newKey)) {
+                throw new InvalidArgumentException(
+                    'Invalid Argument: Array keys must be strings or integers, '
+                    . get_debug_type($newKey) . ' returned by callback'
+                );
+            }
+
+            $result[$newKey] = current($mapped);
         }
 
         return $result;
@@ -2882,7 +2965,7 @@ class Arrays extends StaticClass
 
         // Check if we have string keys that need to be preserved
         $hasStringKeys = count(array_filter(array_keys($array), 'is_string')) > 0 ||
-                         count(array_filter(array_keys($items), 'is_string')) > 0;
+            count(array_filter(array_keys($items), 'is_string')) > 0;
 
         if (!$hasStringKeys) {
             // Fast path for numeric-only arrays: use array_unshift in reverse
@@ -4054,6 +4137,120 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Calculates the average (arithmetic mean) of values in an array.
+     *
+     * This method adds up all the numbers in an array and divides by the count
+     * of elements to find the middle value. Think of it like finding the "typical"
+     * value in a set of numbers.
+     *
+     * If the array is empty, this method returns null. Non-numeric values are
+     * treated as zero in the calculation.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [1, 2, 3, 4, 5];
+     * $avg = Arrays::average($numbers);
+     *
+     * // Returns: 3.0
+     *
+     * // With decimal values
+     * $prices = [10.5, 20.0, 30.5];
+     * $avg = Arrays::average($prices);
+     *
+     * // Returns: 20.333333333333332
+     *
+     * // Empty array returns null
+     * $avg = Arrays::average([]);
+     *
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing numeric values
+     * @return float|null The average value, or null if the array is empty
+     * @see Arrays::sum()
+     * @see Arrays::median()
+     */
+    public static function average(array $array): ?float
+    {
+        $count = count($array);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        return self::sum($array) / $count;
+    }
+
+    /**
+     * Calculates the median (middle value) of values in an array.
+     *
+     * This method finds the middle value in a sorted list of numbers. The median
+     * is useful because it's not affected by extremely high or low values the way
+     * an average is. Think of it like finding the value that splits your data in half.
+     *
+     * For an odd number of elements, the median is the middle value. For an even
+     * number of elements, the median is the average of the two middle values.
+     *
+     * If the array is empty, this method returns null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Odd number of elements - returns middle value
+     * $numbers = [1, 3, 5];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 3
+     *
+     * // Even number of elements - returns average of two middle values
+     * $numbers = [1, 2, 3, 4];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 2.5
+     *
+     * // Unsorted input gets sorted automatically
+     * $numbers = [5, 1, 3, 2, 4];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 3
+     *
+     * // Empty array returns null
+     * $med = Arrays::median([]);
+     *
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing numeric values
+     * @return float|null The median value, or null if the array is empty
+     * @see Arrays::average()
+     */
+    public static function median(array $array): ?float
+    {
+        $count = count($array);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        // Sort the array to find the middle value(s)
+        $sorted = $array;
+        sort($sorted);
+
+        $middle = (int) floor(($count - 1) / 2);
+
+        if ($count % 2 === 0) {
+            // Even number of elements - average the two middle values
+            return ($sorted[$middle] + $sorted[$middle + 1]) / 2;
+        }
+
+        // Odd number of elements - return the middle value
+        return (float) $sorted[$middle];
+    }
+
+    /**
      * This method converts various input types into an array.
      *
      * It supports various data types to arrays using smart conversion rules.
@@ -4339,6 +4536,78 @@ class Arrays extends StaticClass
     public static function values(array $array): array
     {
         return array_values($array);
+    }
+
+    /**
+     * Combines multiple arrays by pairing elements at the same index.
+     *
+     * This method takes multiple arrays and creates a new array where each element
+     * is an array containing the corresponding elements from each input array at
+     * that position. Think of it like zipping together two jacket halves - the
+     * teeth from each side pair up at the same position.
+     *
+     * If the arrays have different lengths, the shortest length determines the
+     * number of pairs produced. Extra elements in longer arrays are ignored.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Pair two arrays
+     * $numbers = [1, 2, 3];
+     * $letters = ['a', 'b', 'c'];
+     * $zipped = Arrays::zip($numbers, $letters);
+     * // Returns: [[1, 'a'], [2, 'b'], [3, 'c']]
+     *
+     * // Zip three arrays
+     * $ids = [1, 2];
+     * $names = ['John', 'Jane'];
+     * $ages = [30, 25];
+     * $zipped = Arrays::zip($ids, $names, $ages);
+     * // Returns: [[1, 'John', 30], [2, 'Jane', 25]]
+     *
+     * // Different lengths - uses shortest
+     * $a = [1, 2, 3, 4];
+     * $b = ['a', 'b'];
+     * $zipped = Arrays::zip($a, $b);
+     * // Returns: [[1, 'a'], [2, 'b']]
+     *
+     * // Create associative arrays
+     * $keys = ['name', 'age'];
+     * $values = ['John', 30];
+     * $zipped = Arrays::zip($keys, $values);
+     * // Returns: [['name', 'John'], ['age', 30]]
+     * ```
+     *
+     * @param array ...$arrays Variable number of arrays to zip together
+     * @return array Returns an array of paired elements from each input array
+     * @throws InvalidArgumentException If fewer than two arrays are provided
+     * @see Arrays::unzip()
+     */
+    public static function zip(array ...$arrays): array
+    {
+        if (count($arrays) < 2) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: At least two arrays are required for zip operation'
+            );
+        }
+
+        // Convert all arrays to numeric-indexed arrays
+        $arrays = array_map('array_values', $arrays);
+
+        // Find the shortest array length
+        $length = min(array_map('count', $arrays));
+
+        $result = [];
+        for ($i = 0; $i < $length; $i++) {
+            $pair = [];
+            foreach ($arrays as $array) {
+                $pair[] = $array[$i];
+            }
+            $result[] = $pair;
+        }
+
+        return $result;
     }
 
     /**

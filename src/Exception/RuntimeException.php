@@ -8,6 +8,7 @@ use Phuture\Coherence\Interface\Exception;
 
 /**
  * Exception thrown for runtime errors that occur during program execution.
+ *
  * Common scenarios where this exception is thrown:
  * - Invalid method calls or argument combinations
  * - Runtime validation failures
@@ -19,7 +20,7 @@ use Phuture\Coherence\Interface\Exception;
  * mistakes but rather by conditions that arise during normal program execution.
  * For programming errors, consider using more specific exception types.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

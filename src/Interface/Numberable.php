@@ -12,7 +12,7 @@ namespace Phuture\Coherence\Interface;
  * can be treated as numbers in various contexts, allowing for flexible
  * type conversion and numeric operations.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

@@ -178,6 +178,104 @@ class ArraysTest extends TestCase
         Assert::same([1 => 'John', 2 => 'Jane', 3 => 'Bob'], $result);
     }
 
+    public function testColumnWithNestedPath(): void
+    {
+        $array = [
+            ['id' => 1, 'profile' => ['email' => 'john@example.com']],
+            ['id' => 2, 'profile' => ['email' => 'jane@example.com']]
+        ];
+        $result = Arrays::column($array, ['profile', 'email']);
+        Assert::same(['john@example.com', 'jane@example.com'], $result);
+    }
+
+    public function testColumnWithNestedPathAndIndex(): void
+    {
+        $array = [
+            ['id' => 1, 'profile' => ['email' => 'john@example.com']],
+            ['id' => 2, 'profile' => ['email' => 'jane@example.com']]
+        ];
+        $result = Arrays::column($array, ['profile', 'email'], 'id');
+        Assert::same([1 => 'john@example.com', 2 => 'jane@example.com'], $result);
+    }
+
+    public function testColumnWithDeepNestedPath(): void
+    {
+        $array = [
+            ['id' => 1, 'user' => ['profile' => ['settings' => ['theme' => 'dark']]]],
+            ['id' => 2, 'user' => ['profile' => ['settings' => ['theme' => 'light']]]]
+        ];
+        $result = Arrays::column($array, ['user', 'profile', 'settings', 'theme']);
+        Assert::same(['dark', 'light'], $result);
+    }
+
+    public function testColumnWithNestedPathAndNestedIndex(): void
+    {
+        $array = [
+            ['id' => 1, 'profile' => ['email' => 'john@example.com']],
+            ['id' => 2, 'profile' => ['email' => 'jane@example.com']]
+        ];
+        $result = Arrays::column($array, ['profile', 'email'], ['profile', 'email']);
+        Assert::same(['john@example.com' => 'john@example.com', 'jane@example.com' => 'jane@example.com'], $result);
+    }
+
+    public function testColumnWithNestedPathReturnsNullForMissing(): void
+    {
+        $array = [
+            ['id' => 1, 'profile' => ['email' => 'john@example.com']],
+            ['id' => 2] // Missing profile
+        ];
+        $result = Arrays::column($array, ['profile', 'email']);
+        Assert::same(['john@example.com', null], $result);
+    }
+
+    public function testColumnWithNestedPathAndObjects(): void
+    {
+        $array = [
+            (object) ['id' => 1, 'profile' => (object) ['email' => 'john@example.com']],
+            (object) ['id' => 2, 'profile' => (object) ['email' => 'jane@example.com']]
+        ];
+        $result = Arrays::column($array, ['profile', 'email']);
+        Assert::same(['john@example.com', 'jane@example.com'], $result);
+    }
+
+    public function testColumnThrowsOnAssociativePath(): void
+    {
+        $array = [
+            ['id' => 1, 'name' => 'John']
+        ];
+        Assert::exception(
+            fn () => Arrays::column($array, ['key' => 'value']),
+            InvalidArgumentException::class,
+            '~Column path must be a list~'
+        );
+    }
+
+    public function testColumnThrowsOnNonStringPathElements(): void
+    {
+        $array = [
+            ['id' => 1, 'name' => 'John']
+        ];
+        Assert::exception(
+            fn () => Arrays::column($array, ['profile', 123]),
+            InvalidArgumentException::class,
+            '~Column path must be a list of strings~'
+        );
+    }
+
+    public function testColumnWithEmptyPath(): void
+    {
+        $array = [
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane']
+        ];
+        $result = Arrays::column($array, []);
+        // Empty path returns the whole item
+        Assert::same([
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane']
+        ], $result);
+    }
+
     public function testCombine(): void
     {
         $keys = ['a', 'b', 'c'];
@@ -2112,6 +2210,101 @@ class ArraysTest extends TestCase
         Assert::same(0, Arrays::sum([]));
     }
 
+    public function testAverage(): void
+    {
+        $numbers = [1, 2, 3, 4, 5];
+        $avg = Arrays::average($numbers);
+        Assert::same(3.0, $avg);
+
+        // With decimal values
+        $prices = [10.5, 20.0, 30.5];
+        $avg = Arrays::average($prices);
+        Assert::true(abs($avg - 20.333333333333332) < 0.0001);
+
+        // Single element
+        $single = [42];
+        $avg = Arrays::average($single);
+        Assert::same(42.0, $avg);
+    }
+
+    public function testAverageEmpty(): void
+    {
+        $avg = Arrays::average([]);
+        Assert::null($avg);
+    }
+
+    public function testAverageWithNegativeNumbers(): void
+    {
+        $numbers = [-5, 0, 5];
+        $avg = Arrays::average($numbers);
+        Assert::same(0.0, $avg);
+    }
+
+    public function testAverageWithFloats(): void
+    {
+        $numbers = [1.5, 2.5, 3.5];
+        $avg = Arrays::average($numbers);
+        Assert::same(2.5, $avg);
+    }
+
+    public function testMedianOddCount(): void
+    {
+        $numbers = [1, 3, 5];
+        $med = Arrays::median($numbers);
+        Assert::same(3.0, $med);
+
+        // Unsorted input
+        $numbers = [5, 1, 3];
+        $med = Arrays::median($numbers);
+        Assert::same(3.0, $med);
+    }
+
+    public function testMedianEvenCount(): void
+    {
+        $numbers = [1, 2, 3, 4];
+        $med = Arrays::median($numbers);
+        Assert::same(2.5, $med);
+
+        // Unsorted input
+        $numbers = [4, 1, 3, 2];
+        $med = Arrays::median($numbers);
+        Assert::same(2.5, $med);
+    }
+
+    public function testMedianEmpty(): void
+    {
+        $med = Arrays::median([]);
+        Assert::null($med);
+    }
+
+    public function testMedianSingleElement(): void
+    {
+        $numbers = [42];
+        $med = Arrays::median($numbers);
+        Assert::same(42.0, $med);
+    }
+
+    public function testMedianTwoElements(): void
+    {
+        $numbers = [1, 5];
+        $med = Arrays::median($numbers);
+        Assert::same(3.0, $med);
+    }
+
+    public function testMedianWithFloats(): void
+    {
+        $numbers = [1.5, 2.5, 3.5];
+        $med = Arrays::median($numbers);
+        Assert::same(2.5, $med);
+    }
+
+    public function testMedianWithDuplicates(): void
+    {
+        $numbers = [1, 2, 2, 3, 3];
+        $med = Arrays::median($numbers);
+        Assert::same(2.0, $med);
+    }
+
     public function testToArrayPrecedence(): void
     {
         // Test that toArray() takes precedence over other methods
@@ -2465,6 +2658,63 @@ class ArraysTest extends TestCase
         Assert::same([10, 20, 30], Arrays::values([10, 20, 30]));
         Assert::same(['John', 30], Arrays::values(['name' => 'John', 'age' => 30]));
         Assert::same([], Arrays::values([]));
+    }
+
+    public function testZip(): void
+    {
+        $numbers = [1, 2, 3];
+        $letters = ['a', 'b', 'c'];
+        $result = Arrays::zip($numbers, $letters);
+        Assert::same([[1, 'a'], [2, 'b'], [3, 'c']], $result);
+    }
+
+    public function testZipThreeArrays(): void
+    {
+        $ids = [1, 2];
+        $names = ['John', 'Jane'];
+        $ages = [30, 25];
+        $result = Arrays::zip($ids, $names, $ages);
+        Assert::same([[1, 'John', 30], [2, 'Jane', 25]], $result);
+    }
+
+    public function testZipDifferentLengths(): void
+    {
+        $a = [1, 2, 3, 4];
+        $b = ['a', 'b'];
+        $result = Arrays::zip($a, $b);
+        Assert::same([[1, 'a'], [2, 'b']], $result);
+    }
+
+    public function testZipEmptyArrays(): void
+    {
+        $result = Arrays::zip([], []);
+        Assert::same([], $result);
+    }
+
+    public function testZipSingleArrayThrows(): void
+    {
+        Assert::exception(
+            fn () => Arrays::zip([1, 2, 3]),
+            InvalidArgumentException::class,
+            '~At least two arrays are required~'
+        );
+    }
+
+    public function testZipPreservesNestedArrays(): void
+    {
+        $a = [[1, 2], [3, 4]];
+        $b = [['a'], ['b']];
+        $result = Arrays::zip($a, $b);
+        Assert::same([[[1, 2], ['a']], [[3, 4], ['b']]], $result);
+    }
+
+    public function testZipWithAssociativeArrays(): void
+    {
+        $a = ['x' => 1, 'y' => 2];
+        $b = ['x' => 'a', 'y' => 'b'];
+        $result = Arrays::zip($a, $b);
+        // Zip uses numeric indices, ignoring keys
+        Assert::same([[1, 'a'], [2, 'b']], $result);
     }
 
     public function testWrap(): void

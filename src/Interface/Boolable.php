@@ -11,7 +11,7 @@ namespace Phuture\Coherence\Interface;
  * to their boolean representation, making it easier to evaluate objects
  * in conditional statements or logical operations.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

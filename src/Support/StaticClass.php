@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
-use Throwable;
-use Phuture\Coherence\Exception\MemberAccessException;
-
 /**
  * Static base class that prevents instantiation and enforces static-only usage.
  *
@@ -35,25 +32,16 @@ use Phuture\Coherence\Exception\MemberAccessException;
  * $slug = StringHelper::slugify('Hello World');
  * ```
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
 abstract class StaticClass
 {
-    use \Nette\StaticClass {
-        __callStatic as protected callStatic;
-    }
-
     /**
-     * Call to undefined static method.
+     * Class is static and cannot be instantiated.
      */
-    public static function __callStatic(string $name, array $args): mixed
+    private function __construct()
     {
-        try {
-            return static::callStatic($name, $args);
-        } catch (Throwable $e) {
-            throw new MemberAccessException($e->getMessage(), $e->getCode());
-        }
     }
 }

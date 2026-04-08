@@ -14,7 +14,7 @@ use Throwable;
  * interface to maintain compatibility with standard exception handling while
  * providing a common type for catching library-specific exceptions.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

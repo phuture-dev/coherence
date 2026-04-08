@@ -11,7 +11,7 @@ namespace Phuture\Coherence\Interface;
  * to their JSON representation, making it easier to serialize objects
  * for API responses, storage, or transmission.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

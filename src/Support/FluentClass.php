@@ -49,7 +49,7 @@ namespace Phuture\Coherence\Support;
  * // Returns "OLLEH"
  * ```
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

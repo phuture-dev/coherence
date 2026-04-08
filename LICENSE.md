@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Advandz Technologies, LLC
+Copyright (c) 2026 Advandz Technologies, LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

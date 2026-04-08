@@ -37,7 +37,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * - Always use HMAC methods when authentication is required
  * - PBKDF2 provides key stretching for password-derived encryption keys
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

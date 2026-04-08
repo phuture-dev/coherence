@@ -18,7 +18,7 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  * that need to support flexible method signatures with optional parameters that can
  * appear at the end of the argument list.
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */

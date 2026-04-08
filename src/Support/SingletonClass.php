@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
-use Throwable;
-use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
+use Phuture\Coherence\Exception\SerializationException;
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.
@@ -35,28 +34,24 @@ use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
  * $service = MyService::getInstance();
  * ```
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
 abstract class SingletonClass
 {
-    use \Nette\StaticClass {
-        __callStatic as protected callStatic;
-    }
-
+    /**
+     * Holds the single instance of the current class.
+     *
+     * @var static|null
+     */
     private static ?SingletonClass $instance = null;
 
     /**
-     * Call to undefined static method.
+     * Class is static and cannot be instantiated.
      */
-    public static function __callStatic(string $name, array $args): mixed
+    private function __construct()
     {
-        try {
-            return static::callStatic($name, $args);
-        } catch (Throwable $e) {
-            throw new MemberAccessException($e->getMessage(), $e->getCode());
-        }
     }
 
     /**
