@@ -1754,8 +1754,8 @@ class Strings extends StaticClass
     /**
      * Generates a cryptographically random alphanumeric string.
      *
-     * Uses `random_int()` where available, falling back to `mt_rand()` on failure.
-     * The character pool is `[0-9a-zA-Z]` (62 characters).
+     * Uses `random_int()` for all character selection. Throws `RandomException`
+     * if the system entropy source fails. The character pool is `[0-9a-zA-Z]` (62 characters).
      *
      * Example:
      * ```php
@@ -1767,6 +1767,7 @@ class Strings extends StaticClass
      *
      * @param int $length The length of the random string to generate (default: 16)
      * @return string The random alphanumeric string
+     * @throws RandomException If the system entropy source is unavailable
      * @see Strings::uuid()
      */
     public static function random(int $length = 16): string
@@ -1776,11 +1777,7 @@ class Strings extends StaticClass
         $result = '';
 
         for ($i = 0; $i < $length; $i++) {
-            try {
-                $result .= $characters[random_int(0, $characterLength - 1)];
-            } catch (RandomException) {
-                $result .= $characters[mt_rand(0, $characterLength - 1)];
-            }
+            $result .= $characters[random_int(0, $characterLength - 1)];
         }
 
         return $result;
