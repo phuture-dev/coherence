@@ -2528,8 +2528,9 @@ class Strings extends StaticClass
     /**
      * Generates a version 4 UUID (random).
      *
-     * Uses `random_bytes()` where available, falling back to `mt_rand()` on failure.
+     * Uses `random_bytes()` for cryptographically secure random data.
      * Sets the version (4) and variant bits per RFC 4122.
+     * Throws `RandomException` if the system entropy source fails.
      *
      * Example:
      * ```php
@@ -2539,20 +2540,13 @@ class Strings extends StaticClass
      * ```
      *
      * @return string A random UUID v4 string
+     * @throws RandomException If the system entropy source is unavailable
      * @see Strings::random()
      * @see Strings::isUuid()
      */
     public static function uuid(): string
     {
-        try {
-            $data = random_bytes(16);
-        } catch (RandomException) {
-            $data = '';
-
-            for ($i = 0; $i < 16; $i++) {
-                $data .= chr(mt_rand(0, 255));
-            }
-        }
+        $data = random_bytes(16);
 
         $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
         $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
