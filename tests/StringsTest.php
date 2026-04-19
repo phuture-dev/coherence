@@ -868,6 +868,967 @@ class StringsTest extends TestCase
         Assert::same('', Strings::first(''));
         Assert::same('', Strings::last(''));
     }
+
+    // ============================================================
+    // TITLE TESTS
+    // ============================================================
+
+    public function testTitle(): void
+    {
+        Assert::same('Hello World', Strings::title('hello world'));
+        Assert::same('Hello World', Strings::title('HELLO WORLD'));
+        Assert::same('Ñaño Ñoño', Strings::title('ñaño ñoño'));
+        Assert::same('Hello', Strings::title('hello'));
+    }
+
+    public function testTitleEmpty(): void
+    {
+        Assert::same('', Strings::title(''));
+    }
+
+    // ============================================================
+    // MODIFICATION TESTS (replace, replaceFirst, replaceLast, remove,
+    //                      reverse, insert, repeat, pad, padLeft, padRight,
+    //                      padBoth, start, finish, swap, truncate, wrap, unwrap)
+    // ============================================================
+
+    public function testReplace(): void
+    {
+        Assert::same('hello PHP', Strings::replace('hello world', 'world', 'PHP'));
+        Assert::same('hell wrld', Strings::replace('hello world', 'o', ''));
+        Assert::same('Hello PHP', Strings::replace('Hello World', 'World', 'PHP'));
+    }
+
+    public function testReplaceEmptySearch(): void
+    {
+        Assert::same('hello', Strings::replace('hello', '', 'x'));
+    }
+
+    public function testReplaceCaseInsensitive(): void
+    {
+        Assert::same('Hello PHP', Strings::replace('Hello World', 'world', 'PHP', false));
+        Assert::same('Hello World', Strings::replace('Hello World', 'world', 'PHP', true));
+    }
+
+    public function testReplaceMultibyte(): void
+    {
+        Assert::same('hXllo', Strings::replace('héllo', 'é', 'X'));
+        Assert::same('nanX', Strings::replace('ñañ', 'ñ', 'n'));
+    }
+
+    public function testReplaceFirst(): void
+    {
+        Assert::same('world hello', Strings::replaceFirst('hello hello', 'hello', 'world'));
+        Assert::same('hello', Strings::replaceFirst('hello', 'xyz', 'world'));
+    }
+
+    public function testReplaceFirstEmptySearch(): void
+    {
+        Assert::same('hello', Strings::replaceFirst('hello', '', 'x'));
+    }
+
+    public function testReplaceFirstMultibyte(): void
+    {
+        Assert::same('Xaño', Strings::replaceFirst('ñaño', 'ñ', 'X'));
+    }
+
+    public function testReplaceLast(): void
+    {
+        Assert::same('hello world', Strings::replaceLast('hello hello', 'hello', 'world'));
+        Assert::same('hello', Strings::replaceLast('hello', 'xyz', 'world'));
+    }
+
+    public function testReplaceLastEmptySearch(): void
+    {
+        Assert::same('hello', Strings::replaceLast('hello', '', 'x'));
+    }
+
+    public function testReplaceLastMultibyte(): void
+    {
+        Assert::same('ñañX', Strings::replaceLast('ñaño', 'o', 'X'));
+    }
+
+    public function testReplaceFirstReplaceLastOpposites(): void
+    {
+        Assert::same('world hello', Strings::replaceFirst('hello hello', 'hello', 'world'));
+        Assert::same('hello world', Strings::replaceLast('hello hello', 'hello', 'world'));
+    }
+
+    public function testRemove(): void
+    {
+        Assert::same('hell wrld', Strings::remove('hello world', 'o'));
+        Assert::same('hllo world', Strings::remove('hello world', 'e'));
+    }
+
+    public function testRemoveCaseInsensitive(): void
+    {
+        Assert::same('Hello ', Strings::remove('Hello World', 'world', false));
+        Assert::same('Hello World', Strings::remove('Hello World', 'world', true));
+    }
+
+    public function testRemoveNotFound(): void
+    {
+        Assert::same('hello', Strings::remove('hello', 'xyz'));
+    }
+
+    public function testRemoveEmpty(): void
+    {
+        Assert::same('', Strings::remove('', 'x'));
+    }
+
+    public function testReverse(): void
+    {
+        Assert::same('olleh', Strings::reverse('hello'));
+        Assert::same('dlrow olleh', Strings::reverse('hello world'));
+    }
+
+    public function testReverseMultibyte(): void
+    {
+        Assert::same('oñañ', Strings::reverse('ñaño'));
+        Assert::same('好你', Strings::reverse('你好'));
+    }
+
+    public function testReverseEmpty(): void
+    {
+        Assert::same('', Strings::reverse(''));
+    }
+
+    public function testReverseRoundTrip(): void
+    {
+        $original = 'hello world';
+        Assert::same($original, Strings::reverse(Strings::reverse($original)));
+    }
+
+    public function testInsert(): void
+    {
+        Assert::same('hello! world', Strings::insert('hello world', '!', 5));
+        Assert::same('hello world!', Strings::insert('hello world', '!', 11));
+    }
+
+    public function testInsertAtStart(): void
+    {
+        Assert::same('!hello', Strings::insert('hello', '!', 0));
+    }
+
+    public function testInsertNegativeIndex(): void
+    {
+        Assert::same('hello worl!d', Strings::insert('hello world', '!', -1));
+    }
+
+    public function testInsertBeyondEnd(): void
+    {
+        Assert::same('hello!', Strings::insert('hello', '!', 100));
+    }
+
+    public function testInsertMultibyte(): void
+    {
+        Assert::same('ña!ño', Strings::insert('ñaño', '!', 2));
+    }
+
+    public function testRepeat(): void
+    {
+        Assert::same('ababab', Strings::repeat('ab', 3));
+        Assert::same('hello', Strings::repeat('hello', 1));
+    }
+
+    public function testRepeatZero(): void
+    {
+        Assert::same('', Strings::repeat('ab', 0));
+    }
+
+    public function testRepeatNegativeThrows(): void
+    {
+        Assert::exception(function () {
+            Strings::repeat('ab', -1);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testRepeatEmptyString(): void
+    {
+        Assert::same('', Strings::repeat('', 5));
+    }
+
+    public function testPad(): void
+    {
+        Assert::same('hello     ', Strings::pad('hello', 10));
+        Assert::same('hello-----', Strings::pad('hello', 10, '-'));
+    }
+
+    public function testPadLeft(): void
+    {
+        Assert::same('     hello', Strings::pad('hello', 10, ' ', STR_PAD_LEFT));
+        Assert::same('-----hello', Strings::pad('hello', 10, '-', STR_PAD_LEFT));
+    }
+
+    public function testPadBoth(): void
+    {
+        Assert::same('--hello---', Strings::pad('hello', 10, '-', STR_PAD_BOTH));
+    }
+
+    public function testPadNoOpWhenAlreadyLongEnough(): void
+    {
+        Assert::same('hello', Strings::pad('hello', 3));
+        Assert::same('hello', Strings::pad('hello', 5));
+    }
+
+    public function testPadLeftDirect(): void
+    {
+        Assert::same('     hello', Strings::padLeft('hello', 10));
+        Assert::same('00005', Strings::padLeft('5', 5, '0'));
+    }
+
+    public function testPadLeftNoOpWhenAlreadyLongEnough(): void
+    {
+        Assert::same('hello', Strings::padLeft('hello', 3));
+    }
+
+    public function testPadRightDirect(): void
+    {
+        Assert::same('hello     ', Strings::padRight('hello', 10));
+        Assert::same('hello-----', Strings::padRight('hello', 10, '-'));
+    }
+
+    public function testPadRightNoOpWhenAlreadyLongEnough(): void
+    {
+        Assert::same('hello', Strings::padRight('hello', 3));
+    }
+
+    public function testPadBothDirect(): void
+    {
+        Assert::same('---hello---', Strings::padBoth('hello', 11, '-'));
+        Assert::same('   hello   ', Strings::padBoth('hello', 11));
+    }
+
+    public function testPadBothOddPaddingGoesToRight(): void
+    {
+        Assert::same('--hello---', Strings::padBoth('hello', 10, '-'));
+    }
+
+    public function testPadBothNoOpWhenAlreadyLongEnough(): void
+    {
+        Assert::same('hello', Strings::padBoth('hello', 3));
+    }
+
+    public function testStart(): void
+    {
+        Assert::same('/path/to', Strings::start('/path/to', '/'));
+        Assert::same('/path/to', Strings::start('path/to', '/'));
+        Assert::same('/path/to', Strings::start('///path/to', '/'));
+    }
+
+    public function testStartEmptySuffix(): void
+    {
+        Assert::same('hello', Strings::start('hello', ''));
+    }
+
+    public function testFinish(): void
+    {
+        Assert::same('path/to/', Strings::finish('path/to', '/'));
+        Assert::same('path/to/', Strings::finish('path/to/', '/'));
+        Assert::same('path/to/', Strings::finish('path/to///', '/'));
+    }
+
+    public function testFinishEmptySuffix(): void
+    {
+        Assert::same('hello', Strings::finish('hello', ''));
+    }
+
+    public function testStartFinishOpposites(): void
+    {
+        Assert::same('/path', Strings::start('path', '/'));
+        Assert::same('path/', Strings::finish('path', '/'));
+    }
+
+    public function testSwap(): void
+    {
+        Assert::same('hi earth', Strings::swap('hello world', ['hello' => 'hi', 'world' => 'earth']));
+        Assert::same('hello world', Strings::swap('foo bar', ['foo' => 'hello', 'bar' => 'world']));
+    }
+
+    public function testSwapEmptyReplacements(): void
+    {
+        Assert::same('hello', Strings::swap('hello', []));
+    }
+
+    public function testSwapMultibyte(): void
+    {
+        Assert::same('nano', Strings::swap('ñaño', ['ñ' => 'n', 'o' => 'o']));
+    }
+
+    public function testTruncate(): void
+    {
+        Assert::same('Hello', Strings::truncate('Hello World', 5));
+        Assert::same('Hi', Strings::truncate('Hi', 5));
+    }
+
+    public function testTruncateWithEnd(): void
+    {
+        Assert::same('Hello…', Strings::truncate('Hello World', 5, '…'));
+    }
+
+    public function testTruncateNoOpWhenShort(): void
+    {
+        Assert::same('Hi', Strings::truncate('Hi', 10));
+        Assert::same('Hello', Strings::truncate('Hello', 5));
+    }
+
+    public function testTruncateMultibyte(): void
+    {
+        Assert::same('ña', Strings::truncate('ñaño', 2));
+    }
+
+    public function testWrap(): void
+    {
+        Assert::same('"hello"', Strings::wrap('hello', '"'));
+        Assert::same('[]hello[]', Strings::wrap('hello', '[]'));
+    }
+
+    public function testWrapEmpty(): void
+    {
+        Assert::same('""', Strings::wrap('', '"'));
+    }
+
+    public function testUnwrap(): void
+    {
+        Assert::same('hello', Strings::unwrap('"hello"', '"'));
+        Assert::same('hello', Strings::unwrap('***hello***', '***'));
+    }
+
+    public function testUnwrapMissingEnd(): void
+    {
+        Assert::same('[hello]', Strings::unwrap('[hello]', '['));
+    }
+
+    public function testUnwrapWhenNotWrapped(): void
+    {
+        Assert::same('hello', Strings::unwrap('hello', '"'));
+    }
+
+    public function testUnwrapEmptyWrapper(): void
+    {
+        Assert::same('"hello"', Strings::unwrap('"hello"', ''));
+    }
+
+    public function testWrapUnwrapRoundTrip(): void
+    {
+        $original = 'hello';
+        Assert::same($original, Strings::unwrap(Strings::wrap($original, '"'), '"'));
+    }
+
+    // ============================================================
+    // SPLITTING & CONVERSION TESTS (6 methods)
+    // ============================================================
+
+    public function testSplit(): void
+    {
+        Assert::same(['a', 'b', 'c'], Strings::split('a.b.c', '.'));
+        Assert::same(['hello', 'world'], Strings::split('hello world', ' '));
+    }
+
+    public function testSplitWithLimit(): void
+    {
+        Assert::same(['a', 'b.c'], Strings::split('a.b.c', '.', 2));
+    }
+
+    public function testSplitEmptyPattern(): void
+    {
+        Assert::same(['a.b.c'], Strings::split('a.b.c', ''));
+    }
+
+    public function testSplitMultibyte(): void
+    {
+        Assert::same(['ña', 'ño'], Strings::split('ña ño', ' '));
+    }
+
+    public function testExplode(): void
+    {
+        Assert::same(['a', 'b', 'c'], Strings::explode('a,b,c', ','));
+        Assert::same(['hello', 'world'], Strings::explode('hello world', ' '));
+    }
+
+    public function testExplodeWithLimit(): void
+    {
+        Assert::same(['a', 'b,c'], Strings::explode('a,b,c', ',', 2));
+    }
+
+    public function testExplodeEmptyDelimiterThrows(): void
+    {
+        Assert::exception(function () {
+            Strings::explode('hello', '');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testChunk(): void
+    {
+        Assert::same(['ab', 'cd', 'ef'], Strings::chunk('abcdef', 2));
+        Assert::same(['hel', 'lo'], Strings::chunk('hello', 3));
+    }
+
+    public function testChunkMultibyte(): void
+    {
+        Assert::same(['ña', 'ño'], Strings::chunk('ñaño', 2));
+    }
+
+    public function testChunkEmptyString(): void
+    {
+        Assert::same([], Strings::chunk('', 3));
+    }
+
+    public function testChunkZeroSizeThrows(): void
+    {
+        Assert::exception(function () {
+            Strings::chunk('hello', 0);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testChunkNegativeSizeThrows(): void
+    {
+        Assert::exception(function () {
+            Strings::chunk('hello', -1);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testToArray(): void
+    {
+        Assert::same(['h', 'e', 'l', 'l', 'o'], Strings::toArray('hello'));
+    }
+
+    public function testToArrayMultibyte(): void
+    {
+        Assert::same(['ñ', 'a', 'ñ', 'o'], Strings::toArray('ñaño'));
+    }
+
+    public function testToArrayEmpty(): void
+    {
+        Assert::same([], Strings::toArray(''));
+    }
+
+    public function testWords(): void
+    {
+        Assert::same(['hello', 'world'], Strings::words('hello world'));
+        Assert::same(["it's", 'a', 'test'], Strings::words("it's a test"));
+    }
+
+    public function testWordsWithLimit(): void
+    {
+        Assert::same(['hello', 'world'], Strings::words('hello world foo', 2));
+    }
+
+    public function testWordsWithLimitAndEnd(): void
+    {
+        Assert::same(['hello', 'world', '…'], Strings::words('hello world foo', 2, '…'));
+    }
+
+    public function testWordsEmptyAndBlank(): void
+    {
+        Assert::same([], Strings::words(''));
+        Assert::same([], Strings::words('   '));
+    }
+
+    public function testWordCount(): void
+    {
+        Assert::same(2, Strings::wordCount('hello world'));
+        Assert::same(1, Strings::wordCount('hello'));
+        Assert::same(3, Strings::wordCount('a b c'));
+    }
+
+    public function testWordCountEmptyAndBlank(): void
+    {
+        Assert::same(0, Strings::wordCount(''));
+        Assert::same(0, Strings::wordCount('   '));
+    }
+
+    public function testWordCountMultibyte(): void
+    {
+        Assert::same(2, Strings::wordCount('ñaño mundo'));
+    }
+
+    public function testWordsWordCountConsistency(): void
+    {
+        $string = 'hello world foo bar';
+        Assert::same(count(Strings::words($string)), Strings::wordCount($string));
+    }
+
+    // ============================================================
+    // ENCODING TESTS (2 methods)
+    // ============================================================
+
+    public function testAscii(): void
+    {
+        Assert::same('hello', Strings::ascii('héllo'));
+        Assert::same('nano', Strings::ascii('ñaño'));
+        Assert::same('hello', Strings::ascii('hello'));
+    }
+
+    public function testAsciiGermanLanguage(): void
+    {
+        Assert::same('Ae', Strings::ascii('Ä', 'de'));
+        Assert::same('ueber', Strings::ascii('über', 'de'));
+    }
+
+    public function testAsciiEmpty(): void
+    {
+        Assert::same('', Strings::ascii(''));
+    }
+
+    public function testSlug(): void
+    {
+        Assert::same('hello-world', Strings::slug('Hello World'));
+        Assert::same('hello-world', Strings::slug('hello world'));
+        Assert::same('hello-world', Strings::slug('héllo wörld'));
+    }
+
+    public function testSlugCustomSeparator(): void
+    {
+        Assert::same('hello_world', Strings::slug('Hello World', '_'));
+    }
+
+    public function testSlugMultipleSpaces(): void
+    {
+        Assert::same('hello-world-foo', Strings::slug('Hello  World  Foo'));
+    }
+
+    public function testSlugEmpty(): void
+    {
+        Assert::same('', Strings::slug(''));
+    }
+
+    // ============================================================
+    // CHECKING TESTS — PHASE 2 METHODS (9 methods)
+    // ============================================================
+
+    public function testIsAlpha(): void
+    {
+        Assert::true(Strings::isAlpha('hello'));
+        Assert::true(Strings::isAlpha('héllo'));
+        Assert::true(Strings::isAlpha('ñaño'));
+        Assert::false(Strings::isAlpha('hello1'));
+        Assert::false(Strings::isAlpha('hello world'));
+        Assert::false(Strings::isAlpha('hello!'));
+    }
+
+    public function testIsAlphaEmpty(): void
+    {
+        Assert::false(Strings::isAlpha(''));
+    }
+
+    public function testIsAlphanumeric(): void
+    {
+        Assert::true(Strings::isAlphanumeric('hello123'));
+        Assert::true(Strings::isAlphanumeric('hello'));
+        Assert::true(Strings::isAlphanumeric('123'));
+        Assert::false(Strings::isAlphanumeric('hello!'));
+        Assert::false(Strings::isAlphanumeric('hello world'));
+    }
+
+    public function testIsAlphanumericEmpty(): void
+    {
+        Assert::false(Strings::isAlphanumeric(''));
+    }
+
+    public function testIsAlphaIsAlphanumericRelationship(): void
+    {
+        Assert::true(Strings::isAlpha('hello'));
+        Assert::true(Strings::isAlphanumeric('hello'));
+        Assert::false(Strings::isAlpha('hello123'));
+        Assert::true(Strings::isAlphanumeric('hello123'));
+    }
+
+    public function testIsEmail(): void
+    {
+        Assert::true(Strings::isEmail('user@example.com'));
+        Assert::true(Strings::isEmail('user.name+tag@sub.domain.com'));
+        Assert::false(Strings::isEmail('not-an-email'));
+        Assert::false(Strings::isEmail('missing@'));
+        Assert::false(Strings::isEmail('@domain.com'));
+    }
+
+    public function testIsEmailEmpty(): void
+    {
+        Assert::false(Strings::isEmail(''));
+    }
+
+    public function testIsLower(): void
+    {
+        Assert::true(Strings::isLower('hello'));
+        Assert::true(Strings::isLower('hello world'));
+        Assert::false(Strings::isLower('Hello'));
+        Assert::false(Strings::isLower('HELLO'));
+        Assert::false(Strings::isLower('hELLO'));
+    }
+
+    public function testIsLowerEmpty(): void
+    {
+        Assert::true(Strings::isLower(''));
+    }
+
+    public function testIsLowerMultibyte(): void
+    {
+        Assert::true(Strings::isLower('ñaño'));
+        Assert::false(Strings::isLower('Ñaño'));
+    }
+
+    public function testIsUpper(): void
+    {
+        Assert::true(Strings::isUpper('HELLO'));
+        Assert::true(Strings::isUpper('HELLO WORLD'));
+        Assert::false(Strings::isUpper('hello'));
+        Assert::false(Strings::isUpper('Hello'));
+        Assert::false(Strings::isUpper('HELLo'));
+    }
+
+    public function testIsUpperEmpty(): void
+    {
+        Assert::true(Strings::isUpper(''));
+    }
+
+    public function testIsUpperMultibyte(): void
+    {
+        Assert::true(Strings::isUpper('ÑAÑO'));
+        Assert::false(Strings::isUpper('ñAÑO'));
+    }
+
+    public function testIsLowerIsUpperOpposites(): void
+    {
+        Assert::true(Strings::isLower('hello'));
+        Assert::false(Strings::isUpper('hello'));
+        Assert::false(Strings::isLower('HELLO'));
+        Assert::true(Strings::isUpper('HELLO'));
+    }
+
+    public function testIsNumeric(): void
+    {
+        Assert::true(Strings::isNumeric('123'));
+        Assert::true(Strings::isNumeric('45.6'));
+        Assert::true(Strings::isNumeric('-45.6'));
+        Assert::false(Strings::isNumeric('abc'));
+        Assert::false(Strings::isNumeric('12abc'));
+        Assert::false(Strings::isNumeric('1.2.3'));
+    }
+
+    public function testIsNumericEmpty(): void
+    {
+        Assert::false(Strings::isNumeric(''));
+    }
+
+    public function testIsUrl(): void
+    {
+        Assert::true(Strings::isUrl('https://example.com'));
+        Assert::true(Strings::isUrl('http://example.com/path?query=1'));
+        Assert::false(Strings::isUrl('not-a-url'));
+        Assert::false(Strings::isUrl('example.com'));
+    }
+
+    public function testIsUrlEmpty(): void
+    {
+        Assert::false(Strings::isUrl(''));
+    }
+
+    public function testIsUuid(): void
+    {
+        Assert::true(Strings::isUuid('550e8400-e29b-41d4-a716-446655440000'));
+        Assert::true(Strings::isUuid('550E8400-E29B-41D4-A716-446655440000'));
+        Assert::false(Strings::isUuid('not-a-uuid'));
+        Assert::false(Strings::isUuid('550e8400-e29b-41d4-a716'));
+        Assert::false(Strings::isUuid(''));
+    }
+
+    public function testIsNotEmpty(): void
+    {
+        Assert::true(Strings::isNotEmpty('hello'));
+        Assert::true(Strings::isNotEmpty(' '));
+        Assert::true(Strings::isNotEmpty('0'));
+        Assert::false(Strings::isNotEmpty(''));
+    }
+
+    public function testIsNotEmptyIsEmptyOpposites(): void
+    {
+        Assert::true(Strings::isEmpty(''));
+        Assert::false(Strings::isNotEmpty(''));
+        Assert::false(Strings::isEmpty('hello'));
+        Assert::true(Strings::isNotEmpty('hello'));
+    }
+
+    // ============================================================
+    // COUNTING & COMPARISON TESTS (3 methods)
+    // ============================================================
+
+    public function testCompare(): void
+    {
+        Assert::same(0, Strings::compare('hello', 'hello'));
+        Assert::true(Strings::compare('apple', 'banana') < 0);
+        Assert::true(Strings::compare('banana', 'apple') > 0);
+    }
+
+    public function testCompareCaseInsensitive(): void
+    {
+        Assert::same(0, Strings::compare('Hello', 'hello', false));
+        Assert::true(Strings::compare('Hello', 'hello', true) !== 0);
+    }
+
+    public function testCompareEmpty(): void
+    {
+        Assert::same(0, Strings::compare('', ''));
+        Assert::true(Strings::compare('', 'a') < 0);
+        Assert::true(Strings::compare('a', '') > 0);
+    }
+
+    public function testEquals(): void
+    {
+        Assert::true(Strings::equals('hello', 'hello'));
+        Assert::false(Strings::equals('hello', 'world'));
+        Assert::false(Strings::equals('Hello', 'hello'));
+    }
+
+    public function testEqualsCaseInsensitive(): void
+    {
+        Assert::true(Strings::equals('Hello', 'hello', false));
+        Assert::true(Strings::equals('HELLO', 'hello', false));
+        Assert::false(Strings::equals('hello', 'world', false));
+    }
+
+    public function testEqualsEmpty(): void
+    {
+        Assert::true(Strings::equals('', ''));
+        Assert::false(Strings::equals('', 'hello'));
+    }
+
+    public function testCountSubstring(): void
+    {
+        Assert::same(2, Strings::countSubstring('hello world hello', 'hello'));
+        Assert::same(2, Strings::countSubstring('aaaa', 'aa'));
+        Assert::same(0, Strings::countSubstring('hello', 'xyz'));
+        Assert::same(1, Strings::countSubstring('hello', 'hello'));
+    }
+
+    public function testCountSubstringEmptyInputs(): void
+    {
+        Assert::same(0, Strings::countSubstring('hello', ''));
+        Assert::same(0, Strings::countSubstring('', 'hello'));
+    }
+
+    public function testCountSubstringMultibyte(): void
+    {
+        Assert::same(2, Strings::countSubstring('ñaño', 'ñ'));
+    }
+
+    // ============================================================
+    // EXTRACTION TESTS — PHASE 2 METHODS (3 methods)
+    // ============================================================
+
+    public function testCharAt(): void
+    {
+        Assert::same('h', Strings::charAt('hello', 0));
+        Assert::same('e', Strings::charAt('hello', 1));
+        Assert::same('o', Strings::charAt('hello', 4));
+    }
+
+    public function testCharAtNegativeIndex(): void
+    {
+        Assert::same('o', Strings::charAt('hello', -1));
+        Assert::same('l', Strings::charAt('hello', -2));
+    }
+
+    public function testCharAtOutOfBounds(): void
+    {
+        Assert::same('', Strings::charAt('hello', 10));
+        Assert::same('', Strings::charAt('hello', -10));
+    }
+
+    public function testCharAtMultibyte(): void
+    {
+        Assert::same('ñ', Strings::charAt('ñaño', 0));
+        Assert::same('a', Strings::charAt('ñaño', 1));
+        Assert::same('o', Strings::charAt('ñaño', -1));
+    }
+
+    public function testCharAtEmpty(): void
+    {
+        Assert::same('', Strings::charAt('', 0));
+    }
+
+    public function testPosition(): void
+    {
+        Assert::same(6, Strings::position('hello world', 'world'));
+        Assert::same(0, Strings::position('hello world', 'hello'));
+        Assert::false(Strings::position('hello world', 'xyz'));
+    }
+
+    public function testPositionWithOffset(): void
+    {
+        Assert::same(6, Strings::position('hello hello', 'hello', 3));
+    }
+
+    public function testPositionMultibyte(): void
+    {
+        Assert::same(0, Strings::position('ñaño', 'ñ'));
+        Assert::same(2, Strings::position('ñaño', 'ñ', 1));
+    }
+
+    public function testLastPosition(): void
+    {
+        Assert::same(12, Strings::lastPosition('hello world hello', 'hello'));
+        Assert::same(0, Strings::lastPosition('hello', 'hello'));
+        Assert::false(Strings::lastPosition('hello', 'xyz'));
+    }
+
+    public function testLastPositionMultibyte(): void
+    {
+        Assert::same(2, Strings::lastPosition('ñaño', 'ñ'));
+    }
+
+    public function testPositionLastPositionOpposites(): void
+    {
+        $string = 'hello world hello';
+        Assert::same(0, Strings::position($string, 'hello'));
+        Assert::same(12, Strings::lastPosition($string, 'hello'));
+    }
+
+    // ============================================================
+    // TRUNCATION TESTS (2 methods)
+    // ============================================================
+
+    public function testLimit(): void
+    {
+        Assert::same('Hello...', Strings::limit('Hello World', 5));
+        Assert::same('Hi', Strings::limit('Hi', 5));
+        Assert::same('Hello', Strings::limit('Hello', 5));
+    }
+
+    public function testLimitCustomEnd(): void
+    {
+        Assert::same('Hello [+]', Strings::limit('Hello World', 5, ' [+]'));
+    }
+
+    public function testLimitEmpty(): void
+    {
+        Assert::same('', Strings::limit('', 5));
+    }
+
+    public function testLimitMultibyte(): void
+    {
+        Assert::same('ñ...', Strings::limit('ñaño', 1));
+        Assert::same('ñaño', Strings::limit('ñaño', 10));
+    }
+
+    public function testExcerpt(): void
+    {
+        Assert::same('...rown fox jump...', Strings::excerpt('The quick brown fox jumps', 'fox', 5));
+    }
+
+    public function testExcerptPhraseNotFound(): void
+    {
+        Assert::same('The q...', Strings::excerpt('The quick brown fox', 'missing', 5));
+    }
+
+    public function testExcerptEmpty(): void
+    {
+        Assert::same('', Strings::excerpt('', 'word'));
+    }
+
+    public function testExcerptEmptyPhrase(): void
+    {
+        Assert::same('Hello Worl...', Strings::excerpt('Hello World Test', '', 5));
+    }
+
+    public function testExcerptCustomOmission(): void
+    {
+        Assert::same('---rown fox jump---', Strings::excerpt('The quick brown fox jumps', 'fox', 5, '---'));
+    }
+
+    public function testExcerptPhraseAtStart(): void
+    {
+        Assert::same('The qui...', Strings::excerpt('The quick brown fox', 'The', 4));
+    }
+
+    // ============================================================
+    // MISCELLANEOUS TESTS (3 methods)
+    // ============================================================
+
+    public function testRandom(): void
+    {
+        $result = Strings::random(16);
+        Assert::same(16, strlen($result));
+        Assert::true(Strings::isAlphanumeric($result));
+    }
+
+    public function testRandomCustomLength(): void
+    {
+        Assert::same(8, strlen(Strings::random(8)));
+        Assert::same(32, strlen(Strings::random(32)));
+    }
+
+    public function testRandomDefaultLength(): void
+    {
+        Assert::same(16, strlen(Strings::random()));
+    }
+
+    public function testRandomProducesUniqueValues(): void
+    {
+        Assert::notSame(Strings::random(32), Strings::random(32));
+    }
+
+    public function testUuid(): void
+    {
+        $uuid = Strings::uuid();
+        Assert::same(36, Strings::length($uuid));
+        Assert::true(Strings::isUuid($uuid));
+    }
+
+    public function testUuidProducesUniqueValues(): void
+    {
+        Assert::notSame(Strings::uuid(), Strings::uuid());
+    }
+
+    public function testUuidIsValidV4(): void
+    {
+        // Version 4 UUID has '4' at position 14 and [89ab] at position 19
+        $uuid = Strings::uuid();
+        Assert::same('4', Strings::charAt($uuid, 14));
+        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+    }
+
+    public function testHeadline(): void
+    {
+        Assert::same('Hello World', Strings::headline('hello_world'));
+        Assert::same('Foo Bar Baz', Strings::headline('foo-bar-baz'));
+        Assert::same('Hello World', Strings::headline('hello world'));
+        Assert::same('User Profile Data', Strings::headline('user_profile_data'));
+    }
+
+    public function testHeadlineEmpty(): void
+    {
+        Assert::same('', Strings::headline(''));
+    }
+
+    public function testHeadlineMultibyte(): void
+    {
+        Assert::same('Ñaño Ñoño', Strings::headline('ñaño_ñoño'));
+    }
+
+    // ============================================================
+    // WORD WRAP TESTS
+    // ============================================================
+
+    public function testWordWrap(): void
+    {
+        Assert::same("The quick\nbrown fox", Strings::wordWrap('The quick brown fox', 10));
+    }
+
+    public function testWordWrapCustomBreak(): void
+    {
+        Assert::same("The quick<br>brown fox", Strings::wordWrap('The quick brown fox', 10, '<br>'));
+    }
+
+    public function testWordWrapCutLongWords(): void
+    {
+        Assert::same("superlongw\nord", Strings::wordWrap('superlongword', 10, "\n", true));
+    }
+
+    public function testWordWrapShortString(): void
+    {
+        Assert::same('Hi', Strings::wordWrap('Hi', 75));
+    }
 }
 
 // Run the tests
