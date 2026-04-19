@@ -916,6 +916,13 @@ class StringsTest extends TestCase
         Assert::same('nanX', Strings::replace('ñañ', 'ñ', 'n'));
     }
 
+    public function testReplaceCaseInsensitiveMultibyte(): void
+    {
+        Assert::same('xBER', Strings::replace('ÜBER', 'ü', 'x', false));
+        Assert::same('x wörld', Strings::replace('héllo wörld', 'HÉLLO', 'x', false));
+        Assert::same('hello world', Strings::replace('hello world', 'HELLO', 'hello', true));
+    }
+
     public function testReplaceFirst(): void
     {
         Assert::same('world hello', Strings::replaceFirst('hello hello', 'hello', 'world'));
@@ -1828,6 +1835,17 @@ class StringsTest extends TestCase
     public function testWordWrapShortString(): void
     {
         Assert::same('Hi', Strings::wordWrap('Hi', 75));
+    }
+
+    public function testWordWrapMultibyte(): void
+    {
+        Assert::same("héllo\nwörld\ntesting", Strings::wordWrap('héllo wörld testing', 8));
+        Assert::same("héllo wörld", Strings::wordWrap('héllo wörld', 75));
+    }
+
+    public function testWordWrapMultibyteCutLongWords(): void
+    {
+        Assert::same("héllo\nwörld", Strings::wordWrap('héllowörld', 5, "\n", true));
     }
 }
 

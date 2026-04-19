@@ -1872,7 +1872,11 @@ class Strings extends StaticClass
             return str_replace($search, $replace, $string);
         }
 
-        return str_ireplace($search, $replace, $string);
+        return preg_replace_callback(
+            '/' . preg_quote($search, '/') . '/iu',
+            static fn() => $replace,
+            $string
+        );
     }
 
     /**
@@ -2620,7 +2624,53 @@ class Strings extends StaticClass
         string $break = "\n",
         bool $cutLongWords = false
     ): string {
-        return wordwrap($string, $width, $break, $cutLongWords);
+        if ($string === '') {
+            return $string;
+        }
+
+        $lines = [];
+        $currentLine = '';
+        $currentLength = 0;
+
+        foreach (explode(' ', $string) as $word) {
+            $wordLength = mb_strlen($word, 'UTF-8');
+
+            if ($cutLongWords && $wordLength > $width) {
+                if ($currentLength > 0) {
+                    $lines[] = $currentLine;
+                    $currentLine = '';
+                    $currentLength = 0;
+                }
+
+                while (mb_strlen($word, 'UTF-8') > 0) {
+                    $available = $width - $currentLength;
+                    $chunk = mb_substr($word, 0, $available, 'UTF-8');
+                    $currentLine .= $chunk;
+                    $currentLength += mb_strlen($chunk, 'UTF-8');
+                    $word = mb_substr($word, $available, null, 'UTF-8');
+
+                    if (mb_strlen($word, 'UTF-8') > 0) {
+                        $lines[] = $currentLine;
+                        $currentLine = '';
+                        $currentLength = 0;
+                    }
+                }
+            } elseif ($currentLength === 0) {
+                $currentLine = $word;
+                $currentLength = $wordLength;
+            } elseif ($currentLength + 1 + $wordLength <= $width) {
+                $currentLine .= ' ' . $word;
+                $currentLength += 1 + $wordLength;
+            } else {
+                $lines[] = $currentLine;
+                $currentLine = $word;
+                $currentLength = $wordLength;
+            }
+        }
+
+        $lines[] = $currentLine;
+
+        return implode($break, $lines);
     }
 
     /**
