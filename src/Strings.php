@@ -30,7 +30,7 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  * - **Encoding & Conversion**: Transliterate to ASCII, generate slugs
  * - **Miscellaneous**: Mask, random strings, UUIDs, chunking, and swapping
  *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
