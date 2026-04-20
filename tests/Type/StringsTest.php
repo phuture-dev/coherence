@@ -567,11 +567,11 @@ class StringsTest extends TestCase
         );
     }
 
-    public function testFluentReplaceBetween(): void
+    public function testFluentReplaceAt(): void
     {
         Assert::same(
-            Strings::replaceBetween('hello world', 'PHP', 6),
-            FluentStrings::from('hello world')->replaceBetween('PHP', 6)->get()
+            Strings::replaceAt('hello world', 'PHP', 6),
+            FluentStrings::from('hello world')->replaceAt('PHP', 6)->get()
         );
     }
 
