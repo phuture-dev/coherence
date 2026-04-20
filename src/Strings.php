@@ -434,37 +434,37 @@ class Strings extends StaticClass
     }
 
     /**
-     * Counts the number of non-overlapping occurrences of a substring.
+     * Counts the number of non-overlapping times a given text appears in a string.
      *
-     * Returns zero when `$substring` is an empty string or is not found in `$string`.
+     * Returns zero when `$search` is an empty string or is not found in `$string`.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::countSubstring('hello world hello', 'hello'); // 2
-     * Strings::countSubstring('aaaa', 'aa'); // 2
-     * Strings::countSubstring('hello', 'xyz'); // 0
+     * Strings::countOccurrences('hello world hello', 'hello'); // 2
+     * Strings::countOccurrences('aaaa', 'aa'); // 2
+     * Strings::countOccurrences('hello', 'xyz'); // 0
      * ```
      *
      * @param string $string The input string to search within
-     * @param string $substring The substring to count
-     * @return int The number of non-overlapping occurrences
+     * @param string $search The text to count
+     * @return int The number of non-overlapping times the text appears
      * @see Strings::has()
      */
-    public static function countSubstring(string $string, string $substring): int
+    public static function countOccurrences(string $string, string $search): int
     {
-        if ($substring === '') {
+        if ($search === '') {
             return 0;
         }
 
         $count = 0;
         $offset = 0;
-        $substringLength = mb_strlen($substring, 'UTF-8');
+        $searchLength = mb_strlen($search, 'UTF-8');
 
-        while (($position = mb_strpos($string, $substring, $offset, 'UTF-8')) !== false) {
+        while (($position = mb_strpos($string, $search, $offset, 'UTF-8')) !== false) {
             $count++;
-            $offset = $position + $substringLength;
+            $offset = $position + $searchLength;
         }
 
         return $count;
@@ -1347,7 +1347,6 @@ class Strings extends StaticClass
      * @param int $count The number of characters to return (default: 1)
      * @return string The last N characters
      * @see Strings::first()
-     * @see Strings::takeRight()
      */
     public static function last(string $string, int $count = 1): string
     {
@@ -2999,44 +2998,44 @@ class Strings extends StaticClass
     }
 
     /**
-     * Replaces a portion of a string with a replacement starting at a given byte offset.
+     * Replaces a portion of a string starting at a given character position.
      *
-     * When `$length` is null, replaces from `$offset` to the end of the string.
-     * Negative `$offset` counts from the end of the string. Negative `$length` means
-     * stop that many characters before the end of the string.
+     * When `$length` is null, replaces from `$position` to the end of the string.
+     * A negative `$position` counts from the end of the string. A negative `$length`
+     * stops that many characters before the end of the string.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::substrReplace('hello world', 'PHP', 6); // 'hello PHP'
-     * Strings::substrReplace('hello world', 'PHP', 6, 5); // 'hello PHP'
-     * Strings::substrReplace('hello world', '', 5, 6); // 'hello'
+     * Strings::replaceAt('hello world', 'PHP', 6); // 'hello PHP'
+     * Strings::replaceAt('hello world', 'PHP', 6, 5); // 'hello PHP'
+     * Strings::replaceAt('hello world', '', 5, 6); // 'hello'
      * ```
      *
      * @param string $string The input string to modify
-     * @param string $replace The replacement string
-     * @param int $offset The position at which to begin replacement (negative counts from end)
+     * @param string $replacement The text to insert at the given position
+     * @param int $position The character index at which to begin replacement (negative counts from end)
      * @param int|null $length The number of characters to replace (null replaces to end of string)
      * @return string The modified string
      * @see Strings::insert()
      * @see Strings::slice()
      */
-    public static function substrReplace(string $string, string $replace, int $offset, ?int $length = null): string
+    public static function replaceAt(string $string, string $replacement, int $position, ?int $length = null): string
     {
         $stringLength = mb_strlen($string, 'UTF-8');
-        $actualOffset = $offset < 0 ? max(0, $stringLength + $offset) : min($offset, $stringLength);
+        $actualStart = $position < 0 ? max(0, $stringLength + $position) : min($position, $stringLength);
 
         if ($length === null) {
-            return mb_substr($string, 0, $actualOffset, 'UTF-8') . $replace;
+            return mb_substr($string, 0, $actualStart, 'UTF-8') . $replacement;
         }
 
         $actualEnd = $length < 0
-            ? max($actualOffset, $stringLength + $length)
-            : $actualOffset + $length;
+            ? max($actualStart, $stringLength + $length)
+            : $actualStart + $length;
 
-        return mb_substr($string, 0, $actualOffset, 'UTF-8')
-            . $replace
+        return mb_substr($string, 0, $actualStart, 'UTF-8')
+            . $replacement
             . mb_substr($string, $actualEnd, null, 'UTF-8');
     }
 

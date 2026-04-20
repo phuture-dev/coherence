@@ -607,7 +607,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Performs multiple simultaneous search-and-replace operations.
      *
-     * @param array<string, string> $replacements A map of search => replacement pairs
+     * @param array $replacements An associative array where each key is the text to find and each value is the text to substitute
      * @return self Returns the current instance for method chaining
      * @see Transformer::swap()
      */
@@ -878,17 +878,17 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Replaces a portion of the string with a replacement starting at a given offset.
+     * Replaces a portion of the string starting at a given character position.
      *
-     * @param string $replace The replacement string
-     * @param int $offset The position at which to begin replacement (negative counts from end)
+     * @param string $replacement The text to insert at the given position
+     * @param int $position The character index at which to begin replacement (negative counts from end)
      * @param int|null $length The number of characters to replace (null replaces to end of string)
      * @return self Returns the current instance for method chaining
-     * @see Transformer::substrReplace()
+     * @see Transformer::replaceAt()
      */
-    public function substrReplace(string $replace, int $offset, ?int $length = null): self
+    public function replaceAt(string $replacement, int $position, ?int $length = null): self
     {
-        $this->data = Transformer::substrReplace((string) $this->data, $replace, $offset, $length);
+        $this->data = Transformer::replaceAt((string) $this->data, $replacement, $position, $length);
 
         return $this;
     }
