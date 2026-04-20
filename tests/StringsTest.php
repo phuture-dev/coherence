@@ -18,9 +18,6 @@ require __DIR__ . '/bootstrap.php';
  */
 class StringsTest extends TestCase
 {
-    // ============================================================
-    // CASE CONVERSION TESTS (8 methods)
-    // ============================================================
 
     public function testLower(): void
     {
@@ -192,10 +189,6 @@ class StringsTest extends TestCase
         Assert::same('helloWorld', $camel);
         Assert::same($pascal, Strings::pascal($camel));
     }
-
-    // ============================================================
-    // CHECKING TESTS (12 methods)
-    // ============================================================
 
     public function testHas(): void
     {
@@ -381,10 +374,6 @@ class StringsTest extends TestCase
         Assert::false(Strings::matches('invalid email', '/^[a-z]+@[a-z]+\.[a-z]+$/'));
     }
 
-    // ============================================================
-    // TRIMMING & CLEANING TESTS (8 methods)
-    // ============================================================
-
     public function testTrim(): void
     {
         Assert::same('hello world', Strings::trim('  hello world  '));
@@ -510,10 +499,6 @@ class StringsTest extends TestCase
     {
         Assert::same('', Strings::dedupe(''));
     }
-
-    // ============================================================
-    // EXTRACTION TESTS (10 methods)
-    // ============================================================
 
     public function testBefore(): void
     {
@@ -709,10 +694,6 @@ class StringsTest extends TestCase
         Assert::same('world', Strings::last($string, 5));
     }
 
-    // ============================================================
-    // LENGTH TEST
-    // ============================================================
-
     public function testLength(): void
     {
         Assert::same(5, Strings::length('hello'));
@@ -720,10 +701,6 @@ class StringsTest extends TestCase
         Assert::same(0, Strings::length(''));
         Assert::same(2, Strings::length('你好'));
     }
-
-    // ============================================================
-    // FLUENT INTERFACE TESTS
-    // ============================================================
 
     public function testFluentLower(): void
     {
@@ -833,10 +810,6 @@ class StringsTest extends TestCase
         Assert::same('HELLO', $result);
     }
 
-    // ============================================================
-    // EDGE CASES
-    // ============================================================
-
     public function testMultibyteCharacters(): void
     {
         Assert::same('ñaño', Strings::lower('ÑAÑO'));
@@ -869,10 +842,6 @@ class StringsTest extends TestCase
         Assert::same('', Strings::last(''));
     }
 
-    // ============================================================
-    // TITLE TESTS
-    // ============================================================
-
     public function testTitle(): void
     {
         Assert::same('Hello World', Strings::title('hello world'));
@@ -885,12 +854,6 @@ class StringsTest extends TestCase
     {
         Assert::same('', Strings::title(''));
     }
-
-    // ============================================================
-    // MODIFICATION TESTS (replace, replaceFirst, replaceLast, remove,
-    //                      reverse, insert, repeat, pad, padLeft, padRight,
-    //                      padBoth, start, finish, swap, truncate, wrap, unwrap)
-    // ============================================================
 
     public function testReplace(): void
     {
@@ -1222,10 +1185,6 @@ class StringsTest extends TestCase
         Assert::same($original, Strings::unwrap(Strings::wrap($original, '"'), '"'));
     }
 
-    // ============================================================
-    // SPLITTING & CONVERSION TESTS (6 methods)
-    // ============================================================
-
     public function testSplit(): void
     {
         Assert::same(['a', 'b', 'c'], Strings::split('a.b.c', '.'));
@@ -1356,10 +1315,6 @@ class StringsTest extends TestCase
         Assert::same(count(Strings::words($string)), Strings::wordCount($string));
     }
 
-    // ============================================================
-    // ENCODING TESTS (2 methods)
-    // ============================================================
-
     public function testAscii(): void
     {
         Assert::same('hello', Strings::ascii('héllo'));
@@ -1399,10 +1354,6 @@ class StringsTest extends TestCase
     {
         Assert::same('', Strings::slug(''));
     }
-
-    // ============================================================
-    // CHECKING TESTS — PHASE 2 METHODS (9 methods)
-    // ============================================================
 
     public function testIsAlpha(): void
     {
@@ -1556,10 +1507,6 @@ class StringsTest extends TestCase
         Assert::true(Strings::isNotEmpty('hello'));
     }
 
-    // ============================================================
-    // COUNTING & COMPARISON TESTS (3 methods)
-    // ============================================================
-
     public function testCompare(): void
     {
         Assert::same(0, Strings::compare('hello', 'hello'));
@@ -1618,10 +1565,6 @@ class StringsTest extends TestCase
     {
         Assert::same(2, Strings::countSubstring('ñaño', 'ñ'));
     }
-
-    // ============================================================
-    // EXTRACTION TESTS — PHASE 2 METHODS (3 methods)
-    // ============================================================
 
     public function testCharAt(): void
     {
@@ -1691,10 +1634,6 @@ class StringsTest extends TestCase
         Assert::same(12, Strings::lastPosition($string, 'hello'));
     }
 
-    // ============================================================
-    // TRUNCATION TESTS (2 methods)
-    // ============================================================
-
     public function testLimit(): void
     {
         Assert::same('Hello...', Strings::limit('Hello World', 5));
@@ -1747,10 +1686,6 @@ class StringsTest extends TestCase
     {
         Assert::same('The qui...', Strings::excerpt('The quick brown fox', 'The', 4));
     }
-
-    // ============================================================
-    // MISCELLANEOUS TESTS (3 methods)
-    // ============================================================
 
     public function testRandom(): void
     {
@@ -1812,10 +1747,6 @@ class StringsTest extends TestCase
     {
         Assert::same('Ñaño Ñoño', Strings::headline('ñaño_ñoño'));
     }
-
-    // ============================================================
-    // WORD WRAP TESTS
-    // ============================================================
 
     public function testWordWrap(): void
     {
