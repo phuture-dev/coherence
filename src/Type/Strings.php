@@ -884,11 +884,11 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param int $position The character index at which to begin replacement (negative counts from end)
      * @param int|null $length The number of characters to replace (null replaces to end of string)
      * @return self Returns the current instance for method chaining
-     * @see Transformer::replaceAt()
+     * @see Transformer::replaceBetween()
      */
-    public function replaceAt(string $replacement, int $position, ?int $length = null): self
+    public function replaceBetween(string $replacement, int $position, ?int $length = null): self
     {
-        $this->data = Transformer::replaceAt((string) $this->data, $replacement, $position, $length);
+        $this->data = Transformer::replaceBetween((string) $this->data, $replacement, $position, $length);
 
         return $this;
     }

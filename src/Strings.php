@@ -442,9 +442,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::countOccurrences('hello world hello', 'hello'); // 2
-     * Strings::countOccurrences('aaaa', 'aa'); // 2
-     * Strings::countOccurrences('hello', 'xyz'); // 0
+     * Strings::countBetween('hello world hello', 'hello'); // 2
+     * Strings::countBetween('aaaa', 'aa'); // 2
+     * Strings::countBetween('hello', 'xyz'); // 0
      * ```
      *
      * @param string $string The input string to search within
@@ -452,7 +452,7 @@ class Strings extends StaticClass
      * @return int The number of non-overlapping times the text appears
      * @see Strings::has()
      */
-    public static function countOccurrences(string $string, string $search): int
+    public static function countBetween(string $string, string $search): int
     {
         if ($search === '') {
             return 0;
@@ -3008,9 +3008,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::replaceAt('hello world', 'PHP', 6); // 'hello PHP'
-     * Strings::replaceAt('hello world', 'PHP', 6, 5); // 'hello PHP'
-     * Strings::replaceAt('hello world', '', 5, 6); // 'hello'
+     * Strings::replaceBetween('hello world', 'PHP', 6); // 'hello PHP'
+     * Strings::replaceBetween('hello world', 'PHP', 6, 5); // 'hello PHP'
+     * Strings::replaceBetween('hello world', '', 5, 6); // 'hello'
      * ```
      *
      * @param string $string The input string to modify
@@ -3021,7 +3021,7 @@ class Strings extends StaticClass
      * @see Strings::insert()
      * @see Strings::slice()
      */
-    public static function replaceAt(string $string, string $replacement, int $position, ?int $length = null): string
+    public static function replaceBetween(string $string, string $replacement, int $position, ?int $length = null): string
     {
         $stringLength = mb_strlen($string, 'UTF-8');
         $actualStart = $position < 0 ? max(0, $stringLength + $position) : min($position, $stringLength);

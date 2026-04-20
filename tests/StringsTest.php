@@ -1503,23 +1503,23 @@ class StringsTest extends TestCase
         Assert::false(Strings::equals('', 'hello'));
     }
 
-    public function testCountOccurrences(): void
+    public function testCountBetween(): void
     {
-        Assert::same(2, Strings::countOccurrences('hello world hello', 'hello'));
-        Assert::same(2, Strings::countOccurrences('aaaa', 'aa'));
-        Assert::same(0, Strings::countOccurrences('hello', 'xyz'));
-        Assert::same(1, Strings::countOccurrences('hello', 'hello'));
+        Assert::same(2, Strings::countBetween('hello world hello', 'hello'));
+        Assert::same(2, Strings::countBetween('aaaa', 'aa'));
+        Assert::same(0, Strings::countBetween('hello', 'xyz'));
+        Assert::same(1, Strings::countBetween('hello', 'hello'));
     }
 
-    public function testCountOccurrencesEmptySearch(): void
+    public function testCountBetweenEmptySearch(): void
     {
-        Assert::same(0, Strings::countOccurrences('hello', ''));
-        Assert::same(0, Strings::countOccurrences('', 'hello'));
+        Assert::same(0, Strings::countBetween('hello', ''));
+        Assert::same(0, Strings::countBetween('', 'hello'));
     }
 
-    public function testCountOccurrencesMultibyte(): void
+    public function testCountBetweenMultibyte(): void
     {
-        Assert::same(2, Strings::countOccurrences('ñaño', 'ñ'));
+        Assert::same(2, Strings::countBetween('ñaño', 'ñ'));
     }
 
     public function testCharAt(): void
@@ -1923,21 +1923,21 @@ class StringsTest extends TestCase
         Assert::same('<mark>fox</mark> and <mark>fox</mark>', Strings::highlight('fox and fox', 'fox'));
     }
 
-    public function testReplaceAt(): void
+    public function testReplaceBetween(): void
     {
-        Assert::same('hello PHP', Strings::replaceAt('hello world', 'PHP', 6));
-        Assert::same('hello PHP', Strings::replaceAt('hello world', 'PHP', 6, 5));
-        Assert::same('hello', Strings::replaceAt('hello world', '', 5, 6));
+        Assert::same('hello PHP', Strings::replaceBetween('hello world', 'PHP', 6));
+        Assert::same('hello PHP', Strings::replaceBetween('hello world', 'PHP', 6, 5));
+        Assert::same('hello', Strings::replaceBetween('hello world', '', 5, 6));
     }
 
-    public function testReplaceAtNegativePosition(): void
+    public function testReplaceBetweenNegativePosition(): void
     {
-        Assert::same('hello PHP', Strings::replaceAt('hello world', 'PHP', -5));
+        Assert::same('hello PHP', Strings::replaceBetween('hello world', 'PHP', -5));
     }
 
-    public function testReplaceAtMultibyte(): void
+    public function testReplaceBetweenMultibyte(): void
     {
-        Assert::same('héllo PHP', Strings::replaceAt('héllo monde', 'PHP', 6));
+        Assert::same('héllo PHP', Strings::replaceBetween('héllo monde', 'PHP', 6));
     }
 
     public function testFixEncoding(): void
