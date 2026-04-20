@@ -913,7 +913,7 @@ class StringsTest extends TestCase
     public function testReplaceMultibyte(): void
     {
         Assert::same('hXllo', Strings::replace('héllo', 'é', 'X'));
-        Assert::same('nanX', Strings::replace('ñañ', 'ñ', 'n'));
+        Assert::same('nan', Strings::replace('ñañ', 'ñ', 'n'));
     }
 
     public function testReplaceCaseInsensitiveMultibyte(): void
