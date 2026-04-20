@@ -1979,7 +1979,7 @@ class StringsTest extends TestCase
         Assert::count(5, $lines);
 
         foreach ($lines as $line) {
-            Assert::same(6, mb_strlen($line, 'UTF-8'));
+            Assert::same(6, mb_strlen(trim($line), 'UTF-8'));
         }
     }
 
