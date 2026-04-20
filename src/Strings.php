@@ -366,7 +366,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to split
      * @param int $size The number of characters per chunk
-     * @return array<int, string> The array of string chunks
+     * @return array Array of string chunks, indexed sequentially from zero
      * @throws InvalidArgumentException When `$size` is less than or equal to zero
      * @see Strings::split()
      */
@@ -577,14 +577,21 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to excerpt from
      * @param string $phrase The phrase to centre the excerpt around
-     * @param int $radius The number of characters to include on each side (default: 100)
+     * @param int $radius The number of characters to include on each side; must be zero or greater (default: 100)
      * @param string $omission The string to append at truncated ends (default: '...')
      * @return string The contextual excerpt
+     * @throws InvalidArgumentException When `$radius` is negative
      * @see Strings::limit()
      * @see Strings::truncate()
      */
     public static function excerpt(string $string, string $phrase, int $radius = 100, string $omission = '...'): string
     {
+        if ($radius < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Radius must be zero or greater"
+            );
+        }
+
         if ($string === '') {
             return '';
         }
@@ -633,7 +640,7 @@ class Strings extends StaticClass
      * @param string $string The input string to split
      * @param string $delimiter The boundary string
      * @param int $limit Maximum number of returned elements (default: PHP_INT_MAX)
-     * @return array<int, string> The array of substrings
+     * @return array Array of substrings, indexed sequentially from zero
      * @throws InvalidArgumentException When `$delimiter` is an empty string
      * @see Strings::split()
      */
@@ -758,7 +765,7 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to search within
-     * @param array<int, string> $searches The values to look for
+     * @param array $searches The values to look for; each element must be a string
      * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
      * @return bool True when all search values are found
      * @see Strings::has()
@@ -790,7 +797,7 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to search within
-     * @param array<int, string> $searches The values to check for absence
+     * @param array $searches The values to check for absence; each element must be a string
      * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
      * @return bool True when none of the search values are found
      * @see Strings::has()
@@ -1415,14 +1422,21 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to limit
-     * @param int $limit The maximum number of characters before truncation
+     * @param int $limit The maximum number of characters before truncation; must be zero or greater
      * @param string $end The string to append after truncation (default: '...')
      * @return string The limited string
+     * @throws InvalidArgumentException When `$limit` is negative
      * @see Strings::truncate()
      * @see Strings::excerpt()
      */
     public static function limit(string $string, int $limit, string $end = '...'): string
     {
+        if ($limit < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Limit must be zero or greater"
+            );
+        }
+
         if (self::length($string) <= $limit) {
             return $string;
         }
@@ -1501,11 +1515,18 @@ class Strings extends StaticClass
      * @param string $string The input string to mask
      * @param string $mask The mask character to use (default: '*')
      * @param int $offset The start position to begin masking (negative counts from the end)
-     * @param int|null $length The number of characters to mask (null masks to the end)
+     * @param int|null $length The number of characters to mask; must be zero or greater (null masks to the end)
      * @return string The masked string
+     * @throws InvalidArgumentException When `$length` is negative
      */
     public static function mask(string $string, string $mask = '*', int $offset = 0, ?int $length = null): string
     {
+        if ($length !== null && $length < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Length must be zero or greater"
+            );
+        }
+
         if ($mask === '') {
             return $string;
         }
@@ -1764,13 +1785,20 @@ class Strings extends StaticClass
      * Strings::random(8); // e.g. 'a1B2c3D4'
      * ```
      *
-     * @param int $length The length of the random string to generate (default: 16)
+     * @param int $length The length of the random string to generate; must be greater than zero (default: 16)
      * @return string The random alphanumeric string
+     * @throws InvalidArgumentException When `$length` is less than or equal to zero
      * @throws RandomException If the system entropy source is unavailable
      * @see Strings::uuid()
      */
     public static function random(int $length = 16): string
     {
+        if ($length <= 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Length must be greater than zero"
+            );
+        }
+
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $characterLength = strlen($characters);
         $result = '';
@@ -2100,7 +2128,7 @@ class Strings extends StaticClass
      * @param string $string The input string to split
      * @param string $pattern The literal separator to split on
      * @param int $limit Maximum number of elements to return (default: -1 = no limit)
-     * @return array<int, string> The array of substrings
+     * @return array Array of substrings, indexed sequentially from zero
      * @see Strings::explode()
      */
     public static function split(string $string, string $pattern, int $limit = -1): array
@@ -2238,7 +2266,7 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string
-     * @param array<string, string> $replacements A map of search => replacement pairs
+     * @param array $replacements A map of string search keys to string replacement values
      * @return string The string with all swaps applied
      * @see Strings::replace()
      */
@@ -2266,7 +2294,7 @@ class Strings extends StaticClass
      * @param int $count The number of characters (negative returns from the end)
      * @return string The extracted characters
      * @see Strings::first()
-     * @see Strings::takeRight()
+     * @see Strings::last()
      */
     public static function take(string $string, int $count): string
     {
@@ -2275,30 +2303,6 @@ class Strings extends StaticClass
         }
 
         return self::first($string, $count);
-    }
-
-    /**
-     * Returns the last N characters of a string.
-     *
-     * Equivalent to `last()` but named for symmetry with `take()`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::takeRight('hello world', 5); // 'world'
-     * Strings::takeRight('ñaño', 2); // 'ño'
-     * ```
-     *
-     * @param string $string The input string
-     * @param int $count The number of characters to return from the end
-     * @return string The last N characters
-     * @see Strings::take()
-     * @see Strings::last()
-     */
-    public static function takeRight(string $string, int $count): string
-    {
-        return self::last($string, $count);
     }
 
     /**
@@ -2317,7 +2321,7 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to convert
-     * @return array<int, string> The array of individual characters
+     * @return array Array of individual Unicode characters, indexed sequentially from zero
      * @see Strings::split()
      * @see Strings::chunk()
      */
@@ -2445,13 +2449,20 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to truncate
-     * @param int $length The maximum number of characters to keep
+     * @param int $length The maximum number of characters to keep; must be zero or greater
      * @param string $end The string to append after truncation (default: '')
      * @return string The truncated string
+     * @throws InvalidArgumentException When `$length` is negative
      * @see Strings::limit()
      */
     public static function truncate(string $string, int $length, string $end = ''): string
     {
+        if ($length < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Length must be zero or greater"
+            );
+        }
+
         if (self::length($string) <= $length) {
             return $string;
         }
@@ -2601,10 +2612,11 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to wrap
-     * @param int $width The number of characters at which to wrap (default: 75)
+     * @param int $width The number of characters at which to wrap; must be greater than zero (default: 75)
      * @param string $break The line break string to insert (default: "\n")
      * @param bool $cutLongWords Whether to cut words longer than `$width` (default: false)
      * @return string The word-wrapped string
+     * @throws InvalidArgumentException When `$width` is less than or equal to zero
      * @see Strings::truncate()
      * @see Strings::limit()
      */
@@ -2614,6 +2626,12 @@ class Strings extends StaticClass
         string $break = "\n",
         bool $cutLongWords = false
     ): string {
+        if ($width <= 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Width must be greater than zero"
+            );
+        }
+
         if ($string === '') {
             return $string;
         }
@@ -2681,7 +2699,7 @@ class Strings extends StaticClass
      * @param string $string The input string to extract words from
      * @param int $limit Maximum number of words to return, -1 = no limit (default: -1)
      * @param string $end String appended after the word list when limited (default: '')
-     * @return array<int, string> The array of words
+     * @return array Array of word strings, indexed sequentially from zero
      * @see Strings::wordCount()
      * @see Strings::split()
      */
@@ -2727,6 +2745,302 @@ class Strings extends StaticClass
     }
 
     /**
+     * Censors all occurrences of banned words in a string by replacing them with a substitution.
+     *
+     * Matching is case-insensitive. Each matched word is replaced with `$replacement` in full,
+     * regardless of the matched word's length. The string is returned unchanged when `$bannedWords`
+     * is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::censor('This is bad and awful', ['bad', 'awful']); // 'This is *** and ***'
+     * Strings::censor('BAD language', ['bad'], '####'); // '#### language'
+     * ```
+     *
+     * @param string $string The input string to censor
+     * @param array $bannedWords List of word strings to replace
+     * @param string $replacement The string to substitute for each matched word (default: '***')
+     * @return string The censored string
+     * @see Strings::replace()
+     */
+    public static function censor(string $string, array $bannedWords, string $replacement = '***'): string
+    {
+        if (empty($bannedWords)) {
+            return $string;
+        }
+
+        $pattern = '/\b(?:' . implode('|', array_map(
+            static fn (string $word): string => preg_quote($word, '/'),
+            $bannedWords
+        )) . ')\b/iu';
+
+        return preg_replace($pattern, $replacement, $string) ?? $string;
+    }
+
+    /**
+     * Fixes invalid UTF-8 byte sequences in a string.
+     *
+     * Removes or replaces any byte sequences that are not valid UTF-8. The result is
+     * guaranteed to be valid UTF-8.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::fixEncoding("hello\xc0world"); // 'helloworld' (invalid byte removed)
+     * Strings::fixEncoding('valid utf-8 ñoño'); // 'valid utf-8 ñoño'
+     * ```
+     *
+     * @param string $string The input string that may contain invalid UTF-8 sequences
+     * @return string A valid UTF-8 string with invalid byte sequences removed
+     */
+    public static function fixEncoding(string $string): string
+    {
+        return mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+    }
+
+    /**
+     * Encodes a string to its Base64 representation.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::toBase64('hello'); // 'aGVsbG8='
+     * ```
+     *
+     * @param string $string The input string to encode
+     * @return string The Base64-encoded string
+     * @see Strings::fromBase64()
+     */
+    public static function toBase64(string $string): string
+    {
+        return base64_encode($string);
+    }
+
+    /**
+     * Decodes a Base64-encoded string.
+     *
+     * Returns an empty string when the input is not valid Base64.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::fromBase64('aGVsbG8='); // 'hello'
+     * Strings::fromBase64('not-base64!!!'); // ''
+     * ```
+     *
+     * @param string $string The Base64-encoded string to decode
+     * @return string The decoded string, or an empty string when decoding fails
+     * @see Strings::toBase64()
+     */
+    public static function fromBase64(string $string): string
+    {
+        $decoded = base64_decode($string, true);
+
+        return $decoded === false ? '' : $decoded;
+    }
+
+    /**
+     * Highlights all occurrences of a phrase within a string by wrapping them in tags.
+     *
+     * Matching is case-insensitive. The original casing of the matched text is preserved
+     * inside the tags. Returns the string unchanged when `$phrase` is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::highlight('The quick brown fox', 'quick'); // 'The <mark>quick</mark> brown fox'
+     * Strings::highlight('Hello World', 'world', '<b>', '</b>'); // 'Hello <b>World</b>'
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param string $phrase The phrase to highlight
+     * @param string $tagOpen The opening tag to insert before each match (default: '<mark>')
+     * @param string $tagClose The closing tag to insert after each match (default: '</mark>')
+     * @return string The string with all occurrences of `$phrase` wrapped in the given tags
+     * @see Strings::replace()
+     */
+    public static function highlight(string $string, string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): string
+    {
+        if ($phrase === '') {
+            return $string;
+        }
+
+        $pattern = '/' . preg_quote($phrase, '/') . '/iu';
+
+        return preg_replace($pattern, $tagOpen . '$0' . $tagClose, $string) ?? $string;
+    }
+
+    /**
+     * Adds indentation to each line of a string.
+     *
+     * Prepends `$indentChar` repeated `$level` times to every line. A line is defined
+     * as any sequence ending with `\n`. Throws when `$level` is negative.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::indent("line1\nline2"); // "\tline1\n\tline2"
+     * Strings::indent("line1\nline2", 2); // "\t\tline1\n\t\tline2"
+     * Strings::indent("line1\nline2", 1, '  '); // "  line1\n  line2"
+     * ```
+     *
+     * @param string $string The input string to indent
+     * @param int $level The number of times to repeat the indent character; must be zero or greater (default: 1)
+     * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
+     * @return string The indented string
+     * @throws InvalidArgumentException When `$level` is negative
+     */
+    public static function indent(string $string, int $level = 1, string $indentChar = "\t"): string
+    {
+        if ($level < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Indent level must be zero or greater"
+            );
+        }
+
+        if ($level === 0 || $string === '') {
+            return $string;
+        }
+
+        $prefix = str_repeat($indentChar, $level);
+
+        return $prefix . str_replace("\n", "\n" . $prefix, $string);
+    }
+
+    /**
+     * Determines whether a string is a valid ULID (Universally Unique Lexicographically Sortable Identifier).
+     *
+     * A ULID is 26 characters long and uses Crockford's Base32 character set (0-9 and A-Z
+     * excluding I, L, O, U). Matching is case-insensitive.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV'); // true
+     * Strings::isUlid('not-a-ulid'); // false
+     * ```
+     *
+     * @param string $string The input string to validate
+     * @return bool True when the string is a valid ULID
+     * @see Strings::isUuid()
+     */
+    public static function isUlid(string $string): bool
+    {
+        return (bool) preg_match('/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/i', $string);
+    }
+
+    /**
+     * Normalizes line endings to Unix-style `\n`.
+     *
+     * Converts Windows-style `\r\n` and old Mac-style `\r` to `\n`. The string is
+     * returned unchanged when it contains no line endings.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::normalizeNewLines("line1\r\nline2\rline3"); // "line1\nline2\nline3"
+     * ```
+     *
+     * @param string $string The input string whose line endings are to be normalized
+     * @return string The string with all line endings replaced by `\n`
+     */
+    public static function normalizeNewLines(string $string): string
+    {
+        return str_replace(["\r\n", "\r"], "\n", $string);
+    }
+
+    /**
+     * Replaces successive occurrences of a search value using values from an array.
+     *
+     * Each time `$search` is found, it is replaced with the next value from `$replacements`.
+     * When the replacements array is exhausted, remaining occurrences are replaced with an
+     * empty string. Returns the string unchanged when `$search` is empty or `$replacements`
+     * is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::replaceArray('?', ['2026', 'April'], 'Year: ?, Month: ?'); // 'Year: 2026, Month: April'
+     * ```
+     *
+     * @param string $search The value to search for
+     * @param array $replacements Ordered list of string replacement values
+     * @param string $string The input string to perform replacements on
+     * @return string The string with successive occurrences replaced
+     * @see Strings::replace()
+     */
+    public static function replaceArray(string $search, array $replacements, string $string): string
+    {
+        if ($search === '' || empty($replacements)) {
+            return $string;
+        }
+
+        foreach ($replacements as $replacement) {
+            $position = strpos($string, $search);
+
+            if ($position === false) {
+                break;
+            }
+
+            $string = substr_replace($string, (string) $replacement, $position, strlen($search));
+        }
+
+        return $string;
+    }
+
+    /**
+     * Replaces a portion of a string with a replacement starting at a given byte offset.
+     *
+     * When `$length` is null, replaces from `$offset` to the end of the string.
+     * Negative `$offset` counts from the end of the string. Negative `$length` means
+     * stop that many characters before the end of the string.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::substrReplace('hello world', 'PHP', 6); // 'hello PHP'
+     * Strings::substrReplace('hello world', 'PHP', 6, 5); // 'hello PHP'
+     * Strings::substrReplace('hello world', '', 5, 6); // 'hello'
+     * ```
+     *
+     * @param string $string The input string to modify
+     * @param string $replace The replacement string
+     * @param int $offset The position at which to begin replacement (negative counts from end)
+     * @param int|null $length The number of characters to replace (null replaces to end of string)
+     * @return string The modified string
+     * @see Strings::insert()
+     * @see Strings::slice()
+     */
+    public static function substrReplace(string $string, string $replace, int $offset, ?int $length = null): string
+    {
+        $stringLength = mb_strlen($string, 'UTF-8');
+        $actualOffset = $offset < 0 ? max(0, $stringLength + $offset) : min($offset, $stringLength);
+
+        if ($length === null) {
+            return mb_substr($string, 0, $actualOffset, 'UTF-8') . $replace;
+        }
+
+        $actualEnd = $length < 0
+            ? max($actualOffset, $stringLength + $length)
+            : $actualOffset + $length;
+
+        return mb_substr($string, 0, $actualOffset, 'UTF-8')
+            . $replace
+            . mb_substr($string, $actualEnd, null, 'UTF-8');
+    }
+
+    /**
      * Creates a fluent wrapper around the given string for method chaining.
      *
      * Returns a `Type\Strings` instance that wraps the provided string value and
@@ -2753,31 +3067,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Returns a reference to the given string variable, allowing in-place modification.
-     *
-     * This method accepts a string by reference and returns that reference directly,
-     * enabling callers to hold a reference to a string variable and modify it without
-     * knowing the variable name at call time.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * $greeting = 'hello';
-     * $ref = &Strings::getReference($greeting);
-     * $ref = 'world';
-     * // $greeting is now 'world'
-     * ```
-     *
-     * @param string $string The string variable to retrieve a reference to (passed by reference)
-     * @return string Returns a reference to the string variable
-     */
-    public static function &getReference(string &$string): string
-    {
-        return $string;
-    }
-
-    /**
      * Generates an ASCII art representation of the given text using a block font.
      *
      * Renders each character of `$text` as a 5-row tall block-style ASCII art figure.
@@ -2789,11 +3078,11 @@ class Strings extends StaticClass
      * use Phuture\Coherence\Strings;
      *
      * echo Strings::asciiArt('Hi');
-     * // # # ###
-     * // # # #
-     * // ### ##
-     * // # # #
-     * // # # ###
+     * //  ####   ####
+     * //  #  #    ##
+     * //  ####    ##
+     * //  #  #    ##
+     * //  #  #   ####
      * ```
      *
      * @param string $text The text to render as ASCII art
@@ -2827,72 +3116,72 @@ class Strings extends StaticClass
      * forming a 5-row block glyph rendered using `#` and space characters.
      *
      * @param string $font The font name (currently only 'block' is supported)
-     * @return array<string, array<int, string>> The font character map
+     * @return array Map of single-character string keys to arrays of exactly five 6-column strings
      */
     private static function getAsciiFontMap(string $font): array
     {
-        // 5-row block font using '#' and spaces; each glyph is 3 columns wide
+        // 5-row block font using '#' and spaces; each glyph is 6 columns wide
         return [
-            ' ' => ['   ', '   ', '   ', '   ', '   '],
-            'A' => [' # ', '# #', '###', '# #', '# #'],
-            'B' => ['## ', '# #', '## ', '# #', '## '],
-            'C' => [' ##', '#  ', '#  ', '#  ', ' ##'],
-            'D' => ['## ', '# #', '# #', '# #', '## '],
-            'E' => ['###', '#  ', '## ', '#  ', '###'],
-            'F' => ['###', '#  ', '## ', '#  ', '#  '],
-            'G' => [' ##', '#  ', '# #', '# #', ' ##'],
-            'H' => ['# #', '# #', '###', '# #', '# #'],
-            'I' => ['###', ' # ', ' # ', ' # ', '###'],
-            'J' => ['###', '  #', '  #', '# #', ' # '],
-            'K' => ['# #', '## ', '#  ', '## ', '# #'],
-            'L' => ['#  ', '#  ', '#  ', '#  ', '###'],
-            'M' => ['# #', '###', '# #', '# #', '# #'],
-            'N' => ['# #', '## ', '# #', '# #', '# #'],
-            'O' => [' # ', '# #', '# #', '# #', ' # '],
-            'P' => ['## ', '# #', '## ', '#  ', '#  '],
-            'Q' => [' # ', '# #', '# #', '## ', ' ##'],
-            'R' => ['## ', '# #', '## ', '# #', '# #'],
-            'S' => [' ##', '#  ', ' # ', '  #', '## '],
-            'T' => ['###', ' # ', ' # ', ' # ', ' # '],
-            'U' => ['# #', '# #', '# #', '# #', ' # '],
-            'V' => ['# #', '# #', '# #', ' # ', ' # '],
-            'W' => ['# #', '# #', '# #', '###', '# #'],
-            'X' => ['# #', '# #', ' # ', '# #', '# #'],
-            'Y' => ['# #', '# #', ' # ', ' # ', ' # '],
-            'Z' => ['###', '  #', ' # ', '#  ', '###'],
-            '0' => [' # ', '# #', '# #', '# #', ' # '],
-            '1' => [' # ', '## ', ' # ', ' # ', '###'],
-            '2' => ['## ', '  #', ' # ', '#  ', '###'],
-            '3' => ['## ', '  #', ' ##', '  #', '## '],
-            '4' => ['# #', '# #', '###', '  #', '  #'],
-            '5' => ['###', '#  ', '## ', '  #', '## '],
-            '6' => [' # ', '#  ', '## ', '# #', ' # '],
-            '7' => ['###', '  #', ' # ', ' # ', ' # '],
-            '8' => [' # ', '# #', ' # ', '# #', ' # '],
-            '9' => [' # ', '# #', ' ##', '  #', ' # '],
-            '!' => [' # ', ' # ', ' # ', '   ', ' # '],
-            '?' => ['## ', '  #', ' # ', '   ', ' # '],
-            '.' => ['   ', '   ', '   ', '   ', ' # '],
-            ',' => ['   ', '   ', '   ', ' # ', ' # '],
-            '-' => ['   ', '   ', '###', '   ', '   '],
-            '_' => ['   ', '   ', '   ', '   ', '###'],
-            ':' => ['   ', ' # ', '   ', ' # ', '   '],
-            '/' => ['  #', '  #', ' # ', '#  ', '#  '],
-            '\\' => ['#  ', '#  ', ' # ', '  #', '  #'],
-            '(' => [' #', '# ', '# ', '# ', ' #'],
-            ')' => ['# ', ' #', ' #', ' #', '# '],
-            '@' => [' # ', '# #', '###', '#  ', ' ##'],
-            '#' => ['# #', '###', '# #', '###', '# #'],
-            '*' => ['# #', ' # ', '###', ' # ', '# #'],
-            '+' => ['   ', ' # ', '###', ' # ', '   '],
-            '=' => ['   ', '###', '   ', '###', '   '],
-            '<' => ['  #', ' # ', '#  ', ' # ', '  #'],
-            '>' => ['#  ', ' # ', '  #', ' # ', '#  '],
-            '"' => ['# #', '# #', '   ', '   ', '   '],
-            "'" => [' # ', ' # ', '   ', '   ', '   '],
-            ';' => ['   ', ' # ', '   ', ' # ', ' # '],
-            '&' => [' # ', '# #', ' # ', '# #', ' ##'],
-            '%' => ['# #', '  #', ' # ', '#  ', '# #'],
+            ' ' => ['      ', '      ', '      ', '      ', '      '],
+            'A' => ['  ##  ', ' #  # ', ' #### ', ' #  # ', ' #  # '],
+            'B' => [' ###  ', ' #  # ', ' ###  ', ' #  # ', ' ###  '],
+            'C' => ['  ### ', ' #    ', ' #    ', ' #    ', '  ### '],
+            'D' => [' ###  ', ' #  # ', ' #  # ', ' #  # ', ' ###  '],
+            'E' => [' #### ', ' #    ', ' ###  ', ' #    ', ' #### '],
+            'F' => [' #### ', ' #    ', ' ###  ', ' #    ', ' #    '],
+            'G' => ['  ### ', ' #    ', ' # ## ', ' #  # ', '  ### '],
+            'H' => [' #  # ', ' #  # ', ' #### ', ' #  # ', ' #  # '],
+            'I' => [' #### ', '  ##  ', '  ##  ', '  ##  ', ' #### '],
+            'J' => [' #### ', '   #  ', '   #  ', ' # #  ', '  #   '],
+            'K' => [' #  # ', ' # #  ', ' ##   ', ' # #  ', ' #  # '],
+            'L' => [' #    ', ' #    ', ' #    ', ' #    ', ' #### '],
+            'M' => [' #  # ', ' #### ', ' # ## ', ' #  # ', ' #  # '],
+            'N' => [' #  # ', ' ## # ', ' # ## ', ' #  # ', ' #  # '],
+            'O' => ['  ##  ', ' #  # ', ' #  # ', ' #  # ', '  ##  '],
+            'P' => [' ###  ', ' #  # ', ' ###  ', ' #    ', ' #    '],
+            'Q' => ['  ##  ', ' #  # ', ' #  # ', ' # ## ', '  ### '],
+            'R' => [' ###  ', ' #  # ', ' ###  ', ' # #  ', ' #  # '],
+            'S' => ['  ### ', ' #    ', '  ##  ', '    # ', ' ###  '],
+            'T' => [' #### ', '  ##  ', '  ##  ', '  ##  ', '  ##  '],
+            'U' => [' #  # ', ' #  # ', ' #  # ', ' #  # ', '  ##  '],
+            'V' => [' #  # ', ' #  # ', ' #  # ', '  ##  ', '  #   '],
+            'W' => [' #  # ', ' #  # ', ' #### ', ' #### ', ' #  # '],
+            'X' => [' #  # ', ' #  # ', '  ##  ', ' #  # ', ' #  # '],
+            'Y' => [' #  # ', ' #  # ', '  ##  ', '  ##  ', '  ##  '],
+            'Z' => [' #### ', '    # ', '  ##  ', ' #    ', ' #### '],
+            '0' => ['  ##  ', ' #  # ', ' #  # ', ' #  # ', '  ##  '],
+            '1' => ['  #   ', ' ##   ', '  #   ', '  #   ', ' #### '],
+            '2' => [' ###  ', '    # ', '  ##  ', ' #    ', ' #### '],
+            '3' => [' ###  ', '    # ', '  ##  ', '    # ', ' ###  '],
+            '4' => [' #  # ', ' #  # ', ' #### ', '    # ', '    # '],
+            '5' => [' #### ', ' #    ', ' ###  ', '    # ', ' ###  '],
+            '6' => ['  #   ', ' #    ', ' ###  ', ' #  # ', '  ##  '],
+            '7' => [' #### ', '    # ', '   #  ', '   #  ', '   #  '],
+            '8' => ['  ##  ', ' #  # ', '  ##  ', ' #  # ', '  ##  '],
+            '9' => ['  ##  ', ' #  # ', '  ### ', '    # ', '   #  '],
+            '!' => ['  ##  ', '  ##  ', '  ##  ', '      ', '  ##  '],
+            '?' => [' ###  ', '    # ', '  ##  ', '      ', '  ##  '],
+            '.' => ['      ', '      ', '      ', '      ', '  ##  '],
+            ',' => ['      ', '      ', '      ', '  ##  ', '  #   '],
+            '-' => ['      ', '      ', ' #### ', '      ', '      '],
+            '_' => ['      ', '      ', '      ', '      ', ' #### '],
+            ':' => ['      ', '  ##  ', '      ', '  ##  ', '      '],
+            '/' => ['    # ', '    # ', '   #  ', '  #   ', '  #   '],
+            '\\' => ['  #   ', '  #   ', '   #  ', '    # ', '    # '],
+            '(' => ['   #  ', '  #   ', '  #   ', '  #   ', '   #  '],
+            ')' => ['  #   ', '   #  ', '   #  ', '   #  ', '  #   '],
+            '@' => ['  ##  ', ' #  # ', ' #### ', ' #    ', '  ### '],
+            '#' => [' #  # ', ' #### ', ' #  # ', ' #### ', ' #  # '],
+            '*' => [' #  # ', '  ##  ', ' #### ', '  ##  ', ' #  # '],
+            '+' => ['      ', '  ##  ', ' #### ', '  ##  ', '      '],
+            '=' => ['      ', ' #### ', '      ', ' #### ', '      '],
+            '<' => ['    # ', '   #  ', '  #   ', '   #  ', '    # '],
+            '>' => ['  #   ', '   #  ', '    # ', '   #  ', '  #   '],
+            '"' => [' #  # ', ' #  # ', '      ', '      ', '      '],
+            "'" => ['  ##  ', '  #   ', '      ', '      ', '      '],
+            ';' => ['      ', '  ##  ', '      ', '  ##  ', '  #   '],
+            '&' => ['  ##  ', ' #  # ', '  ##  ', ' #  # ', '  ### '],
+            '%' => [' #  # ', '    # ', '   #  ', '  #   ', ' #  # '],
         ];
     }
 

@@ -623,23 +623,10 @@ class StringsTest extends TestCase
         Assert::same('', Strings::take('', 5));
     }
 
-    public function testTakeRight(): void
+    public function testTakeNegativeCount(): void
     {
-        Assert::same('world', Strings::takeRight('hello world', 5));
-        Assert::same('hello', Strings::takeRight('hello', 10));
-        Assert::same('ño', Strings::takeRight('ñaño', 2));
-    }
-
-    public function testTakeRightZero(): void
-    {
-        Assert::same('', Strings::takeRight('hello', 0));
-    }
-
-    public function testTakeTakeRightOpposites(): void
-    {
-        $string = 'hello world';
-        Assert::same('hello', Strings::take($string, 5));
-        Assert::same('world', Strings::takeRight($string, 5));
+        Assert::same('world', Strings::take('hello world', -5));
+        Assert::same('ño', Strings::take('ñaño', -2));
     }
 
     public function testSlice(): void
@@ -1746,6 +1733,265 @@ class StringsTest extends TestCase
     public function testWordWrapMultibyteCutLongWords(): void
     {
         Assert::same("héllo\nwörld", Strings::wordWrap('héllowörld', 5, "\n", true));
+    }
+
+    public function testWordWrapZeroWidthThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::wordWrap('hello', 0),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testLimitNegativeThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::limit('hello', -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testTruncateNegativeThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::truncate('hello', -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testExcerptNegativeRadiusThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::excerpt('hello world', 'world', -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testRandomZeroLengthThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::random(0),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testRandomNegativeLengthThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::random(-5),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testMaskNegativeLengthThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::mask('hello', '*', 0, -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testNormalizeNewLines(): void
+    {
+        Assert::same("line1\nline2\nline3", Strings::normalizeNewLines("line1\r\nline2\rline3"));
+        Assert::same("line1\nline2", Strings::normalizeNewLines("line1\r\nline2"));
+        Assert::same("line1\nline2", Strings::normalizeNewLines("line1\nline2"));
+    }
+
+    public function testNormalizeNewLinesEmpty(): void
+    {
+        Assert::same('', Strings::normalizeNewLines(''));
+    }
+
+    public function testNormalizeNewLinesNoLineEndings(): void
+    {
+        Assert::same('hello world', Strings::normalizeNewLines('hello world'));
+    }
+
+    public function testIndent(): void
+    {
+        Assert::same("\thello", Strings::indent('hello'));
+        Assert::same("\t\thello", Strings::indent('hello', 2));
+        Assert::same("  hello", Strings::indent('hello', 1, '  '));
+    }
+
+    public function testIndentMultiLine(): void
+    {
+        Assert::same("\tline1\n\tline2", Strings::indent("line1\nline2"));
+        Assert::same("  line1\n  line2", Strings::indent("line1\nline2", 1, '  '));
+    }
+
+    public function testIndentZeroLevel(): void
+    {
+        Assert::same('hello', Strings::indent('hello', 0));
+    }
+
+    public function testIndentNegativeLevelThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::indent('hello', -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testIndentEmpty(): void
+    {
+        Assert::same('', Strings::indent(''));
+    }
+
+    public function testReplaceArray(): void
+    {
+        Assert::same('Year: 2026, Month: April', Strings::replaceArray('?', ['2026', 'April'], 'Year: ?, Month: ?'));
+        Assert::same('a b c', Strings::replaceArray('?', ['a', 'b', 'c'], '? ? ?'));
+    }
+
+    public function testReplaceArrayFewerReplacementsThanOccurrences(): void
+    {
+        Assert::same('Year: 2026, Month: ?', Strings::replaceArray('?', ['2026'], 'Year: ?, Month: ?'));
+    }
+
+    public function testReplaceArrayEmptySearch(): void
+    {
+        Assert::same('hello', Strings::replaceArray('', ['world'], 'hello'));
+    }
+
+    public function testReplaceArrayEmptyReplacements(): void
+    {
+        Assert::same('hello ?', Strings::replaceArray('?', [], 'hello ?'));
+    }
+
+    public function testToBase64(): void
+    {
+        Assert::same('aGVsbG8=', Strings::toBase64('hello'));
+        Assert::same('', Strings::toBase64(''));
+    }
+
+    public function testFromBase64(): void
+    {
+        Assert::same('hello', Strings::fromBase64('aGVsbG8='));
+        Assert::same('', Strings::fromBase64(''));
+    }
+
+    public function testFromBase64Invalid(): void
+    {
+        Assert::same('', Strings::fromBase64('not-base64!!!'));
+    }
+
+    public function testToBase64FromBase64RoundTrip(): void
+    {
+        $original = 'Hello World!';
+        Assert::same($original, Strings::fromBase64(Strings::toBase64($original)));
+    }
+
+    public function testIsUlid(): void
+    {
+        Assert::true(Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV'));
+        Assert::true(Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV'));
+        Assert::false(Strings::isUlid('not-a-ulid'));
+        Assert::false(Strings::isUlid(''));
+    }
+
+    public function testIsUlidCaseInsensitive(): void
+    {
+        Assert::true(Strings::isUlid('01arz3ndektsv4rrffq69g5fav'));
+    }
+
+    public function testIsUlidWrongLength(): void
+    {
+        Assert::false(Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FA'));
+        Assert::false(Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAVX'));
+    }
+
+    public function testHighlight(): void
+    {
+        Assert::same('The <mark>quick</mark> brown fox', Strings::highlight('The quick brown fox', 'quick'));
+        Assert::same('Hello <b>World</b>', Strings::highlight('Hello World', 'world', '<b>', '</b>'));
+    }
+
+    public function testHighlightCaseInsensitive(): void
+    {
+        Assert::same('Hello <mark>World</mark>', Strings::highlight('Hello World', 'WORLD'));
+    }
+
+    public function testHighlightEmptyPhrase(): void
+    {
+        Assert::same('hello world', Strings::highlight('hello world', ''));
+    }
+
+    public function testHighlightMultipleOccurrences(): void
+    {
+        Assert::same('<mark>fox</mark> and <mark>fox</mark>', Strings::highlight('fox and fox', 'fox'));
+    }
+
+    public function testSubstrReplace(): void
+    {
+        Assert::same('hello PHP', Strings::substrReplace('hello world', 'PHP', 6));
+        Assert::same('hello PHP', Strings::substrReplace('hello world', 'PHP', 6, 5));
+        Assert::same('hello', Strings::substrReplace('hello world', '', 5, 6));
+    }
+
+    public function testSubstrReplaceNegativeOffset(): void
+    {
+        Assert::same('hello PHP', Strings::substrReplace('hello world', 'PHP', -5));
+    }
+
+    public function testSubstrReplaceMultibyte(): void
+    {
+        Assert::same('héllo PHP', Strings::substrReplace('héllo monde', 'PHP', 6));
+    }
+
+    public function testFixEncoding(): void
+    {
+        Assert::same('hello world', Strings::fixEncoding('hello world'));
+        Assert::same('valid utf-8 ñoño', Strings::fixEncoding('valid utf-8 ñoño'));
+    }
+
+    public function testFixEncodingEmpty(): void
+    {
+        Assert::same('', Strings::fixEncoding(''));
+    }
+
+    public function testCensor(): void
+    {
+        Assert::same('This is *** and ***', Strings::censor('This is bad and awful', ['bad', 'awful']));
+        Assert::same('#### language', Strings::censor('BAD language', ['bad'], '####'));
+    }
+
+    public function testCensorCaseInsensitive(): void
+    {
+        Assert::same('This is *** language', Strings::censor('This is BAD language', ['bad']));
+    }
+
+    public function testCensorEmptyBannedWords(): void
+    {
+        Assert::same('hello world', Strings::censor('hello world', []));
+    }
+
+    public function testCensorNoMatch(): void
+    {
+        Assert::same('hello world', Strings::censor('hello world', ['foo', 'bar']));
+    }
+
+    public function testAsciiArtGlyphWidth(): void
+    {
+        $output = Strings::asciiArt('A');
+        $lines = explode("\n", $output);
+        Assert::count(5, $lines);
+
+        foreach ($lines as $line) {
+            Assert::same(6, mb_strlen($line, 'UTF-8'));
+        }
+    }
+
+    public function testAsciiArtMultipleChars(): void
+    {
+        $output = Strings::asciiArt('AB');
+        $lines = explode("\n", $output);
+
+        // Two 6-wide glyphs plus 1 space between = 13 chars per line
+        foreach ($lines as $line) {
+            Assert::same(13, mb_strlen($line, 'UTF-8'));
+        }
     }
 }
 

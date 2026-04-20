@@ -242,11 +242,10 @@ class StringsTest extends TestCase
         Assert::same('', FluentStrings::from('hello')->take(0)->get());
     }
 
-    public function testTakeRight(): void
+    public function testTakeNegativeCount(): void
     {
-        Assert::same(Strings::takeRight('hello world', 5), FluentStrings::from('hello world')->takeRight(5)->get());
-        Assert::same(Strings::takeRight('ñaño', 2), FluentStrings::from('ñaño')->takeRight(2)->get());
-        Assert::same('', FluentStrings::from('hello')->takeRight(0)->get());
+        Assert::same(Strings::take('hello world', -5), FluentStrings::from('hello world')->take(-5)->get());
+        Assert::same(Strings::take('ñaño', -2), FluentStrings::from('ñaño')->take(-2)->get());
     }
 
     public function testReplace(): void
@@ -510,6 +509,78 @@ class StringsTest extends TestCase
             ->upper()
             ->get();
         Assert::same('ÑAÑO', $result);
+    }
+
+    public function testFluentNormalizeNewLines(): void
+    {
+        Assert::same(
+            Strings::normalizeNewLines("line1\r\nline2\rline3"),
+            FluentStrings::from("line1\r\nline2\rline3")->normalizeNewLines()->get()
+        );
+    }
+
+    public function testFluentIndent(): void
+    {
+        Assert::same(
+            Strings::indent("line1\nline2"),
+            FluentStrings::from("line1\nline2")->indent()->get()
+        );
+    }
+
+    public function testFluentToBase64(): void
+    {
+        Assert::same(
+            Strings::toBase64('hello'),
+            FluentStrings::from('hello')->toBase64()->get()
+        );
+    }
+
+    public function testFluentFromBase64(): void
+    {
+        Assert::same(
+            Strings::fromBase64('aGVsbG8='),
+            FluentStrings::from('aGVsbG8=')->fromBase64()->get()
+        );
+    }
+
+    public function testFluentHighlight(): void
+    {
+        Assert::same(
+            Strings::highlight('The quick brown fox', 'quick'),
+            FluentStrings::from('The quick brown fox')->highlight('quick')->get()
+        );
+    }
+
+    public function testFluentCensor(): void
+    {
+        Assert::same(
+            Strings::censor('This is bad', ['bad']),
+            FluentStrings::from('This is bad')->censor(['bad'])->get()
+        );
+    }
+
+    public function testFluentReplaceArray(): void
+    {
+        Assert::same(
+            Strings::replaceArray('?', ['2026', 'April'], 'Year: ?, Month: ?'),
+            FluentStrings::from('Year: ?, Month: ?')->replaceArray('?', ['2026', 'April'])->get()
+        );
+    }
+
+    public function testFluentSubstrReplace(): void
+    {
+        Assert::same(
+            Strings::substrReplace('hello world', 'PHP', 6),
+            FluentStrings::from('hello world')->substrReplace('PHP', 6)->get()
+        );
+    }
+
+    public function testFluentFixEncoding(): void
+    {
+        Assert::same(
+            Strings::fixEncoding('hello world'),
+            FluentStrings::from('hello world')->fixEncoding()->get()
+        );
     }
 }
 
