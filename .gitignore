@@ -4,5 +4,3 @@
 /tests/*/output/
 /.php-cs-fixer.cache
 /debug_*.php
-/composer.phar
-/composer-setup.php
