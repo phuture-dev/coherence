@@ -5,49 +5,31 @@ This document establishes the workflow, coding standards, and architectural patt
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Architecture & Design Principles](#architecture--design-principles)
-3. [Argument Ordering Pattern](#argument-ordering-pattern)
-4. [Method Naming Conventions](#method-naming-conventions)
-5. [Pass-by-Reference Methods](#pass-by-reference-methods)
-6. [Documentation Standards](#documentation-standards)
-7. [Class-Specific Patterns](#class-specific-patterns)
-8. [Testing Requirements](#testing-requirements)
-9. [Code Quality Standards](#code-quality-standards)
-10. [Adding New Methods](#adding-new-methods)
-11. [Adding New Utility Classes](#adding-new-utility-classes)
-12. [Common Patterns & Examples](#common-patterns--examples)
-13. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+2. [Argument Ordering Pattern](#argument-ordering-pattern)
+3. [Method Naming Conventions](#method-naming-conventions)
+4. [Pass-by-Reference Methods](#pass-by-reference-methods)
+5. [Documentation Standards](#documentation-standards)
+6. [Testing Requirements](#testing-requirements)
+7. [Code Quality Standards](#code-quality-standards)
+8. [Adding New Methods](#adding-new-methods)
+9. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
 
 ---
 
 ## Project Overview
 
-**Coherence** is a modern PHP utility library that brings consistency and elegance to your codebase with well-thought helpers.
+This document defines the universal workflow, coding standards, and architectural patterns to follow
+across any project.
 
 ### Key Principles
 
-- **Consistency**: All methods follow the same patterns and conventions
-- **Predictability**: Method signatures and behavior are intuitive and uniform
-- **Uniformity**: Naming conventions and documentation are standardized
-- **Non-invasive**: Native PHP behavior is wrapped, not modified
-
----
-
-## Architecture & Design Principles
-
-### Static-Only Utility Classes
-
-All utility classes in `./src` (excluding subdirectories) follow these rules:
-
-1. **Static Methods Only**: All methods must be declared as `public static`
-2. **No Instantiation**: Classes extend `StaticClass` to prevent instantiation
-3. **No State**: Classes maintain no instance state
-4. **Namespace**: All classes use the `Phuture\Coherence` namespace
-
-### Class Location
-
-- **Main classes location**: `./src/` (root level only)
-- **Excluded**: Subdirectories like `./src/Class/`, `./src/Exception/`, etc.
+- **Consistency**: All methods must follow the same patterns and conventions
+- **Predictability**: Method signatures and behavior must be intuitive and uniform
+- **Uniformity**: Naming conventions and documentation must be standardized
+- **Descriptive naming**: All methods, variables, constants, and properties must have a clear and descriptive name
+  - A name should tell you *what* it represents without requiring a comment to explain it
+- **Self-explanatory code**: Code should read like prose, the logic itself communicates its intent
+  - Avoid excessive comments; if a comment is needed to explain *what* the code does, the code should be rewritten instead
 
 ---
 
@@ -58,31 +40,12 @@ All utility classes in `./src` (excluding subdirectories) follow these rules:
 **All methods MUST follow this argument ordering:**
 
 ```
-($data, [required], [optional], [variadics])
+([required], [optional], [variadics])
 ```
 
 ### Detailed Breakdown
 
-#### 1. Primary Data Source (ALWAYS FIRST)
-
-The data being operated on must always be the first parameter:
-
-| Class            | Primary Parameter | Type     |
-|------------------|-------------------|----------|
-| Arrays           | `$array`          | `array`  |
-| Strings          | `$string`         | `string` |
-| MultibyteStrings | `$string`         | `string` |
-| Hash             | `$data`           | `string` |
-| Html             | `$string`         | `string` |
-| Url              | `$string`         | `string` |
-
-**Example:**
-```php
-Arrays::search(array $array, mixed $needle, bool $strict = false)
-Strings::position(string $subject, string $search, int $offset = 0)
-```
-
-#### 2. Required Parameters
+#### 1. Required Parameters
 
 Search terms, needle values, patterns, or other required operation data:
 
@@ -92,7 +55,7 @@ Strings::contains(string $subject, string $search, ...)
 Hash::md5(string $data, ...)
 ```
 
-#### 3. Optional Parameters
+#### 2. Optional Parameters
 
 Flags, modes, offsets, encoding, and other optional modifiers:
 
@@ -103,7 +66,7 @@ MultibyteStrings::position(string $subject, string $search, int $offset = 0, ?st
 Hash::md5(string $data, bool $binary = false)
 ```
 
-#### 4. Variadic Parameters (ALWAYS LAST)
+#### 3. Variadic Parameters (ALWAYS LAST)
 
 Variadic parameters using the `...` operator must always be the last parameter:
 
@@ -120,16 +83,15 @@ Arrays::difference(array $array, ?callable $callback = null, array ...$arrays)
 
 All method names use camelCase:
 
-| Native PHP Function  | Coherence Method | Class            |
+| Native PHP Function  | Project Method   | Class            |
 |----------------------|------------------|------------------|
-| `array_search()`     | `search()`       | Arrays           |
-| `array_key_exists()` | `containsKey()`  | Arrays           |
-| `str_contains()`     | `contains()`     | Strings          |
-| `strpos()`           | `position()`     | Strings          |
-| `mb_strpos()`        | `position()`     | MultibyteStrings |
-| `htmlentities()`     | `entityEncode()` | Html             |
-| `urlencode()`        | `encode()`       | Url              |
-| `hash()`             | `make()`         | Hash             |
+| `array_search()`     | `search()`       | Collection       |
+| `array_key_exists()` | `containsKey()`  | Collection       |
+| `str_contains()`     | `contains()`     | Text             |
+| `strpos()`           | `position()`     | Text             |
+| `htmlentities()`     | `entityEncode()` | HtmlEncoder      |
+| `urlencode()`        | `encode()`       | UrlEncoder       |
+| `hash()`             | `make()`         | Hasher           |
 
 ### Descriptive Names
 
@@ -138,11 +100,11 @@ All method names use camelCase:
 - Maintain consistency with related methods
 
 **Examples:**
-- `Arrays::sort()` - Simple sort
-- `Arrays::sortKeys()` - Sort by keys
-- `Arrays::sortAssoc()` - Sort maintaining index association
-- `Strings::camelCase()` - Convert to camelCase
-- `Strings::snakeCase()` - Convert to snake_case
+- `Collection::sort()` - Simple sort
+- `Collection::sortByKey()` - Sort by keys
+- `Collection::sortWithIndex()` - Sort maintaining index association
+- `Text::toCamelCase()` - Convert to camelCase
+- `Text::toSnakeCase()` - Convert to snake_case
 
 ---
 
@@ -215,10 +177,10 @@ Every method MUST include complete PHPDoc with the following structure:
 2. **Extended Description**: Detailed explanation using everyday words (required)
 3. **Example**: Always include a short usage example wrapped in ```php code blocks
 4. **Other Classes**: When referring to other classes, always use a Fully Qualified Class Name
-4. **@param Tags**: For EVERY parameter with clear, simple descriptions
-5. **@return Tag**: Clear description of what is returned and what it represents, omit when void
-6. **Callback Documentation**: When a parameter requires a callback function, the @param description MUST include the callback signature in the format: `The callback has the signature \`function (mixed $value): mixed\``
-7. **Additional Tags** (when applicable):
+5. **@param Tags**: For EVERY parameter with clear, simple descriptions
+6. **@return Tag**: Clear description of what is returned and what it represents, omit when void
+7. **Callback Documentation**: When a parameter requires a callback function, the @param description MUST include the callback signature in the format: `The callback has the signature \`function (mixed $value): mixed\``
+8. **Additional Tags** (when applicable):
    - `@see` - For methods that have other related methods, like first() being related to last(), or flatten() to unflatten()
    - `@throws` - For methods that throw exceptions
    - `@deprecated` - For deprecated methods
@@ -246,10 +208,10 @@ Every method MUST include complete PHPDoc with the following structure:
  *
  * Example:
  * ```php
- * use Phuture\Coherence\Arrays;
+ * use App\Utils\Collection;
  * 
  * $fruits = ['apple', 'banana', 'orange'];
- * $hasApple = Arrays::contains($fruits, 'apple');
+ * $hasApple = Collection::contains($fruits, 'apple');
  * 
  * // Returns true
  * ```
@@ -280,10 +242,10 @@ public static function contains(array $array, mixed $value, bool $strict = false
  *
  * Example:
  * ```php
- * use Phuture\Coherence\Arrays;
+ * use App\Utils\Collection;
  *
  * $data = ['name' => 'John', 'address' => ['city' => 'NYC', 'zip' => '10001']];
- * $clean = Arrays::filterRecursive($data, fn($val) => htmlspecialchars($val));
+ * $clean = Collection::filterRecursive($data, fn($val) => htmlspecialchars($val));
  * ```
  *
  * @param array $array The array to process, which may contain nested arrays
@@ -308,10 +270,10 @@ public static function filterRecursive(array $array, callable $callback): array
  *
  * Example:
  * ```php
- * use Phuture\Coherence\Arrays;
+ * use App\Utils\Collection;
  * 
  * $numbers = [3, 1, 4, 1, 5];
- * Arrays::sort($numbers);
+ * Collection::sort($numbers);
  * 
  * // $numbers is now [1, 1, 3, 4, 5]
  * ```
@@ -350,7 +312,7 @@ public static function sort(array &$array, int $flags = SORT_REGULAR): bool
  * Example:
  * ```php
  * $colors = ['red', 'blue', 'green'];
- * $position = Arrays::search($colors, 'blue'); // Returns 1
+ * $position = Collection::search($colors, 'blue'); // Returns 1
  * ```
  *
  * @param array $array The array to search through
@@ -391,9 +353,6 @@ Tests must cover:
 # Run all tests
 composer test
 
-# Run tests with coverage report
-composer test-coverage
-
 # Run specific test file
 composer test tests/ArraysTest.php
 ```
@@ -403,33 +362,33 @@ composer test tests/ArraysTest.php
 ```php
 <?php
 
-namespace Phuture\Coherence\Tests;
+namespace App\Tests\Utils;
 
-use Phuture\Coherence\Arrays;
+use App\Utils\Collection;
 use Tester\Assert;
 use Tester\TestCase;
 
 require __DIR__ . '/bootstrap.php';
 
-class ArraysTest extends TestCase
+class CollectionTest extends TestCase
 {
     public function testContains(): void
     {
         // Happy path
-        Assert::true(Arrays::contains([1, 2, 3], 2));
-        Assert::false(Arrays::contains([1, 2, 3], 4));
+        Assert::true(Collection::contains([1, 2, 3], 2));
+        Assert::false(Collection::contains([1, 2, 3], 4));
 
         // Strict comparison
-        Assert::true(Arrays::contains([1, 2, '3'], 3, false));
-        Assert::false(Arrays::contains([1, 2, '3'], 3, true));
+        Assert::true(Collection::contains([1, 2, '3'], 3, false));
+        Assert::false(Collection::contains([1, 2, '3'], 3, true));
 
         // Edge cases
-        Assert::false(Arrays::contains([], 1));
-        Assert::true(Arrays::contains([null], null));
+        Assert::false(Collection::contains([], 1));
+        Assert::true(Collection::contains([null], null));
     }
 }
 
-(new ArraysTest())->run();
+(new CollectionTest())->run();
 ```
 
 ---
@@ -439,31 +398,25 @@ class ArraysTest extends TestCase
 ### Required Standards
 
 1. **PSR-12**: Mandatory coding style standard
-2. **PHPStan**: Static analysis at level `max`
+2. **PHPStan**: Static analysis at level `6`
 3. **PHP CodeSniffer**: Automatic PSR-12 enforcement
 
 ### Quality Check Commands
 
 ```bash
-# Run PHPStan static analysis
-composer phpstan
-
-# Check PSR-12 compliance
-composer cs-check
-
 # Auto-fix PSR-12 violations
-composer cs-fix
+composer lint
 
 # Run all quality checks
-composer phpstan && composer cs-check && composer test
+composer test
 ```
 
 ### Pre-Commit Checklist
 
 Before committing code, ensure:
-- [ ] All tests pass (`composer test`)
-- [ ] PHPStan passes with no errors (`composer phpstan`)
-- [ ] Code follows PSR-12 (`composer cs-check`)
+- [ ] All tests pass
+- [ ] PHPStan passes with no errors
+- [ ] Code follows PSR-12
 - [ ] All new methods have tests
 - [ ] All methods have complete PHPDoc
 
@@ -478,7 +431,7 @@ Before committing code, ensure:
    - This becomes the first parameter
 
 2. **Order Arguments According to Pattern**
-   - `($data, [required], [callables], [optional], [variadics])`
+   - `([required], [optional], [variadics])`
    - Follow the standard pattern strictly
 
 3. **Add Comprehensive PHPDoc**
@@ -503,19 +456,6 @@ Before committing code, ensure:
    - Verify all tests pass
    - Check test coverage if needed
 
-7. **Run Quality Checks**
-   - Execute `composer phpstan`
-   - Execute `composer cs-check`
-   - Fix any violations
-
-8. **Verify PSR-12 Compliance**
-   - Ensure code formatting is correct
-   - Run `composer cs-fix` if needed
-
-9. **Ensure Complete Coverage**
-   - Review test coverage
-   - Add tests for any missed code paths
-
 ### Example: Adding a New Method
 
 ```php
@@ -532,97 +472,10 @@ public function testContainsKey(): void
 {
     $array = ['foo' => 'bar', 'baz' => 'qux'];
 
-    Assert::true(Arrays::containsKey($array, 'foo'));
-    Assert::false(Arrays::containsKey($array, 'nonexistent'));
-    Assert::true(Arrays::containsKey([0 => 'a', 1 => 'b'], 0));
-    Assert::false(Arrays::containsKey([], 'key'));
-}
-```
-
----
-
-## Adding New Utility Classes
-
-### Requirements Checklist
-
-1. **Place in `./src/` (Root Level Only)**
-   - Do not create subdirectories
-   - Keep all main utility classes at root level
-
-2. **Extend `StaticClass`**
-   ```php
-use Phuture\Coherence\Support\Class\StaticClass;
-
-   class NewUtility extends StaticClass
-   {
-       // ...
-   }
-   ```
-
-3. **All Methods Must Be `public static`**
-   - No instance methods
-   - No constructors
-   - No properties
-
-4. **Follow Namespace Convention**
-   ```php
-   namespace Phuture\Coherence;
-   ```
-
-5. **Add Class-Level PHPDoc**
-   ```php
-   /**
-    * Brief description of the utility class purpose.
-    *
-    * Extended description of what this class provides and when to use it.
-    *
-    * @copyright Copyright (c) 2025, Advandz Technologies, LLC
-    * @license https://opensource.org/licenses/MIT MIT License
-    * @link https://www.phuture.dev/ Phuture
-    */
-   class NewUtility extends StaticClass
-   ```
-
-6. **Follow Argument Ordering Pattern**
-   - Apply the standard pattern to all methods
-   - Maintain consistency with existing classes
-
-7. **Create Comprehensive Test File**
-   - Create `tests/NewUtilityTest.php`
-   - Test all methods thoroughly
-
-### New Class Template
-
-```php
-<?php
-
-namespace Phuture\Coherence;
-
-use Phuture\Coherence\Support\StaticClass;
-
-/**
- * Brief description of the utility class purpose.
- *
- * Extended description of what this class provides and when to use it.
- *
- * @copyright Copyright (c) 2025, Advandz Technologies, LLC
- * @license https://opensource.org/licenses/MIT MIT License
- */
-class NewUtility extends StaticClass
-{
-    /**
-     * Brief method description.
-     *
-     * Extended description of what this method does.
-     *
-     * @param type $primaryData The primary data to operate on
-     * @param type $param Additional parameters
-     * @return type Description of return value
-     */
-    public static function methodName(type $primaryData, type $param): returnType
-    {
-        // Implementation
-    }
+    Assert::true(Collection::containsKey($array, 'foo'));
+    Assert::false(Collection::containsKey($array, 'nonexistent'));
+    Assert::true(Collection::containsKey([0 => 'a', 1 => 'b'], 0));
+    Assert::false(Collection::containsKey([], 'key'));
 }
 ```
 
@@ -641,19 +494,6 @@ public static function merge(array ...$arrays, bool $recursive = false)
 
 // WRONG: Primary data not first
 public static function contains(mixed $needle, array $array)
-```
-
-### Non-Static Methods
-
-```php
-// L WRONG: Instance method in utility class
-class Arrays extends StaticClass
-{
-    public function contains(array $array, mixed $value): bool
-    {
-        return in_array($value, $array);
-    }
-}
 ```
 
 ### Missing PHPDoc
@@ -686,28 +526,60 @@ public static function array_search(array $array, mixed $needle): int|false
 public static function srch(array $array, mixed $needle): int|false
 ```
 
+### Cryptic Variable and Method Names
+
+```php
+// WRONG: Single letters and abbreviations reveal nothing
+$r = new \ReflectionFunction($cb);
+$cls = $r->getClosureScopeClass()?->name;
+$obj = $r->getClosureThis();
+
+// RIGHT: Names tell the story without a comment
+$reflection = new \ReflectionFunction($callback);
+$scopeClass = $reflection->getClosureScopeClass()?->name;
+$boundObject = $reflection->getClosureThis();
+```
+
+### Comments That Explain "What" Instead of Rewriting the Code
+
+```php
+// WRONG: Comment compensates for a bad name
+$f = true; // flag indicating the loop should stop
+foreach ($items as $item) {
+    if ($f) { ... }
+}
+
+// RIGHT: The code speaks for itself
+$shouldStopProcessing = true;
+foreach ($items as $item) {
+    if ($shouldStopProcessing) { ... }
+}
+```
+
 ---
 
 ## Summary
 
-This workflow guide establishes the standards for maintaining consistency, predictability, and quality across the Phuture Coherence project. By following these patterns and practices, we ensure that the library remains:
+This workflow guide establishes the standards for maintaining consistency, predictability, and quality across any project. By following these patterns and practices, we ensure that the codebase remains:
 
 - **Consistent**: All methods follow the same conventions
+- **Readable**: Code reads like prose — self-explanatory without excessive comments
 - **Maintainable**: Clear documentation and tests make updates easy
 - **Reliable**: Comprehensive testing and quality checks prevent regressions
-- **Professional**: High code quality standards reflect well on the project
 
 Remember the key principles:
 
 1. **Static methods only** in `./src/` utility classes
-2. **Argument ordering**: `($data, [required], [callables], [optional], [variadics])`
-3. **Complete PHPDoc** for every method
-4. **Tests are mandatory** for every new method
-5. **PSR-12 compliance** enforced through tooling
+2. **Argument ordering**: `([required], [optional], [variadics])`
+3. **Descriptive names** for every method, variable, constant, and property — clear intent, no abbreviations
+4. **Self-explanatory code** — if a comment explains *what* the code does, rewrite the code instead
+5. **Complete PHPDoc** for every method
+6. **Tests are mandatory** for every new method
+7. **PSR-12 compliance** enforced through tooling
 
 When in doubt, refer to existing classes as examples of proper implementation.
 
 ---
 
-**Last Updated**: 2025-12-05
-**Version**: 1.0
+**Last Updated**: 2026-04-07
+**Version**: 1.1

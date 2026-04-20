@@ -7,7 +7,6 @@ namespace Phuture\Coherence;
 use Closure;
 use Throwable;
 use RuntimeException;
-use Nette\Utils\Callback;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\ReflectionException;
 
@@ -744,7 +743,7 @@ class Callables extends StaticClass
      */
     public static function isStatic(callable $callback): bool
     {
-        return Callback::isStatic($callback);
+        return is_string(is_array($callback) ? $callback[0] : $callback);
     }
 
     /**
@@ -1420,7 +1419,17 @@ class Callables extends StaticClass
      */
     public static function toCallable(Closure $callback): callable|array
     {
-        return Callback::unwrap($callback);
+        $reflection = new \ReflectionFunction($callback);
+        $scopeClass = $reflection->getClosureScopeClass()?->name;
+        if (str_ends_with($reflection->name, '}')) {
+            return $callback;
+        } elseif (($boundObject = $reflection->getClosureThis()) && $boundObject::class === $scopeClass) {
+            return [$boundObject, $reflection->name];
+        } elseif ($scopeClass) {
+            return [$scopeClass, $reflection->name];
+        } else {
+            return $reflection->name;
+        }
     }
 
     /**
@@ -1481,7 +1490,13 @@ class Callables extends StaticClass
      */
     public static function toString(callable $callback): string
     {
-        return Callback::toString($callback);
+        if ($callback instanceof \Closure) {
+            $unwrappedCallable = static::toCallable($callback);
+            return '{closure' . ($unwrappedCallable instanceof \Closure ? '}' : ' ' . static::toString($unwrappedCallable) . '}');
+        } else {
+            is_callable(is_object($callback) ? [$callback, '__invoke'] : $callback, true, $callableString);
+            return $callableString;
+        }
     }
 
     /**
