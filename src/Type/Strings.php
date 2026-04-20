@@ -54,10 +54,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
         return (string) $this->data;
     }
 
-    // =========================================================================
-    // Extraction
-    // =========================================================================
-
     /**
      * Returns the portion of the string after the first occurrence of a search value.
      *
@@ -214,10 +210,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
         return $this;
     }
 
-    // =========================================================================
-    // Case conversion
-    // =========================================================================
-
     /**
      * Converts the string to camelCase.
      *
@@ -348,10 +340,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
 
         return $this;
     }
-
-    // =========================================================================
-    // Modification
-    // =========================================================================
 
     /**
      * Collapses consecutive duplicate occurrences of a character.
@@ -729,10 +717,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
         return $this;
     }
 
-    // =========================================================================
-    // Truncation
-    // =========================================================================
-
     /**
      * Extracts a contextual excerpt of the string around a given phrase.
      *
@@ -779,10 +763,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
 
         return $this;
     }
-
-    // =========================================================================
-    // Splitting & conversion
-    // =========================================================================
 
     /**
      * Splits the string into an array of chunks of the given size.
@@ -856,10 +836,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
         return $this;
     }
 
-    // =========================================================================
-    // Encoding & conversion
-    // =========================================================================
-
     /**
      * Transliterates the string to its ASCII representation.
      *
@@ -873,10 +849,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
 
         return $this;
     }
-
-    // =========================================================================
-    // Testing & checking (stores bool in data)
-    // =========================================================================
 
     /**
      * Determines whether the string ends with a given search value.
@@ -1160,10 +1132,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
 
         return $this;
     }
-
-    // =========================================================================
-    // Counting & comparison (stores int/bool in data)
-    // =========================================================================
 
     /**
      * Compares the string lexicographically against another string.
