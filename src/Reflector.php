@@ -10,7 +10,6 @@ use ReflectionFunction;
 use ReflectionProperty;
 use ReflectionParameter;
 use Phuture\Coherence\Support\StaticClass;
-use Nette\PhpGenerator\{GlobalFunction, Literal};
 use Phuture\Coherence\Exception\{InvalidArgumentException, ReflectionException};
 
 class Reflector extends StaticClass
@@ -32,34 +31,17 @@ class Reflector extends StaticClass
         return is_object($class) ? class_alias(get_class($class), $alias, true) : class_alias($class, $alias, true);
     }
 
-    public static function aliasFunction(string $function, string $alias): bool
+    public static function aliasFunction(string $function): Closure
     {
-        if (function_exists($alias)) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The given alias already exists"
-            );
-        }
-
         if (!function_exists($function)) {
             throw new InvalidArgumentException(
                 "Invalid Argument: The given function does not exist"
             );
         }
 
-        if (!function_exists($alias)) {
-            $closure = (new GlobalFunction($alias))
-                ->setBody(
-                    (string) new Literal(
-                        'return call_user_func_array(?, func_get_args());',
-                        [$function]
-                    )
-                );
-            eval($closure);
-
-            return true;
-        }
-
-        return false;
+        return function () use ($function) {
+            return $function(...func_get_args());
+        };
     }
 
     public static function arity(callable $method): int
