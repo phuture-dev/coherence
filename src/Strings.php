@@ -1485,7 +1485,7 @@ class Strings extends StaticClass
     /**
      * Masks a portion of a string with a repeated mask character.
      *
-     * Replaces characters at positions `[$offset, $offset + $length)` with `$mask`.
+     * Replaces characters at positions `($offset, $offset + $length)` with `$mask`.
      * Supports negative offsets to count from the end of the string. When `$length`
      * is null, all characters from `$offset` onwards are masked.
      *
