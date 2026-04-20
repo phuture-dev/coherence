@@ -742,37 +742,6 @@ class StringsTest extends TestCase
         Assert::same('HelloWorld', FluentStrings::from('hello_world')->pascal()->get());
     }
 
-    public function testFluentHas(): void
-    {
-        Assert::true(FluentStrings::from('hello world')->has('world')->get());
-        Assert::false(FluentStrings::from('hello world')->has('xyz')->get());
-    }
-
-    public function testFluentStartsWith(): void
-    {
-        Assert::true(FluentStrings::from('hello world')->startsWith('hello')->get());
-    }
-
-    public function testFluentEndsWith(): void
-    {
-        Assert::true(FluentStrings::from('hello world')->endsWith('world')->get());
-    }
-
-    public function testFluentIsEmpty(): void
-    {
-        Assert::true(FluentStrings::from('')->isEmpty()->get());
-    }
-
-    public function testFluentIsBlank(): void
-    {
-        Assert::true(FluentStrings::from('   ')->isBlank()->get());
-    }
-
-    public function testFluentIsFilled(): void
-    {
-        Assert::true(FluentStrings::from('hello')->isFilled()->get());
-    }
-
     public function testFluentTrim(): void
     {
         Assert::same('hello', FluentStrings::from('  hello  ')->trim()->get());

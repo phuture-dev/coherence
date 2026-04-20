@@ -46,9 +46,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::after('user@example.com', '@');  // 'example.com'
-     * Strings::after('2023-12-25', '-');         // '12-25'
-     * Strings::after('hello', 'x');              // ''
+     * Strings::after('user@example.com', '@'); // 'example.com'
+     * Strings::after('2023-12-25', '-'); // '12-25'
+     * Strings::after('hello', 'x'); // ''
      * ```
      *
      * @param string $string The input string to search within
@@ -83,9 +83,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::afterLast('path/to/file.txt', '/');  // 'file.txt'
-     * Strings::afterLast('a.b.c', '.');              // 'c'
-     * Strings::afterLast('hello', 'x');              // ''
+     * Strings::afterLast('path/to/file.txt', '/'); // 'file.txt'
+     * Strings::afterLast('a.b.c', '.'); // 'c'
+     * Strings::afterLast('hello', 'x'); // ''
      * ```
      *
      * @param string $string The input string to search within
@@ -120,9 +120,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::ascii('héllo');        // 'hello'
-     * Strings::ascii('ñaño');         // 'nano'
-     * Strings::ascii('über', 'de');   // 'ueber'
+     * Strings::ascii('héllo'); // 'hello'
+     * Strings::ascii('ñaño'); // 'nano'
+     * Strings::ascii('über', 'de'); // 'ueber'
      * ```
      *
      * @param string $string The input string to transliterate
@@ -148,9 +148,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::before('user@example.com', '@');  // 'user'
-     * Strings::before('2023-12-25', '-');         // '2023'
-     * Strings::before('hello', 'x');              // 'hello'
+     * Strings::before('user@example.com', '@'); // 'user'
+     * Strings::before('2023-12-25', '-'); // '2023'
+     * Strings::before('hello', 'x'); // 'hello'
      * ```
      *
      * @param string $string The input string to search within
@@ -185,9 +185,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::beforeLast('path/to/file.txt', '/');  // 'path/to'
-     * Strings::beforeLast('a.b.c', '.');              // 'a.b'
-     * Strings::beforeLast('hello', 'x');              // 'hello'
+     * Strings::beforeLast('path/to/file.txt', '/'); // 'path/to'
+     * Strings::beforeLast('a.b.c', '.'); // 'a.b'
+     * Strings::beforeLast('hello', 'x'); // 'hello'
      * ```
      *
      * @param string $string The input string to search within
@@ -222,9 +222,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::between('[hello]', '[', ']');           // 'hello'
-     * Strings::between('user@example.com', '@', '.');  // 'example'
-     * Strings::between('hello', '{', '}');             // 'hello'
+     * Strings::between('[hello]', '[', ']'); // 'hello'
+     * Strings::between('user@example.com', '@', '.'); // 'example'
+     * Strings::between('hello', '{', '}'); // 'hello'
      * ```
      *
      * @param string $string The input string to search within
@@ -267,10 +267,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::camel('hello world');   // 'helloWorld'
-     * Strings::camel('hello_world');   // 'helloWorld'
-     * Strings::camel('hello-world');   // 'helloWorld'
-     * Strings::camel('HelloWorld');    // 'helloWorld'
+     * Strings::camel('hello world'); // 'helloWorld'
+     * Strings::camel('hello_world'); // 'helloWorld'
+     * Strings::camel('hello-world'); // 'helloWorld'
+     * Strings::camel('HelloWorld'); // 'helloWorld'
      * ```
      *
      * @param string $string The input string to convert
@@ -299,9 +299,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::capitalize('hello world');  // 'Hello World'
-     * Strings::capitalize('HELLO WORLD');  // 'Hello World'
-     * Strings::capitalize('ñaño ñoño');   // 'Ñaño Ñoño'
+     * Strings::capitalize('hello world'); // 'Hello World'
+     * Strings::capitalize('HELLO WORLD'); // 'Hello World'
+     * Strings::capitalize('ñaño ñoño'); // 'Ñaño Ñoño'
      * ```
      *
      * @param string $string The input string to capitalize
@@ -324,9 +324,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::charAt('hello', 0);   // 'h'
-     * Strings::charAt('hello', -1);  // 'o'
-     * Strings::charAt('hello', 10);  // ''
+     * Strings::charAt('hello', 0); // 'h'
+     * Strings::charAt('hello', -1); // 'o'
+     * Strings::charAt('hello', 10); // ''
      * ```
      *
      * @param string $string The input string to index into
@@ -360,8 +360,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::chunk('abcdef', 2);  // ['ab', 'cd', 'ef']
-     * Strings::chunk('hello', 3);   // ['hel', 'lo']
+     * Strings::chunk('abcdef', 2); // ['ab', 'cd', 'ef']
+     * Strings::chunk('hello', 3); // ['hel', 'lo']
      * ```
      *
      * @param string $string The input string to split
@@ -399,10 +399,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::compare('apple', 'banana');            // negative
-     * Strings::compare('banana', 'apple');            // positive
-     * Strings::compare('hello', 'hello');             // 0
-     * Strings::compare('Hello', 'hello', false);      // 0
+     * Strings::compare('apple', 'banana'); // negative
+     * Strings::compare('banana', 'apple'); // positive
+     * Strings::compare('hello', 'hello'); // 0
+     * Strings::compare('Hello', 'hello', false); // 0
      * ```
      *
      * @param string $string The first string to compare
@@ -442,9 +442,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::countSubstring('hello world hello', 'hello');  // 2
-     * Strings::countSubstring('aaaa', 'aa');                  // 2
-     * Strings::countSubstring('hello', 'xyz');                // 0
+     * Strings::countSubstring('hello world hello', 'hello'); // 2
+     * Strings::countSubstring('aaaa', 'aa'); // 2
+     * Strings::countSubstring('hello', 'xyz'); // 0
      * ```
      *
      * @param string $string The input string to search within
@@ -480,8 +480,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::dedupe('hello    world');   // 'hello world'
-     * Strings::dedupe('a,,,b,,,c', ',');  // 'a,b,c'
+     * Strings::dedupe('hello    world'); // 'hello world'
+     * Strings::dedupe('a,,,b,,,c', ','); // 'a,b,c'
      * Strings::dedupe('---test---', '-'); // '-test-'
      * ```
      *
@@ -511,9 +511,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::endsWith('image.jpg', '.jpg');    // true
+     * Strings::endsWith('image.jpg', '.jpg'); // true
      * Strings::endsWith('hello world', 'world'); // true
-     * Strings::endsWith('hello', 'Hello');       // false
+     * Strings::endsWith('hello', 'Hello'); // false
      * ```
      *
      * @param string $string The input string to check
@@ -539,9 +539,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::equals('hello', 'hello');         // true
-     * Strings::equals('Hello', 'hello');         // false
-     * Strings::equals('Hello', 'hello', false);  // true
+     * Strings::equals('hello', 'hello'); // true
+     * Strings::equals('Hello', 'hello'); // false
+     * Strings::equals('Hello', 'hello', false); // true
      * ```
      *
      * @param string $string The first string to compare
@@ -626,8 +626,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::explode('a,b,c', ',');       // ['a', 'b', 'c']
-     * Strings::explode('a,b,c', ',', 2);    // ['a', 'b,c']
+     * Strings::explode('a,b,c', ','); // ['a', 'b', 'c']
+     * Strings::explode('a,b,c', ',', 2); // ['a', 'b,c']
      * ```
      *
      * @param string $string The input string to split
@@ -659,9 +659,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::finish('path/to', '/');      // 'path/to/'
-     * Strings::finish('path/to/', '/');     // 'path/to/'
-     * Strings::finish('path/to///', '/');   // 'path/to/'
+     * Strings::finish('path/to', '/'); // 'path/to/'
+     * Strings::finish('path/to/', '/'); // 'path/to/'
+     * Strings::finish('path/to///', '/'); // 'path/to/'
      * ```
      *
      * @param string $string The input string
@@ -689,9 +689,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::first('hello', 3);  // 'hel'
-     * Strings::first('ñaño', 2);   // 'ña'
-     * Strings::first('hello');     // 'h'
+     * Strings::first('hello', 3); // 'hel'
+     * Strings::first('ñaño', 2); // 'ña'
+     * Strings::first('hello'); // 'h'
      * ```
      *
      * @param string $string The input string
@@ -718,9 +718,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::has('hello world', 'world');             // true
-     * Strings::has('hello world', 'World', false);      // true (case-insensitive)
-     * Strings::has('hello world', 'xyz');               // false
+     * Strings::has('hello world', 'world'); // true
+     * Strings::has('hello world', 'World', false); // true (case-insensitive)
+     * Strings::has('hello world', 'xyz'); // false
      * ```
      *
      * @param string $string The input string to search within
@@ -753,8 +753,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::hasAll('hello world', ['hello', 'world']);  // true
-     * Strings::hasAll('hello world', ['hello', 'xyz']);    // false
+     * Strings::hasAll('hello world', ['hello', 'world']); // true
+     * Strings::hasAll('hello world', ['hello', 'xyz']); // false
      * ```
      *
      * @param string $string The input string to search within
@@ -785,7 +785,7 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::hasNone('hello world', ['foo', 'bar']);  // true
+     * Strings::hasNone('hello world', ['foo', 'bar']); // true
      * Strings::hasNone('hello world', ['hello', 'bar']); // false
      * ```
      *
@@ -817,9 +817,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::headline('hello_world');    // 'Hello World'
-     * Strings::headline('foo-bar-baz');    // 'Foo Bar Baz'
-     * Strings::headline('hello world');   // 'Hello World'
+     * Strings::headline('hello_world'); // 'Hello World'
+     * Strings::headline('foo-bar-baz'); // 'Foo Bar Baz'
+     * Strings::headline('hello world'); // 'Hello World'
      * ```
      *
      * @param string $string The input string to convert
@@ -851,8 +851,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::insert('hello world', '!', 5);   // 'hello! world'
-     * Strings::insert('hello world', '!', -1);  // 'hello worl!d'
+     * Strings::insert('hello world', '!', 5); // 'hello! world'
+     * Strings::insert('hello world', '!', -1); // 'hello worl!d'
      * ```
      *
      * @param string $string The input string to insert into
@@ -893,10 +893,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::is('user_123', 'user_*');   // true
-     * Strings::is('photo.jpg', '*.jpg');   // true
-     * Strings::is('test.jpg', '*.*');      // true
-     * Strings::is('admin', 'user_*');      // false
+     * Strings::is('user_123', 'user_*'); // true
+     * Strings::is('photo.jpg', '*.jpg'); // true
+     * Strings::is('test.jpg', '*.*'); // true
+     * Strings::is('admin', 'user_*'); // false
      * ```
      *
      * @param string $string The input string to test
@@ -921,10 +921,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isAlpha('hello');   // true
-     * Strings::isAlpha('héllo');   // true
-     * Strings::isAlpha('hello1');  // false
-     * Strings::isAlpha('');        // false
+     * Strings::isAlpha('hello'); // true
+     * Strings::isAlpha('héllo'); // true
+     * Strings::isAlpha('hello1'); // false
+     * Strings::isAlpha(''); // false
      * ```
      *
      * @param string $string The input string to test
@@ -951,9 +951,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isAlphanumeric('hello123');  // true
-     * Strings::isAlphanumeric('hello');     // true
-     * Strings::isAlphanumeric('hello!');    // false
+     * Strings::isAlphanumeric('hello123'); // true
+     * Strings::isAlphanumeric('hello'); // true
+     * Strings::isAlphanumeric('hello!'); // false
      * ```
      *
      * @param string $string The input string to test
@@ -980,9 +980,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isAscii('hello');   // true
-     * Strings::isAscii('héllo');   // false
-     * Strings::isAscii('');        // true
+     * Strings::isAscii('hello'); // true
+     * Strings::isAscii('héllo'); // false
+     * Strings::isAscii(''); // true
      * ```
      *
      * @param string $string The input string to test
@@ -1004,10 +1004,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isBlank('');        // true
-     * Strings::isBlank('   ');     // true
-     * Strings::isBlank("\t\n");    // true
-     * Strings::isBlank('hello');   // false
+     * Strings::isBlank(''); // true
+     * Strings::isBlank('   '); // true
+     * Strings::isBlank("\t\n"); // true
+     * Strings::isBlank('hello'); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1029,8 +1029,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isEmail('user@example.com');  // true
-     * Strings::isEmail('not-an-email');      // false
+     * Strings::isEmail('user@example.com'); // true
+     * Strings::isEmail('not-an-email'); // false
      * ```
      *
      * @param string $string The input string to validate
@@ -1052,9 +1052,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isEmpty('');      // true
-     * Strings::isEmpty('0');     // false
-     * Strings::isEmpty(' ');     // false
+     * Strings::isEmpty(''); // true
+     * Strings::isEmpty('0'); // false
+     * Strings::isEmpty(' '); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1076,10 +1076,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isFilled('hello');   // true
+     * Strings::isFilled('hello'); // true
      * Strings::isFilled(' hello '); // true
-     * Strings::isFilled('');        // false
-     * Strings::isFilled('   ');     // false
+     * Strings::isFilled(''); // false
+     * Strings::isFilled('   '); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1102,10 +1102,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isJson('{"name":"John"}');   // true
-     * Strings::isJson('["a", "b"]');        // true
-     * Strings::isJson('not json');          // false
-     * Strings::isJson('');                  // false
+     * Strings::isJson('{"name":"John"}'); // true
+     * Strings::isJson('["a", "b"]'); // true
+     * Strings::isJson('not json'); // false
+     * Strings::isJson(''); // false
      * ```
      *
      * @param string $string The input string to validate
@@ -1132,9 +1132,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isLower('hello');   // true
-     * Strings::isLower('Hello');   // false
-     * Strings::isLower('');        // true
+     * Strings::isLower('hello'); // true
+     * Strings::isLower('Hello'); // false
+     * Strings::isLower(''); // true
      * ```
      *
      * @param string $string The input string to test
@@ -1157,8 +1157,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::matches('user_123', '/^user_\d+$/');   // true
-     * Strings::matches('user_abc', '/^user_\d+$/');   // false
+     * Strings::matches('user_123', '/^user_\d+$/'); // true
+     * Strings::matches('user_abc', '/^user_\d+$/'); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1180,9 +1180,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isNotEmpty('hello');  // true
-     * Strings::isNotEmpty(' ');      // true
-     * Strings::isNotEmpty('');       // false
+     * Strings::isNotEmpty('hello'); // true
+     * Strings::isNotEmpty(' '); // true
+     * Strings::isNotEmpty(''); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1204,10 +1204,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isNumeric('123');    // true
-     * Strings::isNumeric('-45.6');  // true
-     * Strings::isNumeric('abc');    // false
-     * Strings::isNumeric('');       // false
+     * Strings::isNumeric('123'); // true
+     * Strings::isNumeric('-45.6'); // true
+     * Strings::isNumeric('abc'); // false
+     * Strings::isNumeric(''); // false
      * ```
      *
      * @param string $string The input string to test
@@ -1234,9 +1234,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isUpper('HELLO');   // true
-     * Strings::isUpper('Hello');   // false
-     * Strings::isUpper('');        // true
+     * Strings::isUpper('HELLO'); // true
+     * Strings::isUpper('Hello'); // false
+     * Strings::isUpper(''); // true
      * ```
      *
      * @param string $string The input string to test
@@ -1258,8 +1258,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isUrl('https://example.com');  // true
-     * Strings::isUrl('not-a-url');            // false
+     * Strings::isUrl('https://example.com'); // true
+     * Strings::isUrl('not-a-url'); // false
      * ```
      *
      * @param string $string The input string to validate
@@ -1281,8 +1281,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::isUuid('550e8400-e29b-41d4-a716-446655440000');  // true
-     * Strings::isUuid('not-a-uuid');                             // false
+     * Strings::isUuid('550e8400-e29b-41d4-a716-446655440000'); // true
+     * Strings::isUuid('not-a-uuid'); // false
      * ```
      *
      * @param string $string The input string to validate
@@ -1307,9 +1307,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::kebab('helloWorld');     // 'hello-world'
+     * Strings::kebab('helloWorld'); // 'hello-world'
      * Strings::kebab('UserProfileData'); // 'user-profile-data'
-     * Strings::kebab('hello world');    // 'hello-world'
+     * Strings::kebab('hello world'); // 'hello-world'
      * ```
      *
      * @param string $string The input string to convert
@@ -1331,9 +1331,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::last('hello', 3);  // 'llo'
-     * Strings::last('ñaño', 2);   // 'ño'
-     * Strings::last('hello');     // 'o'
+     * Strings::last('hello', 3); // 'llo'
+     * Strings::last('ñaño', 2); // 'ño'
+     * Strings::last('hello'); // 'o'
      * ```
      *
      * @param string $string The input string
@@ -1360,8 +1360,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::lastPosition('hello world hello', 'hello');  // 12
-     * Strings::lastPosition('hello', 'xyz');                 // false
+     * Strings::lastPosition('hello world hello', 'hello'); // 12
+     * Strings::lastPosition('hello', 'xyz'); // false
      * ```
      *
      * @param string $string The input string to search within
@@ -1384,10 +1384,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::length('hello');  // 5
-     * Strings::length('ñaño');   // 4
-     * Strings::length('你好');    // 2
-     * Strings::length('');       // 0
+     * Strings::length('hello'); // 5
+     * Strings::length('ñaño'); // 4
+     * Strings::length('你好'); // 2
+     * Strings::length(''); // 0
      * ```
      *
      * @param string $string The input string to measure
@@ -1409,9 +1409,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::limit('Hello World', 5);         // 'Hello...'
+     * Strings::limit('Hello World', 5); // 'Hello...'
      * Strings::limit('Hello World', 5, ' [+]'); // 'Hello [+]'
-     * Strings::limit('Hi', 5);                  // 'Hi'
+     * Strings::limit('Hi', 5); // 'Hi'
      * ```
      *
      * @param string $string The input string to limit
@@ -1439,9 +1439,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::lower('HELLO');  // 'hello'
-     * Strings::lower('ÑOÑO');   // 'ñoño'
-     * Strings::lower('ÄÖÜ');   // 'äöü'
+     * Strings::lower('HELLO'); // 'hello'
+     * Strings::lower('ÑOÑO'); // 'ñoño'
+     * Strings::lower('ÄÖÜ'); // 'äöü'
      * ```
      *
      * @param string $string The input string to lowercase
@@ -1463,9 +1463,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::lowerFirst('Hello World');  // 'hello World'
-     * Strings::lowerFirst('HELLO');        // 'hELLO'
-     * Strings::lowerFirst('Ñoño');         // 'ñoño'
+     * Strings::lowerFirst('Hello World'); // 'hello World'
+     * Strings::lowerFirst('HELLO'); // 'hELLO'
+     * Strings::lowerFirst('Ñoño'); // 'ñoño'
      * ```
      *
      * @param string $string The input string
@@ -1492,10 +1492,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::mask('1234567890');            // '**********'
-     * Strings::mask('1234567890', '*', 3);    // '123*******'
+     * Strings::mask('1234567890'); // '**********'
+     * Strings::mask('1234567890', '*', 3); // '123*******'
      * Strings::mask('1234567890', '*', 3, 4); // '123****890'
-     * Strings::mask('1234567890', '*', -4);   // '123456****'
+     * Strings::mask('1234567890', '*', -4); // '123456****'
      * ```
      *
      * @param string $string The input string to mask
@@ -1543,8 +1543,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::pad('hello', 10);                      // 'hello     '
-     * Strings::pad('hello', 10, '-', STR_PAD_BOTH);   // '--hello---'
+     * Strings::pad('hello', 10); // 'hello     '
+     * Strings::pad('hello', 10, '-', STR_PAD_BOTH); // '--hello---'
      * ```
      *
      * @param string $string The input string to pad
@@ -1579,8 +1579,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::padBoth('hello', 11);        // '   hello   '
-     * Strings::padBoth('hello', 11, '-');   // '---hello---'
+     * Strings::padBoth('hello', 11); // '   hello   '
+     * Strings::padBoth('hello', 11, '-'); // '---hello---'
      * ```
      *
      * @param string $string The input string to pad
@@ -1623,8 +1623,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::padLeft('hello', 10);        // '     hello'
-     * Strings::padLeft('5', 3, '0');        // '005'
+     * Strings::padLeft('hello', 10); // '     hello'
+     * Strings::padLeft('5', 3, '0'); // '005'
      * ```
      *
      * @param string $string The input string to pad
@@ -1663,8 +1663,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::padRight('hello', 10);       // 'hello     '
-     * Strings::padRight('hello', 10, '-');  // 'hello-----'
+     * Strings::padRight('hello', 10); // 'hello     '
+     * Strings::padRight('hello', 10, '-'); // 'hello-----'
      * ```
      *
      * @param string $string The input string to pad
@@ -1704,10 +1704,10 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::pascal('hello world');   // 'HelloWorld'
-     * Strings::pascal('hello_world');   // 'HelloWorld'
-     * Strings::pascal('hello-world');   // 'HelloWorld'
-     * Strings::pascal('helloWorld');    // 'HelloWorld'
+     * Strings::pascal('hello world'); // 'HelloWorld'
+     * Strings::pascal('hello_world'); // 'HelloWorld'
+     * Strings::pascal('hello-world'); // 'HelloWorld'
+     * Strings::pascal('helloWorld'); // 'HelloWorld'
      * ```
      *
      * @param string $string The input string to convert
@@ -1734,8 +1734,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::position('hello world', 'world');   // 6
-     * Strings::position('hello world', 'xyz');     // false
+     * Strings::position('hello world', 'world'); // 6
+     * Strings::position('hello world', 'xyz'); // false
      * Strings::position('hello hello', 'hello', 3); // 6
      * ```
      *
@@ -1760,8 +1760,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::random(16);  // e.g. 'aB3xK9mNpQ2rZ5wY'
-     * Strings::random(8);   // e.g. 'a1B2c3D4'
+     * Strings::random(16); // e.g. 'aB3xK9mNpQ2rZ5wY'
+     * Strings::random(8); // e.g. 'a1B2c3D4'
      * ```
      *
      * @param int $length The length of the random string to generate (default: 16)
@@ -1791,8 +1791,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::remove('hello world', 'o');                 // 'hell wrld'
-     * Strings::remove('Hello World', 'world', false);      // 'Hello '
+     * Strings::remove('hello world', 'o'); // 'hell wrld'
+     * Strings::remove('Hello World', 'world', false); // 'Hello '
      * ```
      *
      * @param string $string The input string
@@ -1815,8 +1815,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::repeat('ab', 3);  // 'ababab'
-     * Strings::repeat('ha', 0);  // ''
+     * Strings::repeat('ab', 3); // 'ababab'
+     * Strings::repeat('ha', 0); // ''
      * ```
      *
      * @param string $string The input string to repeat
@@ -1845,8 +1845,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::replace('hello world', 'world', 'PHP');          // 'hello PHP'
-     * Strings::replace('Hello World', 'world', 'PHP', false);   // 'Hello PHP'
+     * Strings::replace('hello world', 'world', 'PHP'); // 'hello PHP'
+     * Strings::replace('Hello World', 'world', 'PHP', false); // 'Hello PHP'
      * ```
      *
      * @param string $string The input string
@@ -1884,8 +1884,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::replaceFirst('hello hello', 'hello', 'world');  // 'world hello'
-     * Strings::replaceFirst('hello', 'xyz', 'world');           // 'hello'
+     * Strings::replaceFirst('hello hello', 'hello', 'world'); // 'world hello'
+     * Strings::replaceFirst('hello', 'xyz', 'world'); // 'hello'
      * ```
      *
      * @param string $string The input string
@@ -1921,8 +1921,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::replaceLast('hello hello', 'hello', 'world');  // 'hello world'
-     * Strings::replaceLast('hello', 'xyz', 'world');           // 'hello'
+     * Strings::replaceLast('hello hello', 'hello', 'world'); // 'hello world'
+     * Strings::replaceLast('hello', 'xyz', 'world'); // 'hello'
      * ```
      *
      * @param string $string The input string
@@ -1958,8 +1958,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::reverse('hello');  // 'olleh'
-     * Strings::reverse('ñaño');   // 'oñañ'
+     * Strings::reverse('hello'); // 'olleh'
+     * Strings::reverse('ñaño'); // 'oñañ'
      * ```
      *
      * @param string $string The input string to reverse
@@ -1982,8 +1982,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::scrub("hello\x00world");  // 'helloworld'
-     * Strings::scrub("clean text");      // 'clean text'
+     * Strings::scrub("hello\x00world"); // 'helloworld'
+     * Strings::scrub("clean text"); // 'clean text'
      * ```
      *
      * @param string $string The input string to clean
@@ -2004,9 +2004,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::slice('hello world', 0, 5);   // 'hello'
-     * Strings::slice('hello world', 6);       // 'world'
-     * Strings::slice('hello world', -5);      // 'world'
+     * Strings::slice('hello world', 0, 5); // 'hello'
+     * Strings::slice('hello world', 6); // 'world'
+     * Strings::slice('hello world', -5); // 'world'
      * ```
      *
      * @param string $string The input string to slice
@@ -2032,9 +2032,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::slug('Hello World');      // 'hello-world'
+     * Strings::slug('Hello World'); // 'hello-world'
      * Strings::slug('Hello World', '_'); // 'hello_world'
-     * Strings::slug('héllo wörld');      // 'hello-world'
+     * Strings::slug('héllo wörld'); // 'hello-world'
      * ```
      *
      * @param string $string The input string to slugify
@@ -2062,9 +2062,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::snake('helloWorld');         // 'hello_world'
-     * Strings::snake('HelloWorld', '-');    // 'hello-world'
-     * Strings::snake('hello world');        // 'hello_world'
+     * Strings::snake('helloWorld'); // 'hello_world'
+     * Strings::snake('HelloWorld', '-'); // 'hello-world'
+     * Strings::snake('hello world'); // 'hello_world'
      * ```
      *
      * @param string $string The input string to convert
@@ -2093,7 +2093,7 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::split('a.b.c', '.');     // ['a', 'b', 'c']
+     * Strings::split('a.b.c', '.'); // ['a', 'b', 'c']
      * Strings::split('a.b.c', '.', 2); // ['a', 'b.c']
      * ```
      *
@@ -2124,9 +2124,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::squish('hello    world');         // 'hello world'
+     * Strings::squish('hello    world'); // 'hello world'
      * Strings::squish("  hello   \n   world  "); // 'hello world'
-     * Strings::squish("a\t\tb\n\nc");            // 'a b c'
+     * Strings::squish("a\t\tb\n\nc"); // 'a b c'
      * ```
      *
      * @param string $string The input string to squish
@@ -2150,9 +2150,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::start('/path/to', '/');    // '/path/to'
-     * Strings::start('path/to', '/');     // '/path/to'
-     * Strings::start('///path/to', '/');  // '/path/to'
+     * Strings::start('/path/to', '/'); // '/path/to'
+     * Strings::start('path/to', '/'); // '/path/to'
+     * Strings::start('///path/to', '/'); // '/path/to'
      * ```
      *
      * @param string $string The input string
@@ -2181,9 +2181,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::startsWith('hello world', 'hello');      // true
+     * Strings::startsWith('hello world', 'hello'); // true
      * Strings::startsWith('https://example.com', 'https://'); // true
-     * Strings::startsWith('hello', 'Hello');            // false
+     * Strings::startsWith('hello', 'Hello'); // false
      * ```
      *
      * @param string $string The input string to check
@@ -2210,8 +2210,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::strip('<p>Hello <b>world</b></p>');        // 'Hello world'
-     * Strings::strip('<p>Hello</p>', '<p>');              // '<p>Hello</p>'
+     * Strings::strip('<p>Hello <b>world</b></p>'); // 'Hello world'
+     * Strings::strip('<p>Hello</p>', '<p>'); // '<p>Hello</p>'
      * ```
      *
      * @param string $string The input string to strip
@@ -2257,9 +2257,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::take('hello world', 5);   // 'hello'
-     * Strings::take('hello world', -5);  // 'world'
-     * Strings::take('hello world', 0);   // ''
+     * Strings::take('hello world', 5); // 'hello'
+     * Strings::take('hello world', -5); // 'world'
+     * Strings::take('hello world', 0); // ''
      * ```
      *
      * @param string $string The input string
@@ -2286,8 +2286,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::takeRight('hello world', 5);  // 'world'
-     * Strings::takeRight('ñaño', 2);         // 'ño'
+     * Strings::takeRight('hello world', 5); // 'world'
+     * Strings::takeRight('ñaño', 2); // 'ño'
      * ```
      *
      * @param string $string The input string
@@ -2311,9 +2311,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::toArray('hello');  // ['h', 'e', 'l', 'l', 'o']
-     * Strings::toArray('ñaño');   // ['ñ', 'a', 'ñ', 'o']
-     * Strings::toArray('');       // []
+     * Strings::toArray('hello'); // ['h', 'e', 'l', 'l', 'o']
+     * Strings::toArray('ñaño'); // ['ñ', 'a', 'ñ', 'o']
+     * Strings::toArray(''); // []
      * ```
      *
      * @param string $string The input string to convert
@@ -2341,8 +2341,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::title('hello world');  // 'Hello World'
-     * Strings::title('HELLO WORLD');  // 'Hello World'
+     * Strings::title('hello world'); // 'Hello World'
+     * Strings::title('HELLO WORLD'); // 'Hello World'
      * ```
      *
      * @param string $string The input string to convert
@@ -2365,8 +2365,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::trim('  hello  ');          // 'hello'
-     * Strings::trim('***hello***', '*');   // 'hello'
+     * Strings::trim('  hello  '); // 'hello'
+     * Strings::trim('***hello***', '*'); // 'hello'
      * ```
      *
      * @param string $string The input string to trim
@@ -2390,8 +2390,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::trimLeft('  hello  ');          // 'hello  '
-     * Strings::trimLeft('***hello***', '*');   // 'hello***'
+     * Strings::trimLeft('  hello  '); // 'hello  '
+     * Strings::trimLeft('***hello***', '*'); // 'hello***'
      * ```
      *
      * @param string $string The input string to trim
@@ -2414,8 +2414,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::trimRight('  hello  ');          // '  hello'
-     * Strings::trimRight('***hello***', '*');   // '***hello'
+     * Strings::trimRight('  hello  '); // '  hello'
+     * Strings::trimRight('***hello***', '*'); // '***hello'
      * ```
      *
      * @param string $string The input string to trim
@@ -2439,9 +2439,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::truncate('Hello World', 5);       // 'Hello'
+     * Strings::truncate('Hello World', 5); // 'Hello'
      * Strings::truncate('Hello World', 5, '…'); // 'Hello…'
-     * Strings::truncate('Hi', 5);               // 'Hi'
+     * Strings::truncate('Hi', 5); // 'Hi'
      * ```
      *
      * @param string $string The input string to truncate
@@ -2470,9 +2470,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::unwrap('"hello"', '"');       // 'hello'
-     * Strings::unwrap('[hello]', '[');       // '[hello]' (no matching end)
-     * Strings::unwrap('hello', '"');         // 'hello'
+     * Strings::unwrap('"hello"', '"'); // 'hello'
+     * Strings::unwrap('[hello]', '['); // '[hello]' (no matching end)
+     * Strings::unwrap('hello', '"'); // 'hello'
      * ```
      *
      * @param string $string The input string to unwrap
@@ -2509,9 +2509,9 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::upper('hello');  // 'HELLO'
-     * Strings::upper('ñoño');   // 'ÑOÑO'
-     * Strings::upper('äöü');    // 'ÄÖÜ'
+     * Strings::upper('hello'); // 'HELLO'
+     * Strings::upper('ñoño'); // 'ÑOÑO'
+     * Strings::upper('äöü'); // 'ÄÖÜ'
      * ```
      *
      * @param string $string The input string to uppercase
@@ -2535,7 +2535,7 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::uuid();  // e.g. '550e8400-e29b-41d4-a716-446655440000'
+     * Strings::uuid(); // e.g. '550e8400-e29b-41d4-a716-446655440000'
      * ```
      *
      * @return string A random UUID v4 string
@@ -2569,8 +2569,8 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::wordCount('hello world');   // 2
-     * Strings::wordCount('  ');            // 0
+     * Strings::wordCount('hello world'); // 2
+     * Strings::wordCount('  '); // 0
      * ```
      *
      * @param string $string The input string to count words in
@@ -2674,7 +2674,7 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::words("hello world");        // ['hello', 'world']
+     * Strings::words("hello world"); // ['hello', 'world']
      * Strings::words("it's a test", 2, '…'); // ['it\'s', 'a', '…']
      * ```
      *
@@ -2712,7 +2712,7 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::wrap('hello', '"');   // '"hello"'
+     * Strings::wrap('hello', '"'); // '"hello"'
      * Strings::wrap('hello', '[]'); // '[]hello[]'
      * ```
      *
@@ -2724,6 +2724,176 @@ class Strings extends StaticClass
     public static function wrap(string $string, string $wrapper): string
     {
         return $wrapper . $string . $wrapper;
+    }
+
+    /**
+     * Creates a fluent wrapper around the given string for method chaining.
+     *
+     * Returns a `Type\Strings` instance that wraps the provided string value and
+     * exposes every string-returning method as a chainable call.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $result = Strings::of('  hello world  ')
+     *     ->trim()
+     *     ->upper()
+     *     ->get();
+     * // 'HELLO WORLD'
+     * ```
+     *
+     * @param string $string The string to wrap for fluent operations
+     * @return Type\Strings A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Type\Strings For the fluent wrapper implementation
+     */
+    public static function of(string $string): Type\Strings
+    {
+        return new Type\Strings($string);
+    }
+
+    /**
+     * Returns a reference to the given string variable, allowing in-place modification.
+     *
+     * This method accepts a string by reference and returns that reference directly,
+     * enabling callers to hold a reference to a string variable and modify it without
+     * knowing the variable name at call time.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $greeting = 'hello';
+     * $ref = &Strings::getReference($greeting);
+     * $ref = 'world';
+     * // $greeting is now 'world'
+     * ```
+     *
+     * @param string $string The string variable to retrieve a reference to (passed by reference)
+     * @return string Returns a reference to the string variable
+     */
+    public static function &getReference(string &$string): string
+    {
+        return $string;
+    }
+
+    /**
+     * Generates an ASCII art representation of the given text using a block font.
+     *
+     * Renders each character of `$text` as a 5-row tall block-style ASCII art figure.
+     * Supports uppercase and lowercase letters A–Z (normalised to uppercase), digits 0–9,
+     * and common punctuation. Unsupported characters are rendered as blank columns.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * echo Strings::asciiArt('Hi');
+     * // # # ###
+     * // # # #
+     * // ### ##
+     * // # # #
+     * // # # ###
+     * ```
+     *
+     * @param string $text The text to render as ASCII art
+     * @param string $font The font name to use — currently only 'block' is supported
+     * @return string The multi-line ASCII art string
+     */
+    public static function asciiArt(string $text, string $font = 'block'): string
+    {
+        $fontMap = self::getAsciiFontMap($font);
+        $text = mb_strtoupper($text, 'UTF-8');
+        $chars = mb_str_split($text, 1, 'UTF-8');
+
+        $rows = 5;
+        $lines = array_fill(0, $rows, '');
+
+        foreach ($chars as $char) {
+            $charData = $fontMap[$char] ?? $fontMap[' '];
+
+            for ($i = 0; $i < $rows; $i++) {
+                $lines[$i] .= ($lines[$i] !== '' ? ' ' : '') . $charData[$i];
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Returns the character map for the given ASCII art font.
+     *
+     * Each character is represented as an array of exactly 5 strings of equal width,
+     * forming a 5-row block glyph rendered using `#` and space characters.
+     *
+     * @param string $font The font name (currently only 'block' is supported)
+     * @return array<string, array<int, string>> The font character map
+     */
+    private static function getAsciiFontMap(string $font): array
+    {
+        // 5-row block font using '#' and spaces; each glyph is 3 columns wide
+        return [
+            ' ' => ['   ', '   ', '   ', '   ', '   '],
+            'A' => [' # ', '# #', '###', '# #', '# #'],
+            'B' => ['## ', '# #', '## ', '# #', '## '],
+            'C' => [' ##', '#  ', '#  ', '#  ', ' ##'],
+            'D' => ['## ', '# #', '# #', '# #', '## '],
+            'E' => ['###', '#  ', '## ', '#  ', '###'],
+            'F' => ['###', '#  ', '## ', '#  ', '#  '],
+            'G' => [' ##', '#  ', '# #', '# #', ' ##'],
+            'H' => ['# #', '# #', '###', '# #', '# #'],
+            'I' => ['###', ' # ', ' # ', ' # ', '###'],
+            'J' => ['###', '  #', '  #', '# #', ' # '],
+            'K' => ['# #', '## ', '#  ', '## ', '# #'],
+            'L' => ['#  ', '#  ', '#  ', '#  ', '###'],
+            'M' => ['# #', '###', '# #', '# #', '# #'],
+            'N' => ['# #', '## ', '# #', '# #', '# #'],
+            'O' => [' # ', '# #', '# #', '# #', ' # '],
+            'P' => ['## ', '# #', '## ', '#  ', '#  '],
+            'Q' => [' # ', '# #', '# #', '## ', ' ##'],
+            'R' => ['## ', '# #', '## ', '# #', '# #'],
+            'S' => [' ##', '#  ', ' # ', '  #', '## '],
+            'T' => ['###', ' # ', ' # ', ' # ', ' # '],
+            'U' => ['# #', '# #', '# #', '# #', ' # '],
+            'V' => ['# #', '# #', '# #', ' # ', ' # '],
+            'W' => ['# #', '# #', '# #', '###', '# #'],
+            'X' => ['# #', '# #', ' # ', '# #', '# #'],
+            'Y' => ['# #', '# #', ' # ', ' # ', ' # '],
+            'Z' => ['###', '  #', ' # ', '#  ', '###'],
+            '0' => [' # ', '# #', '# #', '# #', ' # '],
+            '1' => [' # ', '## ', ' # ', ' # ', '###'],
+            '2' => ['## ', '  #', ' # ', '#  ', '###'],
+            '3' => ['## ', '  #', ' ##', '  #', '## '],
+            '4' => ['# #', '# #', '###', '  #', '  #'],
+            '5' => ['###', '#  ', '## ', '  #', '## '],
+            '6' => [' # ', '#  ', '## ', '# #', ' # '],
+            '7' => ['###', '  #', ' # ', ' # ', ' # '],
+            '8' => [' # ', '# #', ' # ', '# #', ' # '],
+            '9' => [' # ', '# #', ' ##', '  #', ' # '],
+            '!' => [' # ', ' # ', ' # ', '   ', ' # '],
+            '?' => ['## ', '  #', ' # ', '   ', ' # '],
+            '.' => ['   ', '   ', '   ', '   ', ' # '],
+            ',' => ['   ', '   ', '   ', ' # ', ' # '],
+            '-' => ['   ', '   ', '###', '   ', '   '],
+            '_' => ['   ', '   ', '   ', '   ', '###'],
+            ':' => ['   ', ' # ', '   ', ' # ', '   '],
+            '/' => ['  #', '  #', ' # ', '#  ', '#  '],
+            '\\' => ['#  ', '#  ', ' # ', '  #', '  #'],
+            '(' => [' #', '# ', '# ', '# ', ' #'],
+            ')' => ['# ', ' #', ' #', ' #', '# '],
+            '@' => [' # ', '# #', '###', '#  ', ' ##'],
+            '#' => ['# #', '###', '# #', '###', '# #'],
+            '*' => ['# #', ' # ', '###', ' # ', '# #'],
+            '+' => ['   ', ' # ', '###', ' # ', '   '],
+            '=' => ['   ', '###', '   ', '###', '   '],
+            '<' => ['  #', ' # ', '#  ', ' # ', '  #'],
+            '>' => ['#  ', ' # ', '  #', ' # ', '#  '],
+            '"' => ['# #', '# #', '   ', '   ', '   '],
+            "'" => [' # ', ' # ', '   ', '   ', '   '],
+            ';' => ['   ', ' # ', '   ', ' # ', ' # '],
+            '&' => [' # ', '# #', ' # ', '# #', ' ##'],
+            '%' => ['# #', '  #', ' # ', '#  ', '# #'],
+        ];
     }
 
     /**

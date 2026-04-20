@@ -58,7 +58,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the portion of the string after the first occurrence of a search value.
      *
      * @param string $search The value to search for
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::after()
      */
     public function after(string $search): self
@@ -72,7 +72,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the portion of the string after the last occurrence of a search value.
      *
      * @param string $search The value to search for
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::afterLast()
      */
     public function afterLast(string $search): self
@@ -86,7 +86,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the portion of the string before the first occurrence of a search value.
      *
      * @param string $search The value to search for
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::before()
      */
     public function before(string $search): self
@@ -100,7 +100,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the portion of the string before the last occurrence of a search value.
      *
      * @param string $search The value to search for
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::beforeLast()
      */
     public function beforeLast(string $search): self
@@ -115,7 +115,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $start The opening delimiter
      * @param string $end The closing delimiter
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::between()
      */
     public function between(string $start, string $end): self
@@ -129,7 +129,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the character at the given index position.
      *
      * @param int $index The zero-based character index (negative counts from the end)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::charAt()
      */
     public function charAt(int $index): self
@@ -143,7 +143,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the first N characters of the string.
      *
      * @param int $count The number of characters to return (default: 1)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::first()
      */
     public function first(int $count = 1): self
@@ -157,7 +157,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the last N characters of the string.
      *
      * @param int $count The number of characters to return (default: 1)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::last()
      */
     public function last(int $count = 1): self
@@ -172,7 +172,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $start The starting position (negative counts from the end)
      * @param int|null $length The number of characters to return (null returns to the end)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::slice()
      */
     public function slice(int $start, ?int $length = null): self
@@ -186,7 +186,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the first or last N characters based on the sign of count.
      *
      * @param int $count Positive returns first N; negative returns last N characters
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::take()
      */
     public function take(int $count): self
@@ -200,7 +200,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Returns the last N characters of the string.
      *
      * @param int $count The number of characters to return from the end
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::takeRight()
      */
     public function takeRight(int $count): self
@@ -213,7 +213,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to camelCase.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::camel()
      */
     public function camel(): self
@@ -226,7 +226,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts every word in the string to Title Case.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::capitalize()
      */
     public function capitalize(): self
@@ -239,7 +239,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to a human-readable headline format.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::headline()
      */
     public function headline(): self
@@ -252,7 +252,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to kebab-case.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::kebab()
      */
     public function kebab(): self
@@ -265,7 +265,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to lowercase.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::lower()
      */
     public function lower(): self
@@ -278,7 +278,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts only the first character of the string to lowercase.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::lowerFirst()
      */
     public function lowerFirst(): self
@@ -291,7 +291,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to PascalCase (StudlyCase).
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::pascal()
      */
     public function pascal(): self
@@ -305,7 +305,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Converts the string to snake_case with a configurable delimiter.
      *
      * @param string $delimiter The word separator character (default: '_')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::snake()
      */
     public function snake(string $delimiter = '_'): self
@@ -318,7 +318,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts every word in the string to Title Case.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::title()
      */
     public function title(): self
@@ -331,7 +331,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Converts the string to uppercase.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::upper()
      */
     public function upper(): self
@@ -345,7 +345,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Collapses consecutive duplicate occurrences of a character.
      *
      * @param string $character The character to collapse (default: space)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::dedupe()
      */
     public function dedupe(string $character = ' '): self
@@ -359,7 +359,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Ensures the string ends with exactly one occurrence of the given suffix.
      *
      * @param string $suffix The suffix to ensure is present exactly once
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::finish()
      */
     public function finish(string $suffix): self
@@ -374,7 +374,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $substring The substring to insert
      * @param int $index The zero-based position to insert at (negative counts from the end)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::insert()
      */
     public function insert(string $substring, int $index): self
@@ -390,7 +390,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param string $mask The mask character to use (default: '*')
      * @param int $offset The start position to begin masking
      * @param int|null $length The number of characters to mask (null masks to the end)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::mask()
      */
     public function mask(string $mask = '*', int $offset = 0, ?int $length = null): self
@@ -406,7 +406,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
      * @param int $padType One of STR_PAD_RIGHT, STR_PAD_LEFT, STR_PAD_BOTH
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::pad()
      */
     public function pad(int $length, string $padString = ' ', int $padType = STR_PAD_RIGHT): self
@@ -421,7 +421,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::padBoth()
      */
     public function padBoth(int $length, string $padString = ' '): self
@@ -436,7 +436,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::padLeft()
      */
     public function padLeft(int $length, string $padString = ' '): self
@@ -451,7 +451,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::padRight()
      */
     public function padRight(int $length, string $padString = ' '): self
@@ -466,7 +466,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $search The value to remove
      * @param bool $caseSensitive Whether the removal is case-sensitive (default: true)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::remove()
      */
     public function remove(string $search, bool $caseSensitive = true): self
@@ -480,7 +480,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Repeats the string a given number of times.
      *
      * @param int $times The number of repetitions (must be zero or greater)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::repeat()
      */
     public function repeat(int $times): self
@@ -496,7 +496,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param string $search The value to search for
      * @param string $replace The replacement value
      * @param bool $caseSensitive Whether the replacement is case-sensitive (default: true)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::replace()
      */
     public function replace(string $search, string $replace, bool $caseSensitive = true): self
@@ -511,7 +511,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $search The value to search for
      * @param string $replace The replacement value
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::replaceFirst()
      */
     public function replaceFirst(string $search, string $replace): self
@@ -526,7 +526,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $search The value to search for
      * @param string $replace The replacement value
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::replaceLast()
      */
     public function replaceLast(string $search, string $replace): self
@@ -539,7 +539,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Reverses the string character by character.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::reverse()
      */
     public function reverse(): self
@@ -552,7 +552,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Removes dangerous control characters from the string.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::scrub()
      */
     public function scrub(): self
@@ -567,7 +567,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param string $separator The separator character between words (default: '-')
      * @param string $language The language code for transliteration (default: 'en')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::slug()
      */
     public function slug(string $separator = '-', string $language = 'en'): self
@@ -580,7 +580,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Collapses all whitespace sequences into a single space and trims the result.
      *
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::squish()
      */
     public function squish(): self
@@ -594,7 +594,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Ensures the string begins with exactly one occurrence of the given prefix.
      *
      * @param string $prefix The prefix to ensure is present exactly once
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::start()
      */
     public function start(string $prefix): self
@@ -608,7 +608,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Strips HTML and PHP tags from the string.
      *
      * @param string $allowedTags HTML tags to preserve (default: '' = strip all)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::strip()
      */
     public function strip(string $allowedTags = ''): self
@@ -622,7 +622,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Performs multiple simultaneous search-and-replace operations.
      *
      * @param array<string, string> $replacements A map of search => replacement pairs
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::swap()
      */
     public function swap(array $replacements): self
@@ -636,7 +636,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Strips whitespace (or given characters) from both ends of the string.
      *
      * @param string $characters The characters to strip (default: whitespace)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::trim()
      */
     public function trim(string $characters = " \t\n\r\0\x0B"): self
@@ -650,7 +650,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Strips whitespace (or given characters) from the beginning of the string.
      *
      * @param string $characters The characters to strip (default: whitespace)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::trimLeft()
      */
     public function trimLeft(string $characters = " \t\n\r\0\x0B"): self
@@ -664,7 +664,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Strips whitespace (or given characters) from the end of the string.
      *
      * @param string $characters The characters to strip (default: whitespace)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::trimRight()
      */
     public function trimRight(string $characters = " \t\n\r\0\x0B"): self
@@ -679,7 +679,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $length The maximum number of characters to keep
      * @param string $end The string to append after truncation (default: '')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::truncate()
      */
     public function truncate(int $length, string $end = ''): self
@@ -693,7 +693,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Removes a surrounding wrapper string from both ends of the string.
      *
      * @param string $wrapper The wrapper string to remove from both ends
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::unwrap()
      */
     public function unwrap(string $wrapper): self
@@ -707,7 +707,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * Wraps the string with a given wrapper string on both sides.
      *
      * @param string $wrapper The string to prepend and append
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::wrap()
      */
     public function wrap(string $wrapper): self
@@ -723,7 +723,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param string $phrase The phrase to centre the excerpt around
      * @param int $radius The number of characters to include on each side (default: 100)
      * @param string $omission The string to append at truncated ends (default: '...')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::excerpt()
      */
     public function excerpt(string $phrase, int $radius = 100, string $omission = '...'): self
@@ -738,7 +738,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      *
      * @param int $limit The maximum number of characters before truncation
      * @param string $end The string to append after truncation (default: '...')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::limit()
      */
     public function limit(int $limit, string $end = '...'): self
@@ -754,7 +754,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @param int $width The number of characters at which to wrap (default: 75)
      * @param string $break The line break string to insert (default: "\n")
      * @param bool $cutLongWords Whether to cut words longer than width (default: false)
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::wordWrap()
      */
     public function wordWrap(int $width = 75, string $break = "\n", bool $cutLongWords = false): self
@@ -765,470 +765,15 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Splits the string into an array of chunks of the given size.
-     *
-     * @param int $size The number of characters per chunk
-     * @return self
-     * @see Transformer::chunk()
-     */
-    public function chunk(int $size): self
-    {
-        $this->data = Transformer::chunk((string) $this->data, $size);
-
-        return $this;
-    }
-
-    /**
-     * Splits the string into an array using a delimiter.
-     *
-     * @param string $delimiter The boundary string
-     * @param int $limit Maximum number of returned elements (default: PHP_INT_MAX)
-     * @return self
-     * @see Transformer::explode()
-     */
-    public function explode(string $delimiter, int $limit = PHP_INT_MAX): self
-    {
-        $this->data = Transformer::explode((string) $this->data, $delimiter, $limit);
-
-        return $this;
-    }
-
-    /**
-     * Splits the string into an array by a literal pattern.
-     *
-     * @param string $pattern The literal separator to split on
-     * @param int $limit Maximum number of elements to return (default: -1 = no limit)
-     * @return self
-     * @see Transformer::split()
-     */
-    public function split(string $pattern, int $limit = -1): self
-    {
-        $this->data = Transformer::split((string) $this->data, $pattern, $limit);
-
-        return $this;
-    }
-
-    /**
-     * Converts the string to an array of individual characters.
-     *
-     * @return self
-     * @see Transformer::toArray()
-     */
-    public function toArray(): self
-    {
-        $this->data = Transformer::toArray((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Extracts the words from the string into an array.
-     *
-     * @param int $limit Maximum number of words to return, -1 = no limit (default: -1)
-     * @param string $end String appended after the word list when limited (default: '')
-     * @return self
-     * @see Transformer::words()
-     */
-    public function words(int $limit = -1, string $end = ''): self
-    {
-        $this->data = Transformer::words((string) $this->data, $limit, $end);
-
-        return $this;
-    }
-
-    /**
      * Transliterates the string to its ASCII representation.
      *
      * @param string $language The language code for locale-specific rules (default: 'en')
-     * @return self
+     * @return self Returns the current instance for method chaining
      * @see Transformer::ascii()
      */
     public function ascii(string $language = 'en'): self
     {
         $this->data = Transformer::ascii((string) $this->data, $language);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string ends with a given search value.
-     *
-     * @param string $search The expected suffix
-     * @return self
-     * @see Transformer::endsWith()
-     */
-    public function endsWith(string $search): self
-    {
-        $this->data = Transformer::endsWith((string) $this->data, $search);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains a given search value.
-     *
-     * @param string $search The value to look for
-     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
-     * @return self
-     * @see Transformer::has()
-     */
-    public function has(string $search, bool $caseSensitive = true): self
-    {
-        $this->data = Transformer::has((string) $this->data, $search, $caseSensitive);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains all of the given search values.
-     *
-     * @param array<int, string> $searches The values to look for
-     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
-     * @return self
-     * @see Transformer::hasAll()
-     */
-    public function hasAll(array $searches, bool $caseSensitive = true): self
-    {
-        $this->data = Transformer::hasAll((string) $this->data, $searches, $caseSensitive);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains none of the given search values.
-     *
-     * @param array<int, string> $searches The values to check for absence
-     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
-     * @return self
-     * @see Transformer::hasNone()
-     */
-    public function hasNone(array $searches, bool $caseSensitive = true): self
-    {
-        $this->data = Transformer::hasNone((string) $this->data, $searches, $caseSensitive);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string matches a wildcard pattern.
-     *
-     * @param string $pattern The wildcard pattern (use `*` as wildcard)
-     * @return self
-     * @see Transformer::is()
-     */
-    public function is(string $pattern): self
-    {
-        $this->data = Transformer::is((string) $this->data, $pattern);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains only alphabetic characters.
-     *
-     * @return self
-     * @see Transformer::isAlpha()
-     */
-    public function isAlpha(): self
-    {
-        $this->data = Transformer::isAlpha((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains only alphanumeric characters.
-     *
-     * @return self
-     * @see Transformer::isAlphanumeric()
-     */
-    public function isAlphanumeric(): self
-    {
-        $this->data = Transformer::isAlphanumeric((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains only ASCII characters.
-     *
-     * @return self
-     * @see Transformer::isAscii()
-     */
-    public function isAscii(): self
-    {
-        $this->data = Transformer::isAscii((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string contains only whitespace characters (or is empty).
-     *
-     * @return self
-     * @see Transformer::isBlank()
-     */
-    public function isBlank(): self
-    {
-        $this->data = Transformer::isBlank((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is a valid email address.
-     *
-     * @return self
-     * @see Transformer::isEmail()
-     */
-    public function isEmail(): self
-    {
-        $this->data = Transformer::isEmail((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is exactly empty (zero-length).
-     *
-     * @return self
-     * @see Transformer::isEmpty()
-     */
-    public function isEmpty(): self
-    {
-        $this->data = Transformer::isEmpty((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is non-empty and contains at least one non-whitespace character.
-     *
-     * @return self
-     * @see Transformer::isFilled()
-     */
-    public function isFilled(): self
-    {
-        $this->data = Transformer::isFilled((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is valid JSON.
-     *
-     * @return self
-     * @see Transformer::isJson()
-     */
-    public function isJson(): self
-    {
-        $this->data = Transformer::isJson((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is entirely lowercase.
-     *
-     * @return self
-     * @see Transformer::isLower()
-     */
-    public function isLower(): self
-    {
-        $this->data = Transformer::isLower((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string matches a regular expression pattern.
-     *
-     * @param string $pattern The full regular expression pattern including delimiters
-     * @return self
-     * @see Transformer::matches()
-     */
-    public function matches(string $pattern): self
-    {
-        $this->data = Transformer::matches((string) $this->data, $pattern);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is not empty (has at least one character).
-     *
-     * @return self
-     * @see Transformer::isNotEmpty()
-     */
-    public function isNotEmpty(): self
-    {
-        $this->data = Transformer::isNotEmpty((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string represents a numeric value.
-     *
-     * @return self
-     * @see Transformer::isNumeric()
-     */
-    public function isNumeric(): self
-    {
-        $this->data = Transformer::isNumeric((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is entirely uppercase.
-     *
-     * @return self
-     * @see Transformer::isUpper()
-     */
-    public function isUpper(): self
-    {
-        $this->data = Transformer::isUpper((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is a valid URL.
-     *
-     * @return self
-     * @see Transformer::isUrl()
-     */
-    public function isUrl(): self
-    {
-        $this->data = Transformer::isUrl((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is a valid UUID.
-     *
-     * @return self
-     * @see Transformer::isUuid()
-     */
-    public function isUuid(): self
-    {
-        $this->data = Transformer::isUuid((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string begins with a given search value.
-     *
-     * @param string $search The expected prefix
-     * @return self
-     * @see Transformer::startsWith()
-     */
-    public function startsWith(string $search): self
-    {
-        $this->data = Transformer::startsWith((string) $this->data, $search);
-
-        return $this;
-    }
-
-    /**
-     * Compares the string lexicographically against another string.
-     *
-     * @param string $other The string to compare against
-     * @param bool $caseSensitive Whether the comparison is case-sensitive (default: true)
-     * @return self
-     * @see Transformer::compare()
-     */
-    public function compare(string $other, bool $caseSensitive = true): self
-    {
-        $this->data = Transformer::compare((string) $this->data, $other, $caseSensitive);
-
-        return $this;
-    }
-
-    /**
-     * Counts the number of non-overlapping occurrences of a substring.
-     *
-     * @param string $substring The substring to count
-     * @return self
-     * @see Transformer::countSubstring()
-     */
-    public function countSubstring(string $substring): self
-    {
-        $this->data = Transformer::countSubstring((string) $this->data, $substring);
-
-        return $this;
-    }
-
-    /**
-     * Determines whether the string is equal to another string.
-     *
-     * @param string $other The string to compare against
-     * @param bool $caseSensitive Whether the comparison is case-sensitive (default: true)
-     * @return self
-     * @see Transformer::equals()
-     */
-    public function equals(string $other, bool $caseSensitive = true): self
-    {
-        $this->data = Transformer::equals((string) $this->data, $other, $caseSensitive);
-
-        return $this;
-    }
-
-    /**
-     * Returns the number of characters in the string.
-     *
-     * @return self
-     * @see Transformer::length()
-     */
-    public function length(): self
-    {
-        $this->data = Transformer::length((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Returns the position of the first occurrence of a search value.
-     *
-     * @param string $search The value to search for
-     * @param int $offset The offset from the start to begin searching (default: 0)
-     * @return self
-     * @see Transformer::position()
-     */
-    public function position(string $search, int $offset = 0): self
-    {
-        $this->data = Transformer::position((string) $this->data, $search, $offset);
-
-        return $this;
-    }
-
-    /**
-     * Returns the position of the last occurrence of a search value.
-     *
-     * @param string $search The value to search for
-     * @param int $offset The offset from the start to begin searching (default: 0)
-     * @return self
-     * @see Transformer::lastPosition()
-     */
-    public function lastPosition(string $search, int $offset = 0): self
-    {
-        $this->data = Transformer::lastPosition((string) $this->data, $search, $offset);
-
-        return $this;
-    }
-
-    /**
-     * Returns the number of words in the string.
-     *
-     * @return self
-     * @see Transformer::wordCount()
-     */
-    public function wordCount(): self
-    {
-        $this->data = Transformer::wordCount((string) $this->data);
 
         return $this;
     }
