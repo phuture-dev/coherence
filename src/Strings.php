@@ -13,8 +13,7 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  *
  * This utility class provides a complete toolkit for string manipulation, including case
  * conversion, pattern matching, extraction, modification, splitting, joining, validation,
- * truncation, encoding conversion, and miscellaneous string operations. All methods are
- * multibyte-safe using the mb_* functions via symfony/polyfill-mbstring.
+ * truncation, encoding conversion, and miscellaneous string operations.
  *
  * Key features:
  *
