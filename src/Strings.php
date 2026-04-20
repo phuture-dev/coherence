@@ -3077,7 +3077,7 @@ class Strings extends StaticClass
      * use Phuture\Coherence\Strings;
      *
      * echo Strings::asciiArt('Hi');
-     * //  ####   ####
+     * //  #  #   ####
      * //  #  #    ##
      * //  ####    ##
      * //  #  #    ##
