@@ -10,6 +10,30 @@ use RuntimeException;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\ReflectionException;
 
+/**
+ * Comprehensive callable and function composition utility class.
+ *
+ * This utility class offers a complete toolkit for working with PHP callables,
+ * including function composition, partial application, currying, rate limiting,
+ * memoization, and higher-order function utilities.
+ *
+ * Key features:
+ *
+ * - **Function Composition**: Chain functions together using pipe (left-to-right) and compose (right-to-left)
+ * - **Partial Application**: Pre-fill function arguments from the left or right
+ * - **Currying**: Transform multi-argument functions into a series of single-argument functions
+ * - **Rate Limiting & Throttling**: Control how frequently a function can execute
+ * - **Memoization**: Cache function results with configurable time-to-live
+ * - **Retry Logic**: Automatically retry failed operations with configurable attempts and delay
+ * - **Hook System**: Attach before, after, and wrap hooks around any function
+ * - **Type Checking**: Inspect callable types (closure, function, method, invokable, static)
+ * - **Safe Execution**: Catch exceptions or convert them to result tuples
+ * - **Timing**: Measure function execution time in milliseconds
+ *
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link https://www.phuture.dev/ Phuture
+ */
 class Callables extends StaticClass
 {
     /**
@@ -332,7 +356,7 @@ class Callables extends StaticClass
      *     fn($x) => $x - 3
      * );
      * $result = $pipeline(10);
-     * // Returns 19 ((10 - 3) * 2 + 1)
+     * // Returns 15 ((10 - 3) * 2 + 1)
      * ```
      *
      * @param callable ...$callback The functions to compose, applied right-to-left
@@ -416,7 +440,7 @@ class Callables extends StaticClass
      * @throws RuntimeException When unable to determine function arity automatically
      * @see Reflector::arity()
      */
-    public static function curry(callable $callback, int $arity = null): Closure
+    public static function curry(callable $callback, ?int $arity = null): Closure
     {
         try {
             if ($arity === null) {
@@ -1090,9 +1114,10 @@ class Callables extends StaticClass
         int $milliseconds = self::EXECUTION_DELAY
     ): Closure {
         $calls = &self::$calls[serialize($callback)];
+        $calls ??= [];
 
         return function (...$args) use ($callback, &$calls, $maxAttempts, $milliseconds) {
-            $now = (int) (microtime() / 1000);
+            $now = (int) (microtime(true) * 1000);
 
             // Clear old calls
             $calls = array_filter($calls, fn ($time) => $time > $now - $milliseconds);
