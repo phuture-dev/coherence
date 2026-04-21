@@ -321,6 +321,115 @@ class Dates extends StaticClass
     }
 
     /**
+     * Formats a date/time value using day.js-style format tokens.
+     *
+     * Unlike {@see format()} which uses PHP's native date() characters, this method
+     * uses intuitive multi-character tokens inspired by day.js and moment.js. Each
+     * token is a letter sequence that describes exactly what it represents.
+     *
+     * Supported tokens:
+     *
+     * | Token | Output          | Description                          |
+     * |-------|-----------------|--------------------------------------|
+     * | YYYY  | 2026            | Four-digit year                      |
+     * | YY    | 26              | Two-digit year                       |
+     * | MMMM  | January         | Full month name                      |
+     * | MMM   | Jan             | Abbreviated month name               |
+     * | MM    | 01-12           | Two-digit month                      |
+     * | M     | 1-12            | Month without leading zero           |
+     * | DD    | 01-31           | Two-digit day of month               |
+     * | D     | 1-31            | Day of month without leading zero    |
+     * | dddd  | Sunday          | Full day of week name                |
+     * | ddd   | Sun             | Abbreviated day of week name         |
+     * | dd    | Su              | Two-letter day of week name          |
+     * | d     | 0-6             | Day of week (Sunday = 0)             |
+     * | HH    | 00-23           | Two-digit hour (24-hour clock)       |
+     * | H     | 0-23            | Hour without leading zero (24-hour)  |
+     * | hh    | 01-12           | Two-digit hour (12-hour clock)       |
+     * | h     | 1-12            | Hour without leading zero (12-hour)  |
+     * | mm    | 00-59           | Two-digit minute                     |
+     * | m     | 0-59            | Minute without leading zero          |
+     * | ss    | 00-59           | Two-digit second                     |
+     * | s     | 0-59            | Second without leading zero          |
+     * | SSS   | 000-999         | Three-digit milliseconds             |
+     * | Z     | +01:00          | UTC offset with colon                |
+     * | ZZ    | +0100           | UTC offset without colon             |
+     * | A     | AM              | Uppercase AM/PM marker               |
+     * | a     | am              | Lowercase am/pm marker               |
+     *
+     * To include literal text that would otherwise be interpreted as a token,
+     * wrap it in square brackets. For example, `[at]` outputs the word "at"
+     * without transforming the letters into date values.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::formatTokens($date, 'YYYY-MM-DD'); // '2026-04-21'
+     * Dates::formatTokens($date, 'DD/MM/YYYY HH:mm'); // '21/04/2026 14:30'
+     * Dates::formatTokens($date, 'dddd, MMMM D, YYYY'); // 'Tuesday, April 21, 2026'
+     * Dates::formatTokens($date, 'h:mm A'); // '2:30 PM'
+     * Dates::formatTokens($date, '[Today is] dddd'); // 'Today is Tuesday'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to format
+     * @param string $format The format string using day.js-style tokens
+     * @return string The formatted date/time string
+     * @see \Phuture\Coherence\Dates::format()
+     */
+    public static function formatTokens(DateTimeImmutable|string $date, string $format): string
+    {
+        $resolved = self::resolveDate($date);
+
+        $escaped = [];
+        $working = preg_replace_callback('/\[([^\]]*)\]/', function ($matches) use (&$escaped) {
+            $placeholder = "\x00ESC" . count($escaped) . "\x00";
+            $escaped[] = $matches[1];
+
+            return $placeholder;
+        }, $format);
+
+        $shortDayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+        $replacements = [
+            'YYYY' => $resolved->format('Y'),
+            'YY' => $resolved->format('y'),
+            'MMMM' => $resolved->format('F'),
+            'MMM' => $resolved->format('M'),
+            'MM' => $resolved->format('m'),
+            'M' => $resolved->format('n'),
+            'DD' => $resolved->format('d'),
+            'D' => $resolved->format('j'),
+            'dddd' => $resolved->format('l'),
+            'ddd' => $resolved->format('D'),
+            'dd' => $shortDayNames[(int) $resolved->format('w')],
+            'd' => (string) (int) $resolved->format('w'),
+            'HH' => $resolved->format('H'),
+            'H' => $resolved->format('G'),
+            'hh' => $resolved->format('h'),
+            'h' => $resolved->format('g'),
+            'mm' => $resolved->format('i'),
+            'm' => (string) (int) $resolved->format('i'),
+            'ss' => $resolved->format('s'),
+            's' => (string) (int) $resolved->format('s'),
+            'SSS' => $resolved->format('v'),
+            'ZZ' => $resolved->format('O'),
+            'Z' => $resolved->format('P'),
+            'A' => $resolved->format('A'),
+            'a' => $resolved->format('a'),
+        ];
+
+        $result = strtr($working, $replacements);
+
+        foreach ($escaped as $index => $text) {
+            $result = str_replace("\x00ESC{$index}\x00", $text, $result);
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns the date portion of a date/time value as a string in Y-m-d format.
      *
      * Extracts only the year, month, and day from the given date/time value,
