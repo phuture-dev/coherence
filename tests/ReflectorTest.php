@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests;
 
 use Closure;
+use stdClass;
 use ReflectionEnum;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionFunction;
 use ReflectionProperty;
-use ReflectionParameter;
-use Phuture\Coherence\Reflector;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Reflector;
 use Phuture\Coherence\Exception\{InvalidArgumentException, ReflectionException};
 
 require __DIR__ . '/bootstrap.php';
@@ -23,13 +23,19 @@ require __DIR__ . '/bootstrap.php';
 
 class ReflectorTestBaseFixture
 {
-    public string $publicProperty = 'base';
-    protected int $protectedProperty = 42;
     private bool $privateProperty = true;
+    protected int $protectedProperty = 42;
+    public string $publicProperty = 'base';
 
-    public function publicMethod(): void {}
-    protected function protectedMethod(): void {}
-    private function privateMethod(): void {}
+    public function publicMethod(): void
+    {
+    }
+    protected function protectedMethod(): void
+    {
+    }
+    private function privateMethod(): void
+    {
+    }
 }
 
 class ReflectorTestChildFixture extends ReflectorTestBaseFixture
@@ -37,7 +43,9 @@ class ReflectorTestChildFixture extends ReflectorTestBaseFixture
     public string $childPublicProperty = 'child';
 }
 
-trait ReflectorTestTraitFixture {}
+trait ReflectorTestTraitFixture
+{
+}
 
 class ReflectorTestTraitUserFixture
 {
@@ -54,6 +62,13 @@ enum ReflectorTestEnumFixture
 
 class ReflectorTest extends TestCase
 {
+    public function testAliasAcceptsObjectInstance(): void
+    {
+        $alias = 'ReflectorTestAliasFromObject_' . uniqid();
+        $result = Reflector::alias(new ReflectorTestBaseFixture(), $alias);
+
+        Assert::true($result);
+    }
     // -----------------------------------------------------------------------
     // alias()
     // -----------------------------------------------------------------------
@@ -67,12 +82,48 @@ class ReflectorTest extends TestCase
         Assert::true(class_exists($alias));
     }
 
-    public function testAliasAcceptsObjectInstance(): void
+    public function testAliasFunctionClosureForwardsMultipleArguments(): void
     {
-        $alias = 'ReflectorTestAliasFromObject_' . uniqid();
-        $result = Reflector::alias(new ReflectorTestBaseFixture(), $alias);
+        $closure = Reflector::aliasFunction('str_pad');
 
-        Assert::true($result);
+        Assert::same(str_pad('hi', 10), $closure('hi', 10));
+        Assert::same(str_pad('hi', 10, '-', STR_PAD_LEFT), $closure('hi', 10, '-', STR_PAD_LEFT));
+    }
+
+    public function testAliasFunctionClosureProducesIdenticalResultToOriginal(): void
+    {
+        $closure = Reflector::aliasFunction('strlen');
+
+        Assert::same(strlen('hello'), $closure('hello'));
+        Assert::same(strlen(''), $closure(''));
+        Assert::same(strlen('longer string here'), $closure('longer string here'));
+    }
+
+    public function testAliasFunctionClosuresAreIndependentAcrossCalls(): void
+    {
+        $strlenClosure = Reflector::aliasFunction('strlen');
+        $strtolowerClosure = Reflector::aliasFunction('strtolower');
+
+        Assert::same(5, $strlenClosure('hello'));
+        Assert::same('hello', $strtolowerClosure('HELLO'));
+    }
+
+    // -----------------------------------------------------------------------
+    // aliasFunction()
+    // -----------------------------------------------------------------------
+
+    public function testAliasFunctionReturnsClosure(): void
+    {
+        $closure = Reflector::aliasFunction('strlen');
+
+        Assert::type(Closure::class, $closure);
+    }
+
+    public function testAliasFunctionThrowsWhenFunctionDoesNotExist(): void
+    {
+        Assert::exception(function () {
+            Reflector::aliasFunction('this_function_absolutely_does_not_exist_xyz');
+        }, InvalidArgumentException::class, 'Invalid Argument: The given function does not exist');
     }
 
     public function testAliasThrowsWhenAliasAlreadyExists(): void
@@ -89,48 +140,32 @@ class ReflectorTest extends TestCase
         }, InvalidArgumentException::class, 'Invalid Argument: The given class does not exist');
     }
 
-    // -----------------------------------------------------------------------
-    // aliasFunction()
-    // -----------------------------------------------------------------------
-
-    public function testAliasFunctionReturnsClosure(): void
+    public function testArityForArrayCallable(): void
     {
-        $closure = Reflector::aliasFunction('strlen');
+        $arity = Reflector::arity([new ReflectorTestBaseFixture(), 'publicMethod']);
 
-        Assert::type(Closure::class, $closure);
+        Assert::same(0, $arity);
     }
 
-    public function testAliasFunctionClosureProducesIdenticalResultToOriginal(): void
+    public function testArityForClosure(): void
     {
-        $closure = Reflector::aliasFunction('strlen');
-
-        Assert::same(strlen('hello'), $closure('hello'));
-        Assert::same(strlen(''), $closure(''));
-        Assert::same(strlen('longer string here'), $closure('longer string here'));
+        Assert::same(0, Reflector::arity(function () {
+        }));
+        Assert::same(2, Reflector::arity(function (string $a, int $b) {
+        }));
+        Assert::same(3, Reflector::arity(fn (int $x, int $y, bool $z = false) => $x + $y));
     }
 
-    public function testAliasFunctionClosureForwardsMultipleArguments(): void
+    public function testArityForInvokableObject(): void
     {
-        $closure = Reflector::aliasFunction('str_pad');
+        $invokable = new class () {
+            public function __invoke(string $x, string $y): string
+            {
+                return $x . $y;
+            }
+        };
 
-        Assert::same(str_pad('hi', 10), $closure('hi', 10));
-        Assert::same(str_pad('hi', 10, '-', STR_PAD_LEFT), $closure('hi', 10, '-', STR_PAD_LEFT));
-    }
-
-    public function testAliasFunctionClosuresAreIndependentAcrossCalls(): void
-    {
-        $strlenClosure = Reflector::aliasFunction('strlen');
-        $strtolowerClosure = Reflector::aliasFunction('strtolower');
-
-        Assert::same(5, $strlenClosure('hello'));
-        Assert::same('hello', $strtolowerClosure('HELLO'));
-    }
-
-    public function testAliasFunctionThrowsWhenFunctionDoesNotExist(): void
-    {
-        Assert::exception(function () {
-            Reflector::aliasFunction('this_function_absolutely_does_not_exist_xyz');
-        }, InvalidArgumentException::class, 'Invalid Argument: The given function does not exist');
+        Assert::same(2, Reflector::arity($invokable));
     }
 
     // -----------------------------------------------------------------------
@@ -143,30 +178,9 @@ class ReflectorTest extends TestCase
         Assert::same(4, Reflector::arity('str_replace'));
     }
 
-    public function testArityForClosure(): void
+    public function testBasenameAcceptsObjectInstance(): void
     {
-        Assert::same(0, Reflector::arity(function () {}));
-        Assert::same(2, Reflector::arity(function (string $a, int $b) {}));
-        Assert::same(3, Reflector::arity(fn (int $x, int $y, bool $z = false) => $x + $y));
-    }
-
-    public function testArityForArrayCallable(): void
-    {
-        $arity = Reflector::arity([new ReflectorTestBaseFixture(), 'publicMethod']);
-
-        Assert::same(0, $arity);
-    }
-
-    public function testArityForInvokableObject(): void
-    {
-        $invokable = new class {
-            public function __invoke(string $x, string $y): string
-            {
-                return $x . $y;
-            }
-        };
-
-        Assert::same(2, Reflector::arity($invokable));
+        Assert::same('ReflectorTestBaseFixture', Reflector::basename(new ReflectorTestBaseFixture()));
     }
 
     // -----------------------------------------------------------------------
@@ -179,14 +193,9 @@ class ReflectorTest extends TestCase
         Assert::same('ReflectorTestChildFixture', Reflector::basename(ReflectorTestChildFixture::class));
     }
 
-    public function testBasenameAcceptsObjectInstance(): void
-    {
-        Assert::same('ReflectorTestBaseFixture', Reflector::basename(new ReflectorTestBaseFixture()));
-    }
-
     public function testBasenameThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::basename($anonymous);
@@ -198,6 +207,16 @@ class ReflectorTest extends TestCase
         Assert::exception(function () {
             Reflector::basename('NonExistentClassXyz456');
         }, ReflectionException::class);
+    }
+
+    public function testHasMethodAcceptsObjectInstance(): void
+    {
+        Assert::true(Reflector::hasMethod(new ReflectorTestBaseFixture(), 'publicMethod'));
+    }
+
+    public function testHasMethodReturnsFalseForNonExistentMethod(): void
+    {
+        Assert::false(Reflector::hasMethod(ReflectorTestBaseFixture::class, 'methodThatDoesNotExist'));
     }
 
     // -----------------------------------------------------------------------
@@ -214,23 +233,18 @@ class ReflectorTest extends TestCase
         Assert::true(Reflector::hasMethod(ReflectorTestChildFixture::class, 'publicMethod'));
     }
 
-    public function testHasMethodReturnsFalseForNonExistentMethod(): void
-    {
-        Assert::false(Reflector::hasMethod(ReflectorTestBaseFixture::class, 'methodThatDoesNotExist'));
-    }
-
-    public function testHasMethodAcceptsObjectInstance(): void
-    {
-        Assert::true(Reflector::hasMethod(new ReflectorTestBaseFixture(), 'publicMethod'));
-    }
-
     public function testHasMethodThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::hasMethod($anonymous, 'someMethod');
         }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+    }
+
+    public function testHasPropertyReturnsFalseForNonExistentProperty(): void
+    {
+        Assert::false(Reflector::hasProperty(ReflectorTestBaseFixture::class, 'undeclaredProperty'));
     }
 
     // -----------------------------------------------------------------------
@@ -244,18 +258,18 @@ class ReflectorTest extends TestCase
         Assert::true(Reflector::hasProperty(ReflectorTestBaseFixture::class, 'privateProperty'));
     }
 
-    public function testHasPropertyReturnsFalseForNonExistentProperty(): void
-    {
-        Assert::false(Reflector::hasProperty(ReflectorTestBaseFixture::class, 'undeclaredProperty'));
-    }
-
     public function testHasPropertyThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::hasProperty($anonymous, 'someProp');
         }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+    }
+
+    public function testIsClassReturnsFalseForNonExistentName(): void
+    {
+        Assert::false(Reflector::isClass('NonExistentClassXyz789'));
     }
 
     // -----------------------------------------------------------------------
@@ -265,12 +279,7 @@ class ReflectorTest extends TestCase
     public function testIsClassReturnsTrueForExistingClass(): void
     {
         Assert::true(Reflector::isClass(ReflectorTestBaseFixture::class));
-        Assert::true(Reflector::isClass(\stdClass::class));
-    }
-
-    public function testIsClassReturnsFalseForNonExistentName(): void
-    {
-        Assert::false(Reflector::isClass('NonExistentClassXyz789'));
+        Assert::true(Reflector::isClass(stdClass::class));
     }
 
     // -----------------------------------------------------------------------
@@ -333,7 +342,7 @@ class ReflectorTest extends TestCase
 
     public function testMethodsThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::methods($anonymous);
@@ -353,7 +362,7 @@ class ReflectorTest extends TestCase
 
     public function testMethodVisibilityThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::methodVisibility($anonymous, 'someMethod');
@@ -378,13 +387,9 @@ class ReflectorTest extends TestCase
         Assert::same(ReflectorTestBaseFixture::class, Reflector::name($fixture));
     }
 
-    public function testNameThrowsForAnonymousObject(): void
+    public function testNamespaceReturnsEmptyStringForUnnamespaced(): void
     {
-        $anonymous = new class {};
-
-        Assert::exception(function () use ($anonymous) {
-            Reflector::name($anonymous);
-        }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+        Assert::same('', Reflector::namespace(stdClass::class));
     }
 
     // -----------------------------------------------------------------------
@@ -399,18 +404,37 @@ class ReflectorTest extends TestCase
         );
     }
 
-    public function testNamespaceReturnsEmptyStringForUnnamespaced(): void
-    {
-        Assert::same('', Reflector::namespace(\stdClass::class));
-    }
-
     public function testNamespaceThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::namespace($anonymous);
         }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+    }
+
+    public function testNameThrowsForAnonymousObject(): void
+    {
+        $anonymous = new class () {};
+
+        Assert::exception(function () use ($anonymous) {
+            Reflector::name($anonymous);
+        }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+    }
+
+    public function testParametersForArrayCallable(): void
+    {
+        $params = Reflector::parameters([new ReflectorTestBaseFixture(), 'publicMethod']);
+
+        Assert::same([], $params);
+    }
+
+    public function testParametersForClosure(): void
+    {
+        $params = Reflector::parameters(function (string $firstName, int $age = 0): void {
+        });
+
+        Assert::same(['firstName', 'age'], $params);
     }
 
     // -----------------------------------------------------------------------
@@ -426,23 +450,10 @@ class ReflectorTest extends TestCase
         Assert::same('string', $params[0]);
     }
 
-    public function testParametersForClosure(): void
-    {
-        $params = Reflector::parameters(function (string $firstName, int $age = 0): void {});
-
-        Assert::same(['firstName', 'age'], $params);
-    }
-
-    public function testParametersForArrayCallable(): void
-    {
-        $params = Reflector::parameters([new ReflectorTestBaseFixture(), 'publicMethod']);
-
-        Assert::same([], $params);
-    }
-
     public function testParametersReturnsEmptyArrayForNoArgFunction(): void
     {
-        $params = Reflector::parameters(function (): void {});
+        $params = Reflector::parameters(function (): void {
+        });
 
         Assert::same([], $params);
     }
@@ -459,6 +470,15 @@ class ReflectorTest extends TestCase
         );
     }
 
+    public function testParentThrowsForAnonymousClass(): void
+    {
+        $anonymous = new class () {};
+
+        Assert::exception(function () use ($anonymous) {
+            Reflector::parent($anonymous);
+        }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+    }
+
     public function testParentThrowsWhenClassHasNoParent(): void
     {
         Assert::exception(function () {
@@ -466,13 +486,11 @@ class ReflectorTest extends TestCase
         }, InvalidArgumentException::class);
     }
 
-    public function testParentThrowsForAnonymousClass(): void
+    public function testPropertiesAcceptsObjectInstance(): void
     {
-        $anonymous = new class {};
+        $properties = Reflector::properties(new ReflectorTestBaseFixture());
 
-        Assert::exception(function () use ($anonymous) {
-            Reflector::parent($anonymous);
-        }, InvalidArgumentException::class, 'Invalid Argument: The given class is anonymous');
+        Assert::true(array_key_exists('publicProperty', $properties));
     }
 
     // -----------------------------------------------------------------------
@@ -488,16 +506,9 @@ class ReflectorTest extends TestCase
         Assert::same('base', $properties['publicProperty']);
     }
 
-    public function testPropertiesAcceptsObjectInstance(): void
-    {
-        $properties = Reflector::properties(new ReflectorTestBaseFixture());
-
-        Assert::true(array_key_exists('publicProperty', $properties));
-    }
-
     public function testPropertiesThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::properties($anonymous);
@@ -517,7 +528,7 @@ class ReflectorTest extends TestCase
 
     public function testPropertyVisibilityThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::propertyVisibility($anonymous, 'someProperty');
@@ -569,6 +580,15 @@ class ReflectorTest extends TestCase
         }, ReflectionException::class);
     }
 
+    public function testReflectFunctionReturnsReflectionFunctionForClosure(): void
+    {
+        $closure = fn (int $x): int => $x * 2;
+        $reflection = Reflector::reflectFunction($closure);
+
+        Assert::type(ReflectionFunction::class, $reflection);
+        Assert::same(1, $reflection->getNumberOfParameters());
+    }
+
     // -----------------------------------------------------------------------
     // reflectFunction()
     // -----------------------------------------------------------------------
@@ -579,15 +599,6 @@ class ReflectorTest extends TestCase
 
         Assert::type(ReflectionFunction::class, $reflection);
         Assert::same('strlen', $reflection->getName());
-    }
-
-    public function testReflectFunctionReturnsReflectionFunctionForClosure(): void
-    {
-        $closure = fn (int $x): int => $x * 2;
-        $reflection = Reflector::reflectFunction($closure);
-
-        Assert::type(ReflectionFunction::class, $reflection);
-        Assert::same(1, $reflection->getNumberOfParameters());
     }
 
     // -----------------------------------------------------------------------
@@ -615,7 +626,7 @@ class ReflectorTest extends TestCase
 
     public function testReflectParameterReturnsReflectionParameterInstance(): void
     {
-        $fixture = new class {
+        $fixture = new class () {
             public function greet(string $name): string
             {
                 return 'Hello, ' . $name;
@@ -658,6 +669,13 @@ class ReflectorTest extends TestCase
         }, ReflectionException::class);
     }
 
+    public function testTraitsReturnsEmptyArrayForClassWithNoTraits(): void
+    {
+        $traits = Reflector::traits(ReflectorTestBaseFixture::class);
+
+        Assert::same([], $traits);
+    }
+
     // -----------------------------------------------------------------------
     // traits()
     // -----------------------------------------------------------------------
@@ -670,16 +688,9 @@ class ReflectorTest extends TestCase
         Assert::true(in_array(ReflectorTestTraitFixture::class, $traits, true));
     }
 
-    public function testTraitsReturnsEmptyArrayForClassWithNoTraits(): void
-    {
-        $traits = Reflector::traits(ReflectorTestBaseFixture::class);
-
-        Assert::same([], $traits);
-    }
-
     public function testTraitsThrowsForAnonymousClass(): void
     {
-        $anonymous = new class {};
+        $anonymous = new class () {};
 
         Assert::exception(function () use ($anonymous) {
             Reflector::traits($anonymous);

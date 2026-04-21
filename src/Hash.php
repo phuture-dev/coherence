@@ -149,7 +149,7 @@ class Hash extends StaticClass
      */
     public static function check(string $data, string $hash, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if ($hash === '') {
             return false;
         }
 
@@ -180,7 +180,7 @@ class Hash extends StaticClass
      */
     public static function checkWithSalt(string $data, string $hash, string $salt, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if ($hash === '') {
             return false;
         }
 
@@ -662,7 +662,7 @@ class Hash extends StaticClass
      */
     public static function hmacCheck(string $data, string $key, string $hash, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if ($hash === '') {
             return false;
         }
 
@@ -699,7 +699,7 @@ class Hash extends StaticClass
         string $salt,
         string $algo = 'sha256'
     ): bool {
-        if ($hash === null || $hash === '') {
+        if ($hash === '') {
             return false;
         }
 
@@ -1026,7 +1026,7 @@ class Hash extends StaticClass
     public static function hmacWithSalt(
         string $data,
         string $key,
-        string $salt = null,
+        ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'
     ): array {
@@ -1313,7 +1313,7 @@ class Hash extends StaticClass
      */
     public static function pbkdf2(
         string $password,
-        string $salt = null,
+        ?string $salt = null,
         int $iterations = self::RECURSION_LIMIT,
         int $length = 32,
         string $algo = 'sha256'
@@ -1733,7 +1733,7 @@ class Hash extends StaticClass
      */
     public static function withSalt(
         string $data,
-        string $salt = null,
+        ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'
     ): array {

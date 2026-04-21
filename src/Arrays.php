@@ -43,14 +43,14 @@ class Arrays extends StaticClass
     use ArgumentExtractor;
 
     /**
-     * Maximum recursion depth for nested array operations to prevent infinite recursion.
-     */
-    public const RECURSION_LIMIT = 1000;
-
-    /**
      * Maximum number of elements allowed in cross join results to prevent memory exhaustion.
      */
     public const CROSS_JOIN_LIMIT = 1000000;
+
+    /**
+     * Maximum recursion depth for nested array operations to prevent infinite recursion.
+     */
+    public const RECURSION_LIMIT = 1000;
 
     /**
      * Retrieves a reference to an array element by key.
@@ -254,6 +254,53 @@ class Arrays extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Calculates the average (arithmetic mean) of values in an array.
+     *
+     * This method adds up all the numbers in an array and divides by the count
+     * of elements to find the middle value. Think of it like finding the "typical"
+     * value in a set of numbers.
+     *
+     * If the array is empty, this method returns null. Non-numeric values are
+     * treated as zero in the calculation.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [1, 2, 3, 4, 5];
+     * $avg = Arrays::average($numbers);
+     *
+     * // Returns: 3.0
+     *
+     * // With decimal values
+     * $prices = [10.5, 20.0, 30.5];
+     * $avg = Arrays::average($prices);
+     *
+     * // Returns: 20.333333333333332
+     *
+     * // Empty array returns null
+     * $avg = Arrays::average([]);
+     *
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing numeric values
+     * @return float|null The average value, or null if the array is empty
+     * @see Arrays::sum()
+     * @see Arrays::median()
+     */
+    public static function average(array $array): ?float
+    {
+        $count = count($array);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        return self::sum($array) / $count;
     }
 
     /**
@@ -965,6 +1012,7 @@ class Arrays extends StaticClass
                 return false;
             }
         }
+
         return true;
     }
 
@@ -1479,6 +1527,7 @@ class Arrays extends StaticClass
                 }
                 $array = $array[$segment];
             }
+
             return $array;
         }
 
@@ -1487,6 +1536,68 @@ class Arrays extends StaticClass
         }
 
         return $default;
+    }
+
+    /**
+     * Filters array elements by regular expression pattern.
+     *
+     * This method returns only those array elements whose values match the specified
+     * regular expression pattern. When the invert parameter is true, it returns elements
+     * that do NOT match the pattern instead.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $data = ['apple', 'banana', '123', '456', 'cherry'];
+     *
+     * // Get only numeric strings
+     * $numbers = Arrays::grep($data, '~^\d+$~');
+     * // Returns: ['123', '456']
+     *
+     * // Get only non-numeric strings (inverted)
+     * $words = Arrays::grep($data, '~^\d+$~', true);
+     * // Returns: ['apple', 'banana', 'cherry']
+     *
+     * // Match strings starting with 'a'
+     * $startsWithA = Arrays::grep($data, '~^a~i');
+     * // Returns: ['apple']
+     * ```
+     *
+     * @param array $array The array to filter.
+     * @param string $pattern Regular expression pattern to match against
+     * @param bool $invert When true, returns elements that do NOT match the pattern (default: false)
+     * @return array Returns filtered array with matching elements
+     * @throws LogicException When the regular expression pattern is invalid
+     */
+    public static function grep(array $array, string $pattern, bool $invert = false): array
+    {
+        // Validate pattern once before the loop
+        set_error_handler(function ($errno, $errstr) use ($pattern) {
+            restore_error_handler();
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
+        });
+
+        $testResult = @preg_match($pattern, '');
+        restore_error_handler();
+
+        if ($testResult === false) {
+            throw new LogicException(
+                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
+            );
+        }
+
+        $result = [];
+        foreach ($array as $key => $value) {
+            $match = preg_match($pattern, (string)$value) === 1;
+            if ($invert !== $match) {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1562,68 +1673,6 @@ class Arrays extends StaticClass
 
             // Add item to its group
             $result[$arrayKey][] = $item;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Filters array elements by regular expression pattern.
-     *
-     * This method returns only those array elements whose values match the specified
-     * regular expression pattern. When the invert parameter is true, it returns elements
-     * that do NOT match the pattern instead.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $data = ['apple', 'banana', '123', '456', 'cherry'];
-     *
-     * // Get only numeric strings
-     * $numbers = Arrays::grep($data, '~^\d+$~');
-     * // Returns: ['123', '456']
-     *
-     * // Get only non-numeric strings (inverted)
-     * $words = Arrays::grep($data, '~^\d+$~', true);
-     * // Returns: ['apple', 'banana', 'cherry']
-     *
-     * // Match strings starting with 'a'
-     * $startsWithA = Arrays::grep($data, '~^a~i');
-     * // Returns: ['apple']
-     * ```
-     *
-     * @param array $array The array to filter.
-     * @param string $pattern Regular expression pattern to match against
-     * @param bool $invert When true, returns elements that do NOT match the pattern (default: false)
-     * @return array Returns filtered array with matching elements
-     * @throws LogicException When the regular expression pattern is invalid
-     */
-    public static function grep(array $array, string $pattern, bool $invert = false): array
-    {
-        // Validate pattern once before the loop
-        set_error_handler(function ($errno, $errstr) use ($pattern) {
-            restore_error_handler();
-            throw new LogicException(
-                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
-            );
-        });
-
-        $testResult = @preg_match($pattern, '');
-        restore_error_handler();
-
-        if ($testResult === false) {
-            throw new LogicException(
-                "Invalid Pattern: The regular expression pattern \"{$pattern}\" is invalid"
-            );
-        }
-
-        $result = [];
-        foreach ($array as $key => $value) {
-            $match = preg_match($pattern, (string)$value) === 1;
-            if ($invert !== $match) {
-                $result[$key] = $value;
-            }
         }
 
         return $result;
@@ -1726,6 +1775,7 @@ class Arrays extends StaticClass
             foreach ($items as $k => $v) {
                 $array[$k] = $v;
             }
+
             return;
         }
 
@@ -1783,6 +1833,7 @@ class Arrays extends StaticClass
         // If key doesn't exist, prepend the items
         if (!array_key_exists($key, $array)) {
             $array = $items + $array;
+
             return;
         }
 
@@ -2580,18 +2631,77 @@ class Arrays extends StaticClass
 
             $newKey = key($mapped);
 
-            // Validate that the key is a valid PHP array key type
-            if (!is_string($newKey) && !is_int($newKey)) {
-                throw new InvalidArgumentException(
-                    'Invalid Argument: Array keys must be strings or integers, '
-                    . get_debug_type($newKey) . ' returned by callback'
-                );
-            }
-
             $result[$newKey] = current($mapped);
         }
 
         return $result;
+    }
+
+    /**
+     * Calculates the median (middle value) of values in an array.
+     *
+     * This method finds the middle value in a sorted list of numbers. The median
+     * is useful because it's not affected by extremely high or low values the way
+     * an average is. Think of it like finding the value that splits your data in half.
+     *
+     * For an odd number of elements, the median is the middle value. For an even
+     * number of elements, the median is the average of the two middle values.
+     *
+     * If the array is empty, this method returns null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Odd number of elements - returns middle value
+     * $numbers = [1, 3, 5];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 3
+     *
+     * // Even number of elements - returns average of two middle values
+     * $numbers = [1, 2, 3, 4];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 2.5
+     *
+     * // Unsorted input gets sorted automatically
+     * $numbers = [5, 1, 3, 2, 4];
+     * $med = Arrays::median($numbers);
+     *
+     * // Returns: 3
+     *
+     * // Empty array returns null
+     * $med = Arrays::median([]);
+     *
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing numeric values
+     * @return float|null The median value, or null if the array is empty
+     * @see Arrays::average()
+     */
+    public static function median(array $array): ?float
+    {
+        $count = count($array);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        // Sort the array to find the middle value(s)
+        $sorted = $array;
+        sort($sorted);
+
+        $middle = (int) floor(($count - 1) / 2);
+
+        if ($count % 2 === 0) {
+            // Even number of elements - average the two middle values
+            return ($sorted[$middle] + $sorted[$middle + 1]) / 2;
+        }
+
+        // Odd number of elements - return the middle value
+        return (float) $sorted[$middle];
     }
 
     /**
@@ -2972,6 +3082,7 @@ class Arrays extends StaticClass
             foreach (array_reverse($items, true) as $value) {
                 array_unshift($array, $value);
             }
+
             return;
         }
 
@@ -3679,6 +3790,7 @@ class Arrays extends StaticClass
                 return true;
             }
         }
+
         return false;
     }
 
@@ -3748,6 +3860,69 @@ class Arrays extends StaticClass
         }
 
         return $reverse ? rsort($array) : sort($array);
+    }
+
+    /**
+     * Sorts an array in ascending or descending order while maintaining index association.
+     *
+     * This method arranges array values from lowest to highest (ascending) or highest
+     * to lowest (descending) while keeping the original keys paired with their values.
+     * Unlike the regular sort method, this preserves the relationship between keys and
+     * values. You can provide a custom comparison function to define your own sorting logic.
+     *
+     * You can optionally provide a custom comparison function as the last parameter.
+     *
+     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $scores = ['John' => 85, 'Alice' => 92, 'Bob' => 78];
+     * Arrays::sortAssoc($scores);
+     * // $scores is now: ['Bob' => 78, 'John' => 85, 'Alice' => 92]
+     * // Keys are preserved with their values
+     *
+     * // Sort with custom callback (case-insensitive string comparison)
+     * $names = ['john' => 'John', 'ALICE' => 'Alice', 'bob' => 'Bob'];
+     * Arrays::sortAssoc($names, false, fn($a, $b) => strcasecmp($a, $b));
+     * // $names is now: ['ALICE' => 'Alice', 'bob' => 'Bob', 'john' => 'John']
+     *
+     * // Sort objects by property while preserving keys
+     * $users = [
+     *     'user1' => (object)['name' => 'John', 'age' => 30],
+     *     'user2' => (object)['name' => 'Jane', 'age' => 25],
+     *     'user3' => (object)['name' => 'Bob', 'age' => 35]
+     * ];
+     * Arrays::sortAssoc($users, false, fn($a, $b) => $a->age <=> $b->age);
+     * // Sorted by age: user2 => Jane (25), user1 => John (30), user3 => Bob (35)
+     *
+     * // Sort with callback in reverse
+     * $prices = ['item1' => 100, 'item2' => 50, 'item3' => 75];
+     * Arrays::sortAssoc($prices, true, fn($a, $b) => $a <=> $b);
+     * // $prices is now: ['item1' => 100, 'item3' => 75, 'item2' => 50]
+     * ```
+     *
+     * @param array $array The array to sort (passed by reference)
+     * @param bool $reverse Whether to sort in descending order (default: false)
+     * @param callable|null $callback Optional custom comparison function for values
+     * @return bool Returns true on success, false on failure
+     * @see Arrays::sort()
+     */
+    public static function sortAssoc(
+        array &$array,
+        bool $reverse = false,
+        ?callable $callback = null
+    ): bool {
+        if (!is_null($callback) && is_callable($callback)) {
+            if ($reverse) {
+                return uasort($array, fn ($a, $b) => $callback($b, $a));
+            }
+
+            return uasort($array, $callback);
+        }
+
+        return $reverse ? arsort($array) : asort($array);
     }
 
     /**
@@ -3855,69 +4030,6 @@ class Arrays extends StaticClass
         }
 
         return usort($array, $comparator);
-    }
-
-    /**
-     * Sorts an array in ascending or descending order while maintaining index association.
-     *
-     * This method arranges array values from lowest to highest (ascending) or highest
-     * to lowest (descending) while keeping the original keys paired with their values.
-     * Unlike the regular sort method, this preserves the relationship between keys and
-     * values. You can provide a custom comparison function to define your own sorting logic.
-     *
-     * You can optionally provide a custom comparison function as the last parameter.
-     *
-     * The callback for the comparison function has the signature `function (mixed $a, mixed $b): int`
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $scores = ['John' => 85, 'Alice' => 92, 'Bob' => 78];
-     * Arrays::sortAssoc($scores);
-     * // $scores is now: ['Bob' => 78, 'John' => 85, 'Alice' => 92]
-     * // Keys are preserved with their values
-     *
-     * // Sort with custom callback (case-insensitive string comparison)
-     * $names = ['john' => 'John', 'ALICE' => 'Alice', 'bob' => 'Bob'];
-     * Arrays::sortAssoc($names, false, fn($a, $b) => strcasecmp($a, $b));
-     * // $names is now: ['ALICE' => 'Alice', 'bob' => 'Bob', 'john' => 'John']
-     *
-     * // Sort objects by property while preserving keys
-     * $users = [
-     *     'user1' => (object)['name' => 'John', 'age' => 30],
-     *     'user2' => (object)['name' => 'Jane', 'age' => 25],
-     *     'user3' => (object)['name' => 'Bob', 'age' => 35]
-     * ];
-     * Arrays::sortAssoc($users, false, fn($a, $b) => $a->age <=> $b->age);
-     * // Sorted by age: user2 => Jane (25), user1 => John (30), user3 => Bob (35)
-     *
-     * // Sort with callback in reverse
-     * $prices = ['item1' => 100, 'item2' => 50, 'item3' => 75];
-     * Arrays::sortAssoc($prices, true, fn($a, $b) => $a <=> $b);
-     * // $prices is now: ['item1' => 100, 'item3' => 75, 'item2' => 50]
-     * ```
-     *
-     * @param array $array The array to sort (passed by reference)
-     * @param bool $reverse Whether to sort in descending order (default: false)
-     * @param callable|null $callback Optional custom comparison function for values
-     * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
-     */
-    public static function sortAssoc(
-        array &$array,
-        bool $reverse = false,
-        ?callable $callback = null
-    ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
-            if ($reverse) {
-                return uasort($array, fn ($a, $b) => $callback($b, $a));
-            }
-
-            return uasort($array, $callback);
-        }
-
-        return $reverse ? arsort($array) : asort($array);
     }
 
     /**
@@ -4134,120 +4246,6 @@ class Arrays extends StaticClass
     public static function sum(array $array): int|float
     {
         return array_sum($array);
-    }
-
-    /**
-     * Calculates the average (arithmetic mean) of values in an array.
-     *
-     * This method adds up all the numbers in an array and divides by the count
-     * of elements to find the middle value. Think of it like finding the "typical"
-     * value in a set of numbers.
-     *
-     * If the array is empty, this method returns null. Non-numeric values are
-     * treated as zero in the calculation.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * $numbers = [1, 2, 3, 4, 5];
-     * $avg = Arrays::average($numbers);
-     *
-     * // Returns: 3.0
-     *
-     * // With decimal values
-     * $prices = [10.5, 20.0, 30.5];
-     * $avg = Arrays::average($prices);
-     *
-     * // Returns: 20.333333333333332
-     *
-     * // Empty array returns null
-     * $avg = Arrays::average([]);
-     *
-     * // Returns: null
-     * ```
-     *
-     * @param array $array The array containing numeric values
-     * @return float|null The average value, or null if the array is empty
-     * @see Arrays::sum()
-     * @see Arrays::median()
-     */
-    public static function average(array $array): ?float
-    {
-        $count = count($array);
-
-        if ($count === 0) {
-            return null;
-        }
-
-        return self::sum($array) / $count;
-    }
-
-    /**
-     * Calculates the median (middle value) of values in an array.
-     *
-     * This method finds the middle value in a sorted list of numbers. The median
-     * is useful because it's not affected by extremely high or low values the way
-     * an average is. Think of it like finding the value that splits your data in half.
-     *
-     * For an odd number of elements, the median is the middle value. For an even
-     * number of elements, the median is the average of the two middle values.
-     *
-     * If the array is empty, this method returns null.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Odd number of elements - returns middle value
-     * $numbers = [1, 3, 5];
-     * $med = Arrays::median($numbers);
-     *
-     * // Returns: 3
-     *
-     * // Even number of elements - returns average of two middle values
-     * $numbers = [1, 2, 3, 4];
-     * $med = Arrays::median($numbers);
-     *
-     * // Returns: 2.5
-     *
-     * // Unsorted input gets sorted automatically
-     * $numbers = [5, 1, 3, 2, 4];
-     * $med = Arrays::median($numbers);
-     *
-     * // Returns: 3
-     *
-     * // Empty array returns null
-     * $med = Arrays::median([]);
-     *
-     * // Returns: null
-     * ```
-     *
-     * @param array $array The array containing numeric values
-     * @return float|null The median value, or null if the array is empty
-     * @see Arrays::average()
-     */
-    public static function median(array $array): ?float
-    {
-        $count = count($array);
-
-        if ($count === 0) {
-            return null;
-        }
-
-        // Sort the array to find the middle value(s)
-        $sorted = $array;
-        sort($sorted);
-
-        $middle = (int) floor(($count - 1) / 2);
-
-        if ($count % 2 === 0) {
-            // Even number of elements - average the two middle values
-            return ($sorted[$middle] + $sorted[$middle + 1]) / 2;
-        }
-
-        // Odd number of elements - return the middle value
-        return (float) $sorted[$middle];
     }
 
     /**
@@ -4539,134 +4537,6 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Combines multiple arrays by pairing elements at the same index.
-     *
-     * This method takes multiple arrays and creates a new array where each element
-     * is an array containing the corresponding elements from each input array at
-     * that position. Think of it like zipping together two jacket halves - the
-     * teeth from each side pair up at the same position.
-     *
-     * If the arrays have different lengths, the shortest length determines the
-     * number of pairs produced. Extra elements in longer arrays are ignored.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Pair two arrays
-     * $numbers = [1, 2, 3];
-     * $letters = ['a', 'b', 'c'];
-     * $zipped = Arrays::zip($numbers, $letters);
-     * // Returns: [[1, 'a'], [2, 'b'], [3, 'c']]
-     *
-     * // Zip three arrays
-     * $ids = [1, 2];
-     * $names = ['John', 'Jane'];
-     * $ages = [30, 25];
-     * $zipped = Arrays::zip($ids, $names, $ages);
-     * // Returns: [[1, 'John', 30], [2, 'Jane', 25]]
-     *
-     * // Different lengths - uses shortest
-     * $a = [1, 2, 3, 4];
-     * $b = ['a', 'b'];
-     * $zipped = Arrays::zip($a, $b);
-     * // Returns: [[1, 'a'], [2, 'b']]
-     *
-     * // Create associative arrays
-     * $keys = ['name', 'age'];
-     * $values = ['John', 30];
-     * $zipped = Arrays::zip($keys, $values);
-     * // Returns: [['name', 'John'], ['age', 30]]
-     * ```
-     *
-     * @param array ...$arrays Variable number of arrays to zip together
-     * @return array Returns an array of paired elements from each input array
-     * @throws InvalidArgumentException If fewer than two arrays are provided
-     * @see Arrays::unzip()
-     */
-    public static function zip(array ...$arrays): array
-    {
-        if (count($arrays) < 2) {
-            throw new InvalidArgumentException(
-                'Invalid Argument: At least two arrays are required for zip operation'
-            );
-        }
-
-        // Convert all arrays to numeric-indexed arrays
-        $arrays = array_map('array_values', $arrays);
-
-        // Find the shortest array length
-        $length = min(array_map('count', $arrays));
-
-        $result = [];
-        for ($i = 0; $i < $length; $i++) {
-            $pair = [];
-            foreach ($arrays as $array) {
-                $pair[] = $array[$i];
-            }
-            $result[] = $pair;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Wraps scalar elements by surrounding them with prefix and suffix strings.
-     *
-     * This method processes each element in the array and wraps only scalar values (strings,
-     * integers, floats, booleans, null) by converting them to strings and surrounding them
-     * with the specified prefix and suffix. Non-scalar values like arrays, objects, and
-     * resources are left unchanged. The original array keys are preserved.
-     *
-     * This is useful for formatting output, adding HTML tags to text values, or preparing
-     * strings for display while preserving complex data structures within the array.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Arrays;
-     *
-     * // Add HTML tags to strings
-     * $colors = ['red', 'green', 'blue'];
-     * $result = Arrays::wrap($colors, '<b>', '</b>');
-     * // Returns: ['<b>red</b>', '<b>green</b>', '<b>blue</b>']
-     *
-     * // Mixed types - only scalars are wrapped
-     * $mixed = ['text', 123, ['nested'], new stdClass(), true];
-     * $result = Arrays::wrap($mixed, '[', ']');
-     * // Returns: ['[text]', '[123]', ['nested'], stdClass object, '[1]']
-     *
-     * // Preserve keys
-     * $data = ['a' => 'red', 'b' => 'green'];
-     * $result = Arrays::wrap($data, '<<', '>>');
-     * // Returns: ['a' => '<<red>>', 'b' => '<<green>>']
-     *
-     * // Numbers are converted to strings
-     * $numbers = [1, 2, 3];
-     * $result = Arrays::wrap($numbers, '(', ')');
-     * // Returns: ['(1)', '(2)', '(3)']
-     * ```
-     *
-     * @param array $array The array whose scalar elements to wrap
-     * @param string $prefix The string to prepend to each scalar element (default: empty string)
-     * @param string $suffix The string to append to each scalar element (default: empty string)
-     * @return array Returns a new array with wrapped scalar elements and preserved keys
-     */
-    public static function wrap(array $array, string $prefix = '', string $suffix = ''): array
-    {
-        $result = [];
-
-        foreach ($array as $key => $value) {
-            if (is_scalar($value) || is_null($value)) {
-                $result[$key] = $prefix . ((string) $value) . $suffix;
-            } else {
-                $result[$key] = $value;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
      * Filters an array using a callback function.
      *
      * This method creates a new array containing only the elements that pass a test
@@ -4753,8 +4623,137 @@ class Arrays extends StaticClass
     {
         return self::filter($array, function ($item) use ($key, $values) {
             $value = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
+
             return in_array($value, $values, true);
         });
+    }
+
+    /**
+     * Wraps scalar elements by surrounding them with prefix and suffix strings.
+     *
+     * This method processes each element in the array and wraps only scalar values (strings,
+     * integers, floats, booleans, null) by converting them to strings and surrounding them
+     * with the specified prefix and suffix. Non-scalar values like arrays, objects, and
+     * resources are left unchanged. The original array keys are preserved.
+     *
+     * This is useful for formatting output, adding HTML tags to text values, or preparing
+     * strings for display while preserving complex data structures within the array.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Add HTML tags to strings
+     * $colors = ['red', 'green', 'blue'];
+     * $result = Arrays::wrap($colors, '<b>', '</b>');
+     * // Returns: ['<b>red</b>', '<b>green</b>', '<b>blue</b>']
+     *
+     * // Mixed types - only scalars are wrapped
+     * $mixed = ['text', 123, ['nested'], new stdClass(), true];
+     * $result = Arrays::wrap($mixed, '[', ']');
+     * // Returns: ['[text]', '[123]', ['nested'], stdClass object, '[1]']
+     *
+     * // Preserve keys
+     * $data = ['a' => 'red', 'b' => 'green'];
+     * $result = Arrays::wrap($data, '<<', '>>');
+     * // Returns: ['a' => '<<red>>', 'b' => '<<green>>']
+     *
+     * // Numbers are converted to strings
+     * $numbers = [1, 2, 3];
+     * $result = Arrays::wrap($numbers, '(', ')');
+     * // Returns: ['(1)', '(2)', '(3)']
+     * ```
+     *
+     * @param array $array The array whose scalar elements to wrap
+     * @param string $prefix The string to prepend to each scalar element (default: empty string)
+     * @param string $suffix The string to append to each scalar element (default: empty string)
+     * @return array Returns a new array with wrapped scalar elements and preserved keys
+     */
+    public static function wrap(array $array, string $prefix = '', string $suffix = ''): array
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            if (is_scalar($value) || is_null($value)) {
+                $result[$key] = $prefix . ((string) $value) . $suffix;
+            } else {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Combines multiple arrays by pairing elements at the same index.
+     *
+     * This method takes multiple arrays and creates a new array where each element
+     * is an array containing the corresponding elements from each input array at
+     * that position. Think of it like zipping together two jacket halves - the
+     * teeth from each side pair up at the same position.
+     *
+     * If the arrays have different lengths, the shortest length determines the
+     * number of pairs produced. Extra elements in longer arrays are ignored.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * // Pair two arrays
+     * $numbers = [1, 2, 3];
+     * $letters = ['a', 'b', 'c'];
+     * $zipped = Arrays::zip($numbers, $letters);
+     * // Returns: [[1, 'a'], [2, 'b'], [3, 'c']]
+     *
+     * // Zip three arrays
+     * $ids = [1, 2];
+     * $names = ['John', 'Jane'];
+     * $ages = [30, 25];
+     * $zipped = Arrays::zip($ids, $names, $ages);
+     * // Returns: [[1, 'John', 30], [2, 'Jane', 25]]
+     *
+     * // Different lengths - uses shortest
+     * $a = [1, 2, 3, 4];
+     * $b = ['a', 'b'];
+     * $zipped = Arrays::zip($a, $b);
+     * // Returns: [[1, 'a'], [2, 'b']]
+     *
+     * // Create associative arrays
+     * $keys = ['name', 'age'];
+     * $values = ['John', 30];
+     * $zipped = Arrays::zip($keys, $values);
+     * // Returns: [['name', 'John'], ['age', 30]]
+     * ```
+     *
+     * @param array ...$arrays Variable number of arrays to zip together
+     * @return array Returns an array of paired elements from each input array
+     * @throws InvalidArgumentException If fewer than two arrays are provided
+     * @see Arrays::unzip()
+     */
+    public static function zip(array ...$arrays): array
+    {
+        if (count($arrays) < 2) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: At least two arrays are required for zip operation'
+            );
+        }
+
+        // Convert all arrays to numeric-indexed arrays
+        $arrays = array_map('array_values', $arrays);
+
+        // Find the shortest array length
+        $length = min(array_map('count', $arrays));
+
+        $result = [];
+        for ($i = 0; $i < $length; $i++) {
+            $pair = [];
+            foreach ($arrays as $array) {
+                $pair[] = $array[$i];
+            }
+            $result[] = $pair;
+        }
+
+        return $result;
     }
 
     /**

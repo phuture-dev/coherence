@@ -138,6 +138,49 @@ class Strings extends StaticClass
     }
 
     /**
+     * Generates an ASCII art representation of the given text using a block font.
+     *
+     * Renders each character of `$text` as a 5-row tall block-style ASCII art figure.
+     * Supports uppercase and lowercase letters A–Z (normalised to uppercase), digits 0–9,
+     * and common punctuation. Unsupported characters are rendered as blank columns.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * echo Strings::asciiArt('Hi');
+     * // #    # ######
+     * // #    #   ##
+     * // ######   ##
+     * // #    #   ##
+     * // #    # ######
+     * ```
+     *
+     * @param string $text The text to render as ASCII art
+     * @param string $font The font name to use — currently only 'block' is supported
+     * @return string The multi-line ASCII art string
+     */
+    public static function asciiArt(string $text, string $font = 'block'): string
+    {
+        $fontMap = self::getAsciiFontMap($font);
+        $text = mb_strtoupper($text, 'UTF-8');
+        $chars = mb_str_split($text, 1, 'UTF-8');
+
+        $rows = 5;
+        $lines = array_fill(0, $rows, '');
+
+        foreach ($chars as $char) {
+            $charData = $fontMap[$char] ?? $fontMap[' '];
+
+            for ($i = 0; $i < $rows; $i++) {
+                $lines[$i] .= ($lines[$i] !== '' ? ' ' : '') . $charData[$i];
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * Returns the portion of the string before the first occurrence of a search value.
      *
      * Searches for the first occurrence of `$search` in `$string` and returns everything
@@ -312,6 +355,41 @@ class Strings extends StaticClass
     public static function capitalize(string $string): string
     {
         return self::title($string);
+    }
+
+    /**
+     * Censors all occurrences of banned words in a string by replacing them with a substitution.
+     *
+     * Matching is case-insensitive. Each matched word is replaced with `$replacement` in full,
+     * regardless of the matched word's length. The string is returned unchanged when `$bannedWords`
+     * is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::censor('This is bad and awful', ['bad', 'awful']); // 'This is *** and ***'
+     * Strings::censor('BAD language', ['bad'], '####'); // '#### language'
+     * ```
+     *
+     * @param string $string The input string to censor
+     * @param array $bannedWords List of word strings to replace
+     * @param string $replacement The string to substitute for each matched word (default: '***')
+     * @return string The censored string
+     * @see Strings::replace()
+     */
+    public static function censor(string $string, array $bannedWords, string $replacement = '***'): string
+    {
+        if (empty($bannedWords)) {
+            return $string;
+        }
+
+        $pattern = '/\b(?:' . implode('|', array_map(
+            static fn (string $word): string => preg_quote($word, '/'),
+            $bannedWords
+        )) . ')\b/iu';
+
+        return preg_replace($pattern, $replacement, $string) ?? $string;
     }
 
     /**
@@ -717,6 +795,52 @@ class Strings extends StaticClass
     }
 
     /**
+     * Fixes invalid UTF-8 byte sequences in a string.
+     *
+     * Removes or replaces any byte sequences that are not valid UTF-8. The result is
+     * guaranteed to be valid UTF-8.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::fixEncoding("hello\xc0world"); // 'helloworld' (invalid byte removed)
+     * Strings::fixEncoding('valid utf-8 ñoño'); // 'valid utf-8 ñoño'
+     * ```
+     *
+     * @param string $string The input string that may contain invalid UTF-8 sequences
+     * @return string A valid UTF-8 string with invalid byte sequences removed
+     */
+    public static function fixEncoding(string $string): string
+    {
+        return mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+    }
+
+    /**
+     * Decodes a Base64-encoded string.
+     *
+     * Returns an empty string when the input is not valid Base64.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::fromBase64('aGVsbG8='); // 'hello'
+     * Strings::fromBase64('not-base64!!!'); // ''
+     * ```
+     *
+     * @param string $string The Base64-encoded string to decode
+     * @return string The decoded string, or an empty string when decoding fails
+     * @see Strings::toBase64()
+     */
+    public static function fromBase64(string $string): string
+    {
+        $decoded = base64_decode($string, true);
+
+        return $decoded === false ? '' : $decoded;
+    }
+
+    /**
      * Determines whether a string contains a given search value.
      *
      * An empty `$search` always returns true. Supports optional case-insensitive matching.
@@ -845,6 +969,80 @@ class Strings extends StaticClass
         $parts = array_map(fn ($part) => self::title($part), $parts);
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * Highlights all occurrences of a phrase within a string by wrapping them in tags.
+     *
+     * Matching is case-insensitive. The original casing of the matched text is preserved
+     * inside the tags. Returns the string unchanged when `$phrase` is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::highlight('The quick brown fox', 'quick'); // 'The <mark>quick</mark> brown fox'
+     * Strings::highlight('Hello World', 'world', '<b>', '</b>'); // 'Hello <b>World</b>'
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param string $phrase The phrase to highlight
+     * @param string $tagOpen The opening tag to insert before each match (default: '<mark>')
+     * @param string $tagClose The closing tag to insert after each match (default: '</mark>')
+     * @return string The string with all occurrences of `$phrase` wrapped in the given tags
+     * @see Strings::replace()
+     */
+    public static function highlight(
+        string $string,
+        string $phrase,
+        string $tagOpen = '<mark>',
+        string $tagClose = '</mark>'
+    ): string {
+        if ($phrase === '') {
+            return $string;
+        }
+
+        $pattern = '/' . preg_quote($phrase, '/') . '/iu';
+
+        return preg_replace($pattern, $tagOpen . '$0' . $tagClose, $string) ?? $string;
+    }
+
+    /**
+     * Adds indentation to each line of a string.
+     *
+     * Prepends `$indentChar` repeated `$level` times to every line. A line is defined
+     * as any sequence ending with `\n`. Throws when `$level` is negative.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::indent("line1\nline2"); // "\tline1\n\tline2"
+     * Strings::indent("line1\nline2", 2); // "\t\tline1\n\t\tline2"
+     * Strings::indent("line1\nline2", 1, '  '); // "  line1\n  line2"
+     * ```
+     *
+     * @param string $string The input string to indent
+     * @param int $level The number of times to repeat the indent character; must be zero or greater (default: 1)
+     * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
+     * @return string The indented string
+     * @throws InvalidArgumentException When `$level` is negative
+     */
+    public static function indent(string $string, int $level = 1, string $indentChar = "\t"): string
+    {
+        if ($level < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Indent level must be zero or greater"
+            );
+        }
+
+        if ($level === 0 || $string === '') {
+            return $string;
+        }
+
+        $prefix = str_repeat($indentChar, $level);
+
+        return $prefix . str_replace("\n", "\n" . $prefix, $string);
     }
 
     /**
@@ -1155,30 +1353,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Determines whether a string matches a regular expression pattern.
-     *
-     * The `$pattern` must include delimiters (e.g., `/^user_\d+$/`). Returns true when
-     * the pattern matches the string.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::matches('user_123', '/^user_\d+$/'); // true
-     * Strings::matches('user_abc', '/^user_\d+$/'); // false
-     * ```
-     *
-     * @param string $string The input string to test
-     * @param string $pattern The full regular expression pattern including delimiters
-     * @return bool True when the pattern matches
-     * @see Strings::is()
-     */
-    public static function matches(string $string, string $pattern): bool
-    {
-        return preg_match($pattern, $string) === 1;
-    }
-
-    /**
      * Determines whether a string is not empty (has at least one character).
      *
      * The inverse of `isEmpty()`. A string consisting only of whitespace is NOT empty.
@@ -1229,6 +1403,29 @@ class Strings extends StaticClass
         }
 
         return preg_match('/^-?\d+\.?\d*$/', $string) === 1;
+    }
+
+    /**
+     * Determines whether a string is a valid ULID (Universally Unique Lexicographically Sortable Identifier).
+     *
+     * A ULID is 26 characters long and uses Crockford's Base32 character set (0-9 and A-Z
+     * excluding I, L, O, U). Matching is case-insensitive.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV'); // true
+     * Strings::isUlid('not-a-ulid'); // false
+     * ```
+     *
+     * @param string $string The input string to validate
+     * @return bool True when the string is a valid ULID
+     * @see Strings::isUuid()
+     */
+    public static function isUlid(string $string): bool
+    {
+        return (bool) preg_match('/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/i', $string);
     }
 
     /**
@@ -1551,6 +1748,77 @@ class Strings extends StaticClass
         }
 
         return $masked;
+    }
+
+    /**
+     * Determines whether a string matches a regular expression pattern.
+     *
+     * The `$pattern` must include delimiters (e.g., `/^user_\d+$/`). Returns true when
+     * the pattern matches the string.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::matches('user_123', '/^user_\d+$/'); // true
+     * Strings::matches('user_abc', '/^user_\d+$/'); // false
+     * ```
+     *
+     * @param string $string The input string to test
+     * @param string $pattern The full regular expression pattern including delimiters
+     * @return bool True when the pattern matches
+     * @see Strings::is()
+     */
+    public static function matches(string $string, string $pattern): bool
+    {
+        return preg_match($pattern, $string) === 1;
+    }
+
+    /**
+     * Normalizes line endings to Unix-style `\n`.
+     *
+     * Converts Windows-style `\r\n` and old Mac-style `\r` to `\n`. The string is
+     * returned unchanged when it contains no line endings.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::normalizeNewLines("line1\r\nline2\rline3"); // "line1\nline2\nline3"
+     * ```
+     *
+     * @param string $string The input string whose line endings are to be normalized
+     * @return string The string with all line endings replaced by `\n`
+     */
+    public static function normalizeNewLines(string $string): string
+    {
+        return str_replace(["\r\n", "\r"], "\n", $string);
+    }
+
+    /**
+     * Creates a fluent wrapper around the given string for method chaining.
+     *
+     * Returns a `Type\Strings` instance that wraps the provided string value and
+     * exposes every string-returning method as a chainable call.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $result = Strings::of('  hello world  ')
+     *     ->trim()
+     *     ->upper()
+     *     ->get();
+     * // 'HELLO WORLD'
+     * ```
+     *
+     * @param string $string The string to wrap for fluent operations
+     * @return Type\Strings A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Type\Strings For the fluent wrapper implementation
+     */
+    public static function of(string $string): Type\Strings
+    {
+        return new Type\Strings($string);
     }
 
     /**
@@ -1897,9 +2165,91 @@ class Strings extends StaticClass
 
         return preg_replace_callback(
             '/' . preg_quote($search, '/') . '/iu',
-            static fn() => $replace,
+            static fn () => $replace,
             $string
         );
+    }
+
+    /**
+     * Replaces successive occurrences of a search value using values from an array.
+     *
+     * Each time `$search` is found, it is replaced with the next value from `$replacements`.
+     * When the replacements array is exhausted, remaining occurrences are replaced with an
+     * empty string. Returns the string unchanged when `$search` is empty or `$replacements`
+     * is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::replaceArray('?', ['2026', 'April'], 'Year: ?, Month: ?'); // 'Year: 2026, Month: April'
+     * ```
+     *
+     * @param string $search The value to search for
+     * @param array $replacements Ordered list of string replacement values
+     * @param string $string The input string to perform replacements on
+     * @return string The string with successive occurrences replaced
+     * @see Strings::replace()
+     */
+    public static function replaceArray(string $search, array $replacements, string $string): string
+    {
+        if ($search === '' || empty($replacements)) {
+            return $string;
+        }
+
+        foreach ($replacements as $replacement) {
+            $position = strpos($string, $search);
+
+            if ($position === false) {
+                break;
+            }
+
+            $string = substr_replace($string, (string) $replacement, $position, strlen($search));
+        }
+
+        return $string;
+    }
+
+    /**
+     * Replaces a portion of a string starting at a given character position.
+     *
+     * When `$length` is null, replaces from `$position` to the end of the string.
+     * A negative `$position` counts from the end of the string. A negative `$length`
+     * stops that many characters before the end of the string.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::replaceAt('hello world', 'PHP', 6); // 'hello PHP'
+     * Strings::replaceAt('hello world', 'PHP', 6, 5); // 'hello PHP'
+     * Strings::replaceAt('hello world', '', 5, 6); // 'hello'
+     * ```
+     *
+     * @param string $string The input string to modify
+     * @param string $replacement The text to insert at the given position
+     * @param int $position The character index at which to begin replacement (negative counts from end)
+     * @param int|null $length The number of characters to replace (null replaces to end of string)
+     * @return string The modified string
+     * @see Strings::insert()
+     * @see Strings::slice()
+     */
+    public static function replaceAt(string $string, string $replacement, int $position, ?int $length = null): string
+    {
+        $stringLength = mb_strlen($string, 'UTF-8');
+        $actualStart = $position < 0 ? max(0, $stringLength + $position) : min($position, $stringLength);
+
+        if ($length === null) {
+            return mb_substr($string, 0, $actualStart, 'UTF-8') . $replacement;
+        }
+
+        $actualEnd = $length < 0
+            ? max($actualStart, $stringLength + $length)
+            : $actualStart + $length;
+
+        return mb_substr($string, 0, $actualStart, 'UTF-8')
+            . $replacement
+            . mb_substr($string, $actualEnd, null, 'UTF-8');
     }
 
     /**
@@ -2305,6 +2655,29 @@ class Strings extends StaticClass
     }
 
     /**
+     * Converts every word in a string to Title Case.
+     *
+     * Multibyte-safe: uses `mb_convert_case()` with `MB_CASE_TITLE` and UTF-8 encoding.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::title('hello world'); // 'Hello World'
+     * Strings::title('HELLO WORLD'); // 'Hello World'
+     * ```
+     *
+     * @param string $string The input string to convert
+     * @return string The title-cased string
+     * @see Strings::capitalize()
+     * @see Strings::upper()
+     */
+    public static function title(string $string): string
+    {
+        return mb_convert_case($string, MB_CASE_TITLE, 'UTF-8');
+    }
+
+    /**
      * Converts a string to an array of individual characters.
      *
      * Returns an empty array for an empty string. Each element of the returned array
@@ -2336,26 +2709,22 @@ class Strings extends StaticClass
     }
 
     /**
-     * Converts every word in a string to Title Case.
-     *
-     * Multibyte-safe: uses `mb_convert_case()` with `MB_CASE_TITLE` and UTF-8 encoding.
+     * Encodes a string to its Base64 representation.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::title('hello world'); // 'Hello World'
-     * Strings::title('HELLO WORLD'); // 'Hello World'
+     * Strings::toBase64('hello'); // 'aGVsbG8='
      * ```
      *
-     * @param string $string The input string to convert
-     * @return string The title-cased string
-     * @see Strings::capitalize()
-     * @see Strings::upper()
+     * @param string $string The input string to encode
+     * @return string The Base64-encoded string
+     * @see Strings::fromBase64()
      */
-    public static function title(string $string): string
+    public static function toBase64(string $string): string
     {
-        return mb_convert_case($string, MB_CASE_TITLE, 'UTF-8');
+        return base64_encode($string);
     }
 
     /**
@@ -2597,6 +2966,48 @@ class Strings extends StaticClass
     }
 
     /**
+     * Extracts the words from a string into an array.
+     *
+     * A word is any sequence of Unicode letters, numbers, and apostrophes. Returns an
+     * empty array for blank strings. When `$limit` is non-negative, only the first
+     * `$limit` words are returned, and `$end` is appended as a final element if provided.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::words("hello world"); // ['hello', 'world']
+     * Strings::words("it's a test", 2, '…'); // ['it\'s', 'a', '…']
+     * ```
+     *
+     * @param string $string The input string to extract words from
+     * @param int $limit Maximum number of words to return, -1 = no limit (default: -1)
+     * @param string $end String appended after the word list when limited (default: '')
+     * @return array Array of word strings, indexed sequentially from zero
+     * @see Strings::wordCount()
+     * @see Strings::split()
+     */
+    public static function words(string $string, int $limit = -1, string $end = ''): array
+    {
+        if (self::isBlank($string)) {
+            return [];
+        }
+
+        preg_match_all('/[\p{L}\p{N}\']+/u', $string, $matches);
+        $words = $matches[0];
+
+        if ($limit >= 0 && count($words) > $limit) {
+            $words = array_slice($words, 0, $limit);
+        }
+
+        if ($end !== '' && $limit >= 0) {
+            $words[] = $end;
+        }
+
+        return $words;
+    }
+
+    /**
      * Wraps a string at a given number of characters, inserting a break string.
      *
      * Delegates to PHP's native `wordwrap()`. When `$cutLongWords` is true, words
@@ -2681,48 +3092,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Extracts the words from a string into an array.
-     *
-     * A word is any sequence of Unicode letters, numbers, and apostrophes. Returns an
-     * empty array for blank strings. When `$limit` is non-negative, only the first
-     * `$limit` words are returned, and `$end` is appended as a final element if provided.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::words("hello world"); // ['hello', 'world']
-     * Strings::words("it's a test", 2, '…'); // ['it\'s', 'a', '…']
-     * ```
-     *
-     * @param string $string The input string to extract words from
-     * @param int $limit Maximum number of words to return, -1 = no limit (default: -1)
-     * @param string $end String appended after the word list when limited (default: '')
-     * @return array Array of word strings, indexed sequentially from zero
-     * @see Strings::wordCount()
-     * @see Strings::split()
-     */
-    public static function words(string $string, int $limit = -1, string $end = ''): array
-    {
-        if (self::isBlank($string)) {
-            return [];
-        }
-
-        preg_match_all('/[\p{L}\p{N}\']+/u', $string, $matches);
-        $words = $matches[0];
-
-        if ($limit >= 0 && count($words) > $limit) {
-            $words = array_slice($words, 0, $limit);
-        }
-
-        if ($end !== '' && $limit >= 0) {
-            $words[] = $end;
-        }
-
-        return $words;
-    }
-
-    /**
      * Wraps a string with a given wrapper string on both sides.
      *
      * Example:
@@ -2741,371 +3110,6 @@ class Strings extends StaticClass
     public static function wrap(string $string, string $wrapper): string
     {
         return $wrapper . $string . $wrapper;
-    }
-
-    /**
-     * Censors all occurrences of banned words in a string by replacing them with a substitution.
-     *
-     * Matching is case-insensitive. Each matched word is replaced with `$replacement` in full,
-     * regardless of the matched word's length. The string is returned unchanged when `$bannedWords`
-     * is empty.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::censor('This is bad and awful', ['bad', 'awful']); // 'This is *** and ***'
-     * Strings::censor('BAD language', ['bad'], '####'); // '#### language'
-     * ```
-     *
-     * @param string $string The input string to censor
-     * @param array $bannedWords List of word strings to replace
-     * @param string $replacement The string to substitute for each matched word (default: '***')
-     * @return string The censored string
-     * @see Strings::replace()
-     */
-    public static function censor(string $string, array $bannedWords, string $replacement = '***'): string
-    {
-        if (empty($bannedWords)) {
-            return $string;
-        }
-
-        $pattern = '/\b(?:' . implode('|', array_map(
-            static fn (string $word): string => preg_quote($word, '/'),
-            $bannedWords
-        )) . ')\b/iu';
-
-        return preg_replace($pattern, $replacement, $string) ?? $string;
-    }
-
-    /**
-     * Fixes invalid UTF-8 byte sequences in a string.
-     *
-     * Removes or replaces any byte sequences that are not valid UTF-8. The result is
-     * guaranteed to be valid UTF-8.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::fixEncoding("hello\xc0world"); // 'helloworld' (invalid byte removed)
-     * Strings::fixEncoding('valid utf-8 ñoño'); // 'valid utf-8 ñoño'
-     * ```
-     *
-     * @param string $string The input string that may contain invalid UTF-8 sequences
-     * @return string A valid UTF-8 string with invalid byte sequences removed
-     */
-    public static function fixEncoding(string $string): string
-    {
-        return mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-    }
-
-    /**
-     * Encodes a string to its Base64 representation.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::toBase64('hello'); // 'aGVsbG8='
-     * ```
-     *
-     * @param string $string The input string to encode
-     * @return string The Base64-encoded string
-     * @see Strings::fromBase64()
-     */
-    public static function toBase64(string $string): string
-    {
-        return base64_encode($string);
-    }
-
-    /**
-     * Decodes a Base64-encoded string.
-     *
-     * Returns an empty string when the input is not valid Base64.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::fromBase64('aGVsbG8='); // 'hello'
-     * Strings::fromBase64('not-base64!!!'); // ''
-     * ```
-     *
-     * @param string $string The Base64-encoded string to decode
-     * @return string The decoded string, or an empty string when decoding fails
-     * @see Strings::toBase64()
-     */
-    public static function fromBase64(string $string): string
-    {
-        $decoded = base64_decode($string, true);
-
-        return $decoded === false ? '' : $decoded;
-    }
-
-    /**
-     * Highlights all occurrences of a phrase within a string by wrapping them in tags.
-     *
-     * Matching is case-insensitive. The original casing of the matched text is preserved
-     * inside the tags. Returns the string unchanged when `$phrase` is empty.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::highlight('The quick brown fox', 'quick'); // 'The <mark>quick</mark> brown fox'
-     * Strings::highlight('Hello World', 'world', '<b>', '</b>'); // 'Hello <b>World</b>'
-     * ```
-     *
-     * @param string $string The input string to search within
-     * @param string $phrase The phrase to highlight
-     * @param string $tagOpen The opening tag to insert before each match (default: '<mark>')
-     * @param string $tagClose The closing tag to insert after each match (default: '</mark>')
-     * @return string The string with all occurrences of `$phrase` wrapped in the given tags
-     * @see Strings::replace()
-     */
-    public static function highlight(string $string, string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): string
-    {
-        if ($phrase === '') {
-            return $string;
-        }
-
-        $pattern = '/' . preg_quote($phrase, '/') . '/iu';
-
-        return preg_replace($pattern, $tagOpen . '$0' . $tagClose, $string) ?? $string;
-    }
-
-    /**
-     * Adds indentation to each line of a string.
-     *
-     * Prepends `$indentChar` repeated `$level` times to every line. A line is defined
-     * as any sequence ending with `\n`. Throws when `$level` is negative.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::indent("line1\nline2"); // "\tline1\n\tline2"
-     * Strings::indent("line1\nline2", 2); // "\t\tline1\n\t\tline2"
-     * Strings::indent("line1\nline2", 1, '  '); // "  line1\n  line2"
-     * ```
-     *
-     * @param string $string The input string to indent
-     * @param int $level The number of times to repeat the indent character; must be zero or greater (default: 1)
-     * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
-     * @return string The indented string
-     * @throws InvalidArgumentException When `$level` is negative
-     */
-    public static function indent(string $string, int $level = 1, string $indentChar = "\t"): string
-    {
-        if ($level < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Indent level must be zero or greater"
-            );
-        }
-
-        if ($level === 0 || $string === '') {
-            return $string;
-        }
-
-        $prefix = str_repeat($indentChar, $level);
-
-        return $prefix . str_replace("\n", "\n" . $prefix, $string);
-    }
-
-    /**
-     * Determines whether a string is a valid ULID (Universally Unique Lexicographically Sortable Identifier).
-     *
-     * A ULID is 26 characters long and uses Crockford's Base32 character set (0-9 and A-Z
-     * excluding I, L, O, U). Matching is case-insensitive.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::isUlid('01ARZ3NDEKTSV4RRFFQ69G5FAV'); // true
-     * Strings::isUlid('not-a-ulid'); // false
-     * ```
-     *
-     * @param string $string The input string to validate
-     * @return bool True when the string is a valid ULID
-     * @see Strings::isUuid()
-     */
-    public static function isUlid(string $string): bool
-    {
-        return (bool) preg_match('/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/i', $string);
-    }
-
-    /**
-     * Normalizes line endings to Unix-style `\n`.
-     *
-     * Converts Windows-style `\r\n` and old Mac-style `\r` to `\n`. The string is
-     * returned unchanged when it contains no line endings.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::normalizeNewLines("line1\r\nline2\rline3"); // "line1\nline2\nline3"
-     * ```
-     *
-     * @param string $string The input string whose line endings are to be normalized
-     * @return string The string with all line endings replaced by `\n`
-     */
-    public static function normalizeNewLines(string $string): string
-    {
-        return str_replace(["\r\n", "\r"], "\n", $string);
-    }
-
-    /**
-     * Replaces successive occurrences of a search value using values from an array.
-     *
-     * Each time `$search` is found, it is replaced with the next value from `$replacements`.
-     * When the replacements array is exhausted, remaining occurrences are replaced with an
-     * empty string. Returns the string unchanged when `$search` is empty or `$replacements`
-     * is empty.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::replaceArray('?', ['2026', 'April'], 'Year: ?, Month: ?'); // 'Year: 2026, Month: April'
-     * ```
-     *
-     * @param string $search The value to search for
-     * @param array $replacements Ordered list of string replacement values
-     * @param string $string The input string to perform replacements on
-     * @return string The string with successive occurrences replaced
-     * @see Strings::replace()
-     */
-    public static function replaceArray(string $search, array $replacements, string $string): string
-    {
-        if ($search === '' || empty($replacements)) {
-            return $string;
-        }
-
-        foreach ($replacements as $replacement) {
-            $position = strpos($string, $search);
-
-            if ($position === false) {
-                break;
-            }
-
-            $string = substr_replace($string, (string) $replacement, $position, strlen($search));
-        }
-
-        return $string;
-    }
-
-    /**
-     * Replaces a portion of a string starting at a given character position.
-     *
-     * When `$length` is null, replaces from `$position` to the end of the string.
-     * A negative `$position` counts from the end of the string. A negative `$length`
-     * stops that many characters before the end of the string.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::replaceAt('hello world', 'PHP', 6); // 'hello PHP'
-     * Strings::replaceAt('hello world', 'PHP', 6, 5); // 'hello PHP'
-     * Strings::replaceAt('hello world', '', 5, 6); // 'hello'
-     * ```
-     *
-     * @param string $string The input string to modify
-     * @param string $replacement The text to insert at the given position
-     * @param int $position The character index at which to begin replacement (negative counts from end)
-     * @param int|null $length The number of characters to replace (null replaces to end of string)
-     * @return string The modified string
-     * @see Strings::insert()
-     * @see Strings::slice()
-     */
-    public static function replaceAt(string $string, string $replacement, int $position, ?int $length = null): string
-    {
-        $stringLength = mb_strlen($string, 'UTF-8');
-        $actualStart = $position < 0 ? max(0, $stringLength + $position) : min($position, $stringLength);
-
-        if ($length === null) {
-            return mb_substr($string, 0, $actualStart, 'UTF-8') . $replacement;
-        }
-
-        $actualEnd = $length < 0
-            ? max($actualStart, $stringLength + $length)
-            : $actualStart + $length;
-
-        return mb_substr($string, 0, $actualStart, 'UTF-8')
-            . $replacement
-            . mb_substr($string, $actualEnd, null, 'UTF-8');
-    }
-
-    /**
-     * Creates a fluent wrapper around the given string for method chaining.
-     *
-     * Returns a `Type\Strings` instance that wraps the provided string value and
-     * exposes every string-returning method as a chainable call.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * $result = Strings::of('  hello world  ')
-     *     ->trim()
-     *     ->upper()
-     *     ->get();
-     * // 'HELLO WORLD'
-     * ```
-     *
-     * @param string $string The string to wrap for fluent operations
-     * @return Type\Strings A fluent wrapper instance that enables method chaining
-     * @see \Phuture\Coherence\Type\Strings For the fluent wrapper implementation
-     */
-    public static function of(string $string): Type\Strings
-    {
-        return new Type\Strings($string);
-    }
-
-    /**
-     * Generates an ASCII art representation of the given text using a block font.
-     *
-     * Renders each character of `$text` as a 5-row tall block-style ASCII art figure.
-     * Supports uppercase and lowercase letters A–Z (normalised to uppercase), digits 0–9,
-     * and common punctuation. Unsupported characters are rendered as blank columns.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * echo Strings::asciiArt('Hi');
-     * // #    # ######
-     * // #    #   ##
-     * // ######   ##
-     * // #    #   ##
-     * // #    # ######
-     * ```
-     *
-     * @param string $text The text to render as ASCII art
-     * @param string $font The font name to use — currently only 'block' is supported
-     * @return string The multi-line ASCII art string
-     */
-    public static function asciiArt(string $text, string $font = 'block'): string
-    {
-        $fontMap = self::getAsciiFontMap($font);
-        $text = mb_strtoupper($text, 'UTF-8');
-        $chars = mb_str_split($text, 1, 'UTF-8');
-
-        $rows = 5;
-        $lines = array_fill(0, $rows, '');
-
-        foreach ($chars as $char) {
-            $charData = $fontMap[$char] ?? $fontMap[' '];
-
-            for ($i = 0; $i < $rows; $i++) {
-                $lines[$i] .= ($lines[$i] !== '' ? ' ' : '') . $charData[$i];
-            }
-        }
-
-        return implode("\n", $lines);
     }
 
     /**

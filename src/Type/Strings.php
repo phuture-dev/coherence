@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Type;
 
-use Phuture\Coherence\Interface\Stringable;
 use Phuture\Coherence\Support\FluentClass;
+use Phuture\Coherence\Interface\Stringable;
 use Phuture\Coherence\Strings as Transformer;
 
 /**
@@ -45,16 +45,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Converts the wrapped value to a string.
-     *
-     * @return string The wrapped string value
-     */
-    public function toString(): string
-    {
-        return (string) $this->data;
-    }
-
-    /**
      * Returns the portion of the string after the first occurrence of a search value.
      *
      * @param string $search The value to search for
@@ -78,6 +68,20 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function afterLast(string $search): self
     {
         $this->data = Transformer::afterLast((string) $this->data, $search);
+
+        return $this;
+    }
+
+    /**
+     * Transliterates the string to its ASCII representation.
+     *
+     * @param string $language The language code for locale-specific rules (default: 'en')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::ascii()
+     */
+    public function ascii(string $language = 'en'): self
+    {
+        $this->data = Transformer::ascii((string) $this->data, $language);
 
         return $this;
     }
@@ -126,77 +130,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Returns the character at the given index position.
-     *
-     * @param int $index The zero-based character index (negative counts from the end)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::charAt()
-     */
-    public function charAt(int $index): self
-    {
-        $this->data = Transformer::charAt((string) $this->data, $index);
-
-        return $this;
-    }
-
-    /**
-     * Returns the first N characters of the string.
-     *
-     * @param int $count The number of characters to return (default: 1)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::first()
-     */
-    public function first(int $count = 1): self
-    {
-        $this->data = Transformer::first((string) $this->data, $count);
-
-        return $this;
-    }
-
-    /**
-     * Returns the last N characters of the string.
-     *
-     * @param int $count The number of characters to return (default: 1)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::last()
-     */
-    public function last(int $count = 1): self
-    {
-        $this->data = Transformer::last((string) $this->data, $count);
-
-        return $this;
-    }
-
-    /**
-     * Extracts a portion of the string by start position and optional length.
-     *
-     * @param int $start The starting position (negative counts from the end)
-     * @param int|null $length The number of characters to return (null returns to the end)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::slice()
-     */
-    public function slice(int $start, ?int $length = null): self
-    {
-        $this->data = Transformer::slice((string) $this->data, $start, $length);
-
-        return $this;
-    }
-
-    /**
-     * Returns the first or last N characters based on the sign of count.
-     *
-     * @param int $count Positive returns first N; negative returns last N characters
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::take()
-     */
-    public function take(int $count): self
-    {
-        $this->data = Transformer::take((string) $this->data, $count);
-
-        return $this;
-    }
-
-    /**
      * Converts the string to camelCase.
      *
      * @return self Returns the current instance for method chaining
@@ -223,6 +156,119 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Censors all occurrences of banned words by replacing them with a substitution.
+     *
+     * @param array $bannedWords List of word strings to replace; each element must be a string
+     * @param string $replacement The string to substitute for each matched word (default: '***')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::censor()
+     */
+    public function censor(array $bannedWords, string $replacement = '***'): self
+    {
+        $this->data = Transformer::censor((string) $this->data, $bannedWords, $replacement);
+
+        return $this;
+    }
+
+    /**
+     * Returns the character at the given index position.
+     *
+     * @param int $index The zero-based character index (negative counts from the end)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::charAt()
+     */
+    public function charAt(int $index): self
+    {
+        $this->data = Transformer::charAt((string) $this->data, $index);
+
+        return $this;
+    }
+
+    /**
+     * Collapses consecutive duplicate occurrences of a character.
+     *
+     * @param string $character The character to collapse (default: space)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::dedupe()
+     */
+    public function dedupe(string $character = ' '): self
+    {
+        $this->data = Transformer::dedupe((string) $this->data, $character);
+
+        return $this;
+    }
+
+    /**
+     * Extracts a contextual excerpt of the string around a given phrase.
+     *
+     * @param string $phrase The phrase to centre the excerpt around
+     * @param int $radius The number of characters to include on each side (default: 100)
+     * @param string $omission The string to append at truncated ends (default: '...')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::excerpt()
+     */
+    public function excerpt(string $phrase, int $radius = 100, string $omission = '...'): self
+    {
+        $this->data = Transformer::excerpt((string) $this->data, $phrase, $radius, $omission);
+
+        return $this;
+    }
+
+    /**
+     * Ensures the string ends with exactly one occurrence of the given suffix.
+     *
+     * @param string $suffix The suffix to ensure is present exactly once
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::finish()
+     */
+    public function finish(string $suffix): self
+    {
+        $this->data = Transformer::finish((string) $this->data, $suffix);
+
+        return $this;
+    }
+
+    /**
+     * Returns the first N characters of the string.
+     *
+     * @param int $count The number of characters to return (default: 1)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::first()
+     */
+    public function first(int $count = 1): self
+    {
+        $this->data = Transformer::first((string) $this->data, $count);
+
+        return $this;
+    }
+
+    /**
+     * Fixes invalid UTF-8 byte sequences in the string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::fixEncoding()
+     */
+    public function fixEncoding(): self
+    {
+        $this->data = Transformer::fixEncoding((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Decodes a Base64-encoded string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::fromBase64()
+     */
+    public function fromBase64(): self
+    {
+        $this->data = Transformer::fromBase64((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Converts the string to a human-readable headline format.
      *
      * @return self Returns the current instance for method chaining
@@ -236,6 +282,52 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Highlights all occurrences of a phrase by wrapping them in tags.
+     *
+     * @param string $phrase The phrase to highlight
+     * @param string $tagOpen The opening tag (default: '<mark>')
+     * @param string $tagClose The closing tag (default: '</mark>')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::highlight()
+     */
+    public function highlight(string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): self
+    {
+        $this->data = Transformer::highlight((string) $this->data, $phrase, $tagOpen, $tagClose);
+
+        return $this;
+    }
+
+    /**
+     * Adds indentation to each line of the string.
+     *
+     * @param int $level The number of times to repeat the indent character (default: 1)
+     * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::indent()
+     */
+    public function indent(int $level = 1, string $indentChar = "\t"): self
+    {
+        $this->data = Transformer::indent((string) $this->data, $level, $indentChar);
+
+        return $this;
+    }
+
+    /**
+     * Inserts a substring into the string at the given index position.
+     *
+     * @param string $substring The substring to insert
+     * @param int $index The zero-based position to insert at (negative counts from the end)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::insert()
+     */
+    public function insert(string $substring, int $index): self
+    {
+        $this->data = Transformer::insert((string) $this->data, $substring, $index);
+
+        return $this;
+    }
+
+    /**
      * Converts the string to kebab-case.
      *
      * @return self Returns the current instance for method chaining
@@ -244,6 +336,35 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function kebab(): self
     {
         $this->data = Transformer::kebab((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Returns the last N characters of the string.
+     *
+     * @param int $count The number of characters to return (default: 1)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::last()
+     */
+    public function last(int $count = 1): self
+    {
+        $this->data = Transformer::last((string) $this->data, $count);
+
+        return $this;
+    }
+
+    /**
+     * Limits the string to a given number of characters, appending an omission marker.
+     *
+     * @param int $limit The maximum number of characters before truncation
+     * @param string $end The string to append after truncation (default: '...')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::limit()
+     */
+    public function limit(int $limit, string $end = '...'): self
+    {
+        $this->data = Transformer::limit((string) $this->data, $limit, $end);
 
         return $this;
     }
@@ -275,102 +396,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Converts the string to PascalCase (StudlyCase).
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::pascal()
-     */
-    public function pascal(): self
-    {
-        $this->data = Transformer::pascal((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Converts the string to snake_case with a configurable delimiter.
-     *
-     * @param string $delimiter The word separator character (default: '_')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::snake()
-     */
-    public function snake(string $delimiter = '_'): self
-    {
-        $this->data = Transformer::snake((string) $this->data, $delimiter);
-
-        return $this;
-    }
-
-    /**
-     * Converts every word in the string to Title Case.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::title()
-     */
-    public function title(): self
-    {
-        $this->data = Transformer::title((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Converts the string to uppercase.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::upper()
-     */
-    public function upper(): self
-    {
-        $this->data = Transformer::upper((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Collapses consecutive duplicate occurrences of a character.
-     *
-     * @param string $character The character to collapse (default: space)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::dedupe()
-     */
-    public function dedupe(string $character = ' '): self
-    {
-        $this->data = Transformer::dedupe((string) $this->data, $character);
-
-        return $this;
-    }
-
-    /**
-     * Ensures the string ends with exactly one occurrence of the given suffix.
-     *
-     * @param string $suffix The suffix to ensure is present exactly once
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::finish()
-     */
-    public function finish(string $suffix): self
-    {
-        $this->data = Transformer::finish((string) $this->data, $suffix);
-
-        return $this;
-    }
-
-    /**
-     * Inserts a substring into the string at the given index position.
-     *
-     * @param string $substring The substring to insert
-     * @param int $index The zero-based position to insert at (negative counts from the end)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::insert()
-     */
-    public function insert(string $substring, int $index): self
-    {
-        $this->data = Transformer::insert((string) $this->data, $substring, $index);
-
-        return $this;
-    }
-
-    /**
      * Masks a portion of the string with a repeated mask character.
      *
      * @param string $mask The mask character to use (default: '*')
@@ -382,6 +407,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function mask(string $mask = '*', int $offset = 0, ?int $length = null): self
     {
         $this->data = Transformer::mask((string) $this->data, $mask, $offset, $length);
+
+        return $this;
+    }
+
+    /**
+     * Normalizes line endings to Unix-style `\n`.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::normalizeNewLines()
+     */
+    public function normalizeNewLines(): self
+    {
+        $this->data = Transformer::normalizeNewLines((string) $this->data);
 
         return $this;
     }
@@ -448,6 +486,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Converts the string to PascalCase (StudlyCase).
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::pascal()
+     */
+    public function pascal(): self
+    {
+        $this->data = Transformer::pascal((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Removes all occurrences of a search value from the string.
      *
      * @param string $search The value to remove
@@ -488,6 +539,37 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function replace(string $search, string $replace, bool $caseSensitive = true): self
     {
         $this->data = Transformer::replace((string) $this->data, $search, $replace, $caseSensitive);
+
+        return $this;
+    }
+
+    /**
+     * Replaces successive occurrences of a search value using values from an array.
+     *
+     * @param string $search The value to search for
+     * @param array $replacements Ordered list of string replacement values
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::replaceArray()
+     */
+    public function replaceArray(string $search, array $replacements): self
+    {
+        $this->data = Transformer::replaceArray($search, $replacements, (string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Replaces a portion of the string starting at a given character position.
+     *
+     * @param string $replacement The text to insert at the given position
+     * @param int $position The character index at which to begin replacement (negative counts from end)
+     * @param int|null $length The number of characters to replace (null replaces to end of string)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::replaceAt()
+     */
+    public function replaceAt(string $replacement, int $position, ?int $length = null): self
+    {
+        $this->data = Transformer::replaceAt((string) $this->data, $replacement, $position, $length);
 
         return $this;
     }
@@ -549,6 +631,21 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Extracts a portion of the string by start position and optional length.
+     *
+     * @param int $start The starting position (negative counts from the end)
+     * @param int|null $length The number of characters to return (null returns to the end)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::slice()
+     */
+    public function slice(int $start, ?int $length = null): self
+    {
+        $this->data = Transformer::slice((string) $this->data, $start, $length);
+
+        return $this;
+    }
+
+    /**
      * Generates a URL-friendly slug from the string.
      *
      * @param string $separator The separator character between words (default: '-')
@@ -559,6 +656,20 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function slug(string $separator = '-', string $language = 'en'): self
     {
         $this->data = Transformer::slug((string) $this->data, $separator, $language);
+
+        return $this;
+    }
+
+    /**
+     * Converts the string to snake_case with a configurable delimiter.
+     *
+     * @param string $delimiter The word separator character (default: '_')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::snake()
+     */
+    public function snake(string $delimiter = '_'): self
+    {
+        $this->data = Transformer::snake((string) $this->data, $delimiter);
 
         return $this;
     }
@@ -607,7 +718,8 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Performs multiple simultaneous search-and-replace operations.
      *
-     * @param array $replacements An associative array where each key is the text to find and each value is the text to substitute
+     * @param array $replacements An associative array where each key is the text to find
+     *                             and each value is the text to substitute
      * @return self Returns the current instance for method chaining
      * @see Transformer::swap()
      */
@@ -616,6 +728,56 @@ class Strings extends FluentClass implements Stringable, \Stringable
         $this->data = Transformer::swap((string) $this->data, $replacements);
 
         return $this;
+    }
+
+    /**
+     * Returns the first or last N characters based on the sign of count.
+     *
+     * @param int $count Positive returns first N; negative returns last N characters
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::take()
+     */
+    public function take(int $count): self
+    {
+        $this->data = Transformer::take((string) $this->data, $count);
+
+        return $this;
+    }
+
+    /**
+     * Converts every word in the string to Title Case.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::title()
+     */
+    public function title(): self
+    {
+        $this->data = Transformer::title((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Encodes the string to its Base64 representation.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::toBase64()
+     */
+    public function toBase64(): self
+    {
+        $this->data = Transformer::toBase64((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Converts the wrapped value to a string.
+     *
+     * @return string The wrapped string value
+     */
+    public function toString(): string
+    {
+        return (string) $this->data;
     }
 
     /**
@@ -690,46 +852,14 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Wraps the string with a given wrapper string on both sides.
+     * Converts the string to uppercase.
      *
-     * @param string $wrapper The string to prepend and append
      * @return self Returns the current instance for method chaining
-     * @see Transformer::wrap()
+     * @see Transformer::upper()
      */
-    public function wrap(string $wrapper): self
+    public function upper(): self
     {
-        $this->data = Transformer::wrap((string) $this->data, $wrapper);
-
-        return $this;
-    }
-
-    /**
-     * Extracts a contextual excerpt of the string around a given phrase.
-     *
-     * @param string $phrase The phrase to centre the excerpt around
-     * @param int $radius The number of characters to include on each side (default: 100)
-     * @param string $omission The string to append at truncated ends (default: '...')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::excerpt()
-     */
-    public function excerpt(string $phrase, int $radius = 100, string $omission = '...'): self
-    {
-        $this->data = Transformer::excerpt((string) $this->data, $phrase, $radius, $omission);
-
-        return $this;
-    }
-
-    /**
-     * Limits the string to a given number of characters, appending an omission marker.
-     *
-     * @param int $limit The maximum number of characters before truncation
-     * @param string $end The string to append after truncation (default: '...')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::limit()
-     */
-    public function limit(int $limit, string $end = '...'): self
-    {
-        $this->data = Transformer::limit((string) $this->data, $limit, $end);
+        $this->data = Transformer::upper((string) $this->data);
 
         return $this;
     }
@@ -751,144 +881,15 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Transliterates the string to its ASCII representation.
+     * Wraps the string with a given wrapper string on both sides.
      *
-     * @param string $language The language code for locale-specific rules (default: 'en')
+     * @param string $wrapper The string to prepend and append
      * @return self Returns the current instance for method chaining
-     * @see Transformer::ascii()
+     * @see Transformer::wrap()
      */
-    public function ascii(string $language = 'en'): self
+    public function wrap(string $wrapper): self
     {
-        $this->data = Transformer::ascii((string) $this->data, $language);
-
-        return $this;
-    }
-
-    /**
-     * Censors all occurrences of banned words by replacing them with a substitution.
-     *
-     * @param array $bannedWords List of word strings to replace; each element must be a string
-     * @param string $replacement The string to substitute for each matched word (default: '***')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::censor()
-     */
-    public function censor(array $bannedWords, string $replacement = '***'): self
-    {
-        $this->data = Transformer::censor((string) $this->data, $bannedWords, $replacement);
-
-        return $this;
-    }
-
-    /**
-     * Fixes invalid UTF-8 byte sequences in the string.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::fixEncoding()
-     */
-    public function fixEncoding(): self
-    {
-        $this->data = Transformer::fixEncoding((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Encodes the string to its Base64 representation.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::toBase64()
-     */
-    public function toBase64(): self
-    {
-        $this->data = Transformer::toBase64((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Decodes a Base64-encoded string.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::fromBase64()
-     */
-    public function fromBase64(): self
-    {
-        $this->data = Transformer::fromBase64((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Highlights all occurrences of a phrase by wrapping them in tags.
-     *
-     * @param string $phrase The phrase to highlight
-     * @param string $tagOpen The opening tag (default: '<mark>')
-     * @param string $tagClose The closing tag (default: '</mark>')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::highlight()
-     */
-    public function highlight(string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): self
-    {
-        $this->data = Transformer::highlight((string) $this->data, $phrase, $tagOpen, $tagClose);
-
-        return $this;
-    }
-
-    /**
-     * Adds indentation to each line of the string.
-     *
-     * @param int $level The number of times to repeat the indent character (default: 1)
-     * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::indent()
-     */
-    public function indent(int $level = 1, string $indentChar = "\t"): self
-    {
-        $this->data = Transformer::indent((string) $this->data, $level, $indentChar);
-
-        return $this;
-    }
-
-    /**
-     * Normalizes line endings to Unix-style `\n`.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::normalizeNewLines()
-     */
-    public function normalizeNewLines(): self
-    {
-        $this->data = Transformer::normalizeNewLines((string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Replaces successive occurrences of a search value using values from an array.
-     *
-     * @param string $search The value to search for
-     * @param array $replacements Ordered list of string replacement values
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::replaceArray()
-     */
-    public function replaceArray(string $search, array $replacements): self
-    {
-        $this->data = Transformer::replaceArray($search, $replacements, (string) $this->data);
-
-        return $this;
-    }
-
-    /**
-     * Replaces a portion of the string starting at a given character position.
-     *
-     * @param string $replacement The text to insert at the given position
-     * @param int $position The character index at which to begin replacement (negative counts from end)
-     * @param int|null $length The number of characters to replace (null replaces to end of string)
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::replaceAt()
-     */
-    public function replaceAt(string $replacement, int $position, ?int $length = null): self
-    {
-        $this->data = Transformer::replaceAt((string) $this->data, $replacement, $position, $length);
+        $this->data = Transformer::wrap((string) $this->data, $wrapper);
 
         return $this;
     }

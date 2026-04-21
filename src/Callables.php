@@ -7,6 +7,7 @@ namespace Phuture\Coherence;
 use Closure;
 use Throwable;
 use RuntimeException;
+use ReflectionFunction;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\ReflectionException;
 
@@ -416,7 +417,7 @@ class Callables extends StaticClass
      * @throws RuntimeException When unable to determine function arity automatically
      * @see Reflector::arity()
      */
-    public static function curry(callable $callback, int $arity = null): Closure
+    public static function curry(callable $callback, ?int $arity = null): Closure
     {
         try {
             if ($arity === null) {
@@ -1092,7 +1093,7 @@ class Callables extends StaticClass
         $calls = &self::$calls[serialize($callback)];
 
         return function (...$args) use ($callback, &$calls, $maxAttempts, $milliseconds) {
-            $now = (int) (microtime() / 1000);
+            $now = (int) (microtime(true) * 1000);
 
             // Clear old calls
             $calls = array_filter($calls, fn ($time) => $time > $now - $milliseconds);
@@ -1419,7 +1420,7 @@ class Callables extends StaticClass
      */
     public static function toCallable(Closure $callback): callable|array
     {
-        $reflection = new \ReflectionFunction($callback);
+        $reflection = new ReflectionFunction($callback);
         $scopeClass = $reflection->getClosureScopeClass()?->name;
         if (str_ends_with($reflection->name, '}')) {
             return $callback;
@@ -1490,11 +1491,17 @@ class Callables extends StaticClass
      */
     public static function toString(callable $callback): string
     {
-        if ($callback instanceof \Closure) {
+        if ($callback instanceof Closure) {
             $unwrappedCallable = static::toCallable($callback);
-            return '{closure' . ($unwrappedCallable instanceof \Closure ? '}' : ' ' . static::toString($unwrappedCallable) . '}');
+
+            $label = $unwrappedCallable instanceof Closure
+                ? '}'
+                : ' ' . static::toString($unwrappedCallable) . '}';
+
+            return '{closure' . $label;
         } else {
             is_callable(is_object($callback) ? [$callback, '__invoke'] : $callback, true, $callableString);
+
             return $callableString;
         }
     }

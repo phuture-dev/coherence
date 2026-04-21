@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
-use Phuture\Coherence\Exception\MemberAccessException;
-use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.
@@ -38,6 +37,7 @@ use Phuture\Coherence\Exception\SerializationException;
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
+ * @phpstan-consistent-constructor
  */
 abstract class SingletonClass
 {
@@ -46,13 +46,43 @@ abstract class SingletonClass
      *
      * @var static|null
      */
-    private static ?SingletonClass $instance = null;
+    protected static ?SingletonClass $instance = null;
 
     /**
      * Class is static and cannot be instantiated.
      */
     private function __construct()
     {
+    }
+
+    /**
+     * Handle calls to undefined instance methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public function __call(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
+    }
+
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 
     /**
@@ -107,35 +137,5 @@ abstract class SingletonClass
         }
 
         return static::$instance;
-    }
-
-    /**
-     * Handle calls to undefined instance methods.
-     *
-     * @param string $name The name of the method being called
-     * @param array $arguments Enumerated array containing the parameters passed to the method
-     * @return mixed
-     * @throws MemberAccessException
-     */
-    public function __call(string $name, array $arguments): mixed
-    {
-        throw new MemberAccessException(
-            sprintf('Call to undefined method %s::%s()', static::class, $name)
-        );
-    }
-
-    /**
-     * Handle calls to undefined static methods.
-     *
-     * @param string $name The name of the method being called
-     * @param array $arguments Enumerated array containing the parameters passed to the method
-     * @return mixed
-     * @throws MemberAccessException
-     */
-    public static function __callStatic(string $name, array $arguments): mixed
-    {
-        throw new MemberAccessException(
-            sprintf('Call to undefined method %s::%s()', static::class, $name)
-        );
     }
 }

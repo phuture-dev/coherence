@@ -54,6 +54,7 @@ use Phuture\Coherence\Exception\MemberAccessException;
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
+ * @phpstan-consistent-constructor
  */
 abstract class FluentClass
 {
@@ -72,6 +73,36 @@ abstract class FluentClass
     public function __construct(mixed $data = null)
     {
         $this->data = $data;
+    }
+
+    /**
+     * Handle calls to undefined instance methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public function __call(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
+    }
+
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 
     /**
@@ -123,35 +154,5 @@ abstract class FluentClass
     public function get(): mixed
     {
         return $this->data;
-    }
-
-    /**
-     * Handle calls to undefined instance methods.
-     *
-     * @param string $name The name of the method being called
-     * @param array $arguments Enumerated array containing the parameters passed to the method
-     * @return mixed
-     * @throws MemberAccessException
-     */
-    public function __call(string $name, array $arguments): mixed
-    {
-        throw new MemberAccessException(
-            sprintf('Call to undefined method %s::%s()', static::class, $name)
-        );
-    }
-
-    /**
-     * Handle calls to undefined static methods.
-     *
-     * @param string $name The name of the method being called
-     * @param array $arguments Enumerated array containing the parameters passed to the method
-     * @return mixed
-     * @throws MemberAccessException
-     */
-    public static function __callStatic(string $name, array $arguments): mixed
-    {
-        throw new MemberAccessException(
-            sprintf('Call to undefined method %s::%s()', static::class, $name)
-        );
     }
 }
