@@ -200,155 +200,177 @@ class DatesTest extends TestCase
         Assert::same('2026-04-21', Dates::format('2026-04-21 14:30:00', 'Y-m-d'));
     }
 
-    public function testFormatTokensYearTokens(): void
+    public function testFormatDayJsYearTokens(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
-        Assert::same('2026', Dates::formatTokens($date, 'YYYY'));
-        Assert::same('26', Dates::formatTokens($date, 'YY'));
+        Assert::same('2026', Dates::format($date, 'YYYY'));
+        Assert::same('26', Dates::format($date, 'YY'));
     }
 
-    public function testFormatTokensMonthTokens(): void
+    public function testFormatDayJsMonthTokens(): void
     {
         $date = Dates::parse('2026-01-21', 'UTC');
-        Assert::same('January', Dates::formatTokens($date, 'MMMM'));
-        Assert::same('Jan', Dates::formatTokens($date, 'MMM'));
-        Assert::same('01', Dates::formatTokens($date, 'MM'));
-        Assert::same('1', Dates::formatTokens($date, 'M'));
+        Assert::same('January', Dates::format($date, 'MMMM'));
+        Assert::same('Jan', Dates::format($date, 'MMM'));
+        Assert::same('01', Dates::format($date, 'MM'));
+        Assert::same('2026-1-21', Dates::format($date, 'YYYY-M-DD'));
     }
 
-    public function testFormatTokensDayOfMonthTokens(): void
+    public function testFormatDayJsDayOfMonthTokens(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
-        Assert::same('21', Dates::formatTokens($date, 'DD'));
-        Assert::same('21', Dates::formatTokens($date, 'D'));
+        Assert::same('21', Dates::format($date, 'DD'));
+        Assert::same('2026-04-21', Dates::format($date, 'YYYY-MM-D'));
 
         $singleDigit = Dates::parse('2026-04-05', 'UTC');
-        Assert::same('05', Dates::formatTokens($singleDigit, 'DD'));
-        Assert::same('5', Dates::formatTokens($singleDigit, 'D'));
+        Assert::same('05', Dates::format($singleDigit, 'DD'));
+        Assert::same('2026-04-5', Dates::format($singleDigit, 'YYYY-MM-D'));
     }
 
-    public function testFormatTokensDayOfWeekTokens(): void
+    public function testFormatDayJsDayOfWeekTokens(): void
     {
         $tuesday = Dates::parse('2026-04-21', 'UTC');
-        Assert::same('Tuesday', Dates::formatTokens($tuesday, 'dddd'));
-        Assert::same('Tue', Dates::formatTokens($tuesday, 'ddd'));
-        Assert::same('Tu', Dates::formatTokens($tuesday, 'dd'));
-        Assert::same('2', Dates::formatTokens($tuesday, 'd'));
+        Assert::same('Tuesday', Dates::format($tuesday, 'dddd'));
+        Assert::same('Tue', Dates::format($tuesday, 'ddd'));
+        Assert::same('Tu', Dates::format($tuesday, 'dd'));
+        Assert::same('2026-2', Dates::format($tuesday, 'YYYY-d'));
 
         $sunday = Dates::parse('2026-04-19', 'UTC');
-        Assert::same('Sunday', Dates::formatTokens($sunday, 'dddd'));
-        Assert::same('0', Dates::formatTokens($sunday, 'd'));
+        Assert::same('Sunday', Dates::format($sunday, 'dddd'));
+        Assert::same('2026-0', Dates::format($sunday, 'YYYY-d'));
     }
 
-    public function testFormatTokensHourTokens24(): void
+    public function testFormatDayJsHourTokens24(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('14', Dates::formatTokens($date, 'HH'));
-        Assert::same('14', Dates::formatTokens($date, 'H'));
+        Assert::same('14', Dates::format($date, 'HH'));
+        Assert::same('14:30', Dates::format($date, 'H:mm'));
 
         $midnight = Dates::parse('2026-04-21 00:30:00', 'UTC');
-        Assert::same('00', Dates::formatTokens($midnight, 'HH'));
-        Assert::same('0', Dates::formatTokens($midnight, 'H'));
+        Assert::same('00', Dates::format($midnight, 'HH'));
+        Assert::same('0:30', Dates::format($midnight, 'H:mm'));
     }
 
-    public function testFormatTokensHourTokens12(): void
+    public function testFormatDayJsHourTokens12(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('02', Dates::formatTokens($date, 'hh'));
-        Assert::same('2', Dates::formatTokens($date, 'h'));
+        Assert::same('02', Dates::format($date, 'hh'));
+        Assert::same('2:30', Dates::format($date, 'h:mm'));
 
         $noon = Dates::parse('2026-04-21 12:00:00', 'UTC');
-        Assert::same('12', Dates::formatTokens($noon, 'hh'));
+        Assert::same('12', Dates::format($noon, 'hh'));
     }
 
-    public function testFormatTokensMinuteTokens(): void
+    public function testFormatDayJsMinuteTokens(): void
     {
         $date = Dates::parse('2026-04-21 14:05:00', 'UTC');
-        Assert::same('05', Dates::formatTokens($date, 'mm'));
-        Assert::same('5', Dates::formatTokens($date, 'm'));
+        Assert::same('05', Dates::format($date, 'mm'));
+        Assert::same('14:5', Dates::format($date, 'HH:m'));
     }
 
-    public function testFormatTokensSecondTokens(): void
+    public function testFormatDayJsSecondTokens(): void
     {
         $date = Dates::parse('2026-04-21 14:30:07', 'UTC');
-        Assert::same('07', Dates::formatTokens($date, 'ss'));
-        Assert::same('7', Dates::formatTokens($date, 's'));
+        Assert::same('07', Dates::format($date, 'ss'));
+        Assert::same('30:7', Dates::format($date, 'mm:s'));
     }
 
-    public function testFormatTokensAmPmTokens(): void
+    public function testFormatDayJsAmPmTokens(): void
     {
         $pm = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('PM', Dates::formatTokens($pm, 'A'));
-        Assert::same('pm', Dates::formatTokens($pm, 'a'));
+        Assert::same('PM', Dates::format($pm, 'A'));
+        Assert::same('pm', Dates::format($pm, 'a'));
 
         $am = Dates::parse('2026-04-21 08:30:00', 'UTC');
-        Assert::same('AM', Dates::formatTokens($am, 'A'));
-        Assert::same('am', Dates::formatTokens($am, 'a'));
+        Assert::same('AM', Dates::format($am, 'A'));
+        Assert::same('am', Dates::format($am, 'a'));
     }
 
-    public function testFormatTokensTimezoneOffsetTokens(): void
+    public function testFormatDayJsTimezoneOffsetTokens(): void
     {
         $utc = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('+00:00', Dates::formatTokens($utc, 'Z'));
-        Assert::same('+0000', Dates::formatTokens($utc, 'ZZ'));
+        Assert::same('2026-04-21 +00:00', Dates::format($utc, 'YYYY-MM-DD Z'));
+        Assert::same('2026-04-21 +0000', Dates::format($utc, 'YYYY-MM-DD ZZ'));
     }
 
-    public function testFormatTokensMilliseconds(): void
+    public function testFormatDayJsMilliseconds(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('000', Dates::formatTokens($date, 'SSS'));
+        Assert::same('000', Dates::format($date, 'SSS'));
     }
 
-    public function testFormatTokensCompoundFormat(): void
+    public function testFormatDayJsCompoundFormat(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2026-04-21', Dates::formatTokens($date, 'YYYY-MM-DD'));
-        Assert::same('21/04/2026 14:30', Dates::formatTokens($date, 'DD/MM/YYYY HH:mm'));
-        Assert::same('Tuesday, April 21, 2026', Dates::formatTokens($date, 'dddd, MMMM D, YYYY'));
+        Assert::same('2026-04-21', Dates::format($date, 'YYYY-MM-DD'));
+        Assert::same('21/04/2026 14:30', Dates::format($date, 'DD/MM/YYYY HH:mm'));
+        Assert::same('Tuesday, April 21, 2026', Dates::format($date, 'dddd, MMMM D, YYYY'));
     }
 
-    public function testFormatTokens12HourFormatWithAmPm(): void
+    public function testFormatDayJs12HourFormatWithAmPm(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2:30 PM', Dates::formatTokens($date, 'h:mm A'));
+        Assert::same('2:30 PM', Dates::format($date, 'h:mm A'));
     }
 
-    public function testFormatTokensBracketEscaping(): void
+    public function testFormatDayJsBracketEscaping(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('Today is Tuesday', Dates::formatTokens($date, '[Today is] dddd'));
-        Assert::same('YYYY is the year 2026', Dates::formatTokens($date, '[YYYY is the year] YYYY'));
+        Assert::same('Today is Tuesday', Dates::format($date, '[Today is] dddd'));
+        Assert::same('YYYY is the year 2026', Dates::format($date, '[YYYY is the year] YYYY'));
     }
 
-    public function testFormatTokensMultipleEscapedSections(): void
+    public function testFormatDayJsMultipleEscapedSections(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('At 14:30 on April 21', Dates::formatTokens($date, '[At] HH:mm [on] MMMM DD'));
+        Assert::same('At 14:30 on April 21', Dates::format($date, '[At] HH:mm [on] MMMM DD'));
     }
 
-    public function testFormatTokensAcceptsStringDate(): void
+    public function testFormatDayJsAcceptsStringDate(): void
     {
-        Assert::same('2026-04-21', Dates::formatTokens('2026-04-21 14:30:00', 'YYYY-MM-DD'));
+        Assert::same('2026-04-21', Dates::format('2026-04-21 14:30:00', 'YYYY-MM-DD'));
     }
 
-    public function testFormatTokensEmptyFormatReturnsEmptyString(): void
+    public function testFormatDayJsEmptyFormatReturnsEmptyString(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
-        Assert::same('', Dates::formatTokens($date, ''));
+        Assert::same('', Dates::format($date, ''));
     }
 
-    public function testFormatTokensLiteralCharactersPassThrough(): void
+    public function testFormatDayJsLiteralCharactersPassThrough(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
-        Assert::same('2026/04/21', Dates::formatTokens($date, 'YYYY/MM/DD'));
-        Assert::same('2026.04.21', Dates::formatTokens($date, 'YYYY.MM.DD'));
+        Assert::same('2026/04/21', Dates::format($date, 'YYYY/MM/DD'));
+        Assert::same('2026.04.21', Dates::format($date, 'YYYY.MM.DD'));
     }
 
-    public function testFormatTokensFullOutput(): void
+    public function testFormatDayJsFullOutput(): void
     {
         $date = Dates::parse('2026-04-21 14:30:45', 'UTC');
         $expected = '2026-04-21 14:30:45 +00:00';
-        Assert::same($expected, Dates::formatTokens($date, 'YYYY-MM-DD HH:mm:ss Z'));
+        Assert::same($expected, Dates::format($date, 'YYYY-MM-DD HH:mm:ss Z'));
+    }
+
+    public function testFormatAutoDetectsPhpNativeFromSingleChars(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('2026-04-21 14:30:00', Dates::format($date, 'Y-m-d H:i:s'));
+        Assert::same('21/04/2026 14:30', Dates::format($date, 'd/m/Y H:i'));
+        Assert::same('Tuesday, April 21, 2026', Dates::format($date, 'l, F j, Y'));
+    }
+
+    public function testFormatAutoDetectsDayJsFromMultiCharTokens(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('2026-04-21', Dates::format($date, 'YYYY-MM-DD'));
+        Assert::same('21/04/2026 14:30', Dates::format($date, 'DD/MM/YYYY HH:mm'));
+        Assert::same('2:30 PM', Dates::format($date, 'h:mm A'));
+    }
+
+    public function testFormatAutoDetectsDayJsFromBracketEscaping(): void
+    {
+        $date = Dates::parse('2026-04-21', 'UTC');
+        Assert::same('Y is 2026', Dates::format($date, '[Y is] YYYY'));
     }
 
     public function testToDateStringReturnsYmd(): void

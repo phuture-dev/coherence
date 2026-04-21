@@ -355,6 +355,85 @@ class Dates extends FluentClass
     }
 
     /**
+     * Formats the wrapped date/time using either PHP native or day.js-style format tokens.
+     *
+     * @param string $format The format string using either PHP date() characters or
+     *   day.js-style tokens (auto-detected)
+     * @return string The formatted date/time string
+     * @see \Phuture\Coherence\Dates::format()
+     */
+    public function format(string $format): string
+    {
+        return Transformer::format($this->data, $format);
+    }
+
+    /**
+     * Returns the date portion of the wrapped date/time as a Y-m-d string.
+     *
+     * @return string The date portion formatted as 'Y-m-d'
+     * @see \Phuture\Coherence\Dates::toDateString()
+     */
+    public function toDateString(): string
+    {
+        return Transformer::toDateString($this->data);
+    }
+
+    /**
+     * Returns the time portion of the wrapped date/time as an H:i:s string.
+     *
+     * @return string The time portion formatted as 'H:i:s'
+     * @see \Phuture\Coherence\Dates::toTimeString()
+     */
+    public function toTimeString(): string
+    {
+        return Transformer::toTimeString($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time as a combined date and time string.
+     *
+     * @return string The date and time formatted as 'Y-m-d H:i:s'
+     * @see \Phuture\Coherence\Dates::toDateTimeString()
+     */
+    public function toDateTimeString(): string
+    {
+        return Transformer::toDateTimeString($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an ISO 8601 string.
+     *
+     * @return string The date and time formatted according to ISO 8601
+     * @see \Phuture\Coherence\Dates::toIso8601()
+     */
+    public function toIso8601(): string
+    {
+        return Transformer::toIso8601($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an RFC 2822 string.
+     *
+     * @return string The date and time formatted according to RFC 2822
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public function toRfc2822(): string
+    {
+        return Transformer::toRfc2822($this->data);
+    }
+
+    /**
+     * Returns the timezone identifier of the wrapped date/time value.
+     *
+     * @return string The timezone identifier string (e.g. 'Europe/Paris')
+     * @see \Phuture\Coherence\Dates::getTimezone()
+     */
+    public function getTimezone(): string
+    {
+        return Transformer::getTimezone($this->data);
+    }
+
+    /**
      * Returns the wrapped DateTimeImmutable value.
      *
      * @return DateTimeImmutable The wrapped date and time value

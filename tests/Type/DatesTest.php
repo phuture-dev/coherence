@@ -352,6 +352,85 @@ class DatesTest extends TestCase
 
         Assert::same('2027-06-25 00:00:00', $result->format('Y-m-d H:i:s'));
     }
+
+    public function testFormatReturnsStringFromPhpNative(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00')
+            ->addDays(10)
+            ->format('Y-m-d');
+
+        Assert::same('2026-05-01', $result);
+    }
+
+    public function testFormatReturnsStringFromDayJsTokens(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00')
+            ->addDays(10)
+            ->format('YYYY-MM-DD');
+
+        Assert::same('2026-05-01', $result);
+    }
+
+    public function testToDateStringReturnsString(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00')
+            ->addDays(10)
+            ->toDateString();
+
+        Assert::same('2026-05-01', $result);
+    }
+
+    public function testToTimeStringReturnsString(): void
+    {
+        $result = $this->date('2026-04-21 14:30:45')
+            ->addMinutes(15)
+            ->toTimeString();
+
+        Assert::same('14:45:45', $result);
+    }
+
+    public function testToDateTimeStringReturnsString(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00')
+            ->addDays(1)
+            ->toDateTimeString();
+
+        Assert::same('2026-04-22 14:30:00', $result);
+    }
+
+    public function testToIso8601ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 12:00:00', 'UTC')
+            ->toIso8601();
+
+        Assert::same('2026-04-21T12:00:00+00:00', $result);
+    }
+
+    public function testToRfc2822ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 12:00:00', 'UTC')
+            ->toRfc2822();
+
+        Assert::contains('Apr 2026', $result);
+    }
+
+    public function testGetTimezoneReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21', 'Asia/Tokyo')
+            ->getTimezone();
+
+        Assert::same('Asia/Tokyo', $result);
+    }
+
+    public function testChainedFormatAsTerminalOperation(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->addDays(10)
+            ->startOfDay()
+            ->format('dddd, MMMM D, YYYY');
+
+        Assert::same('Friday, May 1, 2026', $result);
+    }
 }
 
 (new DatesTest())->run();

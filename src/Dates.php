@@ -294,40 +294,27 @@ class Dates extends StaticClass
     }
 
     /**
-     * Formats a date/time value using a custom format string.
+     * Formats a date/time value using either PHP native or day.js-style format tokens.
      *
-     * The format string uses the same characters as PHP's date() function
-     * (e.g. 'Y' for four-digit year, 'm' for two-digit month, 'd' for two-digit day).
+     * This method supports two format styles and automatically detects which one
+     * you are using based on the format string contents:
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
+     * **PHP native format** — when the string contains only single-character format
+     * codes (the same characters as PHP's `date()` function):
      *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::format($date, 'Y-m-d'); // '2026-04-21'
-     * Dates::format($date, 'd/m/Y H:i'); // '21/04/2026 14:30'
-     * Dates::format($date, 'l, F j, Y'); // 'Tuesday, April 21, 2026'
-     * ```
+     * | Character | Output       | Description                     |
+     * |-----------|--------------|---------------------------------|
+     * | Y         | 2026         | Four-digit year                 |
+     * | y         | 26           | Two-digit year                  |
+     * | m         | 04           | Two-digit month                 |
+     * | d         | 21           | Two-digit day of month          |
+     * | H         | 14           | Two-digit hour (24-hour clock)  |
+     * | i         | 30           | Two-digit minute                |
+     * | s         | 00           | Two-digit second                |
+     * | ...       |              | See PHP date() for all chars    |
      *
-     * @param DateTimeImmutable|string $date The date/time value to format
-     * @param string $format The output format string using PHP date() characters
-     * @return string The formatted date/time string
-     * @see \Phuture\Coherence\Dates::toDateString()
-     * @see \Phuture\Coherence\Dates::toDateTimeString()
-     */
-    public static function format(DateTimeImmutable|string $date, string $format): string
-    {
-        return self::resolveDate($date)->format($format);
-    }
-
-    /**
-     * Formats a date/time value using day.js-style format tokens.
-     *
-     * Unlike {@see format()} which uses PHP's native date() characters, this method
-     * uses intuitive multi-character tokens inspired by day.js and moment.js. Each
-     * token is a letter sequence that describes exactly what it represents.
-     *
-     * Supported tokens:
+     * **day.js-style tokens** — when the string contains multi-character tokens
+     * or bracket-escaped text (`[...]`):
      *
      * | Token | Output          | Description                          |
      * |-------|-----------------|--------------------------------------|
@@ -357,30 +344,42 @@ class Dates extends StaticClass
      * | A     | AM              | Uppercase AM/PM marker               |
      * | a     | am              | Lowercase am/pm marker               |
      *
-     * To include literal text that would otherwise be interpreted as a token,
-     * wrap it in square brackets. For example, `[at]` outputs the word "at"
-     * without transforming the letters into date values.
+     * To include literal text in a day.js-style format, wrap it in square brackets.
+     * For example, `[at]` outputs the word "at" without transforming the letters.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::formatTokens($date, 'YYYY-MM-DD'); // '2026-04-21'
-     * Dates::formatTokens($date, 'DD/MM/YYYY HH:mm'); // '21/04/2026 14:30'
-     * Dates::formatTokens($date, 'dddd, MMMM D, YYYY'); // 'Tuesday, April 21, 2026'
-     * Dates::formatTokens($date, 'h:mm A'); // '2:30 PM'
-     * Dates::formatTokens($date, '[Today is] dddd'); // 'Today is Tuesday'
+     *
+     * // PHP native format (single-character codes)
+     * Dates::format($date, 'Y-m-d'); // '2026-04-21'
+     * Dates::format($date, 'd/m/Y H:i'); // '21/04/2026 14:30'
+     * Dates::format($date, 'l, F j, Y'); // 'Tuesday, April 21, 2026'
+     *
+     * // day.js-style tokens (multi-character codes)
+     * Dates::format($date, 'YYYY-MM-DD'); // '2026-04-21'
+     * Dates::format($date, 'DD/MM/YYYY HH:mm'); // '21/04/2026 14:30'
+     * Dates::format($date, 'dddd, MMMM D, YYYY'); // 'Tuesday, April 21, 2026'
+     * Dates::format($date, 'h:mm A'); // '2:30 PM'
+     * Dates::format($date, '[Today is] dddd'); // 'Today is Tuesday'
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to format
-     * @param string $format The format string using day.js-style tokens
+     * @param string $format The format string using either PHP date() characters or
+     *   day.js-style tokens (auto-detected)
      * @return string The formatted date/time string
-     * @see \Phuture\Coherence\Dates::format()
+     * @see \Phuture\Coherence\Dates::toDateString()
+     * @see \Phuture\Coherence\Dates::toDateTimeString()
      */
-    public static function formatTokens(DateTimeImmutable|string $date, string $format): string
+    public static function format(DateTimeImmutable|string $date, string $format): string
     {
         $resolved = self::resolveDate($date);
+
+        if (!self::isDayJsFormat($format)) {
+            return $resolved->format($format);
+        }
 
         $escaped = [];
         $working = preg_replace_callback('/\[([^\]]*)\]/', function ($matches) use (&$escaped) {
@@ -1949,6 +1948,21 @@ class Dates extends StaticClass
         }
 
         return $date;
+    }
+
+    /**
+     * Determines whether a format string contains day.js-style multi-character tokens.
+     *
+     * @param string $format The format string to inspect
+     * @return bool Returns true if the format contains day.js tokens or bracket escapes
+     */
+    private static function isDayJsFormat(string $format): bool
+    {
+        if (str_contains($format, '[')) {
+            return true;
+        }
+
+        return preg_match('/YYYY|MMMM|dddd|SSS|MMM|ddd|YY|MM|DD|dd|HH|hh|mm|ss|ZZ/', $format) === 1;
     }
 
     /**
