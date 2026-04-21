@@ -55,6 +55,14 @@ abstract class SingletonClass
     {
     }
 
+    /**
+     * Handle calls to undefined instance methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
     public function __call(string $name, array $arguments): mixed
     {
         throw new MemberAccessException(
@@ -62,6 +70,14 @@ abstract class SingletonClass
         );
     }
 
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
     public static function __callStatic(string $name, array $arguments): mixed
     {
         throw new MemberAccessException(
