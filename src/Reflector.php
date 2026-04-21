@@ -10,7 +10,6 @@ use ReflectionFunction;
 use ReflectionProperty;
 use ReflectionParameter;
 use Phuture\Coherence\Support\StaticClass;
-use Nette\PhpGenerator\{GlobalFunction, Literal};
 use Phuture\Coherence\Exception\{InvalidArgumentException, ReflectionException};
 
 class Reflector extends StaticClass
@@ -47,14 +46,11 @@ class Reflector extends StaticClass
         }
 
         if (!function_exists($alias)) {
-            $closure = (new GlobalFunction($alias))
-                ->setBody(
-                    (string) new Literal(
-                        'return call_user_func_array(?, func_get_args());',
-                        [$function]
-                    )
-                );
-            eval($closure);
+            eval(sprintf(
+                'function %s() { return \call_user_func_array(%s, \func_get_args()); }',
+                $alias,
+                var_export($function, true)
+            ));
 
             return true;
         }
