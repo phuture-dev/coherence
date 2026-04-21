@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
-use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.
@@ -37,6 +37,7 @@ use Phuture\Coherence\Exception\SerializationException;
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
+ * @phpstan-consistent-constructor
  */
 abstract class SingletonClass
 {
@@ -45,7 +46,7 @@ abstract class SingletonClass
      *
      * @var static|null
      */
-    private static ?SingletonClass $instance = null;
+    protected static ?SingletonClass $instance = null;
 
     /**
      * Class is static and cannot be instantiated.
@@ -54,18 +55,25 @@ abstract class SingletonClass
     {
     }
 
-    /**
-     * Class is singleton and cannot be cloned.
-     */
-    private function __clone()
+    public function __call(string $name, array $arguments): mixed
     {
-        return false;
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 
-    /**
-     * Class is singleton and cannot be serialized.
-     */
-    public function __serialize()
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
+    }
+
+    private function __clone(): void
+    {
+    }
+
+    public function __serialize(): array
     {
         $class = get_class($this);
         throw new SerializationException(
@@ -73,10 +81,7 @@ abstract class SingletonClass
         );
     }
 
-    /**
-     * Class is singleton and cannot be unserialized.
-     */
-    public function __unserialize(array $data)
+    public function __unserialize(array $data): void
     {
         $class = get_class($this);
         throw new SerializationException(
