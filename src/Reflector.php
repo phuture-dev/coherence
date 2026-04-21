@@ -17,21 +17,19 @@ class Reflector extends StaticClass
 {
     public static function alias(object|string $class, string $alias): bool
     {
-        $className = is_object($class) ? get_class($class) : $class;
-
         if (class_exists($alias)) {
             throw new InvalidArgumentException(
                 "Invalid Argument: The given alias already exists"
             );
         }
 
-        if (!class_exists($className)) {
+        if (!class_exists($class)) {
             throw new InvalidArgumentException(
                 "Invalid Argument: The given class does not exist"
             );
         }
 
-        return class_alias($className, $alias, true);
+        return is_object($class) ? class_alias(get_class($class), $alias, true) : class_alias($class, $alias, true);
     }
 
     public static function aliasFunction(string $function, string $alias): bool
