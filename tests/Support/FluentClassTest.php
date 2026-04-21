@@ -54,6 +54,18 @@ class FluentClassTest extends TestCase
 
         Assert::same('OLLEH', $result);
     }
+
+    public function testUndefinedMethodCall(): void
+    {
+        Assert::exception(function () {
+            $fluent = new TestFluentClass();
+            $fluent->nonExistentMethod();
+        }, \Phuture\Coherence\Exception\MemberAccessException::class);
+
+        Assert::exception(function () {
+            TestFluentClass::nonExistentStaticMethod();
+        }, \Phuture\Coherence\Exception\MemberAccessException::class);
+    }
 }
 
 /**

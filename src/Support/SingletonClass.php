@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
+use Phuture\Coherence\Exception\MemberAccessException;
 use Phuture\Coherence\Exception\SerializationException;
 
 /**
@@ -56,16 +57,20 @@ abstract class SingletonClass
 
     /**
      * Class is singleton and cannot be cloned.
+     *
+     * @return void
      */
-    private function __clone()
+    private function __clone(): void
     {
-        return false;
     }
 
     /**
      * Class is singleton and cannot be serialized.
+     *
+     * @return array
+     * @throws SerializationException
      */
-    public function __serialize()
+    public function __serialize(): array
     {
         $class = get_class($this);
         throw new SerializationException(
@@ -75,8 +80,12 @@ abstract class SingletonClass
 
     /**
      * Class is singleton and cannot be unserialized.
+     *
+     * @param array $data
+     * @return void
+     * @throws SerializationException
      */
-    public function __unserialize(array $data)
+    public function __unserialize(array $data): void
     {
         $class = get_class($this);
         throw new SerializationException(
@@ -98,5 +107,35 @@ abstract class SingletonClass
         }
 
         return static::$instance;
+    }
+
+    /**
+     * Handle calls to undefined instance methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public function __call(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
+    }
+
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @return mixed
+     * @throws MemberAccessException
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 }
