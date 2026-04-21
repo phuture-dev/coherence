@@ -7,6 +7,7 @@ namespace Phuture\Coherence\Tests\Support;
 use ReflectionClass;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Support\FluentClass;
+use Phuture\Coherence\Exception\MemberAccessException;
 
 require __DIR__ . '/../bootstrap.php';
 
@@ -18,6 +19,7 @@ class FluentClassTest extends TestCase
         $reflection = new ReflectionClass(FluentClass::class);
         Assert::true($reflection->isAbstract());
     }
+
     public function testConstructor(): void
     {
         // Test with initial data
@@ -54,6 +56,18 @@ class FluentClassTest extends TestCase
 
         Assert::same('OLLEH', $result);
     }
+
+    public function testUndefinedMethodCall(): void
+    {
+        Assert::exception(function () {
+            $fluent = new TestFluentClass();
+            $fluent->nonExistentMethod();
+        }, MemberAccessException::class);
+
+        Assert::exception(function () {
+            TestFluentClass::nonExistentStaticMethod();
+        }, MemberAccessException::class);
+    }
 }
 
 /**
@@ -67,6 +81,7 @@ class TestFluentClass extends FluentClass
 
         return $this;
     }
+
     public function trim(): self
     {
         $this->data = trim($this->data);
