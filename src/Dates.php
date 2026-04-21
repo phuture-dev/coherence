@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
@@ -25,7 +24,7 @@ use Phuture\Coherence\Support\StaticClass;
  * - **Timezone awareness**: Every creation method accepts an explicit timezone; all operations
  *   preserve or convert timezones without data loss
  * - **Formatting**: Common output formats plus fully custom strftime-style format strings
- * - **Arithmetic**: Add or subtract any unit from seconds to years
+ * - **Arithmetic**: Add or remove any unit from seconds to years
  * - **Comparison**: Check order, equality, and same-period relationships between two dates
  * - **Difference**: Compute elapsed time in any unit between two dates
  * - **Inspection**: Read individual components (year, month, day, hour …) and ask boolean
@@ -39,10 +38,6 @@ use Phuture\Coherence\Support\StaticClass;
  */
 class Dates extends StaticClass
 {
-    // -------------------------------------------------------------------------
-    // Creation
-    // -------------------------------------------------------------------------
-
     /**
      * Returns the current date and time.
      *
@@ -53,8 +48,8 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $now = Dates::now();                      // e.g. 2026-04-21 14:30:00 UTC
-     * $nowInTokyo = Dates::now('Asia/Tokyo');   // same moment, Tokyo time
+     * $now = Dates::now(); // e.g. 2026-04-21 14:30:00 UTC
+     * $nowInTokyo = Dates::now('Asia/Tokyo'); // same moment, Tokyo time
      * ```
      *
      * @param string|null $timezone A valid PHP timezone identifier such as 'America/New_York'
@@ -80,7 +75,7 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::create(2026, 12, 25);                              // Christmas midnight UTC
+     * $date = Dates::create(2026, 12, 25); // Christmas midnight UTC
      * $meeting = Dates::create(2026, 4, 21, 14, 30, 0, 'Europe/Paris'); // 14:30 Paris time
      * ```
      *
@@ -93,6 +88,7 @@ class Dates extends StaticClass
      * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
      * @return DateTimeImmutable The constructed date/time value
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     *   or any component is out of its valid range
      * @see \Phuture\Coherence\Dates::now()
      * @see \Phuture\Coherence\Dates::parse()
      */
@@ -105,6 +101,36 @@ class Dates extends StaticClass
         int $second = 0,
         ?string $timezone = null
     ): DateTimeImmutable {
+        if ($month < 1 || $month > 12) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The month \"{$month}\" is out of range. Expected a value between 1 and 12."
+            );
+        }
+
+        if ($day < 1 || $day > 31) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The day \"{$day}\" is out of range. Expected a value between 1 and 31."
+            );
+        }
+
+        if ($hour < 0 || $hour > 23) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The hour \"{$hour}\" is out of range. Expected a value between 0 and 23."
+            );
+        }
+
+        if ($minute < 0 || $minute > 59) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The minute \"{$minute}\" is out of range. Expected a value between 0 and 59."
+            );
+        }
+
+        if ($second < 0 || $second > 59) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The second \"{$second}\" is out of range. Expected a value between 0 and 59."
+            );
+        }
+
         $dateString = sprintf('%04d-%02d-%02d %02d:%02d:%02d', $year, $month, $day, $hour, $minute, $second);
 
         return new DateTimeImmutable($dateString, self::buildTimezone($timezone));
@@ -135,9 +161,19 @@ class Dates extends StaticClass
      */
     public static function parse(string $dateString, ?string $timezone = null): DateTimeImmutable
     {
-        $parsed = new DateTimeImmutable($dateString, self::buildTimezone($timezone));
+        if ($dateString === '') {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The date string must not be empty.'
+            );
+        }
 
-        return $parsed;
+        try {
+            return new DateTimeImmutable($dateString, self::buildTimezone($timezone));
+        } catch (\Exception $e) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The date string \"{$dateString}\" could not be parsed into a valid date."
+            );
+        }
     }
 
     /**
@@ -150,8 +186,8 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::fromTimestamp(1745236800);                          // UTC
-     * $date = Dates::fromTimestamp(1745236800, 'America/Los_Angeles');   // same moment, LA time
+     * $date = Dates::fromTimestamp(1745236800); // UTC
+     * $date = Dates::fromTimestamp(1745236800, 'America/Los_Angeles'); // same moment, LA time
      * ```
      *
      * @param int $timestamp The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
@@ -200,16 +236,12 @@ class Dates extends StaticClass
 
         if ($date === false) {
             throw new InvalidArgumentException(
-                "The date string \"{$dateString}\" does not match the format \"{$format}\"."
+                "Invalid Argument: The date string \"{$dateString}\" does not match the format \"{$format}\"."
             );
         }
 
         return $date;
     }
-
-    // -------------------------------------------------------------------------
-    // Timezone
-    // -------------------------------------------------------------------------
 
     /**
      * Converts a date/time value to a different timezone.
@@ -222,20 +254,20 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $utc  = Dates::parse('2026-04-21 12:00:00', 'UTC');
-     * $ny   = Dates::toTimezone($utc, 'America/New_York');
+     * $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
+     * $ny = Dates::toTimezone($utc, 'America/New_York');
      * // $ny displays as '2026-04-21 08:00:00' but represents the same moment
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @param string $timezone A valid PHP timezone identifier to convert into
      * @return DateTimeImmutable A new date/time value in the requested timezone
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
      * @see \Phuture\Coherence\Dates::getTimezone()
      */
-    public static function toTimezone(DateTimeImmutable $date, string $timezone): DateTimeImmutable
+    public static function toTimezone(DateTimeImmutable|string $date, string $timezone): DateTimeImmutable
     {
-        return $date->setTimezone(self::buildTimezone($timezone));
+        return self::resolveDate($date)->setTimezone(self::buildTimezone($timezone));
     }
 
     /**
@@ -249,21 +281,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::now('Asia/Tokyo');
-     * $tz   = Dates::getTimezone($date); // 'Asia/Tokyo'
+     * $tz = Dates::getTimezone($date); // 'Asia/Tokyo'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to read the timezone from
+     * @param DateTimeImmutable|string $date The date/time value to read the timezone from
      * @return string The timezone identifier string (e.g. 'Europe/Paris')
      * @see \Phuture\Coherence\Dates::toTimezone()
      */
-    public static function getTimezone(DateTimeImmutable $date): string
+    public static function getTimezone(DateTimeImmutable|string $date): string
     {
-        return $date->getTimezone()->getName();
+        return self::resolveDate($date)->getTimezone()->getName();
     }
-
-    // -------------------------------------------------------------------------
-    // Formatting
-    // -------------------------------------------------------------------------
 
     /**
      * Formats a date/time value using a custom format string.
@@ -276,20 +304,20 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::format($date, 'Y-m-d');         // '2026-04-21'
-     * Dates::format($date, 'd/m/Y H:i');     // '21/04/2026 14:30'
-     * Dates::format($date, 'l, F j, Y');     // 'Tuesday, April 21, 2026'
+     * Dates::format($date, 'Y-m-d'); // '2026-04-21'
+     * Dates::format($date, 'd/m/Y H:i'); // '21/04/2026 14:30'
+     * Dates::format($date, 'l, F j, Y'); // 'Tuesday, April 21, 2026'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to format
+     * @param DateTimeImmutable|string $date The date/time value to format
      * @param string $format The output format string using PHP date() characters
      * @return string The formatted date/time string
      * @see \Phuture\Coherence\Dates::toDateString()
      * @see \Phuture\Coherence\Dates::toDateTimeString()
      */
-    public static function format(DateTimeImmutable $date, string $format): string
+    public static function format(DateTimeImmutable|string $date, string $format): string
     {
-        return $date->format($format);
+        return self::resolveDate($date)->format($format);
     }
 
     /**
@@ -306,14 +334,14 @@ class Dates extends StaticClass
      * Dates::toDateString($date); // '2026-04-21'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date portion formatted as 'Y-m-d' (e.g. '2026-04-21')
      * @see \Phuture\Coherence\Dates::toTimeString()
      * @see \Phuture\Coherence\Dates::toDateTimeString()
      */
-    public static function toDateString(DateTimeImmutable $date): string
+    public static function toDateString(DateTimeImmutable|string $date): string
     {
-        return $date->format('Y-m-d');
+        return self::resolveDate($date)->format('Y-m-d');
     }
 
     /**
@@ -330,14 +358,14 @@ class Dates extends StaticClass
      * Dates::toTimeString($date); // '14:30:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The time portion formatted as 'H:i:s' (e.g. '14:30:00')
      * @see \Phuture\Coherence\Dates::toDateString()
      * @see \Phuture\Coherence\Dates::toDateTimeString()
      */
-    public static function toTimeString(DateTimeImmutable $date): string
+    public static function toTimeString(DateTimeImmutable|string $date): string
     {
-        return $date->format('H:i:s');
+        return self::resolveDate($date)->format('H:i:s');
     }
 
     /**
@@ -354,14 +382,14 @@ class Dates extends StaticClass
      * Dates::toDateTimeString($date); // '2026-04-21 14:30:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date and time formatted as 'Y-m-d H:i:s' (e.g. '2026-04-21 14:30:00')
      * @see \Phuture\Coherence\Dates::toDateString()
      * @see \Phuture\Coherence\Dates::toTimeString()
      */
-    public static function toDateTimeString(DateTimeImmutable $date): string
+    public static function toDateTimeString(DateTimeImmutable|string $date): string
     {
-        return $date->format('Y-m-d H:i:s');
+        return self::resolveDate($date)->format('Y-m-d H:i:s');
     }
 
     /**
@@ -379,13 +407,13 @@ class Dates extends StaticClass
      * Dates::toIso8601($date); // '2026-04-21T14:30:00-04:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date and time formatted according to ISO 8601 (e.g. '2026-04-21T14:30:00+00:00')
      * @see \Phuture\Coherence\Dates::toRfc2822()
      */
-    public static function toIso8601(DateTimeImmutable $date): string
+    public static function toIso8601(DateTimeImmutable|string $date): string
     {
-        return $date->format(DateTimeInterface::ATOM);
+        return self::resolveDate($date)->format(DateTimeInterface::ATOM);
     }
 
     /**
@@ -403,13 +431,13 @@ class Dates extends StaticClass
      * Dates::toRfc2822($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date and time formatted according to RFC 2822
      * @see \Phuture\Coherence\Dates::toIso8601()
      */
-    public static function toRfc2822(DateTimeImmutable $date): string
+    public static function toRfc2822(DateTimeImmutable|string $date): string
     {
-        return $date->format(DateTimeInterface::RFC2822);
+        return self::resolveDate($date)->format(DateTimeInterface::RFC2822);
     }
 
     /**
@@ -426,18 +454,14 @@ class Dates extends StaticClass
      * Dates::toUnixTimestamp($date); // 1745193600
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to convert
+     * @param DateTimeImmutable|string $date The date/time value to convert
      * @return int The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
      * @see \Phuture\Coherence\Dates::fromTimestamp()
      */
-    public static function toUnixTimestamp(DateTimeImmutable $date): int
+    public static function toUnixTimestamp(DateTimeImmutable|string $date): int
     {
-        return $date->getTimestamp();
+        return self::resolveDate($date)->getTimestamp();
     }
-
-    // -------------------------------------------------------------------------
-    // Addition
-    // -------------------------------------------------------------------------
 
     /**
      * Adds a number of seconds to a date/time value.
@@ -449,18 +473,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
+     * $date = Dates::parse('2026-04-21 14:30:00');
      * $result = Dates::addSeconds($date, 90); // '2026-04-21 14:31:30'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $seconds The number of seconds to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the seconds added
-     * @see \Phuture\Coherence\Dates::subSeconds()
+     * @see \Phuture\Coherence\Dates::removeSeconds()
      */
-    public static function addSeconds(DateTimeImmutable $date, int $seconds): DateTimeImmutable
+    public static function addSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
     {
-        return $date->modify("+{$seconds} seconds");
+        return self::resolveDate($date)->modify("+{$seconds} seconds");
     }
 
     /**
@@ -473,18 +497,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
+     * $date = Dates::parse('2026-04-21 14:30:00');
      * $result = Dates::addMinutes($date, 45); // '2026-04-21 15:15:00'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $minutes The number of minutes to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the minutes added
-     * @see \Phuture\Coherence\Dates::subMinutes()
+     * @see \Phuture\Coherence\Dates::removeMinutes()
      */
-    public static function addMinutes(DateTimeImmutable $date, int $minutes): DateTimeImmutable
+    public static function addMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
     {
-        return $date->modify("+{$minutes} minutes");
+        return self::resolveDate($date)->modify("+{$minutes} minutes");
     }
 
     /**
@@ -497,18 +521,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
+     * $date = Dates::parse('2026-04-21 14:30:00');
      * $result = Dates::addHours($date, 3); // '2026-04-21 17:30:00'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $hours The number of hours to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the hours added
-     * @see \Phuture\Coherence\Dates::subHours()
+     * @see \Phuture\Coherence\Dates::removeHours()
      */
-    public static function addHours(DateTimeImmutable $date, int $hours): DateTimeImmutable
+    public static function addHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
     {
-        return $date->modify("+{$hours} hours");
+        return self::resolveDate($date)->modify("+{$hours} hours");
     }
 
     /**
@@ -521,18 +545,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
+     * $date = Dates::parse('2026-04-21');
      * $result = Dates::addDays($date, 10); // '2026-05-01'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $days The number of days to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the days added
-     * @see \Phuture\Coherence\Dates::subDays()
+     * @see \Phuture\Coherence\Dates::removeDays()
      */
-    public static function addDays(DateTimeImmutable $date, int $days): DateTimeImmutable
+    public static function addDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
     {
-        return $date->modify("+{$days} days");
+        return self::resolveDate($date)->modify("+{$days} days");
     }
 
     /**
@@ -545,18 +569,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
+     * $date = Dates::parse('2026-04-21');
      * $result = Dates::addWeeks($date, 2); // '2026-05-05'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $weeks The number of weeks to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the weeks added
-     * @see \Phuture\Coherence\Dates::subWeeks()
+     * @see \Phuture\Coherence\Dates::removeWeeks()
      */
-    public static function addWeeks(DateTimeImmutable $date, int $weeks): DateTimeImmutable
+    public static function addWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
     {
-        return $date->modify("+{$weeks} weeks");
+        return self::resolveDate($date)->modify("+{$weeks} weeks");
     }
 
     /**
@@ -571,18 +595,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-01-15');
+     * $date = Dates::parse('2026-01-15');
      * $result = Dates::addMonths($date, 3); // '2026-04-15'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $months The number of months to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the months added
-     * @see \Phuture\Coherence\Dates::subMonths()
+     * @see \Phuture\Coherence\Dates::removeMonths()
      */
-    public static function addMonths(DateTimeImmutable $date, int $months): DateTimeImmutable
+    public static function addMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
     {
-        return $date->modify("+{$months} months");
+        return self::resolveDate($date)->modify("+{$months} months");
     }
 
     /**
@@ -595,26 +619,22 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
+     * $date = Dates::parse('2026-04-21');
      * $result = Dates::addYears($date, 5); // '2031-04-21'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
+     * @param DateTimeImmutable|string $date The starting date/time value
      * @param int $years The number of years to add (use a negative value to subtract)
      * @return DateTimeImmutable A new date/time value with the years added
-     * @see \Phuture\Coherence\Dates::subYears()
+     * @see \Phuture\Coherence\Dates::removeYears()
      */
-    public static function addYears(DateTimeImmutable $date, int $years): DateTimeImmutable
+    public static function addYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
     {
-        return $date->modify("+{$years} years");
+        return self::resolveDate($date)->modify("+{$years} years");
     }
 
-    // -------------------------------------------------------------------------
-    // Subtraction
-    // -------------------------------------------------------------------------
-
     /**
-     * Subtracts a number of seconds from a date/time value.
+     * Removes a number of seconds from a date/time value.
      *
      * Returns a new date/time value that is the given number of seconds earlier
      * than the original. The original value is never modified.
@@ -623,22 +643,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::subSeconds($date, 30); // '2026-04-21 14:29:30'
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeSeconds($date, 30); // '2026-04-21 14:29:30'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $seconds The number of seconds to subtract
-     * @return DateTimeImmutable A new date/time value with the seconds subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $seconds The number of seconds to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the seconds removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $seconds is negative
      * @see \Phuture\Coherence\Dates::addSeconds()
      */
-    public static function subSeconds(DateTimeImmutable $date, int $seconds): DateTimeImmutable
+    public static function removeSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
     {
-        return $date->modify("-{$seconds} seconds");
+        if ($seconds < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The seconds value must be >= 0. Use addSeconds() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$seconds} seconds");
     }
 
     /**
-     * Subtracts a number of minutes from a date/time value.
+     * Removes a number of minutes from a date/time value.
      *
      * Returns a new date/time value that is the given number of minutes earlier
      * than the original. The original value is never modified.
@@ -647,22 +674,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::subMinutes($date, 15); // '2026-04-21 14:15:00'
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeMinutes($date, 15); // '2026-04-21 14:15:00'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $minutes The number of minutes to subtract
-     * @return DateTimeImmutable A new date/time value with the minutes subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $minutes The number of minutes to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the minutes removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $minutes is negative
      * @see \Phuture\Coherence\Dates::addMinutes()
      */
-    public static function subMinutes(DateTimeImmutable $date, int $minutes): DateTimeImmutable
+    public static function removeMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
     {
-        return $date->modify("-{$minutes} minutes");
+        if ($minutes < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The minutes value must be >= 0. Use addMinutes() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$minutes} minutes");
     }
 
     /**
-     * Subtracts a number of hours from a date/time value.
+     * Removes a number of hours from a date/time value.
      *
      * Returns a new date/time value that is the given number of hours earlier
      * than the original. The original value is never modified.
@@ -671,22 +705,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::subHours($date, 2); // '2026-04-21 12:30:00'
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeHours($date, 2); // '2026-04-21 12:30:00'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $hours The number of hours to subtract
-     * @return DateTimeImmutable A new date/time value with the hours subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $hours The number of hours to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the hours removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $hours is negative
      * @see \Phuture\Coherence\Dates::addHours()
      */
-    public static function subHours(DateTimeImmutable $date, int $hours): DateTimeImmutable
+    public static function removeHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
     {
-        return $date->modify("-{$hours} hours");
+        if ($hours < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The hours value must be >= 0. Use addHours() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$hours} hours");
     }
 
     /**
-     * Subtracts a number of days from a date/time value.
+     * Removes a number of days from a date/time value.
      *
      * Returns a new date/time value that is the given number of days earlier
      * than the original. The original value is never modified.
@@ -695,22 +736,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
-     * $result = Dates::subDays($date, 5); // '2026-04-16'
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeDays($date, 5); // '2026-04-16'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $days The number of days to subtract
-     * @return DateTimeImmutable A new date/time value with the days subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $days The number of days to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the days removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $days is negative
      * @see \Phuture\Coherence\Dates::addDays()
      */
-    public static function subDays(DateTimeImmutable $date, int $days): DateTimeImmutable
+    public static function removeDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
     {
-        return $date->modify("-{$days} days");
+        if ($days < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The days value must be >= 0. Use addDays() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$days} days");
     }
 
     /**
-     * Subtracts a number of weeks from a date/time value.
+     * Removes a number of weeks from a date/time value.
      *
      * Returns a new date/time value that is the given number of weeks earlier
      * than the original. One week equals exactly 7 days.
@@ -719,22 +767,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
-     * $result = Dates::subWeeks($date, 1); // '2026-04-14'
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeWeeks($date, 1); // '2026-04-14'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $weeks The number of weeks to subtract
-     * @return DateTimeImmutable A new date/time value with the weeks subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $weeks The number of weeks to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the weeks removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $weeks is negative
      * @see \Phuture\Coherence\Dates::addWeeks()
      */
-    public static function subWeeks(DateTimeImmutable $date, int $weeks): DateTimeImmutable
+    public static function removeWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
     {
-        return $date->modify("-{$weeks} weeks");
+        if ($weeks < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The weeks value must be >= 0. Use addWeeks() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$weeks} weeks");
     }
 
     /**
-     * Subtracts a number of months from a date/time value.
+     * Removes a number of months from a date/time value.
      *
      * Returns a new date/time value that is the given number of months earlier
      * than the original. When the resulting day does not exist in the target month,
@@ -744,22 +799,29 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-06-15');
-     * $result = Dates::subMonths($date, 2); // '2026-04-15'
+     * $date = Dates::parse('2026-06-15');
+     * $result = Dates::removeMonths($date, 2); // '2026-04-15'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $months The number of months to subtract
-     * @return DateTimeImmutable A new date/time value with the months subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $months The number of months to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the months removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $months is negative
      * @see \Phuture\Coherence\Dates::addMonths()
      */
-    public static function subMonths(DateTimeImmutable $date, int $months): DateTimeImmutable
+    public static function removeMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
     {
-        return $date->modify("-{$months} months");
+        if ($months < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The months value must be >= 0. Use addMonths() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$months} months");
     }
 
     /**
-     * Subtracts a number of years from a date/time value.
+     * Removes a number of years from a date/time value.
      *
      * Returns a new date/time value that is the given number of years earlier
      * than the original. The original value is never modified.
@@ -768,23 +830,26 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
-     * $result = Dates::subYears($date, 10); // '2016-04-21'
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeYears($date, 10); // '2016-04-21'
      * ```
      *
-     * @param DateTimeImmutable $date The starting date/time value
-     * @param int $years The number of years to subtract
-     * @return DateTimeImmutable A new date/time value with the years subtracted
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $years The number of years to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the years removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $years is negative
      * @see \Phuture\Coherence\Dates::addYears()
      */
-    public static function subYears(DateTimeImmutable $date, int $years): DateTimeImmutable
+    public static function removeYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
     {
-        return $date->modify("-{$years} years");
-    }
+        if ($years < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The years value must be >= 0. Use addYears() to move forward in time."
+            );
+        }
 
-    // -------------------------------------------------------------------------
-    // Comparison
-    // -------------------------------------------------------------------------
+        return self::resolveDate($date)->modify("-{$years} years");
+    }
 
     /**
      * Checks whether a date/time value is before another.
@@ -797,20 +862,20 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $earlier = Dates::parse('2026-01-01');
-     * $later   = Dates::parse('2026-12-31');
+     * $later = Dates::parse('2026-12-31');
      * Dates::isBefore($earlier, $later); // true
      * Dates::isBefore($later, $earlier); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to test
-     * @param DateTimeImmutable $comparedTo The date/time value to compare against
+     * @param DateTimeImmutable|string $date The date/time value to test
+     * @param DateTimeImmutable|string $comparedTo The date/time value to compare against
      * @return bool Returns true if $date is before $comparedTo
      * @see \Phuture\Coherence\Dates::isAfter()
      * @see \Phuture\Coherence\Dates::equals()
      */
-    public static function isBefore(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function isBefore(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date < $comparedTo;
+        return self::resolveDate($date) < self::resolveDate($comparedTo);
     }
 
     /**
@@ -823,20 +888,20 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $later   = Dates::parse('2026-12-31');
+     * $later = Dates::parse('2026-12-31');
      * $earlier = Dates::parse('2026-01-01');
      * Dates::isAfter($later, $earlier); // true
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to test
-     * @param DateTimeImmutable $comparedTo The date/time value to compare against
+     * @param DateTimeImmutable|string $date The date/time value to test
+     * @param DateTimeImmutable|string $comparedTo The date/time value to compare against
      * @return bool Returns true if $date is after $comparedTo
      * @see \Phuture\Coherence\Dates::isBefore()
      * @see \Phuture\Coherence\Dates::equals()
      */
-    public static function isAfter(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function isAfter(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date > $comparedTo;
+        return self::resolveDate($date) > self::resolveDate($comparedTo);
     }
 
     /**
@@ -850,19 +915,19 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
-     * $ny  = Dates::parse('2026-04-21 08:00:00', 'America/New_York');
+     * $ny = Dates::parse('2026-04-21 08:00:00', 'America/New_York');
      * Dates::equals($utc, $ny); // true — same moment, different timezones
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return bool Returns true if both values represent the same point in time
      * @see \Phuture\Coherence\Dates::isBefore()
      * @see \Phuture\Coherence\Dates::isAfter()
      */
-    public static function equals(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function equals(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date->getTimestamp() === $comparedTo->getTimestamp();
+        return self::resolveDate($date)->getTimestamp() === self::resolveDate($comparedTo)->getTimestamp();
     }
 
     /**
@@ -875,22 +940,22 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $morning   = Dates::parse('2026-04-21 08:00:00');
-     * $evening   = Dates::parse('2026-04-21 22:00:00');
-     * $tomorrow  = Dates::parse('2026-04-22 08:00:00');
-     * Dates::isSameDay($morning, $evening);  // true
+     * $morning = Dates::parse('2026-04-21 08:00:00');
+     * $evening = Dates::parse('2026-04-21 22:00:00');
+     * $tomorrow = Dates::parse('2026-04-22 08:00:00');
+     * Dates::isSameDay($morning, $evening); // true
      * Dates::isSameDay($morning, $tomorrow); // false
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return bool Returns true if both values fall on the same calendar day
      * @see \Phuture\Coherence\Dates::isSameMonth()
      * @see \Phuture\Coherence\Dates::isSameYear()
      */
-    public static function isSameDay(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function isSameDay(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date->format('Y-m-d') === $comparedTo->format('Y-m-d');
+        return self::resolveDate($date)->format('Y-m-d') === self::resolveDate($comparedTo)->format('Y-m-d');
     }
 
     /**
@@ -902,22 +967,22 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $first  = Dates::parse('2026-04-01');
-     * $last   = Dates::parse('2026-04-30');
-     * $next   = Dates::parse('2026-05-01');
+     * $first = Dates::parse('2026-04-01');
+     * $last = Dates::parse('2026-04-30');
+     * $next = Dates::parse('2026-05-01');
      * Dates::isSameMonth($first, $last); // true
      * Dates::isSameMonth($first, $next); // false
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return bool Returns true if both values fall in the same calendar month and year
      * @see \Phuture\Coherence\Dates::isSameDay()
      * @see \Phuture\Coherence\Dates::isSameYear()
      */
-    public static function isSameMonth(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function isSameMonth(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date->format('Y-m') === $comparedTo->format('Y-m');
+        return self::resolveDate($date)->format('Y-m') === self::resolveDate($comparedTo)->format('Y-m');
     }
 
     /**
@@ -931,25 +996,21 @@ class Dates extends StaticClass
      *
      * $jan = Dates::parse('2026-01-01');
      * $dec = Dates::parse('2026-12-31');
-     * $ny  = Dates::parse('2027-01-01');
+     * $ny = Dates::parse('2027-01-01');
      * Dates::isSameYear($jan, $dec); // true
-     * Dates::isSameYear($jan, $ny);  // false
+     * Dates::isSameYear($jan, $ny); // false
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return bool Returns true if both values fall in the same calendar year
      * @see \Phuture\Coherence\Dates::isSameDay()
      * @see \Phuture\Coherence\Dates::isSameMonth()
      */
-    public static function isSameYear(DateTimeImmutable $date, DateTimeImmutable $comparedTo): bool
+    public static function isSameYear(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return $date->format('Y') === $comparedTo->format('Y');
+        return self::resolveDate($date)->format('Y') === self::resolveDate($comparedTo)->format('Y');
     }
-
-    // -------------------------------------------------------------------------
-    // Difference
-    // -------------------------------------------------------------------------
 
     /**
      * Calculates the number of complete seconds between two date/time values.
@@ -962,19 +1023,19 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-04-21 14:00:00');
-     * $end   = Dates::parse('2026-04-21 14:01:30');
+     * $end = Dates::parse('2026-04-21 14:01:30');
      * Dates::diffInSeconds($start, $end); // 90
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete seconds between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInMinutes()
      * @see \Phuture\Coherence\Dates::diffInHours()
      */
-    public static function diffInSeconds(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInSeconds(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
-        return (int) abs($date->getTimestamp() - $comparedTo->getTimestamp());
+        return (int) abs(self::resolveDate($date)->getTimestamp() - self::resolveDate($comparedTo)->getTimestamp());
     }
 
     /**
@@ -988,17 +1049,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-04-21 14:00:00');
-     * $end   = Dates::parse('2026-04-21 15:30:00');
+     * $end = Dates::parse('2026-04-21 15:30:00');
      * Dates::diffInMinutes($start, $end); // 90
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete minutes between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInSeconds()
      * @see \Phuture\Coherence\Dates::diffInHours()
      */
-    public static function diffInMinutes(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInMinutes(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
         return (int) (self::diffInSeconds($date, $comparedTo) / 60);
     }
@@ -1014,17 +1075,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-04-21 08:00:00');
-     * $end   = Dates::parse('2026-04-21 20:30:00');
+     * $end = Dates::parse('2026-04-21 20:30:00');
      * Dates::diffInHours($start, $end); // 12
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete hours between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInMinutes()
      * @see \Phuture\Coherence\Dates::diffInDays()
      */
-    public static function diffInHours(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInHours(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
         return (int) (self::diffInSeconds($date, $comparedTo) / 3600);
     }
@@ -1040,17 +1101,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-04-01');
-     * $end   = Dates::parse('2026-04-21');
+     * $end = Dates::parse('2026-04-21');
      * Dates::diffInDays($start, $end); // 20
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete days between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInHours()
      * @see \Phuture\Coherence\Dates::diffInWeeks()
      */
-    public static function diffInDays(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInDays(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
         return (int) (self::diffInSeconds($date, $comparedTo) / 86400);
     }
@@ -1066,17 +1127,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-04-07');
-     * $end   = Dates::parse('2026-04-21');
+     * $end = Dates::parse('2026-04-21');
      * Dates::diffInWeeks($start, $end); // 2
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete weeks between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInDays()
      * @see \Phuture\Coherence\Dates::diffInMonths()
      */
-    public static function diffInWeeks(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInWeeks(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
         return (int) (self::diffInDays($date, $comparedTo) / 7);
     }
@@ -1092,19 +1153,19 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2026-01-15');
-     * $end   = Dates::parse('2026-04-10');
+     * $end = Dates::parse('2026-04-10');
      * Dates::diffInMonths($start, $end); // 2 (not 3, because April 10 < January 15 in day)
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete months between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInWeeks()
      * @see \Phuture\Coherence\Dates::diffInYears()
      */
-    public static function diffInMonths(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInMonths(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
-        $interval = $date->diff($comparedTo);
+        $interval = self::resolveDate($date)->diff(self::resolveDate($comparedTo));
 
         return abs(($interval->y * 12) + $interval->m);
     }
@@ -1120,23 +1181,19 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $start = Dates::parse('2020-06-15');
-     * $end   = Dates::parse('2026-04-10');
+     * $end = Dates::parse('2026-04-10');
      * Dates::diffInYears($start, $end); // 5
      * ```
      *
-     * @param DateTimeImmutable $date The first date/time value
-     * @param DateTimeImmutable $comparedTo The second date/time value
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
      * @return int The number of complete years between the two values (always non-negative)
      * @see \Phuture\Coherence\Dates::diffInMonths()
      */
-    public static function diffInYears(DateTimeImmutable $date, DateTimeImmutable $comparedTo): int
+    public static function diffInYears(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
-        return abs($date->diff($comparedTo)->y);
+        return abs(self::resolveDate($date)->diff(self::resolveDate($comparedTo))->y);
     }
-
-    // -------------------------------------------------------------------------
-    // Inspection — components
-    // -------------------------------------------------------------------------
 
     /**
      * Returns the four-digit year of a date/time value.
@@ -1149,14 +1206,14 @@ class Dates extends StaticClass
      * Dates::getYear($date); // 2026
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The year as a four-digit integer (e.g. 2026)
      * @see \Phuture\Coherence\Dates::getMonth()
      * @see \Phuture\Coherence\Dates::getDay()
      */
-    public static function getYear(DateTimeImmutable $date): int
+    public static function getYear(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('Y');
+        return (int) self::resolveDate($date)->format('Y');
     }
 
     /**
@@ -1170,14 +1227,14 @@ class Dates extends StaticClass
      * Dates::getMonth($date); // 4
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The month as an integer from 1 (January) to 12 (December)
      * @see \Phuture\Coherence\Dates::getYear()
      * @see \Phuture\Coherence\Dates::getDay()
      */
-    public static function getMonth(DateTimeImmutable $date): int
+    public static function getMonth(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('n');
+        return (int) self::resolveDate($date)->format('n');
     }
 
     /**
@@ -1191,14 +1248,14 @@ class Dates extends StaticClass
      * Dates::getDay($date); // 21
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The day of the month as an integer from 1 to 31
      * @see \Phuture\Coherence\Dates::getMonth()
      * @see \Phuture\Coherence\Dates::getYear()
      */
-    public static function getDay(DateTimeImmutable $date): int
+    public static function getDay(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('j');
+        return (int) self::resolveDate($date)->format('j');
     }
 
     /**
@@ -1212,14 +1269,14 @@ class Dates extends StaticClass
      * Dates::getHour($date); // 14
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The hour as an integer from 0 to 23
      * @see \Phuture\Coherence\Dates::getMinute()
      * @see \Phuture\Coherence\Dates::getSecond()
      */
-    public static function getHour(DateTimeImmutable $date): int
+    public static function getHour(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('G');
+        return (int) self::resolveDate($date)->format('G');
     }
 
     /**
@@ -1233,14 +1290,14 @@ class Dates extends StaticClass
      * Dates::getMinute($date); // 30
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The minute as an integer from 0 to 59
      * @see \Phuture\Coherence\Dates::getHour()
      * @see \Phuture\Coherence\Dates::getSecond()
      */
-    public static function getMinute(DateTimeImmutable $date): int
+    public static function getMinute(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('i');
+        return (int) self::resolveDate($date)->format('i');
     }
 
     /**
@@ -1254,14 +1311,14 @@ class Dates extends StaticClass
      * Dates::getSecond($date); // 45
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The second as an integer from 0 to 59
      * @see \Phuture\Coherence\Dates::getHour()
      * @see \Phuture\Coherence\Dates::getMinute()
      */
-    public static function getSecond(DateTimeImmutable $date): int
+    public static function getSecond(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('s');
+        return (int) self::resolveDate($date)->format('s');
     }
 
     /**
@@ -1278,14 +1335,14 @@ class Dates extends StaticClass
      * Dates::getDayOfWeek($date); // 2
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The ISO 8601 day of the week: 1 (Monday) through 7 (Sunday)
      * @see \Phuture\Coherence\Dates::getDayOfYear()
      * @see \Phuture\Coherence\Dates::isWeekend()
      */
-    public static function getDayOfWeek(DateTimeImmutable $date): int
+    public static function getDayOfWeek(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('N');
+        return (int) self::resolveDate($date)->format('N');
     }
 
     /**
@@ -1301,14 +1358,14 @@ class Dates extends StaticClass
      * Dates::getDayOfYear($date); // 31
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The day of the year as an integer from 1 to 366
      * @see \Phuture\Coherence\Dates::getDayOfWeek()
      * @see \Phuture\Coherence\Dates::getWeekOfYear()
      */
-    public static function getDayOfYear(DateTimeImmutable $date): int
+    public static function getDayOfYear(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('z') + 1;
+        return (int) self::resolveDate($date)->format('z') + 1;
     }
 
     /**
@@ -1325,13 +1382,13 @@ class Dates extends StaticClass
      * Dates::getWeekOfYear($date); // 1
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The ISO 8601 week number from 1 to 53
      * @see \Phuture\Coherence\Dates::getDayOfYear()
      */
-    public static function getWeekOfYear(DateTimeImmutable $date): int
+    public static function getWeekOfYear(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('W');
+        return (int) self::resolveDate($date)->format('W');
     }
 
     /**
@@ -1350,18 +1407,14 @@ class Dates extends StaticClass
      * Dates::getDaysInMonth($leapDate); // 29
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return int The number of days in the month, from 28 to 31
      * @see \Phuture\Coherence\Dates::isLeapYear()
      */
-    public static function getDaysInMonth(DateTimeImmutable $date): int
+    public static function getDaysInMonth(DateTimeImmutable|string $date): int
     {
-        return (int) $date->format('t');
+        return (int) self::resolveDate($date)->format('t');
     }
-
-    // -------------------------------------------------------------------------
-    // Inspection — boolean checks
-    // -------------------------------------------------------------------------
 
     /**
      * Checks whether the year of a date/time value is a leap year.
@@ -1377,13 +1430,13 @@ class Dates extends StaticClass
      * Dates::isLeapYear(Dates::parse('2026-01-01')); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the year is a leap year
      * @see \Phuture\Coherence\Dates::getDaysInMonth()
      */
-    public static function isLeapYear(DateTimeImmutable $date): bool
+    public static function isLeapYear(DateTimeImmutable|string $date): bool
     {
-        return $date->format('L') === '1';
+        return self::resolveDate($date)->format('L') === '1';
     }
 
     /**
@@ -1395,20 +1448,22 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $today     = Dates::now();
-     * $yesterday = Dates::subDays($today, 1);
-     * Dates::isToday($today);     // true
+     * $today = Dates::now();
+     * $yesterday = Dates::removeSeconds($today, 86400);
+     * Dates::isToday($today); // true
      * Dates::isToday($yesterday); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date falls on today's calendar date
      * @see \Phuture\Coherence\Dates::isYesterday()
      * @see \Phuture\Coherence\Dates::isTomorrow()
      */
-    public static function isToday(DateTimeImmutable $date): bool
+    public static function isToday(DateTimeImmutable|string $date): bool
     {
-        return self::isSameDay($date, new DateTimeImmutable('today', $date->getTimezone()));
+        $resolved = self::resolveDate($date);
+
+        return self::isSameDay($resolved, new DateTimeImmutable('today', $resolved->getTimezone()));
     }
 
     /**
@@ -1420,18 +1475,20 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $yesterday = Dates::subDays(Dates::now(), 1);
+     * $yesterday = Dates::removeSeconds(Dates::now(), 86400);
      * Dates::isYesterday($yesterday); // true
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date falls on yesterday's calendar date
      * @see \Phuture\Coherence\Dates::isToday()
      * @see \Phuture\Coherence\Dates::isTomorrow()
      */
-    public static function isYesterday(DateTimeImmutable $date): bool
+    public static function isYesterday(DateTimeImmutable|string $date): bool
     {
-        return self::isSameDay($date, new DateTimeImmutable('yesterday', $date->getTimezone()));
+        $resolved = self::resolveDate($date);
+
+        return self::isSameDay($resolved, new DateTimeImmutable('yesterday', $resolved->getTimezone()));
     }
 
     /**
@@ -1443,18 +1500,20 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $tomorrow = Dates::addDays(Dates::now(), 1);
+     * $tomorrow = Dates::addSeconds(Dates::now(), 86400);
      * Dates::isTomorrow($tomorrow); // true
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date falls on tomorrow's calendar date
      * @see \Phuture\Coherence\Dates::isToday()
      * @see \Phuture\Coherence\Dates::isYesterday()
      */
-    public static function isTomorrow(DateTimeImmutable $date): bool
+    public static function isTomorrow(DateTimeImmutable|string $date): bool
     {
-        return self::isSameDay($date, new DateTimeImmutable('tomorrow', $date->getTimezone()));
+        $resolved = self::resolveDate($date);
+
+        return self::isSameDay($resolved, new DateTimeImmutable('tomorrow', $resolved->getTimezone()));
     }
 
     /**
@@ -1466,19 +1525,21 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $past   = Dates::parse('2020-01-01');
+     * $past = Dates::parse('2020-01-01');
      * $future = Dates::parse('2030-01-01');
-     * Dates::isPast($past);   // true
+     * Dates::isPast($past); // true
      * Dates::isPast($future); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date is before the current moment
      * @see \Phuture\Coherence\Dates::isFuture()
      */
-    public static function isPast(DateTimeImmutable $date): bool
+    public static function isPast(DateTimeImmutable|string $date): bool
     {
-        return $date < new DateTimeImmutable('now', $date->getTimezone());
+        $resolved = self::resolveDate($date);
+
+        return $resolved < new DateTimeImmutable('now', $resolved->getTimezone());
     }
 
     /**
@@ -1491,18 +1552,20 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $future = Dates::parse('2030-01-01');
-     * $past   = Dates::parse('2020-01-01');
+     * $past = Dates::parse('2020-01-01');
      * Dates::isFuture($future); // true
-     * Dates::isFuture($past);   // false
+     * Dates::isFuture($past); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date is after the current moment
      * @see \Phuture\Coherence\Dates::isPast()
      */
-    public static function isFuture(DateTimeImmutable $date): bool
+    public static function isFuture(DateTimeImmutable|string $date): bool
     {
-        return $date > new DateTimeImmutable('now', $date->getTimezone());
+        $resolved = self::resolveDate($date);
+
+        return $resolved > new DateTimeImmutable('now', $resolved->getTimezone());
     }
 
     /**
@@ -1513,17 +1576,17 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $saturday = Dates::parse('2026-04-18'); // Saturday
-     * $tuesday  = Dates::parse('2026-04-21'); // Tuesday
+     * $tuesday = Dates::parse('2026-04-21'); // Tuesday
      * Dates::isWeekend($saturday); // true
-     * Dates::isWeekend($tuesday);  // false
+     * Dates::isWeekend($tuesday); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date falls on a Saturday or Sunday
      * @see \Phuture\Coherence\Dates::isWeekday()
      * @see \Phuture\Coherence\Dates::getDayOfWeek()
      */
-    public static function isWeekend(DateTimeImmutable $date): bool
+    public static function isWeekend(DateTimeImmutable|string $date): bool
     {
         $dayOfWeek = self::getDayOfWeek($date);
 
@@ -1537,25 +1600,21 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $tuesday  = Dates::parse('2026-04-21'); // Tuesday
+     * $tuesday = Dates::parse('2026-04-21'); // Tuesday
      * $saturday = Dates::parse('2026-04-18'); // Saturday
-     * Dates::isWeekday($tuesday);  // true
+     * Dates::isWeekday($tuesday); // true
      * Dates::isWeekday($saturday); // false
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to inspect
+     * @param DateTimeImmutable|string $date The date/time value to inspect
      * @return bool Returns true if the date falls on Monday through Friday
      * @see \Phuture\Coherence\Dates::isWeekend()
      * @see \Phuture\Coherence\Dates::getDayOfWeek()
      */
-    public static function isWeekday(DateTimeImmutable $date): bool
+    public static function isWeekday(DateTimeImmutable|string $date): bool
     {
         return !self::isWeekend($date);
     }
-
-    // -------------------------------------------------------------------------
-    // Boundaries
-    // -------------------------------------------------------------------------
 
     /**
      * Returns a new date/time value set to the very start of its day (00:00:00).
@@ -1566,17 +1625,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:45');
+     * $date = Dates::parse('2026-04-21 14:30:45');
      * $result = Dates::startOfDay($date); // '2026-04-21 00:00:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at midnight on the same calendar day
      * @see \Phuture\Coherence\Dates::endOfDay()
      */
-    public static function startOfDay(DateTimeImmutable $date): DateTimeImmutable
+    public static function startOfDay(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->setTime(0, 0, 0);
+        return self::resolveDate($date)->setTime(0, 0, 0);
     }
 
     /**
@@ -1588,17 +1647,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:45');
+     * $date = Dates::parse('2026-04-21 14:30:45');
      * $result = Dates::endOfDay($date); // '2026-04-21 23:59:59'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at 23:59:59 on the same calendar day
      * @see \Phuture\Coherence\Dates::startOfDay()
      */
-    public static function endOfDay(DateTimeImmutable $date): DateTimeImmutable
+    public static function endOfDay(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->setTime(23, 59, 59);
+        return self::resolveDate($date)->setTime(23, 59, 59);
     }
 
     /**
@@ -1610,17 +1669,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21'); // Tuesday
+     * $date = Dates::parse('2026-04-21'); // Tuesday
      * $result = Dates::startOfWeek($date); // '2026-04-20 00:00:00' (Monday)
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at Monday 00:00:00 of the same week
      * @see \Phuture\Coherence\Dates::endOfWeek()
      */
-    public static function startOfWeek(DateTimeImmutable $date): DateTimeImmutable
+    public static function startOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('Monday this week')->setTime(0, 0, 0);
+        return self::resolveDate($date)->modify('Monday this week')->setTime(0, 0, 0);
     }
 
     /**
@@ -1632,17 +1691,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21'); // Tuesday
+     * $date = Dates::parse('2026-04-21'); // Tuesday
      * $result = Dates::endOfWeek($date); // '2026-04-26 23:59:59' (Sunday)
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at Sunday 23:59:59 of the same week
      * @see \Phuture\Coherence\Dates::startOfWeek()
      */
-    public static function endOfWeek(DateTimeImmutable $date): DateTimeImmutable
+    public static function endOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('Sunday this week')->setTime(23, 59, 59);
+        return self::resolveDate($date)->modify('Sunday this week')->setTime(23, 59, 59);
     }
 
     /**
@@ -1654,17 +1713,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21 14:30:00');
+     * $date = Dates::parse('2026-04-21 14:30:00');
      * $result = Dates::startOfMonth($date); // '2026-04-01 00:00:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at the first day of the month at 00:00:00
      * @see \Phuture\Coherence\Dates::endOfMonth()
      */
-    public static function startOfMonth(DateTimeImmutable $date): DateTimeImmutable
+    public static function startOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('first day of this month')->setTime(0, 0, 0);
+        return self::resolveDate($date)->modify('first day of this month')->setTime(0, 0, 0);
     }
 
     /**
@@ -1676,17 +1735,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-15');
+     * $date = Dates::parse('2026-04-15');
      * $result = Dates::endOfMonth($date); // '2026-04-30 23:59:59'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at the last day of the month at 23:59:59
      * @see \Phuture\Coherence\Dates::startOfMonth()
      */
-    public static function endOfMonth(DateTimeImmutable $date): DateTimeImmutable
+    public static function endOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('last day of this month')->setTime(23, 59, 59);
+        return self::resolveDate($date)->modify('last day of this month')->setTime(23, 59, 59);
     }
 
     /**
@@ -1698,17 +1757,17 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-09-15');
+     * $date = Dates::parse('2026-09-15');
      * $result = Dates::startOfYear($date); // '2026-01-01 00:00:00'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at January 1st of the same year at 00:00:00
      * @see \Phuture\Coherence\Dates::endOfYear()
      */
-    public static function startOfYear(DateTimeImmutable $date): DateTimeImmutable
+    public static function startOfYear(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('first day of January this year')->setTime(0, 0, 0);
+        return self::resolveDate($date)->modify('first day of January this year')->setTime(0, 0, 0);
     }
 
     /**
@@ -1720,22 +1779,18 @@ class Dates extends StaticClass
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date   = Dates::parse('2026-04-21');
+     * $date = Dates::parse('2026-04-21');
      * $result = Dates::endOfYear($date); // '2026-12-31 23:59:59'
      * ```
      *
-     * @param DateTimeImmutable $date The date/time value to adjust
+     * @param DateTimeImmutable|string $date The date/time value to adjust
      * @return DateTimeImmutable A new date/time value at December 31st of the same year at 23:59:59
      * @see \Phuture\Coherence\Dates::startOfYear()
      */
-    public static function endOfYear(DateTimeImmutable $date): DateTimeImmutable
+    public static function endOfYear(DateTimeImmutable|string $date): DateTimeImmutable
     {
-        return $date->modify('last day of December this year')->setTime(23, 59, 59);
+        return self::resolveDate($date)->modify('last day of December this year')->setTime(23, 59, 59);
     }
-
-    // -------------------------------------------------------------------------
-    // Fluent entry point
-    // -------------------------------------------------------------------------
 
     /**
      * Returns a fluent wrapper around a date/time value for chainable operations.
@@ -1751,8 +1806,8 @@ class Dates extends StaticClass
      * $result = Dates::of('2026-04-21 14:30:00')
      *     ->addDays(10)
      *     ->startOfDay()
-     *     ->toDateTimeString();
-     * // '2026-05-01 00:00:00'
+     *     ->get();
+     * // DateTimeImmutable for '2026-05-01 00:00:00'
      * ```
      *
      * @param DateTimeImmutable|string $date A DateTimeImmutable instance or a parseable date string
@@ -1771,9 +1826,21 @@ class Dates extends StaticClass
         return new Type\Dates($date);
     }
 
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
+    /**
+     * Resolves a DateTimeImmutable|string argument to a DateTimeImmutable instance.
+     *
+     * @param DateTimeImmutable|string $date A DateTimeImmutable instance or a parseable date string
+     * @return DateTimeImmutable The resolved date/time value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the string cannot be parsed
+     */
+    private static function resolveDate(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        if (is_string($date)) {
+            return self::parse($date);
+        }
+
+        return $date;
+    }
 
     /**
      * Builds a DateTimeZone from a timezone string, or returns the system default timezone.
@@ -1790,7 +1857,7 @@ class Dates extends StaticClass
 
         if (!in_array($timezone, timezone_identifiers_list(), true)) {
             throw new InvalidArgumentException(
-                "The timezone \"{$timezone}\" is not a valid PHP timezone identifier."
+                "Invalid Argument: The timezone \"{$timezone}\" is not a valid PHP timezone identifier."
             );
         }
 
