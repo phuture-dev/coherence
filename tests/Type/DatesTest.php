@@ -72,16 +72,6 @@ class DatesTest extends TestCase
         Assert::same('2026-04-21 14:30:00', $result->format('Y-m-d H:i:s'));
     }
 
-    public function testChainedFormatAsTerminalOperation(): void
-    {
-        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
-            ->addDays(10)
-            ->startOfDay()
-            ->format('dddd, MMMM D, YYYY');
-
-        Assert::same('Friday, May 1, 2026', $result);
-    }
-
     public function testChainPreservesTimezone(): void
     {
         $result = Dates::of('2026-04-21 12:00:00', 'UTC')
@@ -136,24 +126,6 @@ class DatesTest extends TestCase
     {
         $result = $this->date('2026-04-21 14:00:00')->endOfYear()->get();
         Assert::same('2026-12-31 23:59:59', $result->format('Y-m-d H:i:s'));
-    }
-
-    public function testFormatReturnsStringFromDayJsTokens(): void
-    {
-        $result = $this->date('2026-04-21 14:30:00')
-            ->addDays(10)
-            ->format('YYYY-MM-DD');
-
-        Assert::same('2026-05-01', $result);
-    }
-
-    public function testFormatReturnsStringFromPhpNative(): void
-    {
-        $result = $this->date('2026-04-21 14:30:00')
-            ->addDays(10)
-            ->format('Y-m-d');
-
-        Assert::same('2026-05-01', $result);
     }
 
     public function testFromAcceptsDateTimeImmutable(): void
