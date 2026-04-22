@@ -211,28 +211,39 @@ class Dates extends StaticClass
      * Creates a date/time value from a string using an explicit format pattern.
      *
      * Use this when you know the exact format of your date string and want
-     * strict parsing. For example, if your source data always looks like "21/04/2026",
-     * pass "d/m/Y" as the format and "21/04/2026" as the date string.
+     * strict parsing. Supports both PHP native format characters and day.js-style
+     * tokens — the format style is auto-detected the same way as {@see format()}.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
+     * // PHP native format
      * $date = Dates::fromFormat('d/m/Y', '21/04/2026');
      * $date = Dates::fromFormat('Y-m-d H:i:s', '2026-04-21 14:30:00', 'Europe/London');
+     *
+     * // day.js-style tokens
+     * $date = Dates::fromFormat('DD/MM/YYYY', '21/04/2026');
+     * $date = Dates::fromFormat('YYYY-MM-DD HH:mm:ss', '2026-04-21 14:30:00', 'Europe/London');
      * ```
      *
-     * @param string $format The format pattern using PHP's date format characters (e.g. 'Y-m-d')
+     * @param string $format The format pattern using either PHP date() characters or
+     *   day.js-style tokens (auto-detected)
      * @param string $dateString The date string to parse according to the format
      * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
      * @return DateTimeImmutable The parsed date and time value
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the format does not match
      *   the date string or the timezone is invalid
      * @see \Phuture\Coherence\Dates::parse()
+     * @see \Phuture\Coherence\Dates::format()
      */
     public static function fromFormat(string $format, string $dateString, ?string $timezone = null): DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat($format, $dateString, self::buildTimezone($timezone));
+        $phpFormat = self::isDayJsFormat($format)
+            ? self::convertDayJsFormatToPhp($format)
+            : $format;
+
+        $date = DateTimeImmutable::createFromFormat($phpFormat, $dateString, self::buildTimezone($timezone));
 
         if ($date === false) {
             throw new InvalidArgumentException(
@@ -1963,6 +1974,69 @@ class Dates extends StaticClass
         }
 
         return preg_match('/YYYY|MMMM|dddd|SSS|MMM|ddd|YY|MM|DD|dd|HH|hh|mm|ss|ZZ/', $format) === 1;
+    }
+
+    /**
+     * Converts a day.js-style format string to PHP native date() format characters.
+     *
+     * @param string $dayJsFormat The format string using day.js-style tokens
+     * @return string The equivalent format string using PHP date() characters
+     */
+    private static function convertDayJsFormatToPhp(string $dayJsFormat): string
+    {
+        $escaped = [];
+        $working = preg_replace_callback('/\[([^\]]*)\]/', function ($matches) use (&$escaped) {
+            $placeholder = "\x00ESC" . count($escaped) . "\x00";
+            $escaped[] = $matches[1];
+
+            return $placeholder;
+        }, $dayJsFormat);
+
+        $conversions = [
+            'YYYY' => 'Y',
+            'YY' => 'y',
+            'MMMM' => 'F',
+            'MMM' => 'M',
+            'MM' => 'm',
+            'M' => 'n',
+            'DD' => 'd',
+            'D' => 'j',
+            'dddd' => 'l',
+            'ddd' => 'D',
+            'dd' => 'D',
+            'HH' => 'H',
+            'H' => 'G',
+            'hh' => 'h',
+            'h' => 'g',
+            'mm' => 'i',
+            'm' => 'i',
+            'ss' => 's',
+            's' => 's',
+            'SSS' => 'v',
+            'ZZ' => 'O',
+            'Z' => 'P',
+            'A' => 'A',
+            'a' => 'a',
+        ];
+
+        $result = strtr($working, $conversions);
+
+        $phpFormatChars = array_flip(str_split('dDjlNwWFS mMntLoYy aABgGhHiseIOPTZcrUuv'));
+
+        foreach ($escaped as $index => $text) {
+            $escapedText = '';
+            $length = strlen($text);
+            for ($i = 0; $i < $length; $i++) {
+                if (isset($phpFormatChars[$text[$i]])) {
+                    $escapedText .= '\\' . $text[$i];
+                } else {
+                    $escapedText .= $text[$i];
+                }
+            }
+            $result = str_replace("\x00ESC{$index}\x00", $escapedText, $result);
+        }
+
+        return $result;
     }
 
     /**

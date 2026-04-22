@@ -161,6 +161,62 @@ class DatesTest extends TestCase
         );
     }
 
+    public function testFromFormatDayJsTokensParsesCorrectly(): void
+    {
+        $date = Dates::fromFormat('DD/MM/YYYY', '21/04/2026', 'UTC');
+        Assert::same('2026-04-21', $date->format('Y-m-d'));
+    }
+
+    public function testFromFormatDayJsTokensWithTime(): void
+    {
+        $date = Dates::fromFormat('YYYY-MM-DD HH:mm:ss', '2026-04-21 14:30:00', 'UTC');
+        Assert::same('2026-04-21 14:30:00', $date->format('Y-m-d H:i:s'));
+    }
+
+    public function testFromFormatDayJsTokensWith12HourClock(): void
+    {
+        $date = Dates::fromFormat('YYYY-MM-DD hh:mm:ss A', '2026-04-21 02:30:00 PM', 'UTC');
+        Assert::same('2026-04-21 14:30:00', $date->format('Y-m-d H:i:s'));
+    }
+
+    public function testFromFormatDayJsTokensWithLowercaseAmPm(): void
+    {
+        $date = Dates::fromFormat('YYYY-MM-DD hh:mm:ss a', '2026-04-21 02:30:00 am', 'UTC');
+        Assert::same('2026-04-21 02:30:00', $date->format('Y-m-d H:i:s'));
+    }
+
+    public function testFromFormatDayJsTokensThrowsOnMismatch(): void
+    {
+        Assert::exception(
+            fn() => Dates::fromFormat('YYYY-MM-DD', 'not-a-date', 'UTC'),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testFromFormatDayJsTokensWithMonthName(): void
+    {
+        $date = Dates::fromFormat('DD MMM YYYY', '21 Apr 2026', 'UTC');
+        Assert::same('2026-04-21', $date->format('Y-m-d'));
+    }
+
+    public function testFromFormatDayJsTokensWithFullMonthName(): void
+    {
+        $date = Dates::fromFormat('DD MMMM YYYY', '21 April 2026', 'UTC');
+        Assert::same('2026-04-21', $date->format('Y-m-d'));
+    }
+
+    public function testFromFormatDayJsTokensSingleDigitMonth(): void
+    {
+        $date = Dates::fromFormat('YYYY-M-DD', '2026-4-21', 'UTC');
+        Assert::same('2026-04-21', $date->format('Y-m-d'));
+    }
+
+    public function testFromFormatDayJsTokensSingleDigitDay(): void
+    {
+        $date = Dates::fromFormat('YYYY-MM-D', '2026-04-5', 'UTC');
+        Assert::same('2026-04-05', $date->format('Y-m-d'));
+    }
+
     public function testToTimezonePreservesMoment(): void
     {
         $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
