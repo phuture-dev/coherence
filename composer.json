@@ -24,13 +24,7 @@
         "symfony/polyfill-php84": "~v1.33.0",
         "symfony/polyfill-php85": "~v1.33.0",
         "symfony/polyfill-mbstring": "~v1.33.0",
-        "symfony/polyfill-iconv": "~v1.33.0",
-        "symfony/polyfill-uuid": "~v1.33.0",
-        "symfony/polyfill-intl-grapheme": "~v1.33.0",
-        "symfony/polyfill-intl-idn": "~v1.33.0",
-        "symfony/polyfill-intl-icu": "~v1.33.0",
-        "symfony/polyfill-intl-messageformatter": "~v1.33.0",
-        "symfony/polyfill-intl-normalizer": "~v1.33.0"
+        "symfony/polyfill-uuid": "~v1.33.0"
     },
     "require-dev": {
         "nette/tester": "^2.5",
