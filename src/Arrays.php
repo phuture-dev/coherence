@@ -88,8 +88,8 @@ class Arrays extends StaticClass
      * @param array $array The array to retrieve the reference from (passed by reference)
      * @param string|int|array $key The key to access (string/int for direct access, array for a nested path).
      * @return mixed Returns a reference to the array element
-     * @throws InvalidArgumentException If the traversed item is not an array
-     * @see Arrays::get()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the traversed item is not an array
+     * @see \Phuture\Coherence\Arrays::get()
      */
     public static function &getReference(array &$array, string|int|array $key): mixed
     {
@@ -185,7 +185,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to add key-value pairs to (passed by reference)
      * @param array $items Associative array of key-value pairs to append.
-     * @see Arrays::prepend()
+     * @see \Phuture\Coherence\Arrays::prepend()
      */
     public static function append(array &$array, array $items): void
     {
@@ -316,7 +316,7 @@ class Arrays extends StaticClass
      *
      * @param array $array An array containing other arrays to merge.
      * @return array Returns a single flattened array with all values from the nested arrays
-     * @see Arrays::flatten()
+     * @see \Phuture\Coherence\Arrays::flatten()
      */
     public static function collapse(array $array): array
     {
@@ -367,8 +367,8 @@ class Arrays extends StaticClass
      * @param int|string|array|null $column The column name, index, or nested path array to extract.
      * @param int|string|array|null $index Optional column, index, or nested path array to use as keys (default: null).
      * @return array Returns an array of values from the specified column
-     * @throws InvalidArgumentException If the column path is not a valid list of strings
-     * @throws InvalidDataTypeException If the array contains invalid data types
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the column path is not a valid list of strings
+     * @throws \Phuture\Coherence\Exception\InvalidDataTypeException If the array contains invalid data types
      */
     public static function column(
         array $array,
@@ -447,8 +447,8 @@ class Arrays extends StaticClass
      * @param array $keys Array of keys to use
      * @param array $values Array of values to use
      * @return array Returns an associative array combining the keys and values
-     * @throws InvalidArgumentException When arrays have different lengths
-     * @throws InvalidDataTypeException When keys contain non-string or non-integer values
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When arrays have different lengths
+     * @throws \Phuture\Coherence\Exception\InvalidDataTypeException When keys contain non-string or non-integer values
      */
     public static function combine(array $keys, array $values): array
     {
@@ -489,8 +489,8 @@ class Arrays extends StaticClass
      * @param array $array The array to search in.
      * @param mixed $value The value to search for.
      * @return bool Returns true if the value exists in the array, false otherwise
-     * @see Arrays::exists()
-     * @see Arrays::search()
+     * @see \Phuture\Coherence\Arrays::exists()
+     * @see \Phuture\Coherence\Arrays::search()
      */
     public static function contains(array $array, mixed $value): bool
     {
@@ -519,7 +519,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array whose values to count.
      * @return array Returns an associative array with values as keys and occurrence counts as values
-     * @see Arrays::length()
+     * @see \Phuture\Coherence\Arrays::length()
      */
     public static function count(array $array): array
     {
@@ -556,7 +556,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays Two or more arrays to cross join
      * @return array Returns a multidimensional array containing all possible combinations
-     * @throws InvalidArgumentException When less than 2 arrays are provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When less than 2 arrays are provided
      */
     public static function crossJoin(array ...$arrays): array
     {
@@ -625,8 +625,8 @@ class Arrays extends StaticClass
      * @param array $array The flattened array with dot notation keys.
      * @param bool $strict If true, throws exception on data conflicts; if false, later values overwrite earlier ones
      * @return array Returns a multidimensional array with nested structure
-     * @throws LogicException When $strict is true and a data conflict is detected
-     * @see Arrays::notation()
+     * @throws \Phuture\Coherence\Exception\LogicException When $strict is true and a data conflict is detected
+     * @see \Phuture\Coherence\Arrays::notation()
      */
     public static function denote(array $array, bool $strict = false): array
     {
@@ -726,9 +726,9 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values from the first array not found in other arrays
-     * @throws InvalidArgumentException When a comparison array is not provided
-     * @see Arrays::differenceAssoc()
-     * @see Arrays::differenceKeys()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When a comparison array is not provided
+     * @see \Phuture\Coherence\Arrays::differenceAssoc()
+     * @see \Phuture\Coherence\Arrays::differenceKeys()
      */
     public static function difference(array $array, ...$arrays): array
     {
@@ -813,13 +813,13 @@ class Arrays extends StaticClass
      * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs from the first array not found in other arrays
-     * @throws InvalidArgumentException When no comparison arrays are provided
-     * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
-     * @throws InvalidArgumentException When more than two callbacks are provided
-     * @throws LogicException When no ArrayComparator enum is provided when needed
-     * @throws LogicException When ArrayComparator::Both is not used with exactly two callbacks
-     * @see Arrays::difference()
-     * @see Arrays::differenceKeys()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison arrays are provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When callbacks are provided without an ArrayComparator
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When more than two callbacks are provided
+     * @throws \Phuture\Coherence\Exception\LogicException When no ArrayComparator enum is provided when needed
+     * @throws \Phuture\Coherence\Exception\LogicException When ArrayComparator::Both is not used with exactly two callbacks
+     * @see \Phuture\Coherence\Arrays::difference()
+     * @see \Phuture\Coherence\Arrays::differenceKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
      */
     public static function differenceAssoc(array $array, ...$arrays): array
@@ -912,8 +912,8 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function for keys that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are not found in other arrays
-     * @see Arrays::difference()
-     * @see Arrays::differenceAssoc()
+     * @see \Phuture\Coherence\Arrays::difference()
+     * @see \Phuture\Coherence\Arrays::differenceAssoc()
      */
     public static function differenceKeys(array $array, ...$arrays): array
     {
@@ -956,7 +956,7 @@ class Arrays extends StaticClass
      * @param callable $callback A function that receives each element and returns true if it passes the test
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return bool Returns true if ALL elements pass the callback test, false otherwise
-     * @see Arrays::some()
+     * @see \Phuture\Coherence\Arrays::some()
      */
     public static function every(array $array, callable $callback): bool
     {
@@ -990,7 +990,7 @@ class Arrays extends StaticClass
      * @param array $array The array to search in
      * @param string|int $key The key to search for
      * @return bool Returns true if the key exists in the array, false otherwise
-     * @see Arrays::contains()
+     * @see \Phuture\Coherence\Arrays::contains()
      */
     public static function exists(array $array, string|int $key): bool
     {
@@ -1025,8 +1025,8 @@ class Arrays extends StaticClass
      * @param int $count Number of elements to insert (must be greater than zero)
      * @param mixed $value The value to fill the array with
      * @return array Returns a new array filled with the specified value
-     * @throws InvalidArgumentException When count is less than or equal to zero
-     * @see Arrays::fillKeys()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When count is less than or equal to zero
+     * @see \Phuture\Coherence\Arrays::fillKeys()
      */
     public static function fill(int $startIndex, int $count, mixed $value): array
     {
@@ -1066,8 +1066,8 @@ class Arrays extends StaticClass
      * @param array $keys Array of keys to use for the new array
      * @param mixed $value The value to assign to all keys
      * @return array Returns a new array with specified keys and the same value for all
-     * @throws InvalidArgumentException When keys array is empty
-     * @see Arrays::fill()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When keys array is empty
+     * @see \Phuture\Coherence\Arrays::fill()
      */
     public static function fillKeys(array $keys, mixed $value): array
     {
@@ -1110,8 +1110,8 @@ class Arrays extends StaticClass
      * @param callable|null $callback Optional function to test each element (default: removes falsy values)
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return array Returns a new array containing only the filtered elements
-     * @see Arrays::grep()
-     * @see Arrays::find()
+     * @see \Phuture\Coherence\Arrays::grep()
+     * @see \Phuture\Coherence\Arrays::find()
      */
     public static function filter(array $array, ?callable $callback = null): array
     {
@@ -1156,7 +1156,7 @@ class Arrays extends StaticClass
      * @param callable $callback Function that tests each element, returns true to select it
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return mixed Returns the first matching element, or null if none found
-     * @see Arrays::findKey()
+     * @see \Phuture\Coherence\Arrays::findKey()
      */
     public static function find(array $array, callable $callback): mixed
     {
@@ -1198,7 +1198,7 @@ class Arrays extends StaticClass
      * @param callable $callback Function that tests each element, returns true to select it
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return mixed Returns the key of the first matching element, or null if none found
-     * @see Arrays::find()
+     * @see \Phuture\Coherence\Arrays::find()
      */
     public static function findKey(array $array, callable $callback): mixed
     {
@@ -1233,8 +1233,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to get the first value from.
      * @return mixed Returns the first value
-     * @throws OutOfBoundsException When the array is empty
-     * @see Arrays::last()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the array is empty
+     * @see \Phuture\Coherence\Arrays::last()
      */
     public static function first(array $array): mixed
     {
@@ -1274,8 +1274,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to get the first key from.
      * @return string|int Returns the first key
-     * @throws OutOfBoundsException When the array is empty
-     * @see Arrays::lastKey()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the array is empty
+     * @see \Phuture\Coherence\Arrays::lastKey()
      */
     public static function firstKey(array $array): string|int
     {
@@ -1313,7 +1313,7 @@ class Arrays extends StaticClass
      *
      * @param array $array A potentially multidimensional array to flatten
      * @return array Returns a single-dimensional array containing all scalar values from the nested structure
-     * @see Arrays::collapse()
+     * @see \Phuture\Coherence\Arrays::collapse()
      */
     public static function flatten(array $array, int $depth = 0): array
     {
@@ -1369,8 +1369,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to flip.
      * @return array Returns a new array with flipped keys and values
-     * @throws InvalidDataTypeException If one of the values is not a string nor integer
-     * @see Arrays::reverse()
+     * @throws \Phuture\Coherence\Exception\InvalidDataTypeException If one of the values is not a string nor integer
+     * @see \Phuture\Coherence\Arrays::reverse()
      */
     public static function flip(array $array): array
     {
@@ -1413,7 +1413,7 @@ class Arrays extends StaticClass
      * @param string $separator The character or string to split on (default: space).
      * @param int $limit The maximum number of array elements to return (default: PHP's default).
      * @return array An array of string parts.
-     * @see Arrays::toString()
+     * @see \Phuture\Coherence\Arrays::toString()
      */
     public static function fromString(string $string, string $separator = ' ', int $limit = PHP_INT_MAX): array
     {
@@ -1461,8 +1461,8 @@ class Arrays extends StaticClass
      * @param string|int|array $key The key to access (string/int for direct access, array for a nested path).
      * @param mixed $default Optional default value to return if the key is not found
      * @return mixed Returns the value at the specified key, or the default value if provided and the key doesn't exist
-     * @throws OutOfBoundsException When the key doesn't exist and no default value is provided
-     * @see Arrays::getReference()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the key doesn't exist and no default value is provided
+     * @see \Phuture\Coherence\Arrays::getReference()
      */
     public static function get(array $array, string|int|array $key, mixed $default = null): mixed
     {
@@ -1535,8 +1535,8 @@ class Arrays extends StaticClass
      *  that returns the group key. The callback has the signature `function (mixed $item, mixed $key): mixed`
      * @return array Returns an associative array where keys are group identifiers
      *  and values are arrays of items belonging to each group
-     * @see Arrays::associate()
-     * @see Arrays::partition()
+     * @see \Phuture\Coherence\Arrays::associate()
+     * @see \Phuture\Coherence\Arrays::partition()
      */
     public static function groupBy(array $array, callable|string $groupBy): array
     {
@@ -1597,7 +1597,7 @@ class Arrays extends StaticClass
      * @param string $pattern Regular expression pattern to match against
      * @param bool $invert When true, returns elements that do NOT match the pattern (default: false)
      * @return array Returns filtered array with matching elements
-     * @throws LogicException When the regular expression pattern is invalid
+     * @throws \Phuture\Coherence\Exception\LogicException When the regular expression pattern is invalid
      */
     public static function grep(array $array, string $pattern, bool $invert = false): array
     {
@@ -1713,7 +1713,7 @@ class Arrays extends StaticClass
      * @param array $array The array to insert into (passed by reference).
      * @param string|int $key The reference key to insert after, or null to append
      * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::insertBefore()
+     * @see \Phuture\Coherence\Arrays::insertBefore()
      */
     public static function insertAfter(array &$array, string|int $key, array $items): void
     {
@@ -1772,7 +1772,7 @@ class Arrays extends StaticClass
      * @param array $array The array to insert into (passed by reference).
      * @param string|int $key The reference key to insert before, or null to prepend
      * @param array $items Associative array of key-value pairs to insert
-     * @see Arrays::insertAfter()
+     * @see \Phuture\Coherence\Arrays::insertAfter()
      */
     public static function insertBefore(array &$array, string|int $key, array $items): void
     {
@@ -1860,8 +1860,8 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values present in all arrays with keys preserved from the first array
-     * @see Arrays::intersectAssoc()
-     * @see Arrays::intersectKeys()
+     * @see \Phuture\Coherence\Arrays::intersectAssoc()
+     * @see \Phuture\Coherence\Arrays::intersectKeys()
      */
     public static function intersect(array $array, ...$arrays): array
     {
@@ -1950,13 +1950,13 @@ class Arrays extends StaticClass
      * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs present in all arrays
-     * @throws InvalidArgumentException When no comparison arrays are provided
-     * @throws InvalidArgumentException When callbacks are provided without an ArrayComparator
-     * @throws InvalidArgumentException When more than two callbacks are provided
-     * @throws LogicException When no ArrayComparator enum is provided when needed
-     * @throws LogicException When ArrayComparator::Both is not used with exactly two callbacks
-     * @see Arrays::intersect()
-     * @see Arrays::intersectKeys()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison arrays are provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When callbacks are provided without an ArrayComparator
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When more than two callbacks are provided
+     * @throws \Phuture\Coherence\Exception\LogicException When no ArrayComparator enum is provided when needed
+     * @throws \Phuture\Coherence\Exception\LogicException When ArrayComparator::Both is not used with exactly two callbacks
+     * @see \Phuture\Coherence\Arrays::intersect()
+     * @see \Phuture\Coherence\Arrays::intersectKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
      */
     public static function intersectAssoc(array $array, ...$arrays): array
@@ -2048,7 +2048,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are found in all arrays
-     * @see Arrays::intersect()
+     * @see \Phuture\Coherence\Arrays::intersect()
      */
     public static function intersectKeys(array $array, ...$arrays): array
     {
@@ -2090,7 +2090,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to check.
      * @return bool Returns true if the array is associative, false if it's a list
-     * @see Arrays::isList()
+     * @see \Phuture\Coherence\Arrays::isList()
      */
     public static function isAssoc(array $array): bool
     {
@@ -2118,7 +2118,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to check.
      * @return bool Returns true if the array is empty, false otherwise
-     * @see Arrays::isFilled()
+     * @see \Phuture\Coherence\Arrays::isFilled()
      */
     public static function isBlank(array $array): bool
     {
@@ -2147,7 +2147,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to check.
      * @return bool Returns true if the array is not empty, false otherwise
-     * @see Arrays::isBlank()
+     * @see \Phuture\Coherence\Arrays::isBlank()
      */
     public static function isFilled(array $array): bool
     {
@@ -2176,7 +2176,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to check.
      * @return bool Returns true if the array is a list, false otherwise
-     * @see Arrays::isAssoc()
+     * @see \Phuture\Coherence\Arrays::isAssoc()
      */
     public static function isList(array $array): bool
     {
@@ -2265,7 +2265,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays Two or more arrays to join together
      * @return array Returns a single merged array
-     * @see Arrays::split()
+     * @see \Phuture\Coherence\Arrays::split()
      */
     public static function join(array ...$arrays): array
     {
@@ -2306,7 +2306,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array from which to extract keys
      * @return array Returns an indexed array containing all keys from the input array
-     * @see Arrays::values()
+     * @see \Phuture\Coherence\Arrays::values()
      */
     public static function keys(array $array): array
     {
@@ -2341,8 +2341,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to get the last value from
      * @return mixed Returns the last value
-     * @throws OutOfBoundsException When the array is empty
-     * @see Arrays::first()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the array is empty
+     * @see \Phuture\Coherence\Arrays::first()
      */
     public static function last(array $array): mixed
     {
@@ -2382,8 +2382,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to get the last key from
      * @return string|int Returns the last key
-     * @throws OutOfBoundsException When the array is empty
-     * @see Arrays::firstKey()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the array is empty
+     * @see \Phuture\Coherence\Arrays::firstKey()
      */
     public static function lastKey(array $array): string|int
     {
@@ -2463,9 +2463,9 @@ class Arrays extends StaticClass
      * @param callable $callback The callback function to apply to each value
      *  The callback has the signature `function (mixed $value): mixed`
      * @return array Returns a new array with transformed values and original keys
-     * @see Arrays::mapKeys()
-     * @see Arrays::mapWithKeys()
-     * @see Arrays::reduce()
+     * @see \Phuture\Coherence\Arrays::mapKeys()
+     * @see \Phuture\Coherence\Arrays::mapWithKeys()
+     * @see \Phuture\Coherence\Arrays::reduce()
      */
     public static function map(array $array, callable $callback): array
     {
@@ -2498,8 +2498,8 @@ class Arrays extends StaticClass
      * @param callable $callback The callback function to apply to each key
      *  The callback has the signature `function (mixed $key): mixed`
      * @return array Returns a new array with transformed keys and original values
-     * @see Arrays::map()
-     * @see Arrays::mapWithKeys()
+     * @see \Phuture\Coherence\Arrays::map()
+     * @see \Phuture\Coherence\Arrays::mapWithKeys()
      */
     public static function mapKeys(array $array, callable $callback): array
     {
@@ -2557,9 +2557,9 @@ class Arrays extends StaticClass
      * @param callable $callback A function that receives ($value, $key) and returns an array with one key-value pair
      *  The callback has the signature `function (mixed $value, mixed $key): array`
      * @return array Returns a new array with the structure defined by the callback
-     * @throws InvalidArgumentException When the callback doesn't return an array with exactly one element
-     * @see Arrays::map()
-     * @see Arrays::mapKeys()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the callback doesn't return an array with exactly one element
+     * @see \Phuture\Coherence\Arrays::map()
+     * @see \Phuture\Coherence\Arrays::mapKeys()
      */
     public static function mapWithKeys(array $array, callable $callback): array
     {
@@ -2622,8 +2622,8 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays One or more arrays to merge together
      * @return array Returns a new merged array
-     * @see Arrays::join()
-     * @see Arrays::collapse()
+     * @see \Phuture\Coherence\Arrays::join()
+     * @see \Phuture\Coherence\Arrays::collapse()
      */
     public static function merge(...$arrays): array
     {
@@ -2674,7 +2674,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to normalize, which may contain objects
      * @return array Returns a pure array with all objects converted to arrays
-     * @see Arrays::toObject()
+     * @see \Phuture\Coherence\Arrays::toObject()
      */
     public static function normalize(array $array): array
     {
@@ -2720,7 +2720,7 @@ class Arrays extends StaticClass
      * @param array $array The multidimensional array to flatten
      * @param string $prefix Optional prefix to prepend to all keys (for internal recursion)
      * @return array Returns a flattened single-level array with dot notation keys
-     * @see Arrays::denote()
+     * @see \Phuture\Coherence\Arrays::denote()
      */
     public static function notation(array $array, string $prefix = ''): array
     {
@@ -2911,8 +2911,8 @@ class Arrays extends StaticClass
      * @param callable $callback Function that returns true for the first array, false for the second.
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return array Returns an array with two elements: [passing_items, failing_items]
-     * @see Arrays::groupBy()
-     * @see Arrays::filter()
+     * @see \Phuture\Coherence\Arrays::groupBy()
+     * @see \Phuture\Coherence\Arrays::filter()
      */
     public static function partition(array $array, callable $callback): array
     {
@@ -2955,7 +2955,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to add key-value pairs to (passed by reference)
      * @param array $items Associative array of key-value pairs to prepend
-     * @see Arrays::append()
+     * @see \Phuture\Coherence\Arrays::append()
      */
     public static function prepend(array &$array, array $items): void
     {
@@ -3002,7 +3002,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array containing values to multiply
      * @return int|float The product of all values in the array
-     * @see Arrays::sum()
+     * @see \Phuture\Coherence\Arrays::sum()
      */
     public static function product(array $array): int|float
     {
@@ -3041,9 +3041,9 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to remove the last element from (passed by reference)
      * @return mixed Returns the last element
-     * @throws OutOfBoundsException If the array is empty
-     * @see Arrays::push()
-     * @see Arrays::shift()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException If the array is empty
+     * @see \Phuture\Coherence\Arrays::push()
+     * @see \Phuture\Coherence\Arrays::shift()
      */
     public static function pull(array &$array): mixed
     {
@@ -3089,8 +3089,8 @@ class Arrays extends StaticClass
      * @param array $array The array to add elements to (passed by reference)
      * @param mixed ...$values One or more values to add to the end
      * @return int Returns the new number of elements in the array
-     * @see Arrays::pull()
-     * @see Arrays::unshift()
+     * @see \Phuture\Coherence\Arrays::pull()
+     * @see \Phuture\Coherence\Arrays::unshift()
      */
     public static function push(array &$array, mixed ...$values): int
     {
@@ -3127,9 +3127,9 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to pick a random value from
      * @return mixed Returns a randomly selected value from the array
-     * @throws OutOfBoundsException When array is empty
-     * @see Arrays::randomKeys()
-     * @see Arrays::shuffle()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When array is empty
+     * @see \Phuture\Coherence\Arrays::randomKeys()
+     * @see \Phuture\Coherence\Arrays::shuffle()
      */
     public static function random(array $array): mixed
     {
@@ -3175,8 +3175,8 @@ class Arrays extends StaticClass
      * @param array $array The array to pick random keys from
      * @param int $num The number of keys to select (default: 1)
      * @return string|int|array Returns a single key if $num is 1, or an array of keys if $num > 1
-     * @throws OutOfBoundsException When array is empty or num is less than 1 or greater than array size
-     * @see Arrays::random()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When array is empty or num is less than 1 or greater than array size
+     * @see \Phuture\Coherence\Arrays::random()
      */
     public static function randomKeys(array $array, int $num = 1): string|int|array
     {
@@ -3239,8 +3239,8 @@ class Arrays extends StaticClass
      *  The callback has the signature `function (mixed $carry, mixed $item): mixed`
      * @param mixed $initial Optional initial value for the carry (default: null)
      * @return mixed Returns the final accumulated value
-     * @see Arrays::map()
-     * @see Arrays::filter()
+     * @see \Phuture\Coherence\Arrays::map()
+     * @see \Phuture\Coherence\Arrays::filter()
      */
     public static function reduce(array $array, callable $callback, mixed $initial = null): mixed
     {
@@ -3335,7 +3335,7 @@ class Arrays extends StaticClass
      * @param array $array The array containing the key to rename (passed by reference)
      * @param string|int|array $oldKey The current key name (string/int for simple key, array for nested path)
      * @param string|int $newKey The new key name
-     * @throws OutOfBoundsException When the old key doesn't exist
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the old key doesn't exist
      */
     public static function rename(array &$array, string|int|array $oldKey, string|int $newKey): void
     {
@@ -3502,7 +3502,7 @@ class Arrays extends StaticClass
      * @param mixed $needle The value to search for
      * @param bool $strict Whether to use strict comparison (default: false)
      * @return int|string|false Returns the key of the first match, or false if not found
-     * @see Arrays::find()
+     * @see \Phuture\Coherence\Arrays::find()
      */
     public static function search(array $array, mixed $needle, bool $strict = false): int|string|false
     {
@@ -3542,9 +3542,9 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to remove the first element from (passed by reference)
      * @return mixed Returns the first element
-     * @throws OutOfBoundsException When array is empty
-     * @see Arrays::unshift()
-     * @see Arrays::pull()
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When array is empty
+     * @see \Phuture\Coherence\Arrays::unshift()
+     * @see \Phuture\Coherence\Arrays::pull()
      */
     public static function shift(array &$array): mixed
     {
@@ -3639,7 +3639,7 @@ class Arrays extends StaticClass
      * @param int|null $length Number of elements to extract (default: null for all remaining)
      * @param bool $preserve_keys Whether to preserve numeric keys (default: false)
      * @return array Returns the extracted portion of the array
-     * @see Arrays::splice()
+     * @see \Phuture\Coherence\Arrays::splice()
      */
     public static function slice(array $array, int $offset, ?int $length = null, bool $preserve_keys = false): array
     {
@@ -3670,7 +3670,7 @@ class Arrays extends StaticClass
      * @param callable $callback A function that receives each element and returns true if it passes the test
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return bool Returns true if ANY element passes the callback test, false if none pass
-     * @see Arrays::every()
+     * @see \Phuture\Coherence\Arrays::every()
      */
     public static function some(array $array, callable $callback): bool
     {
@@ -3729,10 +3729,10 @@ class Arrays extends StaticClass
      * @param bool $reverse Whether to sort in descending order (default: false)
      * @param callable|null $callback Optional custom comparison function
      * @return bool Returns true on success, false on failure
-     * @see Arrays::sortKeys()
-     * @see Arrays::sortAssoc()
-     * @see Arrays::sortNatural()
-     * @see Arrays::sortMultidimensional()
+     * @see \Phuture\Coherence\Arrays::sortKeys()
+     * @see \Phuture\Coherence\Arrays::sortAssoc()
+     * @see \Phuture\Coherence\Arrays::sortNatural()
+     * @see \Phuture\Coherence\Arrays::sortMultidimensional()
      */
     public static function sort(
         array &$array,
@@ -3809,9 +3809,9 @@ class Arrays extends StaticClass
      * @param bool $reverse Whether to sort in descending order (default: false)
      * @param int $flags Sort flags for natural sorting (optional, e.g., SORT_NATURAL)
      * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
-     * @see Arrays::sortAssoc()
-     * @see Arrays::sortKeys()
+     * @see \Phuture\Coherence\Arrays::sort()
+     * @see \Phuture\Coherence\Arrays::sortAssoc()
+     * @see \Phuture\Coherence\Arrays::sortKeys()
      */
     public static function sortBy(
         array &$array,
@@ -3902,7 +3902,7 @@ class Arrays extends StaticClass
      * @param bool $reverse Whether to sort in descending order (default: false)
      * @param callable|null $callback Optional custom comparison function for values
      * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
+     * @see \Phuture\Coherence\Arrays::sort()
      */
     public static function sortAssoc(
         array &$array,
@@ -3965,7 +3965,7 @@ class Arrays extends StaticClass
      * @param bool $reverse Whether to sort in descending order (default: false)
      * @param callable|null $callback Optional custom comparison function for keys
      * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
+     * @see \Phuture\Coherence\Arrays::sort()
      */
     public static function sortKeys(
         array &$array,
@@ -4005,7 +4005,7 @@ class Arrays extends StaticClass
      * @param array $array The array to sort (passed by reference)
      * @param bool $caseInsensitive Whether to ignore case when sorting (default: false)
      * @return bool Returns true on success, false on failure
-     * @see Arrays::sort()
+     * @see \Phuture\Coherence\Arrays::sort()
      */
     public static function sortNatural(array &$array, bool $caseInsensitive = false): bool
     {
@@ -4052,7 +4052,7 @@ class Arrays extends StaticClass
      * @param int|null $length Number of elements to remove (default: null for all remaining)
      * @param mixed $replacement Elements to insert at the offset position (default: empty array)
      * @return array Returns an array containing the removed elements
-     * @see Arrays::slice()
+     * @see \Phuture\Coherence\Arrays::slice()
      */
     public static function splice(array &$array, int $offset, ?int $length = null, mixed $replacement = []): array
     {
@@ -4096,8 +4096,8 @@ class Arrays extends StaticClass
      * @param int $length The size of each chunk (must be greater than 0)
      * @param bool $preserveKeys Whether to preserve array keys (default: false)
      * @return array Returns a multidimensional array of chunks
-     * @throws InvalidArgumentException If length is less than 1
-     * @see Arrays::join()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If length is less than 1
+     * @see \Phuture\Coherence\Arrays::join()
      */
     public static function split(array $array, int $length, bool $preserveKeys = false): array
     {
@@ -4128,8 +4128,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array containing values to sum
      * @return int|float The sum of all values in the array
-     * @see Arrays::product()
-     * @see Arrays::reduce()
+     * @see \Phuture\Coherence\Arrays::product()
+     * @see \Phuture\Coherence\Arrays::reduce()
      */
     public static function sum(array $array): int|float
     {
@@ -4169,8 +4169,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array containing numeric values
      * @return float|null The average value, or null if the array is empty
-     * @see Arrays::sum()
-     * @see Arrays::median()
+     * @see \Phuture\Coherence\Arrays::sum()
+     * @see \Phuture\Coherence\Arrays::median()
      */
     public static function average(array $array): ?float
     {
@@ -4225,7 +4225,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array containing numeric values
      * @return float|null The median value, or null if the array is empty
-     * @see Arrays::average()
+     * @see \Phuture\Coherence\Arrays::average()
      */
     public static function median(array $array): ?float
     {
@@ -4306,7 +4306,7 @@ class Arrays extends StaticClass
      *
      * @param mixed $value The value to convert to array
      * @return array Returns the converted array
-     * @see Arrays::toObject()
+     * @see \Phuture\Coherence\Arrays::toObject()
      */
     public static function toArray(mixed $value): array
     {
@@ -4424,8 +4424,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array to convert to objects, which may contain nested arrays
      * @return object Returns a stdClass object with associative arrays converted to objects and lists preserved
-     * @see Arrays::toArray()
-     * @see Arrays::normalize()
+     * @see \Phuture\Coherence\Arrays::toArray()
+     * @see \Phuture\Coherence\Arrays::normalize()
      */
     public static function toObject(array $array): object
     {
@@ -4495,8 +4495,8 @@ class Arrays extends StaticClass
      * @param array $array The array to add elements to (passed by reference)
      * @param mixed ...$values One or more values to add to the beginning
      * @return int Returns the new number of elements in the array
-     * @see Arrays::shift()
-     * @see Arrays::push()
+     * @see \Phuture\Coherence\Arrays::shift()
+     * @see \Phuture\Coherence\Arrays::push()
      */
     public static function unshift(array &$array, mixed ...$values): int
     {
@@ -4531,7 +4531,7 @@ class Arrays extends StaticClass
      *
      * @param array $array The array from which to extract values
      * @return array Returns an indexed array containing all values from the input array
-     * @see Arrays::keys()
+     * @see \Phuture\Coherence\Arrays::keys()
      */
     public static function values(array $array): array
     {
@@ -4581,8 +4581,8 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays Variable number of arrays to zip together
      * @return array Returns an array of paired elements from each input array
-     * @throws InvalidArgumentException If fewer than two arrays are provided
-     * @see Arrays::unzip()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If fewer than two arrays are provided
+     * @see \Phuture\Coherence\Arrays::unzip()
      */
     public static function zip(array ...$arrays): array
     {
@@ -4705,9 +4705,9 @@ class Arrays extends StaticClass
      * @param callable $callback Function that tests each element, returns true to keep it
      *  The callback has the signature `function (mixed $value, mixed $key): bool`
      * @return array Returns a new array containing only the elements that pass the test
-     * @see Arrays::filter()
-     * @see Arrays::whereIn()
-     * @see Arrays::grep()
+     * @see \Phuture\Coherence\Arrays::filter()
+     * @see \Phuture\Coherence\Arrays::whereIn()
+     * @see \Phuture\Coherence\Arrays::grep()
      */
     public static function where(array $array, callable $callback): array
     {
@@ -4746,8 +4746,8 @@ class Arrays extends StaticClass
      * @param string $key The key to check in each array item.
      * @param array $values The list of values to match against.
      * @return array Returns a new array containing only items where the key's value is in the values list
-     * @see Arrays::where()
-     * @see Arrays::filter()
+     * @see \Phuture\Coherence\Arrays::where()
+     * @see \Phuture\Coherence\Arrays::filter()
      */
     public static function whereIn(array $array, string $key, array $values): array
     {
@@ -4769,7 +4769,7 @@ class Arrays extends StaticClass
      * @param string $prefix The current key prefix for nested elements (starts empty).
      * @param array $result The result array passed by reference where flattened key-value pairs are stored.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
     {
@@ -4804,7 +4804,7 @@ class Arrays extends StaticClass
      * @param array $array The array to normalize (may contain objects).
      * @param array $result The result array passed by reference containing only array values.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
     {
@@ -4842,7 +4842,7 @@ class Arrays extends StaticClass
      * @param array $array The array to convert (may contain nested arrays).
      * @param stdClass $result The result object passed by reference containing the converted structure.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
     {

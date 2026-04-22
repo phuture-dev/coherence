@@ -432,24 +432,24 @@ class DatesTest extends TestCase
     public function testToDateStringReturnsYmd(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2026-04-21', Dates::toDateString($date));
+        Assert::same('2026-04-21', Dates::toDate($date));
     }
 
     public function testToDateStringAcceptsStringDate(): void
     {
-        Assert::same('2026-04-21', Dates::toDateString('2026-04-21 14:30:00'));
+        Assert::same('2026-04-21', Dates::toDate('2026-04-21 14:30:00'));
     }
 
     public function testToTimeStringReturnsHis(): void
     {
         $date = Dates::parse('2026-04-21 14:30:45', 'UTC');
-        Assert::same('14:30:45', Dates::toTimeString($date));
+        Assert::same('14:30:45', Dates::toTime($date));
     }
 
     public function testToDateTimeStringReturnsFull(): void
     {
         $date = Dates::parse('2026-04-21 14:30:45', 'UTC');
-        Assert::same('2026-04-21 14:30:45', Dates::toDateTimeString($date));
+        Assert::same('2026-04-21 14:30:45', Dates::toDateTime($date));
     }
 
     public function testToIso8601ContainsOffset(): void
@@ -464,90 +464,174 @@ class DatesTest extends TestCase
         Assert::contains('Tue, 21 Apr 2026', Dates::toRfc2822($date));
     }
 
+    public function testToRfc822ContainsTwoDigitYear(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('Tue, 21 Apr 26 14:30:00 +0000', Dates::toRfc822($date));
+    }
+
+    public function testToRfc822AcceptsStringDate(): void
+    {
+        $result = Dates::toRfc822('2026-04-21 14:30:00');
+        Assert::contains('Apr 26', $result);
+    }
+
+    public function testToRfc850ContainsFullDayName(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('Tuesday, 21-Apr-26 14:30:00 UTC', Dates::toRfc850($date));
+    }
+
+    public function testToRfc850AcceptsStringDate(): void
+    {
+        $result = Dates::toRfc850('2026-04-21 14:30:00');
+        Assert::contains('Apr-26', $result);
+    }
+
+    public function testToRfc1036ContainsTwoDigitYear(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('Tue, 21 Apr 26 14:30:00 +0000', Dates::toRfc1036($date));
+    }
+
+    public function testToRfc1036AcceptsStringDate(): void
+    {
+        $result = Dates::toRfc1036('2026-04-21 14:30:00');
+        Assert::contains('Apr 26', $result);
+    }
+
+    public function testToRfc1123ContainsFourDigitYear(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('Tue, 21 Apr 2026 14:30:00 +0000', Dates::toRfc1123($date));
+    }
+
+    public function testToRfc1123AcceptsStringDate(): void
+    {
+        $result = Dates::toRfc1123('2026-04-21 14:30:00');
+        Assert::contains('Apr 2026', $result);
+    }
+
+    public function testToRfc7231UsesGmtTimezone(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
+        Assert::same('Tue, 21 Apr 2026 18:30:00 GMT', Dates::toRfc7231($date));
+    }
+
+    public function testToRfc7231UtcDateStaysUnchanged(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('Tue, 21 Apr 2026 14:30:00 GMT', Dates::toRfc7231($date));
+    }
+
+    public function testToRfc7231AcceptsStringDate(): void
+    {
+        $result = Dates::toRfc7231('2026-04-21 14:30:00');
+        Assert::contains('GMT', $result);
+    }
+
+    public function testToW3cContainsOffset(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same('2026-04-21T14:30:00+00:00', Dates::toW3c($date));
+    }
+
+    public function testToW3cAcceptsStringDate(): void
+    {
+        $result = Dates::toW3c('2026-04-21 12:00:00');
+        Assert::contains('2026-04-21T12:00:00', $result);
+    }
+
+    public function testToW3cMatchesIso8601Format(): void
+    {
+        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+        Assert::same(Dates::toIso8601($date), Dates::toW3c($date));
+    }
+
     public function testToUnixTimestampReturnsZeroForEpoch(): void
     {
         $date = Dates::fromTimestamp(0, 'UTC');
-        Assert::same(0, Dates::toUnixTimestamp($date));
+        Assert::same(0, Dates::toTimestamp($date));
     }
 
     public function testToUnixTimestampAcceptsStringDate(): void
     {
-        Assert::same(0, Dates::toUnixTimestamp('1970-01-01 00:00:00'));
+        Assert::same(0, Dates::toTimestamp('1970-01-01 00:00:00'));
     }
 
     public function testAddSecondsIncreasesTime(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::addSeconds($date, 90);
-        Assert::same('2026-04-21 14:31:30', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:31:30', Dates::toDateTime($result));
     }
 
     public function testAddSecondsAcceptsStringDate(): void
     {
         $result = Dates::addSeconds('2026-04-21 14:30:00', 90);
-        Assert::same('2026-04-21 14:31:30', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:31:30', Dates::toDateTime($result));
     }
 
     public function testAddMinutesIncreasesTime(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::addMinutes($date, 45);
-        Assert::same('2026-04-21 15:15:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 15:15:00', Dates::toDateTime($result));
     }
 
     public function testAddHoursIncreasesTime(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::addHours($date, 3);
-        Assert::same('2026-04-21 17:30:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 17:30:00', Dates::toDateTime($result));
     }
 
     public function testAddDaysIncreasesDate(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::addDays($date, 10);
-        Assert::same('2026-05-01', Dates::toDateString($result));
+        Assert::same('2026-05-01', Dates::toDate($result));
     }
 
     public function testAddWeeksIncreasesDate(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::addWeeks($date, 2);
-        Assert::same('2026-05-05', Dates::toDateString($result));
+        Assert::same('2026-05-05', Dates::toDate($result));
     }
 
     public function testAddMonthsIncreasesDate(): void
     {
         $date = Dates::parse('2026-01-15', 'UTC');
         $result = Dates::addMonths($date, 3);
-        Assert::same('2026-04-15', Dates::toDateString($result));
+        Assert::same('2026-04-15', Dates::toDate($result));
     }
 
     public function testAddYearsIncreasesDate(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::addYears($date, 5);
-        Assert::same('2031-04-21', Dates::toDateString($result));
+        Assert::same('2031-04-21', Dates::toDate($result));
     }
 
     public function testAddDoesNotMutateOriginal(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         Dates::addDays($date, 10);
-        Assert::same('2026-04-21', Dates::toDateString($date));
+        Assert::same('2026-04-21', Dates::toDate($date));
     }
 
     public function testRemoveSecondsDecreasesTime(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::removeSeconds($date, 30);
-        Assert::same('2026-04-21 14:29:30', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:29:30', Dates::toDateTime($result));
     }
 
     public function testRemoveSecondsAcceptsStringDate(): void
     {
         $result = Dates::removeSeconds('2026-04-21 14:30:00', 30);
-        Assert::same('2026-04-21 14:29:30', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:29:30', Dates::toDateTime($result));
     }
 
     public function testRemoveSecondsThrowsOnNegativeValue(): void
@@ -562,7 +646,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::removeMinutes($date, 15);
-        Assert::same('2026-04-21 14:15:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:15:00', Dates::toDateTime($result));
     }
 
     public function testRemoveMinutesThrowsOnNegativeValue(): void
@@ -577,7 +661,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::removeHours($date, 2);
-        Assert::same('2026-04-21 12:30:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 12:30:00', Dates::toDateTime($result));
     }
 
     public function testRemoveHoursThrowsOnNegativeValue(): void
@@ -592,7 +676,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::removeDays($date, 5);
-        Assert::same('2026-04-16', Dates::toDateString($result));
+        Assert::same('2026-04-16', Dates::toDate($result));
     }
 
     public function testRemoveDaysThrowsOnNegativeValue(): void
@@ -607,7 +691,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::removeWeeks($date, 1);
-        Assert::same('2026-04-14', Dates::toDateString($result));
+        Assert::same('2026-04-14', Dates::toDate($result));
     }
 
     public function testRemoveWeeksThrowsOnNegativeValue(): void
@@ -622,7 +706,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-06-15', 'UTC');
         $result = Dates::removeMonths($date, 2);
-        Assert::same('2026-04-15', Dates::toDateString($result));
+        Assert::same('2026-04-15', Dates::toDate($result));
     }
 
     public function testRemoveMonthsThrowsOnNegativeValue(): void
@@ -637,7 +721,7 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         $result = Dates::removeYears($date, 10);
-        Assert::same('2016-04-21', Dates::toDateString($result));
+        Assert::same('2016-04-21', Dates::toDate($result));
     }
 
     public function testRemoveYearsThrowsOnNegativeValue(): void
@@ -651,8 +735,8 @@ class DatesTest extends TestCase
     public function testRemoveZeroIsAllowed(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2026-04-21 14:30:00', Dates::toDateTimeString(Dates::removeSeconds($date, 0)));
-        Assert::same('2026-04-21', Dates::toDateString(Dates::removeDays($date, 0)));
+        Assert::same('2026-04-21 14:30:00', Dates::toDateTime(Dates::removeSeconds($date, 0)));
+        Assert::same('2026-04-21', Dates::toDate(Dates::removeDays($date, 0)));
     }
 
     public function testIsBeforeReturnsTrueForEarlierDate(): void
@@ -933,84 +1017,84 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21 14:30:45', 'UTC');
         $result = Dates::startOfDay($date);
-        Assert::same('2026-04-21 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 00:00:00', Dates::toDateTime($result));
     }
 
     public function testStartOfDayAcceptsStringDate(): void
     {
         $result = Dates::startOfDay('2026-04-21 14:30:45');
-        Assert::same('00:00:00', Dates::toTimeString($result));
+        Assert::same('00:00:00', Dates::toTime($result));
     }
 
     public function testEndOfDaySetsTo235959(): void
     {
         $date = Dates::parse('2026-04-21 14:30:45', 'UTC');
         $result = Dates::endOfDay($date);
-        Assert::same('2026-04-21 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 23:59:59', Dates::toDateTime($result));
     }
 
     public function testStartOfWeekSetsToMonday(): void
     {
         $date = Dates::parse('2026-04-21 14:00:00', 'UTC');
         $result = Dates::startOfWeek($date);
-        Assert::same('2026-04-20 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-20 00:00:00', Dates::toDateTime($result));
     }
 
     public function testStartOfWeekAlreadyMonday(): void
     {
         $date = Dates::parse('2026-04-20 09:00:00', 'UTC');
         $result = Dates::startOfWeek($date);
-        Assert::same('2026-04-20 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-20 00:00:00', Dates::toDateTime($result));
     }
 
     public function testEndOfWeekSetsToSunday(): void
     {
         $date = Dates::parse('2026-04-21 14:00:00', 'UTC');
         $result = Dates::endOfWeek($date);
-        Assert::same('2026-04-26 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-26 23:59:59', Dates::toDateTime($result));
     }
 
     public function testStartOfMonthSetsToFirstDay(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::startOfMonth($date);
-        Assert::same('2026-04-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testEndOfMonthSetsToLastDay(): void
     {
         $date = Dates::parse('2026-04-15 14:30:00', 'UTC');
         $result = Dates::endOfMonth($date);
-        Assert::same('2026-04-30 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-30 23:59:59', Dates::toDateTime($result));
     }
 
     public function testEndOfMonthHandlesFebruary(): void
     {
         $regular = Dates::parse('2026-02-10', 'UTC');
-        Assert::same('2026-02-28', Dates::toDateString(Dates::endOfMonth($regular)));
+        Assert::same('2026-02-28', Dates::toDate(Dates::endOfMonth($regular)));
 
         $leap = Dates::parse('2024-02-10', 'UTC');
-        Assert::same('2024-02-29', Dates::toDateString(Dates::endOfMonth($leap)));
+        Assert::same('2024-02-29', Dates::toDate(Dates::endOfMonth($leap)));
     }
 
     public function testStartOfYearSetsToJanuaryFirst(): void
     {
         $date = Dates::parse('2026-09-15 10:00:00', 'UTC');
         $result = Dates::startOfYear($date);
-        Assert::same('2026-01-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-01-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testEndOfYearSetsToDecemberThirtyFirst(): void
     {
         $date = Dates::parse('2026-04-21 14:00:00', 'UTC');
         $result = Dates::endOfYear($date);
-        Assert::same('2026-12-31 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-12-31 23:59:59', Dates::toDateTime($result));
     }
 
     public function testEndOfYearAcceptsStringDate(): void
     {
         $result = Dates::endOfYear('2026-04-21');
-        Assert::same('2026-12-31 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-12-31 23:59:59', Dates::toDateTime($result));
     }
 
     public function testOfReturnsFluentWrapper(): void
@@ -1033,79 +1117,79 @@ class DatesTest extends TestCase
             ->startOfDay()
             ->get();
 
-        Assert::same('2026-05-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-05-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testAddMinutesAcceptsStringDate(): void
     {
         $result = Dates::addMinutes('2026-04-21 14:30:00', 45);
-        Assert::same('2026-04-21 15:15:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 15:15:00', Dates::toDateTime($result));
     }
 
     public function testAddHoursAcceptsStringDate(): void
     {
         $result = Dates::addHours('2026-04-21 14:30:00', 3);
-        Assert::same('2026-04-21 17:30:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 17:30:00', Dates::toDateTime($result));
     }
 
     public function testAddDaysAcceptsStringDate(): void
     {
         $result = Dates::addDays('2026-04-21', 10);
-        Assert::same('2026-05-01', Dates::toDateString($result));
+        Assert::same('2026-05-01', Dates::toDate($result));
     }
 
     public function testAddWeeksAcceptsStringDate(): void
     {
         $result = Dates::addWeeks('2026-04-21', 2);
-        Assert::same('2026-05-05', Dates::toDateString($result));
+        Assert::same('2026-05-05', Dates::toDate($result));
     }
 
     public function testAddMonthsAcceptsStringDate(): void
     {
         $result = Dates::addMonths('2026-01-15', 3);
-        Assert::same('2026-04-15', Dates::toDateString($result));
+        Assert::same('2026-04-15', Dates::toDate($result));
     }
 
     public function testAddYearsAcceptsStringDate(): void
     {
         $result = Dates::addYears('2026-04-21', 5);
-        Assert::same('2031-04-21', Dates::toDateString($result));
+        Assert::same('2031-04-21', Dates::toDate($result));
     }
 
     public function testRemoveMinutesAcceptsStringDate(): void
     {
         $result = Dates::removeMinutes('2026-04-21 14:30:00', 15);
-        Assert::same('2026-04-21 14:15:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:15:00', Dates::toDateTime($result));
     }
 
     public function testRemoveHoursAcceptsStringDate(): void
     {
         $result = Dates::removeHours('2026-04-21 14:30:00', 2);
-        Assert::same('2026-04-21 12:30:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 12:30:00', Dates::toDateTime($result));
     }
 
     public function testRemoveDaysAcceptsStringDate(): void
     {
         $result = Dates::removeDays('2026-04-21', 5);
-        Assert::same('2026-04-16', Dates::toDateString($result));
+        Assert::same('2026-04-16', Dates::toDate($result));
     }
 
     public function testRemoveWeeksAcceptsStringDate(): void
     {
         $result = Dates::removeWeeks('2026-04-21', 1);
-        Assert::same('2026-04-14', Dates::toDateString($result));
+        Assert::same('2026-04-14', Dates::toDate($result));
     }
 
     public function testRemoveMonthsAcceptsStringDate(): void
     {
         $result = Dates::removeMonths('2026-06-15', 2);
-        Assert::same('2026-04-15', Dates::toDateString($result));
+        Assert::same('2026-04-15', Dates::toDate($result));
     }
 
     public function testRemoveYearsAcceptsStringDate(): void
     {
         $result = Dates::removeYears('2026-04-21', 10);
-        Assert::same('2016-04-21', Dates::toDateString($result));
+        Assert::same('2016-04-21', Dates::toDate($result));
     }
 
     public function testGetMonthAcceptsStringDate(): void
@@ -1210,31 +1294,31 @@ class DatesTest extends TestCase
     public function testEndOfDayAcceptsStringDate(): void
     {
         $result = Dates::endOfDay('2026-04-21 14:30:45');
-        Assert::same('2026-04-21 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 23:59:59', Dates::toDateTime($result));
     }
 
     public function testStartOfWeekAcceptsStringDate(): void
     {
         $result = Dates::startOfWeek('2026-04-21 14:00:00');
-        Assert::same('2026-04-20 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-20 00:00:00', Dates::toDateTime($result));
     }
 
     public function testEndOfWeekAcceptsStringDate(): void
     {
         $result = Dates::endOfWeek('2026-04-21 14:00:00');
-        Assert::same('2026-04-26 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-26 23:59:59', Dates::toDateTime($result));
     }
 
     public function testStartOfMonthAcceptsStringDate(): void
     {
         $result = Dates::startOfMonth('2026-04-21 14:30:00');
-        Assert::same('2026-04-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testStartOfYearAcceptsStringDate(): void
     {
         $result = Dates::startOfYear('2026-09-15 10:00:00');
-        Assert::same('2026-01-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-01-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testIsYesterdayAcceptsStringDate(): void
@@ -1275,32 +1359,32 @@ class DatesTest extends TestCase
 
     public function testToTimeStringAcceptsStringDate(): void
     {
-        Assert::same('14:30:45', Dates::toTimeString('2026-04-21 14:30:45'));
+        Assert::same('14:30:45', Dates::toTime('2026-04-21 14:30:45'));
     }
 
     public function testToDateTimeStringAcceptsStringDate(): void
     {
-        Assert::same('2026-04-21 14:30:45', Dates::toDateTimeString('2026-04-21 14:30:45'));
+        Assert::same('2026-04-21 14:30:45', Dates::toDateTime('2026-04-21 14:30:45'));
     }
 
     public function testAddSecondsWithZeroIsNoop(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2026-04-21 14:30:00', Dates::toDateTimeString(Dates::addSeconds($date, 0)));
+        Assert::same('2026-04-21 14:30:00', Dates::toDateTime(Dates::addSeconds($date, 0)));
     }
 
     public function testAddSecondsWithNegativeGoesBackward(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         $result = Dates::addSeconds($date, -30);
-        Assert::same('2026-04-21 14:29:30', Dates::toDateTimeString($result));
+        Assert::same('2026-04-21 14:29:30', Dates::toDateTime($result));
     }
 
     public function testRemoveDoesNotMutateOriginal(): void
     {
         $date = Dates::parse('2026-04-21', 'UTC');
         Dates::removeDays($date, 5);
-        Assert::same('2026-04-21', Dates::toDateString($date));
+        Assert::same('2026-04-21', Dates::toDate($date));
     }
 
     public function testDiffInSecondsIsAlwaysNonNegative(): void
@@ -1367,13 +1451,13 @@ class DatesTest extends TestCase
     public function testEndOfMonthFebruaryNonLeap(): void
     {
         $result = Dates::endOfMonth('2026-02-10');
-        Assert::same('2026-02-28 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-02-28 23:59:59', Dates::toDateTime($result));
     }
 
     public function testEndOfMonthFebruaryLeap(): void
     {
         $result = Dates::endOfMonth('2024-02-10');
-        Assert::same('2024-02-29 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2024-02-29 23:59:59', Dates::toDateTime($result));
     }
 
     public function testFromTimestampZeroIsEpoch(): void
@@ -1429,21 +1513,21 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-19 09:00:00', 'UTC');
         $result = Dates::endOfWeek($date);
-        Assert::same('2026-04-19 23:59:59', Dates::toDateTimeString($result));
+        Assert::same('2026-04-19 23:59:59', Dates::toDateTime($result));
     }
 
     public function testStartOfMonthAlreadyFirstDay(): void
     {
         $date = Dates::parse('2026-04-01 00:00:00', 'UTC');
         $result = Dates::startOfMonth($date);
-        Assert::same('2026-04-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-04-01 00:00:00', Dates::toDateTime($result));
     }
 
     public function testStartOfYearAlreadyJanuaryFirst(): void
     {
         $date = Dates::parse('2026-01-01 00:00:00', 'UTC');
         $result = Dates::startOfYear($date);
-        Assert::same('2026-01-01 00:00:00', Dates::toDateTimeString($result));
+        Assert::same('2026-01-01 00:00:00', Dates::toDateTime($result));
     }
 }
 

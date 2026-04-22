@@ -375,7 +375,7 @@ class DatesTest extends TestCase
     {
         $result = $this->date('2026-04-21 14:30:00')
             ->addDays(10)
-            ->toDateString();
+            ->toDate();
 
         Assert::same('2026-05-01', $result);
     }
@@ -384,7 +384,7 @@ class DatesTest extends TestCase
     {
         $result = $this->date('2026-04-21 14:30:45')
             ->addMinutes(15)
-            ->toTimeString();
+            ->toTime();
 
         Assert::same('14:45:45', $result);
     }
@@ -393,7 +393,7 @@ class DatesTest extends TestCase
     {
         $result = $this->date('2026-04-21 14:30:00')
             ->addDays(1)
-            ->toDateTimeString();
+            ->toDateTime();
 
         Assert::same('2026-04-22 14:30:00', $result);
     }
@@ -412,6 +412,54 @@ class DatesTest extends TestCase
             ->toRfc2822();
 
         Assert::contains('Apr 2026', $result);
+    }
+
+    public function testToRfc822ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->toRfc822();
+
+        Assert::same('Tue, 21 Apr 26 14:30:00 +0000', $result);
+    }
+
+    public function testToRfc850ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->toRfc850();
+
+        Assert::same('Tuesday, 21-Apr-26 14:30:00 UTC', $result);
+    }
+
+    public function testToRfc1036ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->toRfc1036();
+
+        Assert::same('Tue, 21 Apr 26 14:30:00 +0000', $result);
+    }
+
+    public function testToRfc1123ReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->toRfc1123();
+
+        Assert::same('Tue, 21 Apr 2026 14:30:00 +0000', $result);
+    }
+
+    public function testToRfc7231ConvertsToGmt(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'America/New_York')
+            ->toRfc7231();
+
+        Assert::same('Tue, 21 Apr 2026 18:30:00 GMT', $result);
+    }
+
+    public function testToW3cReturnsString(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->toW3c();
+
+        Assert::same('2026-04-21T14:30:00+00:00', $result);
     }
 
     public function testGetTimezoneReturnsString(): void

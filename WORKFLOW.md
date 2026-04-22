@@ -181,8 +181,8 @@ Every method MUST include complete PHPDoc with the following structure:
 6. **@return Tag**: Clear description of what is returned and what it represents, omit when void
 7. **Callback Documentation**: When a parameter requires a callback function, the @param description MUST include the callback signature in the format: `The callback has the signature \`function (mixed $value): mixed\``
 8. **Additional Tags** (when applicable):
-   - `@see` - For methods that have other related methods, like first() being related to last(), or flatten() to unflatten()
-   - `@throws` - For methods that throw exceptions
+   - `@see` - For methods that have other related methods, like first() being related to last(), or flatten() to unflatten(), always use FQCNs
+   - `@throws` - For methods that throw exceptions, always use FQCNs
    - `@deprecated` - For deprecated methods
 
 ### Documentation Best Practices
@@ -293,7 +293,7 @@ public static function sort(array &$array, int $flags = SORT_REGULAR): bool
 **Bad: Too technical and unclear**
 ```php
 /**
- * Performs a binary search on a sorted array utilizing a comparison function.
+ * Performs a binary search on a sorted array using a comparison function.
  *
  * @param array $array The haystack
  * @param mixed $needle The value to locate

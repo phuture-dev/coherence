@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
-use Phuture\Coherence\Exception\SerializationException;
+use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
 
 /**
  * Singleton base class that ensures only one instance of a class exists throughout the application lifecycle.
@@ -60,6 +60,36 @@ abstract class SingletonClass
     private function __clone()
     {
         return false;
+    }
+
+    /**
+     * Handle calls to undefined instance methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @throws MemberAccessException If the called method does not exist on the class
+     */
+    public function __call(string $name, array $arguments): mixed
+    {
+        $class = get_class($this);
+        throw new MemberAccessException(
+            "Call to undefined method {$class}::{$name}()"
+        );
+    }
+
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @throws MemberAccessException If the called static method does not exist on the class
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        $class = static::class;
+        throw new MemberAccessException(
+            "Call to undefined method {$class}::{$name}()"
+        );
     }
 
     /**

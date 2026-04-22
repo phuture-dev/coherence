@@ -24,7 +24,7 @@ This repository contains the official **Phuture Coherence** package. To learn mo
 - 🔐 **Hash** - Secure hashing, passwords, HMAC, and more
 - 🔗 **URL** - URL parsing, building, and manipulation
 - 🌐 **HTML** - HTML escaping, sanitization, and building
-- 📞 **Callable** - Function, methods and classes composition and utilities
+- 📞 **Callables** - Function, methods and classes composition and utilities
 
 ## Installation
 

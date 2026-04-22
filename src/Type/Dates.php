@@ -6,6 +6,7 @@ namespace Phuture\Coherence\Type;
 
 use DateTimeImmutable;
 use Phuture\Coherence\Dates as Transformer;
+use Phuture\Coherence\Interface\Dateable;
 use Phuture\Coherence\Support\FluentClass;
 
 /**
@@ -26,7 +27,7 @@ use Phuture\Coherence\Support\FluentClass;
  *     ->get();
  * // DateTimeImmutable for '2026-05-01 00:00:00'
  *
- * $formatted = Dates::toDateTimeString(
+ * $formatted = Dates::toDateTime(
  *     Dates::of('2026-12-25', 'America/New_York')
  *         ->addHours(9)
  *         ->get()
@@ -38,7 +39,7 @@ use Phuture\Coherence\Support\FluentClass;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-class Dates extends FluentClass
+class Dates extends FluentClass implements Dateable
 {
     /**
      * Converts the wrapped date/time to a different timezone.
@@ -355,49 +356,36 @@ class Dates extends FluentClass
     }
 
     /**
-     * Formats the wrapped date/time using either PHP native or day.js-style format tokens.
-     *
-     * @param string $format The format string using either PHP date() characters or
-     *   day.js-style tokens (auto-detected)
-     * @return string The formatted date/time string
-     * @see \Phuture\Coherence\Dates::format()
-     */
-    public function format(string $format): string
-    {
-        return Transformer::format($this->data, $format);
-    }
-
-    /**
      * Returns the date portion of the wrapped date/time as a Y-m-d string.
      *
      * @return string The date portion formatted as 'Y-m-d'
-     * @see \Phuture\Coherence\Dates::toDateString()
+     * @see \Phuture\Coherence\Dates::toDate()
      */
-    public function toDateString(): string
+    public function toDate(): string
     {
-        return Transformer::toDateString($this->data);
+        return Transformer::toDate($this->data);
     }
 
     /**
      * Returns the time portion of the wrapped date/time as an H:i:s string.
      *
      * @return string The time portion formatted as 'H:i:s'
-     * @see \Phuture\Coherence\Dates::toTimeString()
+     * @see \Phuture\Coherence\Dates::toTime()
      */
-    public function toTimeString(): string
+    public function toTime(): string
     {
-        return Transformer::toTimeString($this->data);
+        return Transformer::toTime($this->data);
     }
 
     /**
      * Returns the wrapped date/time as a combined date and time string.
      *
      * @return string The date and time formatted as 'Y-m-d H:i:s'
-     * @see \Phuture\Coherence\Dates::toDateTimeString()
+     * @see \Phuture\Coherence\Dates::toDateTime()
      */
-    public function toDateTimeString(): string
+    public function toDateTime(): string
     {
-        return Transformer::toDateTimeString($this->data);
+        return Transformer::toDateTime($this->data);
     }
 
     /**
@@ -423,6 +411,72 @@ class Dates extends FluentClass
     }
 
     /**
+     * Returns the wrapped date/time formatted as an RFC 822 string.
+     *
+     * @return string The date and time formatted according to RFC 822
+     * @see \Phuture\Coherence\Dates::toRfc822()
+     */
+    public function toRfc822(): string
+    {
+        return Transformer::toRfc822($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an RFC 850 string.
+     *
+     * @return string The date and time formatted according to RFC 850
+     * @see \Phuture\Coherence\Dates::toRfc850()
+     */
+    public function toRfc850(): string
+    {
+        return Transformer::toRfc850($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an RFC 1036 string.
+     *
+     * @return string The date and time formatted according to RFC 1036
+     * @see \Phuture\Coherence\Dates::toRfc1036()
+     */
+    public function toRfc1036(): string
+    {
+        return Transformer::toRfc1036($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an RFC 1123 string.
+     *
+     * @return string The date and time formatted according to RFC 1123
+     * @see \Phuture\Coherence\Dates::toRfc1123()
+     */
+    public function toRfc1123(): string
+    {
+        return Transformer::toRfc1123($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as an RFC 7231 string (IMF-fixdate).
+     *
+     * @return string The date and time formatted according to RFC 7231
+     * @see \Phuture\Coherence\Dates::toRfc7231()
+     */
+    public function toRfc7231(): string
+    {
+        return Transformer::toRfc7231($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as a W3C string.
+     *
+     * @return string The date and time formatted according to the W3C standard
+     * @see \Phuture\Coherence\Dates::toW3c()
+     */
+    public function toW3c(): string
+    {
+        return Transformer::toW3c($this->data);
+    }
+
+    /**
      * Returns the timezone identifier of the wrapped date/time value.
      *
      * @return string The timezone identifier string (e.g. 'Europe/Paris')
@@ -441,5 +495,16 @@ class Dates extends FluentClass
     public function toDateTimeImmutable(): DateTimeImmutable
     {
         return $this->data;
+    }
+
+    /**
+     * Returns the Unix timestamp representation of a date/time value.
+     *
+     * @return int The number of seconds since the Unix epoch
+     * @see \Phuture\Coherence\Dates::toTimestamp()
+     */
+    public function toTimestamp(): int
+    {
+        return Transformer::toTimestamp($this->data);
     }
 }

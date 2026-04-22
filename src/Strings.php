@@ -54,8 +54,8 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @return string The substring after the first occurrence, or an empty string if not found
-     * @see Strings::afterLast()
-     * @see Strings::before()
+     * @see \Phuture\Coherence\Strings::afterLast()
+     * @see \Phuture\Coherence\Strings::before()
      */
     public static function after(string $string, string $search): string
     {
@@ -91,8 +91,8 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @return string The substring after the last occurrence, or an empty string if not found
-     * @see Strings::after()
-     * @see Strings::beforeLast()
+     * @see \Phuture\Coherence\Strings::after()
+     * @see \Phuture\Coherence\Strings::beforeLast()
      */
     public static function afterLast(string $string, string $search): string
     {
@@ -128,7 +128,7 @@ class Strings extends StaticClass
      * @param string $string The input string to transliterate
      * @param string $language The language code for locale-specific rules (default: 'en')
      * @return string The ASCII-safe string
-     * @see Strings::slug()
+     * @see \Phuture\Coherence\Strings::slug()
      */
     public static function ascii(string $string, string $language = 'en'): string
     {
@@ -156,8 +156,8 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @return string The substring before the first occurrence, or the original string if not found
-     * @see Strings::beforeLast()
-     * @see Strings::after()
+     * @see \Phuture\Coherence\Strings::beforeLast()
+     * @see \Phuture\Coherence\Strings::after()
      */
     public static function before(string $string, string $search): string
     {
@@ -193,8 +193,8 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @return string The substring before the last occurrence, or the original string if not found
-     * @see Strings::before()
-     * @see Strings::afterLast()
+     * @see \Phuture\Coherence\Strings::before()
+     * @see \Phuture\Coherence\Strings::afterLast()
      */
     public static function beforeLast(string $string, string $search): string
     {
@@ -231,8 +231,8 @@ class Strings extends StaticClass
      * @param string $start The opening delimiter
      * @param string $end The closing delimiter
      * @return string The substring between the delimiters, or the original string if not found
-     * @see Strings::before()
-     * @see Strings::after()
+     * @see \Phuture\Coherence\Strings::before()
+     * @see \Phuture\Coherence\Strings::after()
      */
     public static function between(string $string, string $start, string $end): string
     {
@@ -275,8 +275,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The camelCase version of the string
-     * @see Strings::pascal()
-     * @see Strings::snake()
+     * @see \Phuture\Coherence\Strings::pascal()
+     * @see \Phuture\Coherence\Strings::snake()
      */
     public static function camel(string $string): string
     {
@@ -306,8 +306,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to capitalize
      * @return string The title-cased version of the string
-     * @see Strings::lower()
-     * @see Strings::upper()
+     * @see \Phuture\Coherence\Strings::lower()
+     * @see \Phuture\Coherence\Strings::upper()
      */
     public static function capitalize(string $string): string
     {
@@ -332,7 +332,7 @@ class Strings extends StaticClass
      * @param string $string The input string to index into
      * @param int $index The zero-based character index (negative counts from the end)
      * @return string The character at the given position, or an empty string if out of bounds
-     * @see Strings::slice()
+     * @see \Phuture\Coherence\Strings::slice()
      */
     public static function charAt(string $string, int $index): string
     {
@@ -367,8 +367,8 @@ class Strings extends StaticClass
      * @param string $string The input string to split
      * @param int $size The number of characters per chunk
      * @return array Array of string chunks, indexed sequentially from zero
-     * @throws InvalidArgumentException When `$size` is less than or equal to zero
-     * @see Strings::split()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$size` is less than or equal to zero
+     * @see \Phuture\Coherence\Strings::split()
      */
     public static function chunk(string $string, int $size): array
     {
@@ -409,7 +409,7 @@ class Strings extends StaticClass
      * @param string $other The second string to compare against
      * @param bool $caseSensitive Whether the comparison is case-sensitive (default: true)
      * @return int Negative if less than, 0 if equal, positive if greater than
-     * @see Strings::equals()
+     * @see \Phuture\Coherence\Strings::equals()
      */
     public static function compare(string $string, string $other, bool $caseSensitive = true): int
     {
@@ -450,7 +450,7 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The text to count
      * @return int The number of non-overlapping times the text appears
-     * @see Strings::has()
+     * @see \Phuture\Coherence\Strings::has()
      */
     public static function countOccurrences(string $string, string $search): int
     {
@@ -488,7 +488,7 @@ class Strings extends StaticClass
      * @param string $string The input string to deduplicate
      * @param string $character The character to collapse (default: space)
      * @return string The string with consecutive duplicate characters collapsed
-     * @see Strings::squish()
+     * @see \Phuture\Coherence\Strings::squish()
      */
     public static function dedupe(string $string, string $character = ' '): string
     {
@@ -519,7 +519,7 @@ class Strings extends StaticClass
      * @param string $string The input string to check
      * @param string $search The expected suffix
      * @return bool True when the string ends with the search value
-     * @see Strings::startsWith()
+     * @see \Phuture\Coherence\Strings::startsWith()
      */
     public static function endsWith(string $string, string $search): bool
     {
@@ -548,7 +548,7 @@ class Strings extends StaticClass
      * @param string $other The second string to compare against
      * @param bool $caseSensitive Whether the comparison is case-sensitive (default: true)
      * @return bool True when the strings are equal
-     * @see Strings::compare()
+     * @see \Phuture\Coherence\Strings::compare()
      */
     public static function equals(string $string, string $other, bool $caseSensitive = true): bool
     {
@@ -580,9 +580,9 @@ class Strings extends StaticClass
      * @param int $radius The number of characters to include on each side; must be zero or greater (default: 100)
      * @param string $omission The string to append at truncated ends (default: '...')
      * @return string The contextual excerpt
-     * @throws InvalidArgumentException When `$radius` is negative
-     * @see Strings::limit()
-     * @see Strings::truncate()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$radius` is negative
+     * @see \Phuture\Coherence\Strings::limit()
+     * @see \Phuture\Coherence\Strings::truncate()
      */
     public static function excerpt(string $string, string $phrase, int $radius = 100, string $omission = '...'): string
     {
@@ -641,8 +641,8 @@ class Strings extends StaticClass
      * @param string $delimiter The boundary string
      * @param int $limit Maximum number of returned elements (default: PHP_INT_MAX)
      * @return array Array of substrings, indexed sequentially from zero
-     * @throws InvalidArgumentException When `$delimiter` is an empty string
-     * @see Strings::split()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$delimiter` is an empty string
+     * @see \Phuture\Coherence\Strings::split()
      */
     public static function explode(string $string, string $delimiter, int $limit = PHP_INT_MAX): array
     {
@@ -674,7 +674,7 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param string $suffix The suffix to ensure is present exactly once
      * @return string The string guaranteed to end with the suffix
-     * @see Strings::start()
+     * @see \Phuture\Coherence\Strings::start()
      */
     public static function finish(string $string, string $suffix): string
     {
@@ -704,8 +704,8 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param int $count The number of characters to return (default: 1)
      * @return string The first N characters
-     * @see Strings::last()
-     * @see Strings::take()
+     * @see \Phuture\Coherence\Strings::last()
+     * @see \Phuture\Coherence\Strings::take()
      */
     public static function first(string $string, int $count = 1): string
     {
@@ -734,8 +734,8 @@ class Strings extends StaticClass
      * @param string $search The value to look for
      * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
      * @return bool True when the string contains the search value
-     * @see Strings::hasAll()
-     * @see Strings::hasNone()
+     * @see \Phuture\Coherence\Strings::hasAll()
+     * @see \Phuture\Coherence\Strings::hasNone()
      */
     public static function has(string $string, string $search, bool $caseSensitive = true): bool
     {
@@ -768,8 +768,8 @@ class Strings extends StaticClass
      * @param array $searches The values to look for; each element must be a string
      * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
      * @return bool True when all search values are found
-     * @see Strings::has()
-     * @see Strings::hasNone()
+     * @see \Phuture\Coherence\Strings::has()
+     * @see \Phuture\Coherence\Strings::hasNone()
      */
     public static function hasAll(string $string, array $searches, bool $caseSensitive = true): bool
     {
@@ -800,8 +800,8 @@ class Strings extends StaticClass
      * @param array $searches The values to check for absence; each element must be a string
      * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
      * @return bool True when none of the search values are found
-     * @see Strings::has()
-     * @see Strings::hasAll()
+     * @see \Phuture\Coherence\Strings::has()
+     * @see \Phuture\Coherence\Strings::hasAll()
      */
     public static function hasNone(string $string, array $searches, bool $caseSensitive = true): bool
     {
@@ -831,8 +831,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The headline-formatted string
-     * @see Strings::pascal()
-     * @see Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::pascal()
+     * @see \Phuture\Coherence\Strings::capitalize()
      */
     public static function headline(string $string): string
     {
@@ -866,7 +866,7 @@ class Strings extends StaticClass
      * @param string $substring The substring to insert
      * @param int $index The zero-based position to insert at (negative counts from the end)
      * @return string The string with the substring inserted
-     * @see Strings::slice()
+     * @see \Phuture\Coherence\Strings::slice()
      */
     public static function insert(string $string, string $substring, int $index): string
     {
@@ -909,7 +909,7 @@ class Strings extends StaticClass
      * @param string $string The input string to test
      * @param string $pattern The wildcard pattern (use `*` as wildcard)
      * @return bool True when the string matches the pattern
-     * @see Strings::matches()
+     * @see \Phuture\Coherence\Strings::matches()
      */
     public static function is(string $string, string $pattern): bool
     {
@@ -936,8 +936,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string contains only Unicode letters
-     * @see Strings::isAlphanumeric()
-     * @see Strings::isNumeric()
+     * @see \Phuture\Coherence\Strings::isAlphanumeric()
+     * @see \Phuture\Coherence\Strings::isNumeric()
      */
     public static function isAlpha(string $string): bool
     {
@@ -965,8 +965,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string contains only Unicode letters and numbers
-     * @see Strings::isAlpha()
-     * @see Strings::isNumeric()
+     * @see \Phuture\Coherence\Strings::isAlpha()
+     * @see \Phuture\Coherence\Strings::isNumeric()
      */
     public static function isAlphanumeric(string $string): bool
     {
@@ -994,7 +994,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string contains only ASCII characters
-     * @see Strings::ascii()
+     * @see \Phuture\Coherence\Strings::ascii()
      */
     public static function isAscii(string $string): bool
     {
@@ -1019,8 +1019,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string is blank
-     * @see Strings::isEmpty()
-     * @see Strings::isFilled()
+     * @see \Phuture\Coherence\Strings::isEmpty()
+     * @see \Phuture\Coherence\Strings::isFilled()
      */
     public static function isBlank(string $string): bool
     {
@@ -1042,7 +1042,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to validate
      * @return bool True when the string is a valid email address
-     * @see Strings::isUrl()
+     * @see \Phuture\Coherence\Strings::isUrl()
      */
     public static function isEmail(string $string): bool
     {
@@ -1066,8 +1066,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string has zero length
-     * @see Strings::isNotEmpty()
-     * @see Strings::isBlank()
+     * @see \Phuture\Coherence\Strings::isNotEmpty()
+     * @see \Phuture\Coherence\Strings::isBlank()
      */
     public static function isEmpty(string $string): bool
     {
@@ -1091,8 +1091,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string contains at least one non-whitespace character
-     * @see Strings::isBlank()
-     * @see Strings::isEmpty()
+     * @see \Phuture\Coherence\Strings::isBlank()
+     * @see \Phuture\Coherence\Strings::isEmpty()
      */
     public static function isFilled(string $string): bool
     {
@@ -1146,8 +1146,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string is entirely lowercase
-     * @see Strings::isUpper()
-     * @see Strings::lower()
+     * @see \Phuture\Coherence\Strings::isUpper()
+     * @see \Phuture\Coherence\Strings::lower()
      */
     public static function isLower(string $string): bool
     {
@@ -1171,7 +1171,7 @@ class Strings extends StaticClass
      * @param string $string The input string to test
      * @param string $pattern The full regular expression pattern including delimiters
      * @return bool True when the pattern matches
-     * @see Strings::is()
+     * @see \Phuture\Coherence\Strings::is()
      */
     public static function matches(string $string, string $pattern): bool
     {
@@ -1194,7 +1194,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string is not empty
-     * @see Strings::isEmpty()
+     * @see \Phuture\Coherence\Strings::isEmpty()
      */
     public static function isNotEmpty(string $string): bool
     {
@@ -1219,8 +1219,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string is numeric
-     * @see Strings::isAlpha()
-     * @see Strings::isAlphanumeric()
+     * @see \Phuture\Coherence\Strings::isAlpha()
+     * @see \Phuture\Coherence\Strings::isAlphanumeric()
      */
     public static function isNumeric(string $string): bool
     {
@@ -1248,8 +1248,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to test
      * @return bool True when the string is entirely uppercase
-     * @see Strings::isLower()
-     * @see Strings::upper()
+     * @see \Phuture\Coherence\Strings::isLower()
+     * @see \Phuture\Coherence\Strings::upper()
      */
     public static function isUpper(string $string): bool
     {
@@ -1271,7 +1271,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to validate
      * @return bool True when the string is a valid URL
-     * @see Strings::isEmail()
+     * @see \Phuture\Coherence\Strings::isEmail()
      */
     public static function isUrl(string $string): bool
     {
@@ -1294,7 +1294,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to validate
      * @return bool True when the string is a valid UUID
-     * @see Strings::uuid()
+     * @see \Phuture\Coherence\Strings::uuid()
      */
     public static function isUuid(string $string): bool
     {
@@ -1321,8 +1321,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The kebab-case version of the string
-     * @see Strings::snake()
-     * @see Strings::camel()
+     * @see \Phuture\Coherence\Strings::snake()
+     * @see \Phuture\Coherence\Strings::camel()
      */
     public static function kebab(string $string): string
     {
@@ -1346,7 +1346,7 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param int $count The number of characters to return (default: 1)
      * @return string The last N characters
-     * @see Strings::first()
+     * @see \Phuture\Coherence\Strings::first()
      */
     public static function last(string $string, int $count = 1): string
     {
@@ -1374,7 +1374,7 @@ class Strings extends StaticClass
      * @param string $search The value to search for
      * @param int $offset The offset from the start to begin searching (default: 0)
      * @return int|false The position of the last occurrence, or false if not found
-     * @see Strings::position()
+     * @see \Phuture\Coherence\Strings::position()
      */
     public static function lastPosition(string $string, string $search, int $offset = 0): int|false
     {
@@ -1398,7 +1398,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to measure
      * @return int The number of characters
-     * @see Strings::wordCount()
+     * @see \Phuture\Coherence\Strings::wordCount()
      */
     public static function length(string $string): int
     {
@@ -1424,9 +1424,9 @@ class Strings extends StaticClass
      * @param int $limit The maximum number of characters before truncation; must be zero or greater
      * @param string $end The string to append after truncation (default: '...')
      * @return string The limited string
-     * @throws InvalidArgumentException When `$limit` is negative
-     * @see Strings::truncate()
-     * @see Strings::excerpt()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$limit` is negative
+     * @see \Phuture\Coherence\Strings::truncate()
+     * @see \Phuture\Coherence\Strings::excerpt()
      */
     public static function limit(string $string, int $limit, string $end = '...'): string
     {
@@ -1459,8 +1459,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to lowercase
      * @return string The lowercased string
-     * @see Strings::upper()
-     * @see Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::upper()
+     * @see \Phuture\Coherence\Strings::capitalize()
      */
     public static function lower(string $string): string
     {
@@ -1483,8 +1483,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string
      * @return string The string with its first character lowercased
-     * @see Strings::lower()
-     * @see Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::lower()
+     * @see \Phuture\Coherence\Strings::capitalize()
      */
     public static function lowerFirst(string $string): string
     {
@@ -1516,7 +1516,7 @@ class Strings extends StaticClass
      * @param int $offset The start position to begin masking (negative counts from the end)
      * @param int|null $length The number of characters to mask; must be zero or greater (null masks to the end)
      * @return string The masked string
-     * @throws InvalidArgumentException When `$length` is negative
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is negative
      */
     public static function mask(string $string, string $mask = '*', int $offset = 0, ?int $length = null): string
     {
@@ -1572,9 +1572,9 @@ class Strings extends StaticClass
      * @param string $padString The string to pad with (default: space)
      * @param int $padType One of STR_PAD_RIGHT, STR_PAD_LEFT, STR_PAD_BOTH (default: STR_PAD_RIGHT)
      * @return string The padded string
-     * @see Strings::padLeft()
-     * @see Strings::padRight()
-     * @see Strings::padBoth()
+     * @see \Phuture\Coherence\Strings::padLeft()
+     * @see \Phuture\Coherence\Strings::padRight()
+     * @see \Phuture\Coherence\Strings::padBoth()
      */
     public static function pad(
         string $string,
@@ -1607,8 +1607,8 @@ class Strings extends StaticClass
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
      * @return string The symmetrically padded string
-     * @see Strings::padLeft()
-     * @see Strings::padRight()
+     * @see \Phuture\Coherence\Strings::padLeft()
+     * @see \Phuture\Coherence\Strings::padRight()
      */
     public static function padBoth(string $string, int $length, string $padString = ' '): string
     {
@@ -1651,8 +1651,8 @@ class Strings extends StaticClass
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
      * @return string The left-padded string
-     * @see Strings::padRight()
-     * @see Strings::padBoth()
+     * @see \Phuture\Coherence\Strings::padRight()
+     * @see \Phuture\Coherence\Strings::padBoth()
      */
     public static function padLeft(string $string, int $length, string $padString = ' '): string
     {
@@ -1691,8 +1691,8 @@ class Strings extends StaticClass
      * @param int $length The target total length
      * @param string $padString The string to pad with (default: space)
      * @return string The right-padded string
-     * @see Strings::padLeft()
-     * @see Strings::padBoth()
+     * @see \Phuture\Coherence\Strings::padLeft()
+     * @see \Phuture\Coherence\Strings::padBoth()
      */
     public static function padRight(string $string, int $length, string $padString = ' '): string
     {
@@ -1732,8 +1732,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The PascalCase version of the string
-     * @see Strings::camel()
-     * @see Strings::snake()
+     * @see \Phuture\Coherence\Strings::camel()
+     * @see \Phuture\Coherence\Strings::snake()
      */
     public static function pascal(string $string): string
     {
@@ -1763,7 +1763,7 @@ class Strings extends StaticClass
      * @param string $search The value to search for
      * @param int $offset The offset from the start to begin searching (default: 0)
      * @return int|false The position of the first occurrence, or false if not found
-     * @see Strings::lastPosition()
+     * @see \Phuture\Coherence\Strings::lastPosition()
      */
     public static function position(string $string, string $search, int $offset = 0): int|false
     {
@@ -1786,9 +1786,9 @@ class Strings extends StaticClass
      *
      * @param int $length The length of the random string to generate; must be greater than zero (default: 16)
      * @return string The random alphanumeric string
-     * @throws InvalidArgumentException When `$length` is less than or equal to zero
-     * @throws RandomException If the system entropy source is unavailable
-     * @see Strings::uuid()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is less than or equal to zero
+     * @throws \Random\RandomException If the system entropy source is unavailable
+     * @see \Phuture\Coherence\Strings::uuid()
      */
     public static function random(int $length = 16): string
     {
@@ -1826,7 +1826,7 @@ class Strings extends StaticClass
      * @param string $search The value to remove
      * @param bool $caseSensitive Whether the removal is case-sensitive (default: true)
      * @return string The string with all occurrences removed
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function remove(string $string, string $search, bool $caseSensitive = true): string
     {
@@ -1849,7 +1849,7 @@ class Strings extends StaticClass
      * @param string $string The input string to repeat
      * @param int $times The number of repetitions (must be zero or greater)
      * @return string The repeated string
-     * @throws InvalidArgumentException When `$times` is negative
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$times` is negative
      */
     public static function repeat(string $string, int $times): string
     {
@@ -1881,9 +1881,9 @@ class Strings extends StaticClass
      * @param string $replace The replacement value
      * @param bool $caseSensitive Whether the replacement is case-sensitive (default: true)
      * @return string The string with all occurrences replaced
-     * @see Strings::replaceFirst()
-     * @see Strings::replaceLast()
-     * @see Strings::remove()
+     * @see \Phuture\Coherence\Strings::replaceFirst()
+     * @see \Phuture\Coherence\Strings::replaceLast()
+     * @see \Phuture\Coherence\Strings::remove()
      */
     public static function replace(string $string, string $search, string $replace, bool $caseSensitive = true): string
     {
@@ -1919,8 +1919,8 @@ class Strings extends StaticClass
      * @param string $search The value to search for
      * @param string $replace The replacement value
      * @return string The string with the first occurrence replaced
-     * @see Strings::replaceLast()
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replaceLast()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function replaceFirst(string $string, string $search, string $replace): string
     {
@@ -1956,8 +1956,8 @@ class Strings extends StaticClass
      * @param string $search The value to search for
      * @param string $replace The replacement value
      * @return string The string with the last occurrence replaced
-     * @see Strings::replaceFirst()
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replaceFirst()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function replaceLast(string $string, string $search, string $replace): string
     {
@@ -2040,9 +2040,9 @@ class Strings extends StaticClass
      * @param int $start The starting position (negative counts from the end)
      * @param int|null $length The number of characters to return (null returns to the end)
      * @return string The extracted substring
-     * @see Strings::first()
-     * @see Strings::last()
-     * @see Strings::charAt()
+     * @see \Phuture\Coherence\Strings::first()
+     * @see \Phuture\Coherence\Strings::last()
+     * @see \Phuture\Coherence\Strings::charAt()
      */
     public static function slice(string $string, int $start, ?int $length = null): string
     {
@@ -2068,7 +2068,7 @@ class Strings extends StaticClass
      * @param string $separator The separator character between words (default: '-')
      * @param string $language The language code for transliteration (default: 'en')
      * @return string The URL-friendly slug
-     * @see Strings::ascii()
+     * @see \Phuture\Coherence\Strings::ascii()
      */
     public static function slug(string $string, string $separator = '-', string $language = 'en'): string
     {
@@ -2097,8 +2097,8 @@ class Strings extends StaticClass
      * @param string $string The input string to convert
      * @param string $delimiter The word separator character (default: '_')
      * @return string The snake_case version of the string
-     * @see Strings::kebab()
-     * @see Strings::camel()
+     * @see \Phuture\Coherence\Strings::kebab()
+     * @see \Phuture\Coherence\Strings::camel()
      */
     public static function snake(string $string, string $delimiter = '_'): string
     {
@@ -2128,7 +2128,7 @@ class Strings extends StaticClass
      * @param string $pattern The literal separator to split on
      * @param int $limit Maximum number of elements to return (default: -1 = no limit)
      * @return array Array of substrings, indexed sequentially from zero
-     * @see Strings::explode()
+     * @see \Phuture\Coherence\Strings::explode()
      */
     public static function split(string $string, string $pattern, int $limit = -1): array
     {
@@ -2158,8 +2158,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to squish
      * @return string The string with collapsed whitespace
-     * @see Strings::trim()
-     * @see Strings::dedupe()
+     * @see \Phuture\Coherence\Strings::trim()
+     * @see \Phuture\Coherence\Strings::dedupe()
      */
     public static function squish(string $string): string
     {
@@ -2185,7 +2185,7 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param string $prefix The prefix to ensure is present exactly once
      * @return string The string guaranteed to begin with the prefix
-     * @see Strings::finish()
+     * @see \Phuture\Coherence\Strings::finish()
      */
     public static function start(string $string, string $prefix): string
     {
@@ -2216,7 +2216,7 @@ class Strings extends StaticClass
      * @param string $string The input string to check
      * @param string $search The expected prefix
      * @return bool True when the string begins with the search value
-     * @see Strings::endsWith()
+     * @see \Phuture\Coherence\Strings::endsWith()
      */
     public static function startsWith(string $string, string $search): bool
     {
@@ -2267,7 +2267,7 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param array $replacements A map of string search keys to string replacement values
      * @return string The string with all swaps applied
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function swap(string $string, array $replacements): string
     {
@@ -2292,8 +2292,8 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @param int $count The number of characters (negative returns from the end)
      * @return string The extracted characters
-     * @see Strings::first()
-     * @see Strings::last()
+     * @see \Phuture\Coherence\Strings::first()
+     * @see \Phuture\Coherence\Strings::last()
      */
     public static function take(string $string, int $count): string
     {
@@ -2321,8 +2321,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return array Array of individual Unicode characters, indexed sequentially from zero
-     * @see Strings::split()
-     * @see Strings::chunk()
+     * @see \Phuture\Coherence\Strings::split()
+     * @see \Phuture\Coherence\Strings::chunk()
      */
     public static function toArray(string $string): array
     {
@@ -2350,8 +2350,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The title-cased string
-     * @see Strings::capitalize()
-     * @see Strings::upper()
+     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::upper()
      */
     public static function title(string $string): string
     {
@@ -2375,9 +2375,9 @@ class Strings extends StaticClass
      * @param string $string The input string to trim
      * @param string $characters The characters to strip (default: whitespace)
      * @return string The trimmed string
-     * @see Strings::trimLeft()
-     * @see Strings::trimRight()
-     * @see Strings::squish()
+     * @see \Phuture\Coherence\Strings::trimLeft()
+     * @see \Phuture\Coherence\Strings::trimRight()
+     * @see \Phuture\Coherence\Strings::squish()
      */
     public static function trim(string $string, string $characters = " \t\n\r\0\x0B"): string
     {
@@ -2400,8 +2400,8 @@ class Strings extends StaticClass
      * @param string $string The input string to trim
      * @param string $characters The characters to strip (default: whitespace)
      * @return string The left-trimmed string
-     * @see Strings::trimRight()
-     * @see Strings::trim()
+     * @see \Phuture\Coherence\Strings::trimRight()
+     * @see \Phuture\Coherence\Strings::trim()
      */
     public static function trimLeft(string $string, string $characters = " \t\n\r\0\x0B"): string
     {
@@ -2424,8 +2424,8 @@ class Strings extends StaticClass
      * @param string $string The input string to trim
      * @param string $characters The characters to strip (default: whitespace)
      * @return string The right-trimmed string
-     * @see Strings::trimLeft()
-     * @see Strings::trim()
+     * @see \Phuture\Coherence\Strings::trimLeft()
+     * @see \Phuture\Coherence\Strings::trim()
      */
     public static function trimRight(string $string, string $characters = " \t\n\r\0\x0B"): string
     {
@@ -2451,8 +2451,8 @@ class Strings extends StaticClass
      * @param int $length The maximum number of characters to keep; must be zero or greater
      * @param string $end The string to append after truncation (default: '')
      * @return string The truncated string
-     * @throws InvalidArgumentException When `$length` is negative
-     * @see Strings::limit()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is negative
+     * @see \Phuture\Coherence\Strings::limit()
      */
     public static function truncate(string $string, int $length, string $end = ''): string
     {
@@ -2488,7 +2488,7 @@ class Strings extends StaticClass
      * @param string $string The input string to unwrap
      * @param string $wrapper The wrapper string to remove from both ends
      * @return string The unwrapped string
-     * @see Strings::wrap()
+     * @see \Phuture\Coherence\Strings::wrap()
      */
     public static function unwrap(string $string, string $wrapper): string
     {
@@ -2526,8 +2526,8 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to uppercase
      * @return string The uppercased string
-     * @see Strings::lower()
-     * @see Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::lower()
+     * @see \Phuture\Coherence\Strings::capitalize()
      */
     public static function upper(string $string): string
     {
@@ -2549,9 +2549,9 @@ class Strings extends StaticClass
      * ```
      *
      * @return string A random UUID v4 string
-     * @throws RandomException If the system entropy source is unavailable
-     * @see Strings::random()
-     * @see Strings::isUuid()
+     * @throws \Random\RandomException If the system entropy source is unavailable
+     * @see \Phuture\Coherence\Strings::random()
+     * @see \Phuture\Coherence\Strings::isUuid()
      */
     public static function uuid(): string
     {
@@ -2585,7 +2585,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to count words in
      * @return int The number of words
-     * @see Strings::words()
+     * @see \Phuture\Coherence\Strings::words()
      */
     public static function wordCount(string $string): int
     {
@@ -2615,9 +2615,9 @@ class Strings extends StaticClass
      * @param string $break The line break string to insert (default: "\n")
      * @param bool $cutLongWords Whether to cut words longer than `$width` (default: false)
      * @return string The word-wrapped string
-     * @throws InvalidArgumentException When `$width` is less than or equal to zero
-     * @see Strings::truncate()
-     * @see Strings::limit()
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$width` is less than or equal to zero
+     * @see \Phuture\Coherence\Strings::truncate()
+     * @see \Phuture\Coherence\Strings::limit()
      */
     public static function wordWrap(
         string $string,
@@ -2699,8 +2699,8 @@ class Strings extends StaticClass
      * @param int $limit Maximum number of words to return, -1 = no limit (default: -1)
      * @param string $end String appended after the word list when limited (default: '')
      * @return array Array of word strings, indexed sequentially from zero
-     * @see Strings::wordCount()
-     * @see Strings::split()
+     * @see \Phuture\Coherence\Strings::wordCount()
+     * @see \Phuture\Coherence\Strings::split()
      */
     public static function words(string $string, int $limit = -1, string $end = ''): array
     {
@@ -2736,7 +2736,7 @@ class Strings extends StaticClass
      * @param string $string The input string to wrap
      * @param string $wrapper The string to prepend and append
      * @return string The wrapped string
-     * @see Strings::unwrap()
+     * @see \Phuture\Coherence\Strings::unwrap()
      */
     public static function wrap(string $string, string $wrapper): string
     {
@@ -2762,7 +2762,7 @@ class Strings extends StaticClass
      * @param array $bannedWords List of word strings to replace
      * @param string $replacement The string to substitute for each matched word (default: '***')
      * @return string The censored string
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function censor(string $string, array $bannedWords, string $replacement = '***'): string
     {
@@ -2812,7 +2812,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to encode
      * @return string The Base64-encoded string
-     * @see Strings::fromBase64()
+     * @see \Phuture\Coherence\Strings::fromBase64()
      */
     public static function toBase64(string $string): string
     {
@@ -2834,7 +2834,7 @@ class Strings extends StaticClass
      *
      * @param string $string The Base64-encoded string to decode
      * @return string The decoded string, or an empty string when decoding fails
-     * @see Strings::toBase64()
+     * @see \Phuture\Coherence\Strings::toBase64()
      */
     public static function fromBase64(string $string): string
     {
@@ -2862,7 +2862,7 @@ class Strings extends StaticClass
      * @param string $tagOpen The opening tag to insert before each match (default: '<mark>')
      * @param string $tagClose The closing tag to insert after each match (default: '</mark>')
      * @return string The string with all occurrences of `$phrase` wrapped in the given tags
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function highlight(string $string, string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): string
     {
@@ -2894,7 +2894,7 @@ class Strings extends StaticClass
      * @param int $level The number of times to repeat the indent character; must be zero or greater (default: 1)
      * @param string $indentChar The character(s) used for one level of indentation (default: "\t")
      * @return string The indented string
-     * @throws InvalidArgumentException When `$level` is negative
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$level` is negative
      */
     public static function indent(string $string, int $level = 1, string $indentChar = "\t"): string
     {
@@ -2929,7 +2929,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to validate
      * @return bool True when the string is a valid ULID
-     * @see Strings::isUuid()
+     * @see \Phuture\Coherence\Strings::isUuid()
      */
     public static function isUlid(string $string): bool
     {
@@ -2976,7 +2976,7 @@ class Strings extends StaticClass
      * @param array $replacements Ordered list of string replacement values
      * @param string $string The input string to perform replacements on
      * @return string The string with successive occurrences replaced
-     * @see Strings::replace()
+     * @see \Phuture\Coherence\Strings::replace()
      */
     public static function replaceArray(string $search, array $replacements, string $string): string
     {
@@ -3018,8 +3018,8 @@ class Strings extends StaticClass
      * @param int $position The character index at which to begin replacement (negative counts from end)
      * @param int|null $length The number of characters to replace (null replaces to end of string)
      * @return string The modified string
-     * @see Strings::insert()
-     * @see Strings::slice()
+     * @see \Phuture\Coherence\Strings::insert()
+     * @see \Phuture\Coherence\Strings::slice()
      */
     public static function replaceAt(string $string, string $replacement, int $position, ?int $length = null): string
     {

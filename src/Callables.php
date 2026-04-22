@@ -39,8 +39,34 @@ class Callables extends StaticClass
      */
     public const MAX_ATTEMPTS = 10;
 
+    /**
+     * Cached function results keyed by serialized callback and arguments.
+     *
+     * Used internally by the memoize() method to store return values
+     * alongside their expiration timestamps.
+     *
+     * @var array
+     */
     protected static array $cache = [];
+
+    /**
+     * Tracks whether a callback has already been executed once.
+     *
+     * Used internally by the once() method to ensure each unique callback
+     * only runs a single time, regardless of how many times it is called.
+     *
+     * @var array
+     */
     protected static array $called = [];
+
+    /**
+     * Timestamps of recent calls keyed by serialized callback.
+     *
+     * Used internally by the rateLimit() method to track call frequency
+     * and enforce the maximum number of attempts within a time window.
+     *
+     * @var array
+     */
     protected static array $calls = [];
 
     /**
@@ -413,7 +439,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to curry
      * @param int|null $arity The number of arguments expected (null to auto-detect)
      * @return Closure A curried version of the function
-     * @throws RuntimeException When unable to determine function arity automatically
+     * @throws \Phuture\Coherence\Exception\RuntimeException When unable to determine function arity automatically
      * @see Reflector::arity()
      */
     public static function curry(callable $callback, int $arity = null): Closure
@@ -473,7 +499,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to execute after delay
      * @param int $milliseconds The delay in milliseconds before execution (default: EXECUTION_DELAY)
      * @return Closure A function that delays execution before calling the callback
-     * @see Callables::EXECUTION_DELAY
+     * @see \Phuture\Coherence\Callables::EXECUTION_DELAY
      */
     public static function defer(callable $callback, int $milliseconds = self::EXECUTION_DELAY): Closure
     {
@@ -782,7 +808,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to memoize
      * @param int|null $ttl Time-to-live in seconds, defaults to CACHE_TTL, null for runtime permanent cache
      * @return Closure A memoized version of the function with TTL support
-     * @see Callables::CACHE_TTL
+     * @see \Phuture\Coherence\Callables::CACHE_TTL
      */
     public static function memoize(callable $callback, ?int $ttl = self::CACHE_TTL): Closure
     {
@@ -1080,9 +1106,9 @@ class Callables extends StaticClass
      * @param int $maxAttempts Maximum number of allowed calls within the time period, defaults to MAX_ATTEMPTS
      * @param int $milliseconds Delay between calls in milliseconds, defaults to EXECUTION_DELAY
      * @return Closure A rate-limited version of the function
-     * @throws RuntimeException When the rate limit is exceeded
-     * @see Callables::MAX_ATTEMPTS
-     * @see Callables::EXECUTION_DELAY
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the rate limit is exceeded
+     * @see \Phuture\Coherence\Callables::MAX_ATTEMPTS
+     * @see \Phuture\Coherence\Callables::EXECUTION_DELAY
      */
     public static function rateLimit(
         callable $callback,
@@ -1143,8 +1169,8 @@ class Callables extends StaticClass
      * @param int $maxAttempts Maximum number of attempts, defaults to MAX_ATTEMPTS
      * @param int $milliseconds Delay between attempts in milliseconds, defaults to EXECUTION_DELAY
      * @return Closure A retry-enabled version of the function
-     * @see Callables::MAX_ATTEMPTS
-     * @see Callables::EXECUTION_DELAY
+     * @see \Phuture\Coherence\Callables::MAX_ATTEMPTS
+     * @see \Phuture\Coherence\Callables::EXECUTION_DELAY
      */
     public static function retry(
         callable $callback,
@@ -1336,7 +1362,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to rate-limit
      * @param int $milliseconds Minimum time between executions in milliseconds, defaults to Callables::EXECUTION_DELAY
      * @return Closure A throttled version of the function
-     * @see Callables::EXECUTION_DELAY
+     * @see \Phuture\Coherence\Callables::EXECUTION_DELAY
      */
     public static function throttle(callable $callback, int $milliseconds = self::EXECUTION_DELAY): Closure
     {
@@ -1549,7 +1575,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to execute when condition is false
      * @param bool $condition The condition to check before executing the callback
      * @return Closure Returns a new function that conditionally executes the callback
-     * @see Callables::when()
+     * @see \Phuture\Coherence\Callables::when()
      */
     public static function unless(callable $callback, bool $condition): Closure
     {

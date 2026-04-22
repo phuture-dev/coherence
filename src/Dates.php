@@ -218,7 +218,7 @@ class Dates extends StaticClass
      * @param string|null $timezone A valid PHP timezone identifier for display (default: null — UTC)
      * @return DateTimeImmutable The date and time represented by the timestamp
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
-     * @see \Phuture\Coherence\Dates::toUnixTimestamp()
+     * @see \Phuture\Coherence\Dates::toTimestamp()
      */
     public static function fromTimestamp(int $timestamp, ?string $timezone = null): DateTimeImmutable
     {
@@ -414,8 +414,8 @@ class Dates extends StaticClass
      * @param string $format The format string using either PHP date() characters or
      *   day.js-style tokens (auto-detected)
      * @return string The formatted date/time string
-     * @see \Phuture\Coherence\Dates::toDateString()
-     * @see \Phuture\Coherence\Dates::toDateTimeString()
+     * @see \Phuture\Coherence\Dates::toDate()
+     * @see \Phuture\Coherence\Dates::toDateTime()
      */
     public static function format(DateTimeImmutable|string $date, string $format): string
     {
@@ -457,15 +457,15 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toDateString($date); // '2026-04-21'
+     * Dates::toDate($date); // '2026-04-21'
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date portion formatted as 'Y-m-d' (e.g. '2026-04-21')
-     * @see \Phuture\Coherence\Dates::toTimeString()
-     * @see \Phuture\Coherence\Dates::toDateTimeString()
+     * @see \Phuture\Coherence\Dates::toTime()
+     * @see \Phuture\Coherence\Dates::toDateTime()
      */
-    public static function toDateString(DateTimeImmutable|string $date): string
+    public static function toDate(DateTimeImmutable|string $date): string
     {
         return self::resolveDate($date)->format('Y-m-d');
     }
@@ -481,15 +481,15 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toTimeString($date); // '14:30:00'
+     * Dates::toTime($date); // '14:30:00'
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The time portion formatted as 'H:i:s' (e.g. '14:30:00')
-     * @see \Phuture\Coherence\Dates::toDateString()
-     * @see \Phuture\Coherence\Dates::toDateTimeString()
+     * @see \Phuture\Coherence\Dates::toDate()
+     * @see \Phuture\Coherence\Dates::toDateTime()
      */
-    public static function toTimeString(DateTimeImmutable|string $date): string
+    public static function toTime(DateTimeImmutable|string $date): string
     {
         return self::resolveDate($date)->format('H:i:s');
     }
@@ -505,15 +505,15 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toDateTimeString($date); // '2026-04-21 14:30:00'
+     * Dates::toDateTime($date); // '2026-04-21 14:30:00'
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to convert
      * @return string The date and time formatted as 'Y-m-d H:i:s' (e.g. '2026-04-21 14:30:00')
-     * @see \Phuture\Coherence\Dates::toDateString()
-     * @see \Phuture\Coherence\Dates::toTimeString()
+     * @see \Phuture\Coherence\Dates::toDate()
+     * @see \Phuture\Coherence\Dates::toTime()
      */
-    public static function toDateTimeString(DateTimeImmutable|string $date): string
+    public static function toDateTime(DateTimeImmutable|string $date): string
     {
         return self::resolveDate($date)->format('Y-m-d H:i:s');
     }
@@ -567,7 +567,151 @@ class Dates extends StaticClass
     }
 
     /**
-     * Returns the Unix timestamp representation of a date/time value.
+     * Returns a date/time value formatted as an RFC 822 string.
+     *
+     * RFC 822 is the original standard for date and time in email messages.
+     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year.
+     * For most modern use cases, RFC 2822 (four-digit year) is preferred.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc822($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 822
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc822(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC822);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 850 string.
+     *
+     * RFC 850 is a format used in some older systems and protocols.
+     * It produces a string like "Tuesday, 21-Apr-26 14:30:00 UTC" with the full
+     * day name and a two-digit year.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc850($date); // 'Tuesday, 21-Apr-26 14:30:00 UTC'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 850
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc850(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC850);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 1036 string.
+     *
+     * RFC 1036 is the standard format used in Usenet news messages (NNTP).
+     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year,
+     * similar to RFC 822 but used specifically in news article headers.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc1036($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 1036
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc1036(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC1036);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 1123 string.
+     *
+     * RFC 1123 is the standard format for HTTP date headers.
+     * It produces a string like "Tue, 21 Apr 2026 14:30:00 +0000" with a four-digit year,
+     * essentially the same as RFC 2822 but requiring a four-digit year.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc1123($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 1123
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc1123(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC1123);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 7231 string.
+     *
+     * RFC 7231 is the current standard for HTTP/1.1 date headers.
+     * It produces a string like "Tue, 21 Apr 2026 14:30:00 GMT" using the preferred
+     * IMF-fixdate format with "GMT" as the fixed timezone indicator. The input date
+     * is automatically converted to GMT before formatting.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
+     * Dates::toRfc7231($date); // 'Tue, 21 Apr 2026 18:30:00 GMT'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 7231 (IMF-fixdate)
+     * @see \Phuture\Coherence\Dates::toRfc1123()
+     */
+    public static function toRfc7231(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->setTimezone(new DateTimeZone('GMT'))->format(DateTimeInterface::RFC7231);
+    }
+
+    /**
+     * Returns a date/time value formatted as a W3C string.
+     *
+     * The W3C format is a simplified subset of ISO 8601 commonly used in
+     * HTML documents, XML schemas, and web APIs. It produces a string like
+     * "2026-04-21T14:30:00+00:00" with the timezone offset included.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toW3c($date); // '2026-04-21T14:30:00+00:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to the W3C standard
+     * @see \Phuture\Coherence\Dates::toIso8601()
+     */
+    public static function toW3c(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::W3C);
+    }
+
+    /**
      *
      * The Unix timestamp is the number of seconds elapsed since
      * 1 January 1970 00:00:00 UTC, regardless of timezone.
@@ -577,14 +721,14 @@ class Dates extends StaticClass
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 00:00:00', 'UTC');
-     * Dates::toUnixTimestamp($date); // 1745193600
+     * Dates::toTimestamp($date); // 1745193600
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to convert
      * @return int The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
      * @see \Phuture\Coherence\Dates::fromTimestamp()
      */
-    public static function toUnixTimestamp(DateTimeImmutable|string $date): int
+    public static function toTimestamp(DateTimeImmutable|string $date): int
     {
         return self::resolveDate($date)->getTimestamp();
     }
@@ -2056,8 +2200,8 @@ class Dates extends StaticClass
      */
     private static function buildTimezone(?string $timezone): DateTimeZone
     {
-        if ($timezone === null) {
-            return new DateTimeZone(date_default_timezone_get());
+        if ($timezone === null || $timezone === '') {
+            return new DateTimeZone('UTC');
         }
 
         if (!in_array($timezone, timezone_identifiers_list(), true)) {

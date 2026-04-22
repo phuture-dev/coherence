@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Support;
 
+use Phuture\Coherence\Exception\MemberAccessException;
+
 /**
  * Static base class that prevents instantiation and enforces static-only usage.
  *
@@ -43,5 +45,20 @@ abstract class StaticClass
      */
     private function __construct()
     {
+    }
+
+    /**
+     * Handle calls to undefined static methods.
+     *
+     * @param string $name The name of the method being called
+     * @param array $arguments Enumerated array containing the parameters passed to the method
+     * @throws MemberAccessException If the called static method does not exist on the class
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        $class = static::class;
+        throw new MemberAccessException(
+            "Call to undefined method {$class}::{$name}()"
+        );
     }
 }
