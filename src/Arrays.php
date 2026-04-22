@@ -861,15 +861,11 @@ class Arrays extends StaticClass
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs from the first array not found in other arrays
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When no comparison arrays are provided
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When callbacks are provided without an ArrayComparator
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When more than two callbacks are provided
+     *     When no comparison arrays are provided, when callbacks are provided without an ArrayComparator
+     *     OR when more than two callbacks are provided
      * @throws \Phuture\Coherence\Exception\LogicException
-     *     When no ArrayComparator enum is provided when needed
-     * @throws \Phuture\Coherence\Exception\LogicException
-     *     When ArrayComparator::Both is not used with exactly two callbacks
+     *     When no ArrayComparator enum is provided when needed OR when ArrayComparator::Both is not used
+     *     with exactly two callbacks
      * @see \Phuture\Coherence\Arrays::difference()
      * @see \Phuture\Coherence\Arrays::differenceKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
@@ -2008,15 +2004,11 @@ class Arrays extends StaticClass
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs present in all arrays
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When no comparison arrays are provided
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When callbacks are provided without an ArrayComparator
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
-     *     When more than two callbacks are provided
+     *     When no comparison arrays are provided, when callbacks are provided without an ArrayComparator
+     *     OR when more than two callbacks are provided
      * @throws \Phuture\Coherence\Exception\LogicException
-     *     When no ArrayComparator enum is provided when needed
-     * @throws \Phuture\Coherence\Exception\LogicException
-     *     When ArrayComparator::Both is not used with exactly two callbacks
+     *     When no ArrayComparator enum is provided when needed OR when ArrayComparator::Both is not used
+     *     with exactly two callbacks
      * @see \Phuture\Coherence\Arrays::intersect()
      * @see \Phuture\Coherence\Arrays::intersectKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
