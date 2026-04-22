@@ -718,7 +718,8 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Performs multiple simultaneous search-and-replace operations.
      *
-     * @param array $replacements An associative array where each key is the text to find and each value is the text to substitute
+     * @param array $replacements An associative array where each key is the text to find
+     *     and each value is the text to substitute
      * @return self Returns the current instance for method chaining
      * @see Transformer::swap()
      */

@@ -860,11 +860,16 @@ class Arrays extends StaticClass
      * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs from the first array not found in other arrays
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison arrays are provided
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When callbacks are provided without an ArrayComparator
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When more than two callbacks are provided
-     * @throws \Phuture\Coherence\Exception\LogicException When no ArrayComparator enum is provided when needed
-     * @throws \Phuture\Coherence\Exception\LogicException When ArrayComparator::Both is not used with exactly two callbacks
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When no comparison arrays are provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When callbacks are provided without an ArrayComparator
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When more than two callbacks are provided
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When no ArrayComparator enum is provided when needed
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When ArrayComparator::Both is not used with exactly two callbacks
      * @see \Phuture\Coherence\Arrays::difference()
      * @see \Phuture\Coherence\Arrays::differenceKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
@@ -1509,7 +1514,8 @@ class Arrays extends StaticClass
      * @param string|int|array $key The key to access (string/int for direct access, array for a nested path).
      * @param mixed $default Optional default value to return if the key is not found
      * @return mixed Returns the value at the specified key, or the default value if provided and the key doesn't exist
-     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When the key doesn't exist and no default value is provided
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException
+     *     When the key doesn't exist and no default value is provided
      * @see \Phuture\Coherence\Arrays::getReference()
      */
     public static function get(array $array, string|int|array $key, mixed $default = null): mixed
@@ -2001,11 +2007,16 @@ class Arrays extends StaticClass
      * @param callable|null $firstCallback Optional comparison function that returns <0, 0, or >0
      * @param callable|null $secondCallback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs present in all arrays
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison arrays are provided
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When callbacks are provided without an ArrayComparator
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When more than two callbacks are provided
-     * @throws \Phuture\Coherence\Exception\LogicException When no ArrayComparator enum is provided when needed
-     * @throws \Phuture\Coherence\Exception\LogicException When ArrayComparator::Both is not used with exactly two callbacks
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When no comparison arrays are provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When callbacks are provided without an ArrayComparator
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When more than two callbacks are provided
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When no ArrayComparator enum is provided when needed
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When ArrayComparator::Both is not used with exactly two callbacks
      * @see \Phuture\Coherence\Arrays::intersect()
      * @see \Phuture\Coherence\Arrays::intersectKeys()
      * @see \Phuture\Coherence\Enum\ArrayComparator
@@ -2608,7 +2619,8 @@ class Arrays extends StaticClass
      * @param callable $callback A function that receives ($value, $key) and returns an array with one key-value pair
      *  The callback has the signature `function (mixed $value, mixed $key): array`
      * @return array Returns a new array with the structure defined by the callback
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the callback doesn't return an array with exactly one element
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException
+     *     When the callback doesn't return an array with exactly one element
      * @see \Phuture\Coherence\Arrays::map()
      * @see \Phuture\Coherence\Arrays::mapKeys()
      */
@@ -3294,7 +3306,8 @@ class Arrays extends StaticClass
      * @param array $array The array to pick random keys from
      * @param int $num The number of keys to select (default: 1)
      * @return string|int|array Returns a single key if $num is 1, or an array of keys if $num > 1
-     * @throws \Phuture\Coherence\Exception\OutOfBoundsException When array is empty or num is less than 1 or greater than array size
+     * @throws \Phuture\Coherence\Exception\OutOfBoundsException
+     *     When array is empty or num is less than 1 or greater than array size
      * @see \Phuture\Coherence\Arrays::random()
      */
     public static function randomKeys(array $array, int $num = 1): string|int|array
@@ -4776,7 +4789,8 @@ class Arrays extends StaticClass
      * @param string $prefix The current key prefix for nested elements (starts empty).
      * @param array $result The result array passed by reference where flattened key-value pairs are stored.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function flattenToNotation(array $array, string $prefix, array &$result, int $depth = 0): void
     {
@@ -4811,7 +4825,8 @@ class Arrays extends StaticClass
      * @param array $array The array to normalize (may contain objects).
      * @param array $result The result array passed by reference containing only array values.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function normalizeRecursive(array $array, array &$result, int $depth = 0): void
     {
@@ -4849,7 +4864,8 @@ class Arrays extends StaticClass
      * @param array $array The array to convert (may contain nested arrays).
      * @param stdClass $result The result object passed by reference containing the converted structure.
      * @param int $depth Current recursion depth to prevent stack overflow.
-     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
+     * @throws \Phuture\Coherence\Exception\LogicException
+     *     When recursion depth exceeds RECURSION_LIMIT to prevent stack overflow.
      */
     private static function toObjectRecursive(array $array, stdClass &$result, int $depth = 0): void
     {

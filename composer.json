@@ -53,7 +53,7 @@
         "lint": "php-cs-fixer fix",
         "server": "php -S localhost:8000",
         "phpstan": "phpstan analyse src --memory-limit=4294967296",
-        "phpcs": "phpcs --standard=PSR12 src",
+        "phpcs": "phpcs",
         "tester": "tester tests -C"
     },
     "config": {

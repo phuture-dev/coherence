@@ -992,8 +992,12 @@ class Strings extends StaticClass
      * @return string The string with all occurrences of `$phrase` wrapped in the given tags
      * @see \Phuture\Coherence\Strings::replace()
      */
-    public static function highlight(string $string, string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): string
-    {
+    public static function highlight(
+        string $string,
+        string $phrase,
+        string $tagOpen = '<mark>',
+        string $tagClose = '</mark>'
+    ): string {
         if ($phrase === '') {
             return $string;
         }
