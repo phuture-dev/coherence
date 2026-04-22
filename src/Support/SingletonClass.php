@@ -55,14 +55,6 @@ abstract class SingletonClass
     }
 
     /**
-     * Class is singleton and cannot be cloned.
-     */
-    private function __clone()
-    {
-        return false;
-    }
-
-    /**
      * Handle calls to undefined instance methods.
      *
      * @param string $name The name of the method being called
@@ -90,6 +82,14 @@ abstract class SingletonClass
         throw new MemberAccessException(
             "Call to undefined method {$class}::{$name}()"
         );
+    }
+
+    /**
+     * Class is singleton and cannot be cloned.
+     */
+    private function __clone()
+    {
+        return false;
     }
 
     /**

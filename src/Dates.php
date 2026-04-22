@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
+use Exception;
+use DateTimeZone;
 use DateTimeImmutable;
 use DateTimeInterface;
-use DateTimeZone;
-use Phuture\Coherence\Exception\InvalidArgumentException;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Exception\InvalidArgumentException;
 
 /**
  * Comprehensive date and time manipulation utility class with full timezone support.
@@ -45,12 +46,6 @@ class Dates extends StaticClass
     private const MARKER_DAY_OF_WEEK = "\xFD\x00";
 
     /**
-     * Marker byte sequence for day.js `dd` token — two-letter day name (Su, Mo, Tu …).
-     * PHP has no native format character for two-letter day abbreviations.
-     */
-    private const MARKER_SHORT_DAY_NAME = "\xFD\x01";
-
-    /**
      * Marker byte sequence for day.js `m` token — minutes (0–59) with no leading zero.
      * PHP's `i` always produces a leading zero; there is no zero-padded alternative.
      */
@@ -63,29 +58,179 @@ class Dates extends StaticClass
     private const MARKER_SECONDS_NO_PAD = "\xFD\x03";
 
     /**
-     * Returns the current date and time.
+     * Marker byte sequence for day.js `dd` token — two-letter day name (Su, Mo, Tu …).
+     * PHP has no native format character for two-letter day abbreviations.
+     */
+    private const MARKER_SHORT_DAY_NAME = "\xFD\x01";
+
+    /**
+     * Adds a number of days to a date/time value.
      *
-     * Creates a new date/time value representing the exact moment this method is called.
-     * When no timezone is given, the system's default timezone is used.
+     * Returns a new date/time value that is the given number of days later
+     * than the original. The original value is never modified.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $now = Dates::now(); // e.g. 2026-04-21 14:30:00 UTC
-     * $nowInTokyo = Dates::now('Asia/Tokyo'); // same moment, Tokyo time
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::addDays($date, 10); // '2026-05-01'
      * ```
      *
-     * @param string|null $timezone A valid PHP timezone identifier such as 'America/New_York'
-     *   (default: null, which uses the system default timezone)
-     * @return DateTimeImmutable The current date and time in the requested timezone
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
-     * @see \Phuture\Coherence\Dates::create()
-     * @see \Phuture\Coherence\Dates::parse()
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $days The number of days to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the days added
+     * @see \Phuture\Coherence\Dates::removeDays()
      */
-    public static function now(?string $timezone = null): DateTimeImmutable
+    public static function addDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
     {
-        return new DateTimeImmutable('now', self::buildTimezone($timezone));
+        return self::resolveDate($date)->modify("+{$days} days");
+    }
+
+    /**
+     * Adds a number of hours to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of hours later
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::addHours($date, 3); // '2026-04-21 17:30:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $hours The number of hours to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the hours added
+     * @see \Phuture\Coherence\Dates::removeHours()
+     */
+    public static function addHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$hours} hours");
+    }
+
+    /**
+     * Adds a number of minutes to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of minutes later
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::addMinutes($date, 45); // '2026-04-21 15:15:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $minutes The number of minutes to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the minutes added
+     * @see \Phuture\Coherence\Dates::removeMinutes()
+     */
+    public static function addMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$minutes} minutes");
+    }
+
+    /**
+     * Adds a number of months to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of months later
+     * than the original. When the resulting day does not exist in the target month
+     * (e.g. adding 1 month to January 31 gives March 3 or 2 in a leap year),
+     * PHP overflows to the next month.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-01-15');
+     * $result = Dates::addMonths($date, 3); // '2026-04-15'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $months The number of months to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the months added
+     * @see \Phuture\Coherence\Dates::removeMonths()
+     */
+    public static function addMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$months} months");
+    }
+
+    /**
+     * Adds a number of seconds to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of seconds later
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::addSeconds($date, 90); // '2026-04-21 14:31:30'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $seconds The number of seconds to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the seconds added
+     * @see \Phuture\Coherence\Dates::removeSeconds()
+     */
+    public static function addSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$seconds} seconds");
+    }
+
+    /**
+     * Adds a number of weeks to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of weeks later
+     * than the original. One week equals exactly 7 days.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::addWeeks($date, 2); // '2026-05-05'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $weeks The number of weeks to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the weeks added
+     * @see \Phuture\Coherence\Dates::removeWeeks()
+     */
+    public static function addWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$weeks} weeks");
+    }
+
+    /**
+     * Adds a number of years to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of years later
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::addYears($date, 5); // '2031-04-21'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $years The number of years to add (use a negative value to subtract)
+     * @return DateTimeImmutable A new date/time value with the years added
+     * @see \Phuture\Coherence\Dates::removeYears()
+     */
+    public static function addYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify("+{$years} years");
     }
 
     /**
@@ -161,180 +306,300 @@ class Dates extends StaticClass
     }
 
     /**
-     * Parses a date/time string into a DateTimeImmutable value.
+     * Calculates the number of complete days between two date/time values.
      *
-     * Accepts any date/time string that PHP's DateTimeImmutable constructor understands,
-     * such as '2026-04-21', 'next Monday', 'yesterday', or '+2 days'.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-12-25');
-     * $date = Dates::parse('next Friday', 'America/New_York');
-     * $date = Dates::parse('2026-04-21 14:30:00', 'Europe/Berlin');
-     * ```
-     *
-     * @param string $dateString Any date/time string understood by PHP's date parser
-     * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
-     * @return DateTimeImmutable The parsed date and time value
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
-     *   or the date string cannot be parsed
-     * @see \Phuture\Coherence\Dates::fromFormat()
-     * @see \Phuture\Coherence\Dates::fromTimestamp()
-     */
-    public static function parse(string $dateString, ?string $timezone = null): DateTimeImmutable
-    {
-        if ($dateString === '') {
-            throw new InvalidArgumentException(
-                'Invalid Argument: The date string must not be empty.'
-            );
-        }
-
-        try {
-            return new DateTimeImmutable($dateString, self::buildTimezone($timezone));
-        } catch (\Exception $e) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The date string \"{$dateString}\" could not be parsed into a valid date."
-            );
-        }
-    }
-
-    /**
-     * Creates a date/time value from a Unix timestamp.
-     *
-     * A Unix timestamp is the number of seconds that have elapsed since
-     * 1 January 1970 00:00:00 UTC. This is the format returned by PHP's time() function.
+     * Returns the absolute (always positive) number of full days between the two dates.
+     * Partial days are discarded — for example, 23 hours returns 0.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::fromTimestamp(1745236800); // UTC
-     * $date = Dates::fromTimestamp(1745236800, 'America/Los_Angeles'); // same moment, LA time
+     * $start = Dates::parse('2026-04-01');
+     * $end = Dates::parse('2026-04-21');
+     * Dates::diffInDays($start, $end); // 20
      * ```
      *
-     * @param int $timestamp The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
-     * @param string|null $timezone A valid PHP timezone identifier for display (default: null — UTC)
-     * @return DateTimeImmutable The date and time represented by the timestamp
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
-     * @see \Phuture\Coherence\Dates::toTimestamp()
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete days between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInHours()
+     * @see \Phuture\Coherence\Dates::diffInWeeks()
      */
-    public static function fromTimestamp(int $timestamp, ?string $timezone = null): DateTimeImmutable
+    public static function diffInDays(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
-        $date = new DateTimeImmutable('@' . $timestamp);
-
-        if ($timezone !== null) {
-            $date = $date->setTimezone(self::buildTimezone($timezone));
-        }
-
-        return $date;
+        return (int) (self::diffInSeconds($date, $comparedTo) / 86400);
     }
 
     /**
-     * Creates a date/time value from a string using an explicit format pattern.
+     * Calculates the number of complete hours between two date/time values.
      *
-     * Use this when you know the exact format of your date string and want
-     * strict parsing. Supports both PHP native format characters and day.js-style
-     * tokens — the format style is auto-detected the same way as {@see format()}.
+     * Returns the absolute (always positive) number of full hours between the two dates.
+     * Partial hours are discarded — for example, 59 minutes returns 0.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * // PHP native format
-     * $date = Dates::fromFormat('d/m/Y', '21/04/2026');
-     * $date = Dates::fromFormat('Y-m-d H:i:s', '2026-04-21 14:30:00', 'Europe/London');
-     *
-     * // day.js-style tokens
-     * $date = Dates::fromFormat('DD/MM/YYYY', '21/04/2026');
-     * $date = Dates::fromFormat('YYYY-MM-DD HH:mm:ss', '2026-04-21 14:30:00', 'Europe/London');
+     * $start = Dates::parse('2026-04-21 08:00:00');
+     * $end = Dates::parse('2026-04-21 20:30:00');
+     * Dates::diffInHours($start, $end); // 12
      * ```
      *
-     * @param string $format The format pattern using either PHP date() characters or
-     *   day.js-style tokens (auto-detected)
-     * @param string $dateString The date string to parse according to the format
-     * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
-     * @return DateTimeImmutable The parsed date and time value
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the format does not match
-     *   the date string or the timezone is invalid
-     * @see \Phuture\Coherence\Dates::parse()
-     * @see \Phuture\Coherence\Dates::format()
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete hours between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInMinutes()
+     * @see \Phuture\Coherence\Dates::diffInDays()
      */
-    public static function fromFormat(string $format, string $dateString, ?string $timezone = null): DateTimeImmutable
+    public static function diffInHours(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
     {
-        $phpFormat = self::isDayJsFormat($format)
-            ? str_replace(
-                [
-                    self::MARKER_DAY_OF_WEEK,
-                    self::MARKER_SHORT_DAY_NAME,
-                    self::MARKER_MINUTES_NO_PAD,
-                    self::MARKER_SECONDS_NO_PAD,
-                ],
-                ['w', 'D', 'i', 's'],
-                self::convertDayJsFormatToPhp($format)
-            )
-            : $format;
-
-        $date = DateTimeImmutable::createFromFormat($phpFormat, $dateString, self::buildTimezone($timezone));
-
-        if ($date === false) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The date string \"{$dateString}\" does not match the format \"{$format}\"."
-            );
-        }
-
-        return $date;
+        return (int) (self::diffInSeconds($date, $comparedTo) / 3600);
     }
 
     /**
-     * Converts a date/time value to a different timezone.
+     * Calculates the number of complete minutes between two date/time values.
      *
-     * The underlying point in time remains exactly the same — only the timezone
-     * context used to display it changes. Useful when you need to present a UTC
-     * timestamp in a user's local timezone.
+     * Returns the absolute (always positive) number of full minutes between the two dates.
+     * Partial minutes are discarded — for example, 89 seconds returns 1.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2026-04-21 14:00:00');
+     * $end = Dates::parse('2026-04-21 15:30:00');
+     * Dates::diffInMinutes($start, $end); // 90
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete minutes between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInSeconds()
+     * @see \Phuture\Coherence\Dates::diffInHours()
+     */
+    public static function diffInMinutes(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
+    {
+        return (int) (self::diffInSeconds($date, $comparedTo) / 60);
+    }
+
+    /**
+     * Calculates the number of complete months between two date/time values.
+     *
+     * Returns the absolute (always positive) number of full calendar months between
+     * the two dates using PHP's DateInterval. Partial months are discarded.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2026-01-15');
+     * $end = Dates::parse('2026-04-10');
+     * Dates::diffInMonths($start, $end); // 2 (not 3, because April 10 < January 15 in day)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete months between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInWeeks()
+     * @see \Phuture\Coherence\Dates::diffInYears()
+     */
+    public static function diffInMonths(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
+    {
+        $interval = self::resolveDate($date)->diff(self::resolveDate($comparedTo));
+
+        return abs(($interval->y * 12) + $interval->m);
+    }
+
+    /**
+     * Calculates the number of complete seconds between two date/time values.
+     *
+     * Returns the absolute (always positive) number of full seconds between the two dates.
+     * The order of the arguments does not matter — the result is always non-negative.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2026-04-21 14:00:00');
+     * $end = Dates::parse('2026-04-21 14:01:30');
+     * Dates::diffInSeconds($start, $end); // 90
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete seconds between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInMinutes()
+     * @see \Phuture\Coherence\Dates::diffInHours()
+     */
+    public static function diffInSeconds(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
+    {
+        return (int) abs(self::resolveDate($date)->getTimestamp() - self::resolveDate($comparedTo)->getTimestamp());
+    }
+
+    /**
+     * Calculates the number of complete weeks between two date/time values.
+     *
+     * Returns the absolute (always positive) number of full weeks between the two dates.
+     * Partial weeks are discarded — for example, 6 days returns 0.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2026-04-07');
+     * $end = Dates::parse('2026-04-21');
+     * Dates::diffInWeeks($start, $end); // 2
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete weeks between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInDays()
+     * @see \Phuture\Coherence\Dates::diffInMonths()
+     */
+    public static function diffInWeeks(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
+    {
+        return (int) (self::diffInDays($date, $comparedTo) / 7);
+    }
+
+    /**
+     * Calculates the number of complete years between two date/time values.
+     *
+     * Returns the absolute (always positive) number of full calendar years between
+     * the two dates using PHP's DateInterval. Partial years are discarded.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2020-06-15');
+     * $end = Dates::parse('2026-04-10');
+     * Dates::diffInYears($start, $end); // 5
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of complete years between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInMonths()
+     */
+    public static function diffInYears(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
+    {
+        return abs(self::resolveDate($date)->diff(self::resolveDate($comparedTo))->y);
+    }
+
+    /**
+     * Returns a new date/time value set to the very end of its day (23:59:59).
+     *
+     * Keeps the same date and timezone but sets the time to one second before midnight.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:45');
+     * $result = Dates::endOfDay($date); // '2026-04-21 23:59:59'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at 23:59:59 on the same calendar day
+     * @see \Phuture\Coherence\Dates::startOfDay()
+     */
+    public static function endOfDay(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->setTime(23, 59, 59);
+    }
+
+    /**
+     * Returns a new date/time value set to the last day of the same month at 23:59:59.
+     *
+     * Automatically accounts for months with different lengths, including February in leap years.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-15');
+     * $result = Dates::endOfMonth($date); // '2026-04-30 23:59:59'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at the last day of the month at 23:59:59
+     * @see \Phuture\Coherence\Dates::startOfMonth()
+     */
+    public static function endOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('last day of this month')->setTime(23, 59, 59);
+    }
+
+    /**
+     * Returns a new date/time value set to the Sunday of the same ISO week at 23:59:59.
+     *
+     * The ISO week ends on Sunday. The time is set to 23:59:59.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21'); // Tuesday
+     * $result = Dates::endOfWeek($date); // '2026-04-26 23:59:59' (Sunday)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at Sunday 23:59:59 of the same week
+     * @see \Phuture\Coherence\Dates::startOfWeek()
+     */
+    public static function endOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('Sunday this week')->setTime(23, 59, 59);
+    }
+
+    /**
+     * Returns a new date/time value set to December 31st of the same year at 23:59:59.
+     *
+     * Advances to December 31 and sets the time to 23:59:59.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::endOfYear($date); // '2026-12-31 23:59:59'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at December 31st of the same year at 23:59:59
+     * @see \Phuture\Coherence\Dates::startOfYear()
+     */
+    public static function endOfYear(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('last day of December this year')->setTime(23, 59, 59);
+    }
+
+    /**
+     * Checks whether two date/time values represent the exact same moment in time.
+     *
+     * Both dates are compared as absolute points in time (Unix timestamps).
+     * Two dates in different timezones that represent the same moment will be equal.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
-     * $ny = Dates::toTimezone($utc, 'America/New_York');
-     * // $ny displays as '2026-04-21 08:00:00' but represents the same moment
+     * $ny = Dates::parse('2026-04-21 08:00:00', 'America/New_York');
+     * Dates::equals($utc, $ny); // true — same moment, different timezones
      * ```
      *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @param string $timezone A valid PHP timezone identifier to convert into
-     * @return DateTimeImmutable A new date/time value in the requested timezone
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
-     * @see \Phuture\Coherence\Dates::getTimezone()
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return bool Returns true if both values represent the same point in time
+     * @see \Phuture\Coherence\Dates::isBefore()
+     * @see \Phuture\Coherence\Dates::isAfter()
      */
-    public static function toTimezone(DateTimeImmutable|string $date, string $timezone): DateTimeImmutable
+    public static function equals(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        return self::resolveDate($date)->setTimezone(self::buildTimezone($timezone));
-    }
-
-    /**
-     * Returns the timezone identifier of a date/time value.
-     *
-     * Extracts the name of the timezone that is associated with the given date,
-     * such as 'America/New_York' or 'UTC'.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::now('Asia/Tokyo');
-     * $tz = Dates::getTimezone($date); // 'Asia/Tokyo'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to read the timezone from
-     * @return string The timezone identifier string (e.g. 'Europe/Paris')
-     * @see \Phuture\Coherence\Dates::toTimezone()
-     */
-    public static function getTimezone(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->getTimezone()->getName();
+        return self::resolveDate($date)->getTimestamp() === self::resolveDate($comparedTo)->getTimestamp();
     }
 
     /**
@@ -447,678 +712,360 @@ class Dates extends StaticClass
     }
 
     /**
-     * Returns the date portion of a date/time value as a string in Y-m-d format.
+     * Creates a date/time value from a string using an explicit format pattern.
      *
-     * Extracts only the year, month, and day from the given date/time value,
-     * dropping any time information.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toDate($date); // '2026-04-21'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date portion formatted as 'Y-m-d' (e.g. '2026-04-21')
-     * @see \Phuture\Coherence\Dates::toTime()
-     * @see \Phuture\Coherence\Dates::toDateTime()
-     */
-    public static function toDate(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format('Y-m-d');
-    }
-
-    /**
-     * Returns the time portion of a date/time value as a string in H:i:s format.
-     *
-     * Extracts only the hour, minute, and second from the given date/time value,
-     * dropping any date information.
+     * Use this when you know the exact format of your date string and want
+     * strict parsing. Supports both PHP native format characters and day.js-style
+     * tokens — the format style is auto-detected the same way as {@see format()}.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toTime($date); // '14:30:00'
+     * // PHP native format
+     * $date = Dates::fromFormat('d/m/Y', '21/04/2026');
+     * $date = Dates::fromFormat('Y-m-d H:i:s', '2026-04-21 14:30:00', 'Europe/London');
+     *
+     * // day.js-style tokens
+     * $date = Dates::fromFormat('DD/MM/YYYY', '21/04/2026');
+     * $date = Dates::fromFormat('YYYY-MM-DD HH:mm:ss', '2026-04-21 14:30:00', 'Europe/London');
      * ```
      *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The time portion formatted as 'H:i:s' (e.g. '14:30:00')
-     * @see \Phuture\Coherence\Dates::toDate()
-     * @see \Phuture\Coherence\Dates::toDateTime()
+     * @param string $format The format pattern using either PHP date() characters or
+     *   day.js-style tokens (auto-detected)
+     * @param string $dateString The date string to parse according to the format
+     * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
+     * @return DateTimeImmutable The parsed date and time value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the format does not match
+     *   the date string or the timezone is invalid
+     * @see \Phuture\Coherence\Dates::parse()
+     * @see \Phuture\Coherence\Dates::format()
      */
-    public static function toTime(DateTimeImmutable|string $date): string
+    public static function fromFormat(string $format, string $dateString, ?string $timezone = null): DateTimeImmutable
     {
-        return self::resolveDate($date)->format('H:i:s');
+        $phpFormat = self::isDayJsFormat($format)
+            ? str_replace(
+                [
+                    self::MARKER_DAY_OF_WEEK,
+                    self::MARKER_SHORT_DAY_NAME,
+                    self::MARKER_MINUTES_NO_PAD,
+                    self::MARKER_SECONDS_NO_PAD,
+                ],
+                ['w', 'D', 'i', 's'],
+                self::convertDayJsFormatToPhp($format)
+            )
+            : $format;
+
+        $date = DateTimeImmutable::createFromFormat($phpFormat, $dateString, self::buildTimezone($timezone));
+
+        if ($date === false) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The date string \"{$dateString}\" does not match the format \"{$format}\"."
+            );
+        }
+
+        return $date;
     }
 
     /**
-     * Returns a date/time value as a combined date and time string.
+     * Creates a date/time value from a Unix timestamp.
      *
-     * Formats the date/time as a human-readable string containing both
-     * the date and time components separated by a space.
+     * A Unix timestamp is the number of seconds that have elapsed since
+     * 1 January 1970 00:00:00 UTC. This is the format returned by PHP's time() function.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::toDateTime($date); // '2026-04-21 14:30:00'
+     * $date = Dates::fromTimestamp(1745236800); // UTC
+     * $date = Dates::fromTimestamp(1745236800, 'America/Los_Angeles'); // same moment, LA time
      * ```
      *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted as 'Y-m-d H:i:s' (e.g. '2026-04-21 14:30:00')
-     * @see \Phuture\Coherence\Dates::toDate()
-     * @see \Phuture\Coherence\Dates::toTime()
+     * @param int $timestamp The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
+     * @param string|null $timezone A valid PHP timezone identifier for display (default: null — UTC)
+     * @return DateTimeImmutable The date and time represented by the timestamp
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     * @see \Phuture\Coherence\Dates::toTimestamp()
      */
-    public static function toDateTime(DateTimeImmutable|string $date): string
+    public static function fromTimestamp(int $timestamp, ?string $timezone = null): DateTimeImmutable
     {
-        return self::resolveDate($date)->format('Y-m-d H:i:s');
+        $date = new DateTimeImmutable('@' . $timestamp);
+
+        if ($timezone !== null) {
+            $date = $date->setTimezone(self::buildTimezone($timezone));
+        }
+
+        return $date;
     }
 
     /**
-     * Returns a date/time value formatted as an ISO 8601 string.
-     *
-     * ISO 8601 is an international standard for representing dates and times.
-     * The output includes timezone offset information, making it ideal for
-     * data exchange between systems (APIs, JSON payloads, etc.).
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
-     * Dates::toIso8601($date); // '2026-04-21T14:30:00-04:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to ISO 8601 (e.g. '2026-04-21T14:30:00+00:00')
-     * @see \Phuture\Coherence\Dates::toRfc2822()
-     */
-    public static function toIso8601(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::ATOM);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 2822 string.
-     *
-     * RFC 2822 is the standard format used in email headers and HTTP dates.
-     * The output always includes the three-letter day name, day of the month,
-     * three-letter month abbreviation, four-digit year, time, and timezone offset.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toRfc2822($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 2822
-     * @see \Phuture\Coherence\Dates::toIso8601()
-     */
-    public static function toRfc2822(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::RFC2822);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 822 string.
-     *
-     * RFC 822 is the original standard for date and time in email messages.
-     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year.
-     * For most modern use cases, RFC 2822 (four-digit year) is preferred.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toRfc822($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 822
-     * @see \Phuture\Coherence\Dates::toRfc2822()
-     */
-    public static function toRfc822(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::RFC822);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 850 string.
-     *
-     * RFC 850 is a format used in some older systems and protocols.
-     * It produces a string like "Tuesday, 21-Apr-26 14:30:00 UTC" with the full
-     * day name and a two-digit year.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toRfc850($date); // 'Tuesday, 21-Apr-26 14:30:00 UTC'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 850
-     * @see \Phuture\Coherence\Dates::toRfc2822()
-     */
-    public static function toRfc850(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::RFC850);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 1036 string.
-     *
-     * RFC 1036 is the standard format used in Usenet news messages (NNTP).
-     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year,
-     * similar to RFC 822 but used specifically in news article headers.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toRfc1036($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 1036
-     * @see \Phuture\Coherence\Dates::toRfc2822()
-     */
-    public static function toRfc1036(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::RFC1036);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 1123 string.
-     *
-     * RFC 1123 is the standard format for HTTP date headers.
-     * It produces a string like "Tue, 21 Apr 2026 14:30:00 +0000" with a four-digit year,
-     * essentially the same as RFC 2822 but requiring a four-digit year.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toRfc1123($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 1123
-     * @see \Phuture\Coherence\Dates::toRfc2822()
-     */
-    public static function toRfc1123(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::RFC1123);
-    }
-
-    /**
-     * Returns a date/time value formatted as an RFC 7231 string.
-     *
-     * RFC 7231 is the current standard for HTTP/1.1 date headers.
-     * It produces a string like "Tue, 21 Apr 2026 14:30:00 GMT" using the preferred
-     * IMF-fixdate format with "GMT" as the fixed timezone indicator. The input date
-     * is automatically converted to GMT before formatting.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
-     * Dates::toRfc7231($date); // 'Tue, 21 Apr 2026 18:30:00 GMT'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to RFC 7231 (IMF-fixdate)
-     * @see \Phuture\Coherence\Dates::toRfc1123()
-     */
-    public static function toRfc7231(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->setTimezone(new DateTimeZone('GMT'))->format(DateTimeInterface::RFC7231);
-    }
-
-    /**
-     * Returns a date/time value formatted as a W3C string.
-     *
-     * The W3C format is a simplified subset of ISO 8601 commonly used in
-     * HTML documents, XML schemas, and web APIs. It produces a string like
-     * "2026-04-21T14:30:00+00:00" with the timezone offset included.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-     * Dates::toW3c($date); // '2026-04-21T14:30:00+00:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return string The date and time formatted according to the W3C standard
-     * @see \Phuture\Coherence\Dates::toIso8601()
-     */
-    public static function toW3c(DateTimeImmutable|string $date): string
-    {
-        return self::resolveDate($date)->format(DateTimeInterface::W3C);
-    }
-
-    /**
-     *
-     * The Unix timestamp is the number of seconds elapsed since
-     * 1 January 1970 00:00:00 UTC, regardless of timezone.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 00:00:00', 'UTC');
-     * Dates::toTimestamp($date); // 1745193600
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to convert
-     * @return int The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
-     * @see \Phuture\Coherence\Dates::fromTimestamp()
-     */
-    public static function toTimestamp(DateTimeImmutable|string $date): int
-    {
-        return self::resolveDate($date)->getTimestamp();
-    }
-
-    /**
-     * Adds a number of seconds to a date/time value.
-     *
-     * Returns a new date/time value that is the given number of seconds later
-     * than the original. The original value is never modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::addSeconds($date, 90); // '2026-04-21 14:31:30'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $seconds The number of seconds to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the seconds added
-     * @see \Phuture\Coherence\Dates::removeSeconds()
-     */
-    public static function addSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify("+{$seconds} seconds");
-    }
-
-    /**
-     * Adds a number of minutes to a date/time value.
-     *
-     * Returns a new date/time value that is the given number of minutes later
-     * than the original. The original value is never modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::addMinutes($date, 45); // '2026-04-21 15:15:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $minutes The number of minutes to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the minutes added
-     * @see \Phuture\Coherence\Dates::removeMinutes()
-     */
-    public static function addMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify("+{$minutes} minutes");
-    }
-
-    /**
-     * Adds a number of hours to a date/time value.
-     *
-     * Returns a new date/time value that is the given number of hours later
-     * than the original. The original value is never modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::addHours($date, 3); // '2026-04-21 17:30:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $hours The number of hours to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the hours added
-     * @see \Phuture\Coherence\Dates::removeHours()
-     */
-    public static function addHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify("+{$hours} hours");
-    }
-
-    /**
-     * Adds a number of days to a date/time value.
-     *
-     * Returns a new date/time value that is the given number of days later
-     * than the original. The original value is never modified.
+     * Returns the day of the month for a date/time value.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21');
-     * $result = Dates::addDays($date, 10); // '2026-05-01'
+     * Dates::getDay($date); // 21
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $days The number of days to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the days added
-     * @see \Phuture\Coherence\Dates::removeDays()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The day of the month as an integer from 1 to 31
+     * @see \Phuture\Coherence\Dates::getMonth()
+     * @see \Phuture\Coherence\Dates::getYear()
      */
-    public static function addDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
+    public static function getDay(DateTimeImmutable|string $date): int
     {
-        return self::resolveDate($date)->modify("+{$days} days");
+        return (int) self::resolveDate($date)->format('j');
     }
 
     /**
-     * Adds a number of weeks to a date/time value.
+     * Returns the day of the week for a date/time value.
      *
-     * Returns a new date/time value that is the given number of weeks later
-     * than the original. One week equals exactly 7 days.
+     * The returned value follows the ISO 8601 standard where Monday is 1
+     * and Sunday is 7.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-04-21');
-     * $result = Dates::addWeeks($date, 2); // '2026-05-05'
+     * $date = Dates::parse('2026-04-21'); // Tuesday
+     * Dates::getDayOfWeek($date); // 2
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $weeks The number of weeks to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the weeks added
-     * @see \Phuture\Coherence\Dates::removeWeeks()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The ISO 8601 day of the week: 1 (Monday) through 7 (Sunday)
+     * @see \Phuture\Coherence\Dates::getDayOfYear()
+     * @see \Phuture\Coherence\Dates::isWeekend()
      */
-    public static function addWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
+    public static function getDayOfWeek(DateTimeImmutable|string $date): int
     {
-        return self::resolveDate($date)->modify("+{$weeks} weeks");
+        return (int) self::resolveDate($date)->format('N');
     }
 
     /**
-     * Adds a number of months to a date/time value.
+     * Returns the day of the year for a date/time value.
      *
-     * Returns a new date/time value that is the given number of months later
-     * than the original. When the resulting day does not exist in the target month
-     * (e.g. adding 1 month to January 31 gives March 3 or 2 in a leap year),
-     * PHP overflows to the next month.
+     * January 1 is day 1, December 31 is day 365 (or 366 in a leap year).
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-01-15');
-     * $result = Dates::addMonths($date, 3); // '2026-04-15'
+     * $date = Dates::parse('2026-01-31');
+     * Dates::getDayOfYear($date); // 31
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $months The number of months to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the months added
-     * @see \Phuture\Coherence\Dates::removeMonths()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The day of the year as an integer from 1 to 366
+     * @see \Phuture\Coherence\Dates::getDayOfWeek()
+     * @see \Phuture\Coherence\Dates::getWeekOfYear()
      */
-    public static function addMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
+    public static function getDayOfYear(DateTimeImmutable|string $date): int
     {
-        return self::resolveDate($date)->modify("+{$months} months");
+        return (int) self::resolveDate($date)->format('z') + 1;
     }
 
     /**
-     * Adds a number of years to a date/time value.
+     * Returns the number of days in the month of a date/time value.
      *
-     * Returns a new date/time value that is the given number of years later
-     * than the original. The original value is never modified.
+     * Takes leap years into account when calculating February.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-04-21');
-     * $result = Dates::addYears($date, 5); // '2031-04-21'
+     * $date = Dates::parse('2026-02-01');
+     * Dates::getDaysInMonth($date); // 28
+     *
+     * $leapDate = Dates::parse('2024-02-01');
+     * Dates::getDaysInMonth($leapDate); // 29
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $years The number of years to add (use a negative value to subtract)
-     * @return DateTimeImmutable A new date/time value with the years added
-     * @see \Phuture\Coherence\Dates::removeYears()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The number of days in the month, from 28 to 31
+     * @see \Phuture\Coherence\Dates::isLeapYear()
      */
-    public static function addYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
+    public static function getDaysInMonth(DateTimeImmutable|string $date): int
     {
-        return self::resolveDate($date)->modify("+{$years} years");
+        return (int) self::resolveDate($date)->format('t');
     }
 
     /**
-     * Removes a number of seconds from a date/time value.
-     *
-     * Returns a new date/time value that is the given number of seconds earlier
-     * than the original. The original value is never modified.
+     * Returns the hour of a date/time value.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::removeSeconds($date, 30); // '2026-04-21 14:29:30'
+     * Dates::getHour($date); // 14
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $seconds The number of seconds to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the seconds removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $seconds is negative
-     * @see \Phuture\Coherence\Dates::addSeconds()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The hour as an integer from 0 to 23
+     * @see \Phuture\Coherence\Dates::getMinute()
+     * @see \Phuture\Coherence\Dates::getSecond()
      */
-    public static function removeSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
+    public static function getHour(DateTimeImmutable|string $date): int
     {
-        if ($seconds < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The seconds value must be >= 0. Use addSeconds() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$seconds} seconds");
+        return (int) self::resolveDate($date)->format('G');
     }
 
     /**
-     * Removes a number of minutes from a date/time value.
-     *
-     * Returns a new date/time value that is the given number of minutes earlier
-     * than the original. The original value is never modified.
+     * Returns the minute of a date/time value.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::removeMinutes($date, 15); // '2026-04-21 14:15:00'
+     * Dates::getMinute($date); // 30
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $minutes The number of minutes to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the minutes removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $minutes is negative
-     * @see \Phuture\Coherence\Dates::addMinutes()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The minute as an integer from 0 to 59
+     * @see \Phuture\Coherence\Dates::getHour()
+     * @see \Phuture\Coherence\Dates::getSecond()
      */
-    public static function removeMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
+    public static function getMinute(DateTimeImmutable|string $date): int
     {
-        if ($minutes < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The minutes value must be >= 0. Use addMinutes() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$minutes} minutes");
+        return (int) self::resolveDate($date)->format('i');
     }
 
     /**
-     * Removes a number of hours from a date/time value.
-     *
-     * Returns a new date/time value that is the given number of hours earlier
-     * than the original. The original value is never modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::removeHours($date, 2); // '2026-04-21 12:30:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $hours The number of hours to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the hours removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $hours is negative
-     * @see \Phuture\Coherence\Dates::addHours()
-     */
-    public static function removeHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
-    {
-        if ($hours < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The hours value must be >= 0. Use addHours() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$hours} hours");
-    }
-
-    /**
-     * Removes a number of days from a date/time value.
-     *
-     * Returns a new date/time value that is the given number of days earlier
-     * than the original. The original value is never modified.
+     * Returns the month number of a date/time value.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21');
-     * $result = Dates::removeDays($date, 5); // '2026-04-16'
+     * Dates::getMonth($date); // 4
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $days The number of days to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the days removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $days is negative
-     * @see \Phuture\Coherence\Dates::addDays()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The month as an integer from 1 (January) to 12 (December)
+     * @see \Phuture\Coherence\Dates::getYear()
+     * @see \Phuture\Coherence\Dates::getDay()
      */
-    public static function removeDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
+    public static function getMonth(DateTimeImmutable|string $date): int
     {
-        if ($days < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The days value must be >= 0. Use addDays() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$days} days");
+        return (int) self::resolveDate($date)->format('n');
     }
 
     /**
-     * Removes a number of weeks from a date/time value.
+     * Returns the second of a date/time value.
      *
-     * Returns a new date/time value that is the given number of weeks earlier
-     * than the original. One week equals exactly 7 days.
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:45');
+     * Dates::getSecond($date); // 45
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The second as an integer from 0 to 59
+     * @see \Phuture\Coherence\Dates::getHour()
+     * @see \Phuture\Coherence\Dates::getMinute()
+     */
+    public static function getSecond(DateTimeImmutable|string $date): int
+    {
+        return (int) self::resolveDate($date)->format('s');
+    }
+
+    /**
+     * Returns the timezone identifier of a date/time value.
+     *
+     * Extracts the name of the timezone that is associated with the given date,
+     * such as 'America/New_York' or 'UTC'.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::now('Asia/Tokyo');
+     * $tz = Dates::getTimezone($date); // 'Asia/Tokyo'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to read the timezone from
+     * @return string The timezone identifier string (e.g. 'Europe/Paris')
+     * @see \Phuture\Coherence\Dates::toTimezone()
+     */
+    public static function getTimezone(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->getTimezone()->getName();
+    }
+
+    /**
+     * Returns the ISO 8601 week number of the year for a date/time value.
+     *
+     * Weeks start on Monday. The first week of the year is the week containing
+     * the year's first Thursday (ISO 8601 definition).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-01-01');
+     * Dates::getWeekOfYear($date); // 1
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The ISO 8601 week number from 1 to 53
+     * @see \Phuture\Coherence\Dates::getDayOfYear()
+     */
+    public static function getWeekOfYear(DateTimeImmutable|string $date): int
+    {
+        return (int) self::resolveDate($date)->format('W');
+    }
+
+    /**
+     * Returns the four-digit year of a date/time value.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
      * $date = Dates::parse('2026-04-21');
-     * $result = Dates::removeWeeks($date, 1); // '2026-04-14'
+     * Dates::getYear($date); // 2026
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $weeks The number of weeks to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the weeks removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $weeks is negative
-     * @see \Phuture\Coherence\Dates::addWeeks()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return int The year as a four-digit integer (e.g. 2026)
+     * @see \Phuture\Coherence\Dates::getMonth()
+     * @see \Phuture\Coherence\Dates::getDay()
      */
-    public static function removeWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
+    public static function getYear(DateTimeImmutable|string $date): int
     {
-        if ($weeks < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The weeks value must be >= 0. Use addWeeks() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$weeks} weeks");
+        return (int) self::resolveDate($date)->format('Y');
     }
 
     /**
-     * Removes a number of months from a date/time value.
+     * Checks whether a date/time value is after another.
      *
-     * Returns a new date/time value that is the given number of months earlier
-     * than the original. When the resulting day does not exist in the target month,
-     * PHP overflows to the next month.
+     * Returns true if the first date comes later in time than the second date.
+     * Both dates are compared as absolute points in time, regardless of timezone.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-06-15');
-     * $result = Dates::removeMonths($date, 2); // '2026-04-15'
+     * $later = Dates::parse('2026-12-31');
+     * $earlier = Dates::parse('2026-01-01');
+     * Dates::isAfter($later, $earlier); // true
      * ```
      *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $months The number of months to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the months removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $months is negative
-     * @see \Phuture\Coherence\Dates::addMonths()
+     * @param DateTimeImmutable|string $date The date/time value to test
+     * @param DateTimeImmutable|string $comparedTo The date/time value to compare against
+     * @return bool Returns true if $date is after $comparedTo
+     * @see \Phuture\Coherence\Dates::isBefore()
+     * @see \Phuture\Coherence\Dates::equals()
      */
-    public static function removeMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
+    public static function isAfter(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
     {
-        if ($months < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The months value must be >= 0. Use addMonths() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$months} months");
-    }
-
-    /**
-     * Removes a number of years from a date/time value.
-     *
-     * Returns a new date/time value that is the given number of years earlier
-     * than the original. The original value is never modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21');
-     * $result = Dates::removeYears($date, 10); // '2016-04-21'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The starting date/time value
-     * @param int $years The number of years to remove (must be >= 0)
-     * @return DateTimeImmutable A new date/time value with the years removed
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $years is negative
-     * @see \Phuture\Coherence\Dates::addYears()
-     */
-    public static function removeYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
-    {
-        if ($years < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The years value must be >= 0. Use addYears() to move forward in time."
-            );
-        }
-
-        return self::resolveDate($date)->modify("-{$years} years");
+        return self::resolveDate($date) > self::resolveDate($comparedTo);
     }
 
     /**
@@ -1149,55 +1096,78 @@ class Dates extends StaticClass
     }
 
     /**
-     * Checks whether a date/time value is after another.
+     * Checks whether a date/time value is in the future.
      *
-     * Returns true if the first date comes later in time than the second date.
-     * Both dates are compared as absolute points in time, regardless of timezone.
+     * Returns true if the given date/time is strictly after the current moment.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $later = Dates::parse('2026-12-31');
-     * $earlier = Dates::parse('2026-01-01');
-     * Dates::isAfter($later, $earlier); // true
+     * $future = Dates::parse('2030-01-01');
+     * $past = Dates::parse('2020-01-01');
+     * Dates::isFuture($future); // true
+     * Dates::isFuture($past); // false
      * ```
      *
-     * @param DateTimeImmutable|string $date The date/time value to test
-     * @param DateTimeImmutable|string $comparedTo The date/time value to compare against
-     * @return bool Returns true if $date is after $comparedTo
-     * @see \Phuture\Coherence\Dates::isBefore()
-     * @see \Phuture\Coherence\Dates::equals()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return bool Returns true if the date is after the current moment
+     * @see \Phuture\Coherence\Dates::isPast()
      */
-    public static function isAfter(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
+    public static function isFuture(DateTimeImmutable|string $date): bool
     {
-        return self::resolveDate($date) > self::resolveDate($comparedTo);
+        $resolved = self::resolveDate($date);
+
+        return $resolved > new DateTimeImmutable('now', $resolved->getTimezone());
     }
 
     /**
-     * Checks whether two date/time values represent the exact same moment in time.
+     * Checks whether the year of a date/time value is a leap year.
      *
-     * Both dates are compared as absolute points in time (Unix timestamps).
-     * Two dates in different timezones that represent the same moment will be equal.
+     * A leap year has 366 days. It occurs when the year is divisible by 4,
+     * except for years divisible by 100, which must also be divisible by 400.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
-     * $ny = Dates::parse('2026-04-21 08:00:00', 'America/New_York');
-     * Dates::equals($utc, $ny); // true — same moment, different timezones
+     * Dates::isLeapYear(Dates::parse('2024-01-01')); // true
+     * Dates::isLeapYear(Dates::parse('2026-01-01')); // false
      * ```
      *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return bool Returns true if both values represent the same point in time
-     * @see \Phuture\Coherence\Dates::isBefore()
-     * @see \Phuture\Coherence\Dates::isAfter()
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return bool Returns true if the year is a leap year
+     * @see \Phuture\Coherence\Dates::getDaysInMonth()
      */
-    public static function equals(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): bool
+    public static function isLeapYear(DateTimeImmutable|string $date): bool
     {
-        return self::resolveDate($date)->getTimestamp() === self::resolveDate($comparedTo)->getTimestamp();
+        return self::resolveDate($date)->format('L') === '1';
+    }
+
+    /**
+     * Checks whether a date/time value is in the past.
+     *
+     * Returns true if the given date/time is strictly before the current moment.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $past = Dates::parse('2020-01-01');
+     * $future = Dates::parse('2030-01-01');
+     * Dates::isPast($past); // true
+     * Dates::isPast($future); // false
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @return bool Returns true if the date is before the current moment
+     * @see \Phuture\Coherence\Dates::isFuture()
+     */
+    public static function isPast(DateTimeImmutable|string $date): bool
+    {
+        $resolved = self::resolveDate($date);
+
+        return $resolved < new DateTimeImmutable('now', $resolved->getTimezone());
     }
 
     /**
@@ -1283,433 +1253,6 @@ class Dates extends StaticClass
     }
 
     /**
-     * Calculates the number of complete seconds between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full seconds between the two dates.
-     * The order of the arguments does not matter — the result is always non-negative.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-04-21 14:00:00');
-     * $end = Dates::parse('2026-04-21 14:01:30');
-     * Dates::diffInSeconds($start, $end); // 90
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete seconds between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInMinutes()
-     * @see \Phuture\Coherence\Dates::diffInHours()
-     */
-    public static function diffInSeconds(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return (int) abs(self::resolveDate($date)->getTimestamp() - self::resolveDate($comparedTo)->getTimestamp());
-    }
-
-    /**
-     * Calculates the number of complete minutes between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full minutes between the two dates.
-     * Partial minutes are discarded — for example, 89 seconds returns 1.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-04-21 14:00:00');
-     * $end = Dates::parse('2026-04-21 15:30:00');
-     * Dates::diffInMinutes($start, $end); // 90
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete minutes between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInSeconds()
-     * @see \Phuture\Coherence\Dates::diffInHours()
-     */
-    public static function diffInMinutes(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return (int) (self::diffInSeconds($date, $comparedTo) / 60);
-    }
-
-    /**
-     * Calculates the number of complete hours between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full hours between the two dates.
-     * Partial hours are discarded — for example, 59 minutes returns 0.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-04-21 08:00:00');
-     * $end = Dates::parse('2026-04-21 20:30:00');
-     * Dates::diffInHours($start, $end); // 12
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete hours between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInMinutes()
-     * @see \Phuture\Coherence\Dates::diffInDays()
-     */
-    public static function diffInHours(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return (int) (self::diffInSeconds($date, $comparedTo) / 3600);
-    }
-
-    /**
-     * Calculates the number of complete days between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full days between the two dates.
-     * Partial days are discarded — for example, 23 hours returns 0.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-04-01');
-     * $end = Dates::parse('2026-04-21');
-     * Dates::diffInDays($start, $end); // 20
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete days between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInHours()
-     * @see \Phuture\Coherence\Dates::diffInWeeks()
-     */
-    public static function diffInDays(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return (int) (self::diffInSeconds($date, $comparedTo) / 86400);
-    }
-
-    /**
-     * Calculates the number of complete weeks between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full weeks between the two dates.
-     * Partial weeks are discarded — for example, 6 days returns 0.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-04-07');
-     * $end = Dates::parse('2026-04-21');
-     * Dates::diffInWeeks($start, $end); // 2
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete weeks between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInDays()
-     * @see \Phuture\Coherence\Dates::diffInMonths()
-     */
-    public static function diffInWeeks(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return (int) (self::diffInDays($date, $comparedTo) / 7);
-    }
-
-    /**
-     * Calculates the number of complete months between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full calendar months between
-     * the two dates using PHP's DateInterval. Partial months are discarded.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2026-01-15');
-     * $end = Dates::parse('2026-04-10');
-     * Dates::diffInMonths($start, $end); // 2 (not 3, because April 10 < January 15 in day)
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete months between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInWeeks()
-     * @see \Phuture\Coherence\Dates::diffInYears()
-     */
-    public static function diffInMonths(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        $interval = self::resolveDate($date)->diff(self::resolveDate($comparedTo));
-
-        return abs(($interval->y * 12) + $interval->m);
-    }
-
-    /**
-     * Calculates the number of complete years between two date/time values.
-     *
-     * Returns the absolute (always positive) number of full calendar years between
-     * the two dates using PHP's DateInterval. Partial years are discarded.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $start = Dates::parse('2020-06-15');
-     * $end = Dates::parse('2026-04-10');
-     * Dates::diffInYears($start, $end); // 5
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The first date/time value
-     * @param DateTimeImmutable|string $comparedTo The second date/time value
-     * @return int The number of complete years between the two values (always non-negative)
-     * @see \Phuture\Coherence\Dates::diffInMonths()
-     */
-    public static function diffInYears(DateTimeImmutable|string $date, DateTimeImmutable|string $comparedTo): int
-    {
-        return abs(self::resolveDate($date)->diff(self::resolveDate($comparedTo))->y);
-    }
-
-    /**
-     * Returns the four-digit year of a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21');
-     * Dates::getYear($date); // 2026
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The year as a four-digit integer (e.g. 2026)
-     * @see \Phuture\Coherence\Dates::getMonth()
-     * @see \Phuture\Coherence\Dates::getDay()
-     */
-    public static function getYear(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('Y');
-    }
-
-    /**
-     * Returns the month number of a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21');
-     * Dates::getMonth($date); // 4
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The month as an integer from 1 (January) to 12 (December)
-     * @see \Phuture\Coherence\Dates::getYear()
-     * @see \Phuture\Coherence\Dates::getDay()
-     */
-    public static function getMonth(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('n');
-    }
-
-    /**
-     * Returns the day of the month for a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21');
-     * Dates::getDay($date); // 21
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The day of the month as an integer from 1 to 31
-     * @see \Phuture\Coherence\Dates::getMonth()
-     * @see \Phuture\Coherence\Dates::getYear()
-     */
-    public static function getDay(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('j');
-    }
-
-    /**
-     * Returns the hour of a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::getHour($date); // 14
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The hour as an integer from 0 to 23
-     * @see \Phuture\Coherence\Dates::getMinute()
-     * @see \Phuture\Coherence\Dates::getSecond()
-     */
-    public static function getHour(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('G');
-    }
-
-    /**
-     * Returns the minute of a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * Dates::getMinute($date); // 30
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The minute as an integer from 0 to 59
-     * @see \Phuture\Coherence\Dates::getHour()
-     * @see \Phuture\Coherence\Dates::getSecond()
-     */
-    public static function getMinute(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('i');
-    }
-
-    /**
-     * Returns the second of a date/time value.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:45');
-     * Dates::getSecond($date); // 45
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The second as an integer from 0 to 59
-     * @see \Phuture\Coherence\Dates::getHour()
-     * @see \Phuture\Coherence\Dates::getMinute()
-     */
-    public static function getSecond(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('s');
-    }
-
-    /**
-     * Returns the day of the week for a date/time value.
-     *
-     * The returned value follows the ISO 8601 standard where Monday is 1
-     * and Sunday is 7.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21'); // Tuesday
-     * Dates::getDayOfWeek($date); // 2
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The ISO 8601 day of the week: 1 (Monday) through 7 (Sunday)
-     * @see \Phuture\Coherence\Dates::getDayOfYear()
-     * @see \Phuture\Coherence\Dates::isWeekend()
-     */
-    public static function getDayOfWeek(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('N');
-    }
-
-    /**
-     * Returns the day of the year for a date/time value.
-     *
-     * January 1 is day 1, December 31 is day 365 (or 366 in a leap year).
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-01-31');
-     * Dates::getDayOfYear($date); // 31
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The day of the year as an integer from 1 to 366
-     * @see \Phuture\Coherence\Dates::getDayOfWeek()
-     * @see \Phuture\Coherence\Dates::getWeekOfYear()
-     */
-    public static function getDayOfYear(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('z') + 1;
-    }
-
-    /**
-     * Returns the ISO 8601 week number of the year for a date/time value.
-     *
-     * Weeks start on Monday. The first week of the year is the week containing
-     * the year's first Thursday (ISO 8601 definition).
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-01-01');
-     * Dates::getWeekOfYear($date); // 1
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The ISO 8601 week number from 1 to 53
-     * @see \Phuture\Coherence\Dates::getDayOfYear()
-     */
-    public static function getWeekOfYear(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('W');
-    }
-
-    /**
-     * Returns the number of days in the month of a date/time value.
-     *
-     * Takes leap years into account when calculating February.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-02-01');
-     * Dates::getDaysInMonth($date); // 28
-     *
-     * $leapDate = Dates::parse('2024-02-01');
-     * Dates::getDaysInMonth($leapDate); // 29
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return int The number of days in the month, from 28 to 31
-     * @see \Phuture\Coherence\Dates::isLeapYear()
-     */
-    public static function getDaysInMonth(DateTimeImmutable|string $date): int
-    {
-        return (int) self::resolveDate($date)->format('t');
-    }
-
-    /**
-     * Checks whether the year of a date/time value is a leap year.
-     *
-     * A leap year has 366 days. It occurs when the year is divisible by 4,
-     * except for years divisible by 100, which must also be divisible by 400.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * Dates::isLeapYear(Dates::parse('2024-01-01')); // true
-     * Dates::isLeapYear(Dates::parse('2026-01-01')); // false
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return bool Returns true if the year is a leap year
-     * @see \Phuture\Coherence\Dates::getDaysInMonth()
-     */
-    public static function isLeapYear(DateTimeImmutable|string $date): bool
-    {
-        return self::resolveDate($date)->format('L') === '1';
-    }
-
-    /**
      * Checks whether a date/time value falls on today's date.
      *
      * Compares only the calendar date (year, month, day) in the date's own timezone.
@@ -1734,31 +1277,6 @@ class Dates extends StaticClass
         $resolved = self::resolveDate($date);
 
         return self::isSameDay($resolved, new DateTimeImmutable('today', $resolved->getTimezone()));
-    }
-
-    /**
-     * Checks whether a date/time value falls on yesterday's date.
-     *
-     * Compares only the calendar date (year, month, day) in the date's own timezone.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $yesterday = Dates::removeSeconds(Dates::now(), 86400);
-     * Dates::isYesterday($yesterday); // true
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return bool Returns true if the date falls on yesterday's calendar date
-     * @see \Phuture\Coherence\Dates::isToday()
-     * @see \Phuture\Coherence\Dates::isTomorrow()
-     */
-    public static function isYesterday(DateTimeImmutable|string $date): bool
-    {
-        $resolved = self::resolveDate($date);
-
-        return self::isSameDay($resolved, new DateTimeImmutable('yesterday', $resolved->getTimezone()));
     }
 
     /**
@@ -1787,55 +1305,26 @@ class Dates extends StaticClass
     }
 
     /**
-     * Checks whether a date/time value is in the past.
-     *
-     * Returns true if the given date/time is strictly before the current moment.
+     * Checks whether a date/time value falls on a weekday (Monday through Friday).
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $past = Dates::parse('2020-01-01');
-     * $future = Dates::parse('2030-01-01');
-     * Dates::isPast($past); // true
-     * Dates::isPast($future); // false
+     * $tuesday = Dates::parse('2026-04-21'); // Tuesday
+     * $saturday = Dates::parse('2026-04-18'); // Saturday
+     * Dates::isWeekday($tuesday); // true
+     * Dates::isWeekday($saturday); // false
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return bool Returns true if the date is before the current moment
-     * @see \Phuture\Coherence\Dates::isFuture()
+     * @return bool Returns true if the date falls on Monday through Friday
+     * @see \Phuture\Coherence\Dates::isWeekend()
+     * @see \Phuture\Coherence\Dates::getDayOfWeek()
      */
-    public static function isPast(DateTimeImmutable|string $date): bool
+    public static function isWeekday(DateTimeImmutable|string $date): bool
     {
-        $resolved = self::resolveDate($date);
-
-        return $resolved < new DateTimeImmutable('now', $resolved->getTimezone());
-    }
-
-    /**
-     * Checks whether a date/time value is in the future.
-     *
-     * Returns true if the given date/time is strictly after the current moment.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $future = Dates::parse('2030-01-01');
-     * $past = Dates::parse('2020-01-01');
-     * Dates::isFuture($future); // true
-     * Dates::isFuture($past); // false
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return bool Returns true if the date is after the current moment
-     * @see \Phuture\Coherence\Dates::isPast()
-     */
-    public static function isFuture(DateTimeImmutable|string $date): bool
-    {
-        $resolved = self::resolveDate($date);
-
-        return $resolved > new DateTimeImmutable('now', $resolved->getTimezone());
+        return !self::isWeekend($date);
     }
 
     /**
@@ -1864,202 +1353,54 @@ class Dates extends StaticClass
     }
 
     /**
-     * Checks whether a date/time value falls on a weekday (Monday through Friday).
+     * Checks whether a date/time value falls on yesterday's date.
+     *
+     * Compares only the calendar date (year, month, day) in the date's own timezone.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $tuesday = Dates::parse('2026-04-21'); // Tuesday
-     * $saturday = Dates::parse('2026-04-18'); // Saturday
-     * Dates::isWeekday($tuesday); // true
-     * Dates::isWeekday($saturday); // false
+     * $yesterday = Dates::removeSeconds(Dates::now(), 86400);
+     * Dates::isYesterday($yesterday); // true
      * ```
      *
      * @param DateTimeImmutable|string $date The date/time value to inspect
-     * @return bool Returns true if the date falls on Monday through Friday
-     * @see \Phuture\Coherence\Dates::isWeekend()
-     * @see \Phuture\Coherence\Dates::getDayOfWeek()
+     * @return bool Returns true if the date falls on yesterday's calendar date
+     * @see \Phuture\Coherence\Dates::isToday()
+     * @see \Phuture\Coherence\Dates::isTomorrow()
      */
-    public static function isWeekday(DateTimeImmutable|string $date): bool
+    public static function isYesterday(DateTimeImmutable|string $date): bool
     {
-        return !self::isWeekend($date);
+        $resolved = self::resolveDate($date);
+
+        return self::isSameDay($resolved, new DateTimeImmutable('yesterday', $resolved->getTimezone()));
     }
 
     /**
-     * Returns a new date/time value set to the very start of its day (00:00:00).
+     * Returns the current date and time.
      *
-     * Keeps the same date and timezone but resets the time to midnight.
+     * Creates a new date/time value representing the exact moment this method is called.
+     * When no timezone is given, the system's default timezone is used.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
      *
-     * $date = Dates::parse('2026-04-21 14:30:45');
-     * $result = Dates::startOfDay($date); // '2026-04-21 00:00:00'
+     * $now = Dates::now(); // e.g. 2026-04-21 14:30:00 UTC
+     * $nowInTokyo = Dates::now('Asia/Tokyo'); // same moment, Tokyo time
      * ```
      *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at midnight on the same calendar day
-     * @see \Phuture\Coherence\Dates::endOfDay()
+     * @param string|null $timezone A valid PHP timezone identifier such as 'America/New_York'
+     *   (default: null, which uses the system default timezone)
+     * @return DateTimeImmutable The current date and time in the requested timezone
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     * @see \Phuture\Coherence\Dates::create()
+     * @see \Phuture\Coherence\Dates::parse()
      */
-    public static function startOfDay(DateTimeImmutable|string $date): DateTimeImmutable
+    public static function now(?string $timezone = null): DateTimeImmutable
     {
-        return self::resolveDate($date)->setTime(0, 0, 0);
-    }
-
-    /**
-     * Returns a new date/time value set to the very end of its day (23:59:59).
-     *
-     * Keeps the same date and timezone but sets the time to one second before midnight.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:45');
-     * $result = Dates::endOfDay($date); // '2026-04-21 23:59:59'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at 23:59:59 on the same calendar day
-     * @see \Phuture\Coherence\Dates::startOfDay()
-     */
-    public static function endOfDay(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->setTime(23, 59, 59);
-    }
-
-    /**
-     * Returns a new date/time value set to the Monday of the same ISO week at midnight.
-     *
-     * The ISO week starts on Monday. The time is reset to 00:00:00.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21'); // Tuesday
-     * $result = Dates::startOfWeek($date); // '2026-04-20 00:00:00' (Monday)
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at Monday 00:00:00 of the same week
-     * @see \Phuture\Coherence\Dates::endOfWeek()
-     */
-    public static function startOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('Monday this week')->setTime(0, 0, 0);
-    }
-
-    /**
-     * Returns a new date/time value set to the Sunday of the same ISO week at 23:59:59.
-     *
-     * The ISO week ends on Sunday. The time is set to 23:59:59.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21'); // Tuesday
-     * $result = Dates::endOfWeek($date); // '2026-04-26 23:59:59' (Sunday)
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at Sunday 23:59:59 of the same week
-     * @see \Phuture\Coherence\Dates::startOfWeek()
-     */
-    public static function endOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('Sunday this week')->setTime(23, 59, 59);
-    }
-
-    /**
-     * Returns a new date/time value set to the first day of the same month at midnight.
-     *
-     * Resets the day to 1 and the time to 00:00:00 while preserving the year and month.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21 14:30:00');
-     * $result = Dates::startOfMonth($date); // '2026-04-01 00:00:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at the first day of the month at 00:00:00
-     * @see \Phuture\Coherence\Dates::endOfMonth()
-     */
-    public static function startOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('first day of this month')->setTime(0, 0, 0);
-    }
-
-    /**
-     * Returns a new date/time value set to the last day of the same month at 23:59:59.
-     *
-     * Automatically accounts for months with different lengths, including February in leap years.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-15');
-     * $result = Dates::endOfMonth($date); // '2026-04-30 23:59:59'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at the last day of the month at 23:59:59
-     * @see \Phuture\Coherence\Dates::startOfMonth()
-     */
-    public static function endOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('last day of this month')->setTime(23, 59, 59);
-    }
-
-    /**
-     * Returns a new date/time value set to January 1st of the same year at midnight.
-     *
-     * Resets the month and day to January 1 and the time to 00:00:00.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-09-15');
-     * $result = Dates::startOfYear($date); // '2026-01-01 00:00:00'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at January 1st of the same year at 00:00:00
-     * @see \Phuture\Coherence\Dates::endOfYear()
-     */
-    public static function startOfYear(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('first day of January this year')->setTime(0, 0, 0);
-    }
-
-    /**
-     * Returns a new date/time value set to December 31st of the same year at 23:59:59.
-     *
-     * Advances to December 31 and sets the time to 23:59:59.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Dates;
-     *
-     * $date = Dates::parse('2026-04-21');
-     * $result = Dates::endOfYear($date); // '2026-12-31 23:59:59'
-     * ```
-     *
-     * @param DateTimeImmutable|string $date The date/time value to adjust
-     * @return DateTimeImmutable A new date/time value at December 31st of the same year at 23:59:59
-     * @see \Phuture\Coherence\Dates::startOfYear()
-     */
-    public static function endOfYear(DateTimeImmutable|string $date): DateTimeImmutable
-    {
-        return self::resolveDate($date)->modify('last day of December this year')->setTime(23, 59, 59);
+        return new DateTimeImmutable('now', self::buildTimezone($timezone));
     }
 
     /**
@@ -2097,34 +1438,685 @@ class Dates extends StaticClass
     }
 
     /**
-     * Resolves a DateTimeImmutable|string argument to a DateTimeImmutable instance.
+     * Parses a date/time string into a DateTimeImmutable value.
      *
-     * @param DateTimeImmutable|string $date A DateTimeImmutable instance or a parseable date string
-     * @return DateTimeImmutable The resolved date/time value
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the string cannot be parsed
+     * Accepts any date/time string that PHP's DateTimeImmutable constructor understands,
+     * such as '2026-04-21', 'next Monday', 'yesterday', or '+2 days'.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-12-25');
+     * $date = Dates::parse('next Friday', 'America/New_York');
+     * $date = Dates::parse('2026-04-21 14:30:00', 'Europe/Berlin');
+     * ```
+     *
+     * @param string $dateString Any date/time string understood by PHP's date parser
+     * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
+     * @return DateTimeImmutable The parsed date and time value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     *   or the date string cannot be parsed
+     * @see \Phuture\Coherence\Dates::fromFormat()
+     * @see \Phuture\Coherence\Dates::fromTimestamp()
      */
-    private static function resolveDate(DateTimeImmutable|string $date): DateTimeImmutable
+    public static function parse(string $dateString, ?string $timezone = null): DateTimeImmutable
     {
-        if (is_string($date)) {
-            return self::parse($date);
+        if ($dateString === '') {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The date string must not be empty.'
+            );
         }
 
-        return $date;
+        try {
+            return new DateTimeImmutable($dateString, self::buildTimezone($timezone));
+        } catch (Exception $e) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The date string \"{$dateString}\" could not be parsed into a valid date."
+            );
+        }
     }
 
     /**
-     * Determines whether a format string contains day.js-style multi-character tokens.
+     * Removes a number of days from a date/time value.
      *
-     * @param string $format The format string to inspect
-     * @return bool Returns true if the format contains day.js tokens or bracket escapes
+     * Returns a new date/time value that is the given number of days earlier
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeDays($date, 5); // '2026-04-16'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $days The number of days to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the days removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $days is negative
+     * @see \Phuture\Coherence\Dates::addDays()
      */
-    private static function isDayJsFormat(string $format): bool
+    public static function removeDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
     {
-        if (str_contains($format, '[')) {
-            return true;
+        if ($days < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The days value must be >= 0. Use addDays() to move forward in time."
+            );
         }
 
-        return preg_match('/YYYY|MMMM|dddd|SSS|MMM|ddd|YY|MM|DD|dd|HH|hh|mm|ss|ZZ/', $format) === 1;
+        return self::resolveDate($date)->modify("-{$days} days");
+    }
+
+    /**
+     * Removes a number of hours from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of hours earlier
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeHours($date, 2); // '2026-04-21 12:30:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $hours The number of hours to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the hours removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $hours is negative
+     * @see \Phuture\Coherence\Dates::addHours()
+     */
+    public static function removeHours(DateTimeImmutable|string $date, int $hours): DateTimeImmutable
+    {
+        if ($hours < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The hours value must be >= 0. Use addHours() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$hours} hours");
+    }
+
+    /**
+     * Removes a number of minutes from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of minutes earlier
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeMinutes($date, 15); // '2026-04-21 14:15:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $minutes The number of minutes to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the minutes removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $minutes is negative
+     * @see \Phuture\Coherence\Dates::addMinutes()
+     */
+    public static function removeMinutes(DateTimeImmutable|string $date, int $minutes): DateTimeImmutable
+    {
+        if ($minutes < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The minutes value must be >= 0. Use addMinutes() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$minutes} minutes");
+    }
+
+    /**
+     * Removes a number of months from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of months earlier
+     * than the original. When the resulting day does not exist in the target month,
+     * PHP overflows to the next month.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-06-15');
+     * $result = Dates::removeMonths($date, 2); // '2026-04-15'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $months The number of months to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the months removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $months is negative
+     * @see \Phuture\Coherence\Dates::addMonths()
+     */
+    public static function removeMonths(DateTimeImmutable|string $date, int $months): DateTimeImmutable
+    {
+        if ($months < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The months value must be >= 0. Use addMonths() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$months} months");
+    }
+
+    /**
+     * Removes a number of seconds from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of seconds earlier
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::removeSeconds($date, 30); // '2026-04-21 14:29:30'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $seconds The number of seconds to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the seconds removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $seconds is negative
+     * @see \Phuture\Coherence\Dates::addSeconds()
+     */
+    public static function removeSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
+    {
+        if ($seconds < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The seconds value must be >= 0. Use addSeconds() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$seconds} seconds");
+    }
+
+    /**
+     * Removes a number of weeks from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of weeks earlier
+     * than the original. One week equals exactly 7 days.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeWeeks($date, 1); // '2026-04-14'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $weeks The number of weeks to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the weeks removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $weeks is negative
+     * @see \Phuture\Coherence\Dates::addWeeks()
+     */
+    public static function removeWeeks(DateTimeImmutable|string $date, int $weeks): DateTimeImmutable
+    {
+        if ($weeks < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The weeks value must be >= 0. Use addWeeks() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$weeks} weeks");
+    }
+
+    /**
+     * Removes a number of years from a date/time value.
+     *
+     * Returns a new date/time value that is the given number of years earlier
+     * than the original. The original value is never modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21');
+     * $result = Dates::removeYears($date, 10); // '2016-04-21'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $years The number of years to remove (must be >= 0)
+     * @return DateTimeImmutable A new date/time value with the years removed
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When $years is negative
+     * @see \Phuture\Coherence\Dates::addYears()
+     */
+    public static function removeYears(DateTimeImmutable|string $date, int $years): DateTimeImmutable
+    {
+        if ($years < 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The years value must be >= 0. Use addYears() to move forward in time."
+            );
+        }
+
+        return self::resolveDate($date)->modify("-{$years} years");
+    }
+
+    /**
+     * Returns a new date/time value set to the very start of its day (00:00:00).
+     *
+     * Keeps the same date and timezone but resets the time to midnight.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:45');
+     * $result = Dates::startOfDay($date); // '2026-04-21 00:00:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at midnight on the same calendar day
+     * @see \Phuture\Coherence\Dates::endOfDay()
+     */
+    public static function startOfDay(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->setTime(0, 0, 0);
+    }
+
+    /**
+     * Returns a new date/time value set to the first day of the same month at midnight.
+     *
+     * Resets the day to 1 and the time to 00:00:00 while preserving the year and month.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * $result = Dates::startOfMonth($date); // '2026-04-01 00:00:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at the first day of the month at 00:00:00
+     * @see \Phuture\Coherence\Dates::endOfMonth()
+     */
+    public static function startOfMonth(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('first day of this month')->setTime(0, 0, 0);
+    }
+
+    /**
+     * Returns a new date/time value set to the Monday of the same ISO week at midnight.
+     *
+     * The ISO week starts on Monday. The time is reset to 00:00:00.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21'); // Tuesday
+     * $result = Dates::startOfWeek($date); // '2026-04-20 00:00:00' (Monday)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at Monday 00:00:00 of the same week
+     * @see \Phuture\Coherence\Dates::endOfWeek()
+     */
+    public static function startOfWeek(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('Monday this week')->setTime(0, 0, 0);
+    }
+
+    /**
+     * Returns a new date/time value set to January 1st of the same year at midnight.
+     *
+     * Resets the month and day to January 1 and the time to 00:00:00.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-09-15');
+     * $result = Dates::startOfYear($date); // '2026-01-01 00:00:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to adjust
+     * @return DateTimeImmutable A new date/time value at January 1st of the same year at 00:00:00
+     * @see \Phuture\Coherence\Dates::endOfYear()
+     */
+    public static function startOfYear(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        return self::resolveDate($date)->modify('first day of January this year')->setTime(0, 0, 0);
+    }
+
+    /**
+     * Returns the date portion of a date/time value as a string in Y-m-d format.
+     *
+     * Extracts only the year, month, and day from the given date/time value,
+     * dropping any time information.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * Dates::toDate($date); // '2026-04-21'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date portion formatted as 'Y-m-d' (e.g. '2026-04-21')
+     * @see \Phuture\Coherence\Dates::toTime()
+     * @see \Phuture\Coherence\Dates::toDateTime()
+     */
+    public static function toDate(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format('Y-m-d');
+    }
+
+    /**
+     * Returns a date/time value as a combined date and time string.
+     *
+     * Formats the date/time as a human-readable string containing both
+     * the date and time components separated by a space.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * Dates::toDateTime($date); // '2026-04-21 14:30:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted as 'Y-m-d H:i:s' (e.g. '2026-04-21 14:30:00')
+     * @see \Phuture\Coherence\Dates::toDate()
+     * @see \Phuture\Coherence\Dates::toTime()
+     */
+    public static function toDateTime(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Returns a date/time value formatted as an ISO 8601 string.
+     *
+     * ISO 8601 is an international standard for representing dates and times.
+     * The output includes timezone offset information, making it ideal for
+     * data exchange between systems (APIs, JSON payloads, etc.).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
+     * Dates::toIso8601($date); // '2026-04-21T14:30:00-04:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to ISO 8601 (e.g. '2026-04-21T14:30:00+00:00')
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toIso8601(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::ATOM);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 1036 string.
+     *
+     * RFC 1036 is the standard format used in Usenet news messages (NNTP).
+     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year,
+     * similar to RFC 822 but used specifically in news article headers.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc1036($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 1036
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc1036(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC1036);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 1123 string.
+     *
+     * RFC 1123 is the standard format for HTTP date headers.
+     * It produces a string like "Tue, 21 Apr 2026 14:30:00 +0000" with a four-digit year,
+     * essentially the same as RFC 2822 but requiring a four-digit year.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc1123($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 1123
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc1123(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC1123);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 2822 string.
+     *
+     * RFC 2822 is the standard format used in email headers and HTTP dates.
+     * The output always includes the three-letter day name, day of the month,
+     * three-letter month abbreviation, four-digit year, time, and timezone offset.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc2822($date); // 'Tue, 21 Apr 2026 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 2822
+     * @see \Phuture\Coherence\Dates::toIso8601()
+     */
+    public static function toRfc2822(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC2822);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 7231 string.
+     *
+     * RFC 7231 is the current standard for HTTP/1.1 date headers.
+     * It produces a string like "Tue, 21 Apr 2026 14:30:00 GMT" using the preferred
+     * IMF-fixdate format with "GMT" as the fixed timezone indicator. The input date
+     * is automatically converted to GMT before formatting.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'America/New_York');
+     * Dates::toRfc7231($date); // 'Tue, 21 Apr 2026 18:30:00 GMT'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 7231 (IMF-fixdate)
+     * @see \Phuture\Coherence\Dates::toRfc1123()
+     */
+    public static function toRfc7231(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->setTimezone(new DateTimeZone('GMT'))->format('D, d M Y H:i:s \G\M\T');
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 822 string.
+     *
+     * RFC 822 is the original standard for date and time in email messages.
+     * It produces a string like "Tue, 21 Apr 26 14:30:00 +0000" with a two-digit year.
+     * For most modern use cases, RFC 2822 (four-digit year) is preferred.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc822($date); // 'Tue, 21 Apr 26 14:30:00 +0000'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 822
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc822(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC822);
+    }
+
+    /**
+     * Returns a date/time value formatted as an RFC 850 string.
+     *
+     * RFC 850 is a format used in some older systems and protocols.
+     * It produces a string like "Tuesday, 21-Apr-26 14:30:00 UTC" with the full
+     * day name and a two-digit year.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toRfc850($date); // 'Tuesday, 21-Apr-26 14:30:00 UTC'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to RFC 850
+     * @see \Phuture\Coherence\Dates::toRfc2822()
+     */
+    public static function toRfc850(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::RFC850);
+    }
+
+    /**
+     * Returns the time portion of a date/time value as a string in H:i:s format.
+     *
+     * Extracts only the hour, minute, and second from the given date/time value,
+     * dropping any date information.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00');
+     * Dates::toTime($date); // '14:30:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The time portion formatted as 'H:i:s' (e.g. '14:30:00')
+     * @see \Phuture\Coherence\Dates::toDate()
+     * @see \Phuture\Coherence\Dates::toDateTime()
+     */
+    public static function toTime(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format('H:i:s');
+    }
+
+    /**
+     *
+     * The Unix timestamp is the number of seconds elapsed since
+     * 1 January 1970 00:00:00 UTC, regardless of timezone.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 00:00:00', 'UTC');
+     * Dates::toTimestamp($date); // 1745193600
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return int The number of seconds since the Unix epoch (1970-01-01 00:00:00 UTC)
+     * @see \Phuture\Coherence\Dates::fromTimestamp()
+     */
+    public static function toTimestamp(DateTimeImmutable|string $date): int
+    {
+        return self::resolveDate($date)->getTimestamp();
+    }
+
+    /**
+     * Converts a date/time value to a different timezone.
+     *
+     * The underlying point in time remains exactly the same — only the timezone
+     * context used to display it changes. Useful when you need to present a UTC
+     * timestamp in a user's local timezone.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $utc = Dates::parse('2026-04-21 12:00:00', 'UTC');
+     * $ny = Dates::toTimezone($utc, 'America/New_York');
+     * // $ny displays as '2026-04-21 08:00:00' but represents the same moment
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @param string $timezone A valid PHP timezone identifier to convert into
+     * @return DateTimeImmutable A new date/time value in the requested timezone
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     * @see \Phuture\Coherence\Dates::getTimezone()
+     */
+    public static function toTimezone(DateTimeImmutable|string $date, string $timezone): DateTimeImmutable
+    {
+        return self::resolveDate($date)->setTimezone(self::buildTimezone($timezone));
+    }
+
+    /**
+     * Returns a date/time value formatted as a W3C string.
+     *
+     * The W3C format is a simplified subset of ISO 8601 commonly used in
+     * HTML documents, XML schemas, and web APIs. It produces a string like
+     * "2026-04-21T14:30:00+00:00" with the timezone offset included.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
+     * Dates::toW3c($date); // '2026-04-21T14:30:00+00:00'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to convert
+     * @return string The date and time formatted according to the W3C standard
+     * @see \Phuture\Coherence\Dates::toIso8601()
+     */
+    public static function toW3c(DateTimeImmutable|string $date): string
+    {
+        return self::resolveDate($date)->format(DateTimeInterface::W3C);
+    }
+
+    /**
+     * Builds a DateTimeZone from a timezone string, or returns the system default timezone.
+     *
+     * @param string|null $timezone A valid PHP timezone identifier, or null for the system default
+     * @return DateTimeZone The resolved timezone object
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is not a valid identifier
+     */
+    private static function buildTimezone(?string $timezone): DateTimeZone
+    {
+        if ($timezone === null || $timezone === '') {
+            return new DateTimeZone('UTC');
+        }
+
+        if (!in_array($timezone, timezone_identifiers_list(), true)) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The timezone \"{$timezone}\" is not a valid PHP timezone identifier."
+            );
+        }
+
+        return new DateTimeZone($timezone);
     }
 
     /**
@@ -2192,24 +2184,33 @@ class Dates extends StaticClass
     }
 
     /**
-     * Builds a DateTimeZone from a timezone string, or returns the system default timezone.
+     * Determines whether a format string contains day.js-style multi-character tokens.
      *
-     * @param string|null $timezone A valid PHP timezone identifier, or null for the system default
-     * @return DateTimeZone The resolved timezone object
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is not a valid identifier
+     * @param string $format The format string to inspect
+     * @return bool Returns true if the format contains day.js tokens or bracket escapes
      */
-    private static function buildTimezone(?string $timezone): DateTimeZone
+    private static function isDayJsFormat(string $format): bool
     {
-        if ($timezone === null || $timezone === '') {
-            return new DateTimeZone('UTC');
+        if (str_contains($format, '[')) {
+            return true;
         }
 
-        if (!in_array($timezone, timezone_identifiers_list(), true)) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: The timezone \"{$timezone}\" is not a valid PHP timezone identifier."
-            );
+        return preg_match('/YYYY|MMMM|dddd|SSS|MMM|ddd|YY|MM|DD|dd|HH|hh|mm|ss|ZZ/', $format) === 1;
+    }
+
+    /**
+     * Resolves a DateTimeImmutable|string argument to a DateTimeImmutable instance.
+     *
+     * @param DateTimeImmutable|string $date A DateTimeImmutable instance or a parseable date string
+     * @return DateTimeImmutable The resolved date/time value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the string cannot be parsed
+     */
+    private static function resolveDate(DateTimeImmutable|string $date): DateTimeImmutable
+    {
+        if (is_string($date)) {
+            return self::parse($date);
         }
 
-        return new DateTimeZone($timezone);
+        return $date;
     }
 }

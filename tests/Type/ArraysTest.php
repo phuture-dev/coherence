@@ -350,6 +350,82 @@ class ArraysTest extends TestCase
         Assert::same([0 => 'apple'], $result);
     }
 
+    public function testGroupByCallback(): void
+    {
+        $numbers = new Arrays([1, 2, 3, 4, 5, 6]);
+        $result = $numbers->groupBy(fn ($n) => $n % 2)->toArray();
+
+        Assert::count(2, $result);
+        Assert::same([1, 3, 5], $result[1]);
+        Assert::same([2, 4, 6], $result[0]);
+    }
+
+    public function testGroupByChaining(): void
+    {
+        $users = new Arrays([
+            ['name' => 'John', 'department' => 'Sales', 'active' => true],
+            ['name' => 'Jane', 'department' => 'IT', 'active' => true],
+            ['name' => 'Bob', 'department' => 'Sales', 'active' => false]
+        ]);
+
+        // Group by department, then filter to active users only in Sales
+        $grouped = $users->groupBy('department')->toArray();
+        $salesUsers = new Arrays($grouped['Sales']);
+        $activeSales = $salesUsers->where(fn ($user) => $user['active'])->toArray();
+
+        Assert::count(1, $activeSales);
+        Assert::same('John', $activeSales[0]['name']);
+    }
+
+    public function testGroupByEmptyArray(): void
+    {
+        $items = new Arrays([]);
+        $result = $items->groupBy('key')->toArray();
+        Assert::same([], $result);
+    }
+
+    public function testGroupByObjects(): void
+    {
+        $obj1 = new stdClass();
+        $obj1->type = 'fruit';
+        $obj1->name = 'apple';
+
+        $obj2 = new stdClass();
+        $obj2->type = 'vegetable';
+        $obj2->name = 'carrot';
+
+        $obj3 = new stdClass();
+        $obj3->type = 'fruit';
+        $obj3->name = 'banana';
+
+        $items = new Arrays([$obj1, $obj2, $obj3]);
+        $result = $items->groupBy('type')->toArray();
+
+        Assert::count(2, $result);
+        Assert::count(2, $result['fruit']);
+        Assert::count(1, $result['vegetable']);
+        Assert::same('apple', $result['fruit'][0]->name);
+        Assert::same('banana', $result['fruit'][1]->name);
+        Assert::same('carrot', $result['vegetable'][0]->name);
+    }
+
+    public function testGroupByStringKey(): void
+    {
+        $users = new Arrays([
+            ['name' => 'John', 'department' => 'Sales'],
+            ['name' => 'Jane', 'department' => 'IT'],
+            ['name' => 'Bob', 'department' => 'Sales']
+        ]);
+        $result = $users->groupBy('department')->toArray();
+
+        Assert::count(2, $result);
+        Assert::count(2, $result['Sales']);
+        Assert::count(1, $result['IT']);
+        Assert::same('John', $result['Sales'][0]['name']);
+        Assert::same('Bob', $result['Sales'][1]['name']);
+        Assert::same('Jane', $result['IT'][0]['name']);
+    }
+
     public function testIntersect(): void
     {
         $base = new Arrays([1, 2, 3, 4, 5]);
@@ -814,106 +890,6 @@ class ArraysTest extends TestCase
         Assert::same([0 => 'zero', 1 => 'value', 2 => 'five'], $result);
     }
 
-    public function testWrap(): void
-    {
-        $data = new Arrays(['apple', 'banana', 'cherry']);
-
-        // Test with prefix and suffix
-        $result = $data->wrap('<', '>')->toArray();
-        Assert::same(['<apple>', '<banana>', '<cherry>'], $result);
-
-        // Test with only prefix
-        $data = new Arrays(['apple', 'banana', 'cherry']);
-        $result = $data->wrap('prefix_')->toArray();
-        Assert::same(['prefix_apple', 'prefix_banana', 'prefix_cherry'], $result);
-
-        // Test with only suffix
-        $data = new Arrays(['apple', 'banana', 'cherry']);
-        $result = $data->wrap('', '_suffix')->toArray();
-        Assert::same(['apple_suffix', 'banana_suffix', 'cherry_suffix'], $result);
-
-        // Test with no prefix or suffix (no change)
-        $data = new Arrays(['apple', 'banana', 'cherry']);
-        $result = $data->wrap()->toArray();
-        Assert::same(['apple', 'banana', 'cherry'], $result);
-    }
-
-    public function testGroupByStringKey(): void
-    {
-        $users = new Arrays([
-            ['name' => 'John', 'department' => 'Sales'],
-            ['name' => 'Jane', 'department' => 'IT'],
-            ['name' => 'Bob', 'department' => 'Sales']
-        ]);
-        $result = $users->groupBy('department')->toArray();
-
-        Assert::count(2, $result);
-        Assert::count(2, $result['Sales']);
-        Assert::count(1, $result['IT']);
-        Assert::same('John', $result['Sales'][0]['name']);
-        Assert::same('Bob', $result['Sales'][1]['name']);
-        Assert::same('Jane', $result['IT'][0]['name']);
-    }
-
-    public function testGroupByCallback(): void
-    {
-        $numbers = new Arrays([1, 2, 3, 4, 5, 6]);
-        $result = $numbers->groupBy(fn($n) => $n % 2)->toArray();
-
-        Assert::count(2, $result);
-        Assert::same([1, 3, 5], $result[1]);
-        Assert::same([2, 4, 6], $result[0]);
-    }
-
-    public function testGroupByObjects(): void
-    {
-        $obj1 = new stdClass();
-        $obj1->type = 'fruit';
-        $obj1->name = 'apple';
-
-        $obj2 = new stdClass();
-        $obj2->type = 'vegetable';
-        $obj2->name = 'carrot';
-
-        $obj3 = new stdClass();
-        $obj3->type = 'fruit';
-        $obj3->name = 'banana';
-
-        $items = new Arrays([$obj1, $obj2, $obj3]);
-        $result = $items->groupBy('type')->toArray();
-
-        Assert::count(2, $result);
-        Assert::count(2, $result['fruit']);
-        Assert::count(1, $result['vegetable']);
-        Assert::same('apple', $result['fruit'][0]->name);
-        Assert::same('banana', $result['fruit'][1]->name);
-        Assert::same('carrot', $result['vegetable'][0]->name);
-    }
-
-    public function testGroupByEmptyArray(): void
-    {
-        $items = new Arrays([]);
-        $result = $items->groupBy('key')->toArray();
-        Assert::same([], $result);
-    }
-
-    public function testGroupByChaining(): void
-    {
-        $users = new Arrays([
-            ['name' => 'John', 'department' => 'Sales', 'active' => true],
-            ['name' => 'Jane', 'department' => 'IT', 'active' => true],
-            ['name' => 'Bob', 'department' => 'Sales', 'active' => false]
-        ]);
-
-        // Group by department, then filter to active users only in Sales
-        $grouped = $users->groupBy('department')->toArray();
-        $salesUsers = new Arrays($grouped['Sales']);
-        $activeSales = $salesUsers->where(fn($user) => $user['active'])->toArray();
-
-        Assert::count(1, $activeSales);
-        Assert::same('John', $activeSales[0]['name']);
-    }
-
     public function testWhere(): void
     {
         $users = new Arrays([
@@ -921,7 +897,7 @@ class ArraysTest extends TestCase
             ['name' => 'Jane', 'age' => 17, 'active' => true],
             ['name' => 'Bob', 'age' => 30, 'active' => false]
         ]);
-        $adults = $users->where(fn($user) => $user['age'] >= 18)->toArray();
+        $adults = $users->where(fn ($user) => $user['age'] >= 18)->toArray();
 
         Assert::count(2, $adults);
         Assert::same('John', $adults[0]['name']);
@@ -938,9 +914,9 @@ class ArraysTest extends TestCase
         ]);
 
         // Chain: filter active, then filter adults, then get names
-        $result = $users->where(fn($user) => $user['active'])
-            ->where(fn($user) => $user['age'] >= 18)
-            ->map(fn($user) => $user['name'])
+        $result = $users->where(fn ($user) => $user['active'])
+            ->where(fn ($user) => $user['age'] >= 18)
+            ->map(fn ($user) => $user['name'])
             ->values()
             ->toArray();
 
@@ -974,8 +950,8 @@ class ArraysTest extends TestCase
 
         // Chain: filter admins/moderators, then filter active, then get names
         $result = $users->whereIn('role', ['admin', 'moderator'])
-            ->where(fn($user) => $user['active'])
-            ->map(fn($user) => $user['name'])
+            ->where(fn ($user) => $user['active'])
+            ->map(fn ($user) => $user['name'])
             ->values()
             ->toArray();
 
@@ -990,6 +966,30 @@ class ArraysTest extends TestCase
         ]);
         $result = $items->whereIn('type', [])->toArray();
         Assert::same([], $result);
+    }
+
+    public function testWrap(): void
+    {
+        $data = new Arrays(['apple', 'banana', 'cherry']);
+
+        // Test with prefix and suffix
+        $result = $data->wrap('<', '>')->toArray();
+        Assert::same(['<apple>', '<banana>', '<cherry>'], $result);
+
+        // Test with only prefix
+        $data = new Arrays(['apple', 'banana', 'cherry']);
+        $result = $data->wrap('prefix_')->toArray();
+        Assert::same(['prefix_apple', 'prefix_banana', 'prefix_cherry'], $result);
+
+        // Test with only suffix
+        $data = new Arrays(['apple', 'banana', 'cherry']);
+        $result = $data->wrap('', '_suffix')->toArray();
+        Assert::same(['apple_suffix', 'banana_suffix', 'cherry_suffix'], $result);
+
+        // Test with no prefix or suffix (no change)
+        $data = new Arrays(['apple', 'banana', 'cherry']);
+        $result = $data->wrap()->toArray();
+        Assert::same(['apple', 'banana', 'cherry'], $result);
     }
 }
 

@@ -7,6 +7,7 @@ namespace Phuture\Coherence;
 use Closure;
 use Throwable;
 use RuntimeException;
+use ReflectionFunction;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\ReflectionException;
 
@@ -1445,7 +1446,7 @@ class Callables extends StaticClass
      */
     public static function toCallable(Closure $callback): callable|array
     {
-        $reflection = new \ReflectionFunction($callback);
+        $reflection = new ReflectionFunction($callback);
         $scopeClass = $reflection->getClosureScopeClass()?->name;
         if (str_ends_with($reflection->name, '}')) {
             return $callback;
@@ -1516,11 +1517,13 @@ class Callables extends StaticClass
      */
     public static function toString(callable $callback): string
     {
-        if ($callback instanceof \Closure) {
+        if ($callback instanceof Closure) {
             $unwrappedCallable = static::toCallable($callback);
-            return '{closure' . ($unwrappedCallable instanceof \Closure ? '}' : ' ' . static::toString($unwrappedCallable) . '}');
+
+            return '{closure' . ($unwrappedCallable instanceof Closure ? '}' : ' ' . static::toString($unwrappedCallable) . '}');
         } else {
             is_callable(is_object($callback) ? [$callback, '__invoke'] : $callback, true, $callableString);
+
             return $callableString;
         }
     }
