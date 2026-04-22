@@ -1402,38 +1402,6 @@ class DatesTest extends TestCase
         Assert::type(DateTimeImmutable::class, $date);
     }
 
-    public function testParseWithPhpNativeFormat(): void
-    {
-        $date = Dates::parse('21/04/2026', 'UTC', 'd/m/Y');
-        Assert::same('2026-04-21', $date->format('Y-m-d'));
-    }
-
-    public function testParseWithDayJsFormat(): void
-    {
-        $date = Dates::parse('21/04/2026', 'UTC', 'DD/MM/YYYY');
-        Assert::same('2026-04-21', $date->format('Y-m-d'));
-    }
-
-    public function testParseWithDayJsFormatDateTime(): void
-    {
-        $date = Dates::parse('2026-04-21 14:30:00', 'UTC', 'YYYY-MM-DD HH:mm:ss');
-        Assert::same('2026-04-21 14:30:00', $date->format('Y-m-d H:i:s'));
-    }
-
-    public function testParseWithoutFormatFallsBackToPhpParser(): void
-    {
-        $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
-        Assert::same('2026-04-21 14:30:00', $date->format('Y-m-d H:i:s'));
-    }
-
-    public function testParseWithInvalidFormatThrowsException(): void
-    {
-        Assert::exception(
-            fn() => Dates::parse('not-a-date', 'UTC', 'YYYY-MM-DD'),
-            InvalidArgumentException::class
-        );
-    }
-
     public function testEqualsSameDateReturnsTrue(): void
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');

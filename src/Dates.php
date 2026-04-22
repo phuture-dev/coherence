@@ -166,10 +166,6 @@ class Dates extends StaticClass
      * Accepts any date/time string that PHP's DateTimeImmutable constructor understands,
      * such as '2026-04-21', 'next Monday', 'yesterday', or '+2 days'.
      *
-     * When a format string is provided, the date string is parsed according to that format
-     * instead of PHP's built-in date parser. The format string supports both PHP native
-     * date() characters and day.js-style tokens (auto-detected).
-     *
      * Example:
      * ```php
      * use Phuture\Coherence\Dates;
@@ -177,33 +173,22 @@ class Dates extends StaticClass
      * $date = Dates::parse('2026-12-25');
      * $date = Dates::parse('next Friday', 'America/New_York');
      * $date = Dates::parse('2026-04-21 14:30:00', 'Europe/Berlin');
-     *
-     * // With a format string (PHP native or day.js tokens)
-     * $date = Dates::parse('21/04/2026', 'UTC', 'd/m/Y');
-     * $date = Dates::parse('2026-04-21 14:30:00', 'UTC', 'YYYY-MM-DD HH:mm:ss');
      * ```
      *
-     * @param string $dateString Any date/time string understood by PHP's date parser, or a string
-     *   matching the given format
+     * @param string $dateString Any date/time string understood by PHP's date parser
      * @param string|null $timezone A valid PHP timezone identifier (default: null — system default)
-     * @param string|null $format A format pattern using either PHP date() characters or day.js-style
-     *   tokens (default: null — use PHP's built-in parser)
      * @return DateTimeImmutable The parsed date and time value
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid,
-     *   the date string cannot be parsed, or the date string does not match the given format
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the timezone string is invalid
+     *   or the date string cannot be parsed
      * @see \Phuture\Coherence\Dates::fromFormat()
      * @see \Phuture\Coherence\Dates::fromTimestamp()
      */
-    public static function parse(string $dateString, ?string $timezone = null, ?string $format = null): DateTimeImmutable
+    public static function parse(string $dateString, ?string $timezone = null): DateTimeImmutable
     {
         if ($dateString === '') {
             throw new InvalidArgumentException(
                 'Invalid Argument: The date string must not be empty.'
             );
-        }
-
-        if ($format !== null) {
-            return self::fromFormat($format, $dateString, $timezone);
         }
 
         try {
