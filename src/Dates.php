@@ -38,6 +38,11 @@ use Phuture\Coherence\Support\StaticClass;
  */
 class Dates extends StaticClass
 {
+    private const MARKER_DAY_OF_WEEK = "\xFD\x00";
+    private const MARKER_SHORT_DAY_NAME = "\xFD\x01";
+    private const MARKER_MINUTES_NO_PAD = "\xFD\x02";
+    private const MARKER_SECONDS_NO_PAD = "\xFD\x03";
+
     /**
      * Returns the current date and time.
      *
@@ -240,7 +245,16 @@ class Dates extends StaticClass
     public static function fromFormat(string $format, string $dateString, ?string $timezone = null): DateTimeImmutable
     {
         $phpFormat = self::isDayJsFormat($format)
-            ? self::convertDayJsFormatToPhp($format)
+            ? str_replace(
+                [
+                    self::MARKER_DAY_OF_WEEK,
+                    self::MARKER_SHORT_DAY_NAME,
+                    self::MARKER_MINUTES_NO_PAD,
+                    self::MARKER_SECONDS_NO_PAD,
+                ],
+                ['w', 'D', 'i', 's'],
+                self::convertDayJsFormatToPhp($format)
+            )
             : $format;
 
         $date = DateTimeImmutable::createFromFormat($phpFormat, $dateString, self::buildTimezone($timezone));
@@ -392,51 +406,25 @@ class Dates extends StaticClass
             return $resolved->format($format);
         }
 
-        $escaped = [];
-        $working = preg_replace_callback('/\[([^\]]*)\]/', function ($matches) use (&$escaped) {
-            $placeholder = "\x00ESC" . count($escaped) . "\x00";
-            $escaped[] = $matches[1];
-
-            return $placeholder;
-        }, $format);
+        $phpFormat = self::convertDayJsFormatToPhp($format);
 
         $shortDayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-        $replacements = [
-            'YYYY' => $resolved->format('Y'),
-            'YY' => $resolved->format('y'),
-            'MMMM' => $resolved->format('F'),
-            'MMM' => $resolved->format('M'),
-            'MM' => $resolved->format('m'),
-            'M' => $resolved->format('n'),
-            'DD' => $resolved->format('d'),
-            'D' => $resolved->format('j'),
-            'dddd' => $resolved->format('l'),
-            'ddd' => $resolved->format('D'),
-            'dd' => $shortDayNames[(int) $resolved->format('w')],
-            'd' => (string) (int) $resolved->format('w'),
-            'HH' => $resolved->format('H'),
-            'H' => $resolved->format('G'),
-            'hh' => $resolved->format('h'),
-            'h' => $resolved->format('g'),
-            'mm' => $resolved->format('i'),
-            'm' => (string) (int) $resolved->format('i'),
-            'ss' => $resolved->format('s'),
-            's' => (string) (int) $resolved->format('s'),
-            'SSS' => $resolved->format('v'),
-            'ZZ' => $resolved->format('O'),
-            'Z' => $resolved->format('P'),
-            'A' => $resolved->format('A'),
-            'a' => $resolved->format('a'),
-        ];
-
-        $result = strtr($working, $replacements);
-
-        foreach ($escaped as $index => $text) {
-            $result = str_replace("\x00ESC{$index}\x00", $text, $result);
-        }
-
-        return $result;
+        return str_replace(
+            [
+                self::MARKER_DAY_OF_WEEK,
+                self::MARKER_SHORT_DAY_NAME,
+                self::MARKER_MINUTES_NO_PAD,
+                self::MARKER_SECONDS_NO_PAD,
+            ],
+            [
+                (string) (int) $resolved->format('w'),
+                $shortDayNames[(int) $resolved->format('w')],
+                (string) (int) $resolved->format('i'),
+                (string) (int) $resolved->format('s'),
+            ],
+            $resolved->format($phpFormat)
+        );
     }
 
     /**
@@ -2003,15 +1991,16 @@ class Dates extends StaticClass
             'D' => 'j',
             'dddd' => 'l',
             'ddd' => 'D',
-            'dd' => 'D',
+            'dd' => self::MARKER_SHORT_DAY_NAME,
+            'd' => self::MARKER_DAY_OF_WEEK,
             'HH' => 'H',
             'H' => 'G',
             'hh' => 'h',
             'h' => 'g',
             'mm' => 'i',
-            'm' => 'i',
+            'm' => self::MARKER_MINUTES_NO_PAD,
             'ss' => 's',
-            's' => 's',
+            's' => self::MARKER_SECONDS_NO_PAD,
             'SSS' => 'v',
             'ZZ' => 'O',
             'Z' => 'P',
