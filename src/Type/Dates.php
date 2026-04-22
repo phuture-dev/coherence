@@ -42,6 +42,33 @@ use Phuture\Coherence\Dates as Transformer;
 class Dates extends FluentClass implements Dateable
 {
     /**
+     * Formats the wrapped date/time using a custom format string.
+     *
+     * Supports both PHP native date() format characters and day.js-style
+     * tokens. The format style is auto-detected automatically.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+     *     ->addDays(10)
+     *     ->startOfDay()
+     *     ->format('dddd, MMMM D, YYYY');
+     * // 'Friday, May 1, 2026'
+     * ```
+     *
+     * @param string $format The format pattern using either PHP date() characters or
+     *   day.js-style tokens (auto-detected)
+     * @return string The formatted date/time string
+     * @see \Phuture\Coherence\Dates::format()
+     */
+    public function format(string $format): string
+    {
+        return Transformer::format($this->data, $format);
+    }
+
+    /**
      * Adds a number of days to the wrapped date/time value.
      *
      * @param int $days The number of days to add
