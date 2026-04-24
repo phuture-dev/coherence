@@ -1520,7 +1520,11 @@ class Callables extends StaticClass
         if ($callback instanceof Closure) {
             $unwrappedCallable = static::toCallable($callback);
 
-            return '{closure' . ($unwrappedCallable instanceof Closure ? '}' : ' ' . static::toString($unwrappedCallable) . '}');
+            return '{closure' . (
+                $unwrappedCallable instanceof Closure
+                    ? '}'
+                    : ' ' . static::toString($unwrappedCallable) . '}'
+            );
         } else {
             is_callable(is_object($callback) ? [$callback, '__invoke'] : $callback, true, $callableString);
 
