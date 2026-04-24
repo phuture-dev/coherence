@@ -11,7 +11,7 @@ use Phuture\Coherence\Strings as Transformer;
 /**
  * A fluent wrapper around the Strings utility class for chainable string manipulation.
  *
- * Each method delegates to the corresponding static method on `Strings`, stores the
+ * Each method delegates to the corresponding static method on `\Phuture\Coherence\Strings`, stores the
  * result internally, and returns `$this` to enable method chaining. Retrieve the final
  * value by calling `get()` or invoking the object directly.
  *

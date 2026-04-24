@@ -17,9 +17,9 @@ use Phuture\Coherence\Arrays as Transformer;
 /**
  * A fluent, array-like wrapper that provides object-oriented array manipulation.
  *
- * This class combines the power of PHP's native array operations with the convenience
- * of object-oriented syntax and method chaining. It implements key PHP interfaces to
- * provide seamless array-like behavior while maintaining the fluent interface pattern.
+ * Each method delegates to the corresponding static method on `\Phuture\Coherence\Arrays`, stores the
+ * result internally, and returns `$this` to enable method chaining. Retrieve the final
+ * value by calling `get()` or invoking the object directly.
  *
  * Example:
  * ```php

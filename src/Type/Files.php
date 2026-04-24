@@ -11,13 +11,9 @@ use Phuture\Coherence\Files as Transformer;
 /**
  * A fluent wrapper around the Files utility class for chainable file manipulation.
  *
- * Each method delegates to the corresponding static method on `Files`, stores the
+ * Each method delegates to the corresponding static method on `\Phuture\Coherence\Files`, stores the
  * result internally, and returns `$this` to enable method chaining. The wrapped
  * value is always the current file path as a string.
- *
- * Retrieve the final path by calling `get()`, or use the `Fileable` interface
- * methods (`size()`, `extension()`, `path()`, `name()`, `lastModified()`,
- * `mimeType()`, `read()`) to inspect the file at the current path.
  *
  * Example:
  * ```php
