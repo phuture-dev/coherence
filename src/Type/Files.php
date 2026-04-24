@@ -80,24 +80,6 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Creates a directory at the current path.
-     *
-     * When the wrapped path is a directory that should be created, this method
-     * ensures it exists, including any parent directories.
-     *
-     * @param int $mode The permission mode for the directory (default: 0777)
-     * @return self Returns the current instance for method chaining
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be created
-     * @see \Phuture\Coherence\Files::createDirectory()
-     */
-    public function createDirectory(int $mode = 0777): self
-    {
-        Transformer::createDirectory($this->data, $mode);
-
-        return $this;
-    }
-
-    /**
      * Deletes the file or directory at the current path.
      *
      * After deletion, the internal path is set to an empty string. This method

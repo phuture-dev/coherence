@@ -6,6 +6,7 @@ namespace Phuture\Coherence\Tests\Type;
 
 use Phuture\Coherence\Files;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Exception\RuntimeException;
 use Phuture\Coherence\Type\Files as FluentFiles;
 
 require __DIR__ . '/../bootstrap.php';
@@ -29,10 +30,31 @@ class FilesTest extends TestCase
 
     public function testOfReturnsFluentInstance(): void
     {
-        $fluent = Files::of($this->tempDir . '/test.txt');
+        $file = $this->tempDir . '/test.txt';
+        file_put_contents($file, 'content');
+
+        $fluent = Files::of($file);
 
         Assert::type(FluentFiles::class, $fluent);
-        Assert::same($this->tempDir . '/test.txt', $fluent->get());
+        Assert::same(realpath($file), $fluent->get());
+    }
+
+    public function testOfResolvesRealPath(): void
+    {
+        $file = $this->tempDir . '/real.txt';
+        file_put_contents($file, 'content');
+
+        $fluent = Files::of($file);
+
+        Assert::same(realpath($file), $fluent->path());
+    }
+
+    public function testOfThrowsForNonExistentPath(): void
+    {
+        Assert::exception(
+            static fn () => Files::of('/non/existent/file.txt'),
+            RuntimeException::class
+        );
     }
 
     public function testFromReturnsFluentInstance(): void
@@ -46,9 +68,10 @@ class FilesTest extends TestCase
 
     public function testWriteAndRead(): void
     {
-        $path = $this->tempDir . '/write.txt';
+        $file = $this->tempDir . '/write.txt';
+        file_put_contents($file, 'initial');
 
-        $content = Files::of($path)
+        $content = Files::of($file)
             ->write('Hello, fluent!')
             ->read();
 
@@ -65,7 +88,7 @@ class FilesTest extends TestCase
             ->copy($destination)
             ->get();
 
-        Assert::same($source, $path);
+        Assert::same(realpath($source), $path);
         Assert::true(file_exists($destination));
         Assert::true(file_exists($source));
     }
@@ -135,15 +158,6 @@ class FilesTest extends TestCase
         Assert::true(is_writable($file));
     }
 
-    public function testCreateDirectory(): void
-    {
-        $dir = $this->tempDir . '/new/sub/dir';
-
-        Files::of($dir)->createDirectory();
-
-        Assert::true(is_dir($dir));
-    }
-
     public function testNameReturnsFileName(): void
     {
         $file = $this->tempDir . '/test.txt';
@@ -165,7 +179,7 @@ class FilesTest extends TestCase
         $file = $this->tempDir . '/path_test.txt';
         file_put_contents($file, 'content');
 
-        Assert::same($file, Files::of($file)->path());
+        Assert::same(realpath($file), Files::of($file)->path());
     }
 
     public function testSizeReturnsBytes(): void
@@ -197,21 +211,25 @@ class FilesTest extends TestCase
 
     public function testFullChainingWorkflow(): void
     {
-        $path = Files::of($this->tempDir . '/draft.txt')
-            ->write('initial content')
+        $file = $this->tempDir . '/draft.txt';
+        file_put_contents($file, 'initial');
+
+        $path = Files::of($file)
+            ->write('updated content')
             ->rename('final.txt')
             ->get();
 
         $content = Files::of($path)->read();
 
         Assert::same($this->tempDir . '/final.txt', $path);
-        Assert::same('initial content', $content);
+        Assert::same('updated content', $content);
     }
 
     public function testCopyToWriteReadWorkflow(): void
     {
         $original = $this->tempDir . '/source.txt';
         $copy = $this->tempDir . '/destination.txt';
+        file_put_contents($original, 'old');
 
         $result = Files::of($original)
             ->write('original data')
@@ -230,7 +248,7 @@ class FilesTest extends TestCase
 
         $fluent = Files::of($file);
 
-        Assert::same($file, $fluent());
+        Assert::same(realpath($file), $fluent());
     }
 
     private function removeDirectory(string $dir): void

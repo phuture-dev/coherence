@@ -1148,6 +1148,9 @@ class Files extends StaticClass
      * file path and exposes chainable file manipulation methods alongside the
      * `\Phuture\Coherence\Interface\Fileable` inspection methods.
      *
+     * The file or directory must exist at the given path. The path is resolved
+     * to its full absolute real path before being passed to the wrapper.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
@@ -1162,11 +1165,20 @@ class Files extends StaticClass
      *
      * @param string $path The file path to wrap for fluent operations
      * @return \Phuture\Coherence\Type\Files A fluent wrapper instance that enables method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file or directory does not exist
      * @see \Phuture\Coherence\Type\Files For the fluent wrapper implementation
      */
     public static function of(string $path): Type\Files
     {
-        return new Type\Files($path);
+        $realPath = realpath($path);
+
+        if ($realPath === false) {
+            throw new RuntimeException(
+                "Runtime Error: File or directory {$path} does not exist"
+            );
+        }
+
+        return new Type\Files($realPath);
     }
 
     /**
