@@ -90,6 +90,29 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
+     * Returns the file extension without the leading dot.
+     *
+     * @return string The file extension without the leading dot, or an empty string when there is none
+     * @see \Phuture\Coherence\Files::extension()
+     */
+    public function extension(): string
+    {
+        return Transformer::extension($this->data);
+    }
+
+    /**
+     * Returns the last modification time of the file as a Unix timestamp.
+     *
+     * @return int The last modification time as a Unix timestamp
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
+     * @see \Phuture\Coherence\Files::lastModified()
+     */
+    public function lastModified(): int
+    {
+        return Transformer::lastModified($this->data);
+    }
+
+    /**
      * Sets file permissions to make the current path writable.
      *
      * @param int $directoryMode The permission mode for directories (default: 0777)
@@ -104,6 +127,19 @@ class Files extends FluentClass implements Fileable
         Transformer::makeWritable($this->data, $directoryMode, $fileMode);
 
         return $this;
+    }
+
+    /**
+     * Returns the MIME type of the file detected from its content.
+     *
+     * @return string The MIME type of the file (e.g., 'text/plain', 'image/png')
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the file does not exist or the MIME type cannot be detected
+     * @see \Phuture\Coherence\Files::mimeType()
+     */
+    public function mimeType(): string
+    {
+        return Transformer::mimeType($this->data);
     }
 
     /**
@@ -122,6 +158,39 @@ class Files extends FluentClass implements Fileable
         $this->data = $destination;
 
         return $this;
+    }
+
+    /**
+     * Returns the name of the file including its extension.
+     *
+     * @return string The file name with extension
+     * @see \Phuture\Coherence\Files::name()
+     */
+    public function name(): string
+    {
+        return Transformer::name($this->data);
+    }
+
+    /**
+     * Returns the full absolute path to the file.
+     *
+     * @return string The full absolute path to the file
+     */
+    public function path(): string
+    {
+        return (string) $this->data;
+    }
+
+    /**
+     * Reads and returns the entire contents of the file as a string.
+     *
+     * @return string The complete contents of the file
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be read
+     * @see \Phuture\Coherence\Files::read()
+     */
+    public function read(): string
+    {
+        return Transformer::read($this->data);
     }
 
     /**
@@ -144,6 +213,18 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
+     * Returns the size of the file in bytes.
+     *
+     * @return int The file size in bytes
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the size cannot be read
+     * @see \Phuture\Coherence\Files::size()
+     */
+    public function size(): int
+    {
+        return Transformer::size($this->data);
+    }
+
+    /**
      * Writes content to the wrapped file, creating it if it does not exist.
      *
      * @param string $content The content to write to the file
@@ -157,86 +238,5 @@ class Files extends FluentClass implements Fileable
         Transformer::write($this->data, $content, $mode);
 
         return $this;
-    }
-
-    /**
-     * Returns the file extension without the leading dot.
-     *
-     * @return string The file extension without the leading dot, or an empty string when there is none
-     * @see \Phuture\Coherence\Files::extension()
-     */
-    public function extension(): string
-    {
-        return Transformer::extension($this->data);
-    }
-
-    /**
-     * Returns the full absolute path to the file.
-     *
-     * @return string The full absolute path to the file
-     */
-    public function path(): string
-    {
-        return (string) $this->data;
-    }
-
-    /**
-     * Returns the name of the file including its extension.
-     *
-     * @return string The file name with extension
-     * @see \Phuture\Coherence\Files::name()
-     */
-    public function name(): string
-    {
-        return Transformer::name($this->data);
-    }
-
-    /**
-     * Returns the last modification time of the file as a Unix timestamp.
-     *
-     * @return int The last modification time as a Unix timestamp
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
-     * @see \Phuture\Coherence\Files::lastModified()
-     */
-    public function lastModified(): int
-    {
-        return Transformer::lastModified($this->data);
-    }
-
-    /**
-     * Returns the MIME type of the file detected from its content.
-     *
-     * @return string The MIME type of the file (e.g., 'text/plain', 'image/png')
-     * @throws \Phuture\Coherence\Exception\RuntimeException
-     *     When the file does not exist or the MIME type cannot be detected
-     * @see \Phuture\Coherence\Files::mimeType()
-     */
-    public function mimeType(): string
-    {
-        return Transformer::mimeType($this->data);
-    }
-
-    /**
-     * Reads and returns the entire contents of the file as a string.
-     *
-     * @return string The complete contents of the file
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be read
-     * @see \Phuture\Coherence\Files::read()
-     */
-    public function read(): string
-    {
-        return Transformer::read($this->data);
-    }
-
-    /**
-     * Returns the size of the file in bytes.
-     *
-     * @return int The file size in bytes
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the size cannot be read
-     * @see \Phuture\Coherence\Files::size()
-     */
-    public function size(): int
-    {
-        return Transformer::size($this->data);
     }
 }

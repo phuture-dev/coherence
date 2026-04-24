@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phuture\Coherence;
 
 use Generator;
-use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
@@ -164,6 +164,431 @@ class Files extends StaticClass
     }
 
     /**
+     * Returns the parent directory path of a file or directory.
+     *
+     * Optionally, you can specify the number of levels to go up. For example,
+     * a `$levels` of 2 goes up two parent directories.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::directory('/path/to/file.txt'); // '/path/to'
+     * Files::directory('/path/to/file.txt', 2); // '/path'
+     * Files::directory('/path/to/directory/'); // '/path/to'
+     * ```
+     *
+     * @param string $path The file or directory path
+     * @param int $levels The number of parent directories to go up (default: 1)
+     * @return string The parent directory path
+     * @see \Phuture\Coherence\Files::name()
+     */
+    public static function directory(string $path, int $levels = 1): string
+    {
+        return dirname($path, $levels);
+    }
+
+    /**
+     * Determines whether a file or directory exists at the given path.
+     *
+     * Returns true for both files and directories. Use `isFile()` or
+     * `isDirectory()` for type-specific checks.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::exists('/path/to/file.txt'); // true or false
+     * Files::exists('/path/to/directory'); // true or false
+     * ```
+     *
+     * @param string $path The path to check for existence
+     * @return bool True when a file or directory exists at the path
+     * @see \Phuture\Coherence\Files::isFile()
+     * @see \Phuture\Coherence\Files::isDirectory()
+     */
+    public static function exists(string $path): bool
+    {
+        return file_exists($path);
+    }
+
+    /**
+     * Extracts the file extension from a path.
+     *
+     * Returns the extension without the leading dot. When the file has no
+     * extension, an empty string is returned.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::extension('/path/to/file.txt'); // 'txt'
+     * Files::extension('/path/to/archive.tar.gz'); // 'gz'
+     * Files::extension('/path/to/README'); // ''
+     * ```
+     *
+     * @param string $path The file path to extract the extension from
+     * @return string The file extension without the leading dot, or an empty string when there is none
+     * @see \Phuture\Coherence\Files::name()
+     * @see \Phuture\Coherence\Files::mimeType()
+     */
+    public static function extension(string $path): string
+    {
+        return pathinfo($path, PATHINFO_EXTENSION);
+    }
+
+    /**
+     * Finds files and directories matching the given glob-style patterns.
+     *
+     * Returns all files and directories within the specified directory that match
+     * any of the provided masks. When `$recursive` is true, subdirectories are
+     * searched as well. Masks use glob patterns: `*` matches any characters, `?`
+     * matches a single character, and `[...]` matches a character class.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $all = Files::find('*', '/path/to/dir');
+     * $phpAndMd = Files::find(['*.php', '*.md'], '/path/to/src', recursive: true);
+     * ```
+     *
+     * @param string|array $masks One or more glob patterns to match against (default: '*')
+     * @param string $directory The directory to search in (default: '.')
+     * @param bool $recursive Whether to search subdirectories (default: false)
+     * @return array Array of file and directory paths matching the patterns
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
+     * @see \Phuture\Coherence\Files::findFiles()
+     * @see \Phuture\Coherence\Files::findDirectories()
+     */
+    public static function find(string|array $masks = '*', string $directory = '.', bool $recursive = false): array
+    {
+        return self::findByType($masks, $directory, $recursive, null);
+    }
+
+    /**
+     * Finds only directories matching the given glob-style patterns.
+     *
+     * Works like `find()` but excludes files from the results. Only
+     * directories that match any of the provided masks are returned.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $dirs = Files::findDirectories('*', '/path/to/project');
+     * $srcDirs = Files::findDirectories('src*', '/path/to', recursive: true);
+     * ```
+     *
+     * @param string|array $masks One or more glob patterns to match against (default: '*')
+     * @param string $directory The directory to search in (default: '.')
+     * @param bool $recursive Whether to search subdirectories (default: false)
+     * @return array Array of directory paths matching the patterns
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
+     * @see \Phuture\Coherence\Files::find()
+     * @see \Phuture\Coherence\Files::findFiles()
+     */
+    public static function findDirectories(
+        string|array $masks = '*',
+        string $directory = '.',
+        bool $recursive = false
+    ): array {
+        return self::findByType($masks, $directory, $recursive, 'dir');
+    }
+
+    /**
+     * Finds only files matching the given glob-style patterns.
+     *
+     * Works like `find()` but excludes directories from the results. Only
+     * regular files that match any of the provided masks are returned.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $phpFiles = Files::findFiles('*.php', '/path/to/src');
+     * $allCode = Files::findFiles(['*.php', '*.js'], '/path/to/project', recursive: true);
+     * ```
+     *
+     * @param string|array $masks One or more glob patterns to match against (default: '*')
+     * @param string $directory The directory to search in (default: '.')
+     * @param bool $recursive Whether to search subdirectories (default: false)
+     * @return array Array of file paths matching the patterns
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
+     * @see \Phuture\Coherence\Files::find()
+     * @see \Phuture\Coherence\Files::findDirectories()
+     */
+    public static function findFiles(string|array $masks = '*', string $directory = '.', bool $recursive = false): array
+    {
+        return self::findByType($masks, $directory, $recursive, 'file');
+    }
+
+    /**
+     * Determines whether a path is absolute.
+     *
+     * An absolute path starts with a forward slash on Unix systems or a drive
+     * letter followed by a colon on Windows (for example, `C:/`).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isAbsolute('/usr/local/bin'); // true
+     * Files::isAbsolute('relative/path'); // false
+     * Files::isAbsolute('C:/Windows'); // true
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path is absolute, false when it is relative
+     * @see \Phuture\Coherence\Files::normalizePath()
+     * @see \Phuture\Coherence\Files::joinPaths()
+     */
+    public static function isAbsolute(string $path): bool
+    {
+        return strlen($path) > 0 && (
+            $path[0] === '/' || $path[0] === '\\'
+            || (
+                strlen($path) > 3
+                && ctype_alpha($path[0])
+                && $path[1] === ':'
+                && ($path[2] === '/' || $path[2] === '\\')
+            )
+        );
+    }
+
+    /**
+     * Determines whether the given path is a directory.
+     *
+     * Returns false for regular files, symlinks pointing to files, and
+     * non-existent paths.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isDirectory('/path/to/directory'); // true
+     * Files::isDirectory('/path/to/file.txt'); // false
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path is a directory
+     * @see \Phuture\Coherence\Files::isFile()
+     * @see \Phuture\Coherence\Files::exists()
+     */
+    public static function isDirectory(string $path): bool
+    {
+        return is_dir($path);
+    }
+
+    /**
+     * Determines whether a directory is empty (contains no files or subdirectories).
+     *
+     * Returns true when the directory exists and contains no entries. Returns
+     * false when the directory contains at least one file or subdirectory.
+     * Throws when the path is not a valid directory.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isEmpty('/path/to/empty/dir'); // true
+     * Files::isEmpty('/path/to/full/dir'); // false
+     * ```
+     *
+     * @param string $path The directory path to check
+     * @return bool True when the directory is empty, false when it contains entries
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the path is not a directory
+     * @see \Phuture\Coherence\Files::isDirectory()
+     * @see \Phuture\Coherence\Files::listing()
+     */
+    public static function isEmpty(string $path): bool
+    {
+        if (!is_dir($path)) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Path {$path} is not a directory"
+            );
+        }
+
+        $handle = opendir($path);
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to open directory {$path}"
+            );
+        }
+
+        $isEmpty = true;
+
+        while (($entry = readdir($handle)) !== false) {
+            if ($entry !== '.' && $entry !== '..') {
+                $isEmpty = false;
+                break;
+            }
+        }
+
+        closedir($handle);
+
+        return $isEmpty;
+    }
+
+    /**
+     * Determines whether the given path is a regular file (not a directory).
+     *
+     * Returns false for directories, symlinks pointing to directories, and
+     * non-existent paths.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isFile('/path/to/file.txt'); // true
+     * Files::isFile('/path/to/directory'); // false
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path is a regular file
+     * @see \Phuture\Coherence\Files::isDirectory()
+     * @see \Phuture\Coherence\Files::exists()
+     */
+    public static function isFile(string $path): bool
+    {
+        return is_file($path);
+    }
+
+    /**
+     * Joins multiple path segments into a single normalized path.
+     *
+     * Segments are joined with forward slashes and the resulting path is
+     * normalized to resolve `.` and `..` references. Trailing slashes on
+     * individual segments are handled correctly.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::joinPaths('a', 'b', 'file.txt'); // 'a/b/file.txt'
+     * Files::joinPaths('/a/', '/b/'); // '/a/b/'
+     * Files::joinPaths('/a/', '/../b'); // '/b'
+     * ```
+     *
+     * @param string ...$segments The path segments to join together
+     * @return string The joined and normalized path
+     * @see \Phuture\Coherence\Files::normalizePath()
+     * @see \Phuture\Coherence\Files::isAbsolute()
+     */
+    public static function joinPaths(string ...$segments): string
+    {
+        return self::normalizePath(implode('/', $segments));
+    }
+
+    /**
+     * Returns the last modification time of a file as a Unix timestamp.
+     *
+     * The timestamp represents the number of seconds since the Unix epoch
+     * (January 1, 1970, 00:00:00 UTC) when the file was last modified.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $timestamp = Files::lastModified('/path/to/file.txt');
+     * echo date('Y-m-d H:i:s', $timestamp);
+     * ```
+     *
+     * @param string $path The file path to check
+     * @return int The last modification time as a Unix timestamp
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
+     * @see \Phuture\Coherence\Files::size()
+     */
+    public static function lastModified(string $path): int
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} does not exist"
+            );
+        }
+
+        $time = filemtime($path);
+
+        if ($time === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to get modification time for {$path}"
+            );
+        }
+
+        return $time;
+    }
+
+    /**
+     * Lists the contents of a directory, optionally filtered by a pattern or callback.
+     *
+     * Returns an array of file and directory paths within the specified directory.
+     * When `$filter` is a string, only entries matching the glob pattern are included.
+     * When `$filter` is a callable, it receives each entry path and must return true
+     * to include it.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $all = Files::listing('/path/to/dir');
+     * $phpFiles = Files::listing('/path/to/dir', '*.php');
+     * $largeFiles = Files::listing('/path/to/dir', fn($path) => filesize($path) > 1024);
+     * ```
+     *
+     * @param string $path The directory path to list
+     * @param string|callable|null $filter A glob pattern string, a callback function,
+     *     or null for no filtering (default: null)
+     * @return array Array of file and directory paths within the directory
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the path is not a directory
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be opened
+     * @see \Phuture\Coherence\Files::findFiles()
+     * @see \Phuture\Coherence\Files::isEmpty()
+     */
+    public static function listing(string $path, string|callable|null $filter = null): array
+    {
+        if (!is_dir($path)) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Path {$path} is not a directory"
+            );
+        }
+
+        $handle = opendir($path);
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to open directory {$path}"
+            );
+        }
+
+        $results = [];
+
+        while (($entry = readdir($handle)) !== false) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            $fullPath = $path . DIRECTORY_SEPARATOR . $entry;
+
+            if ($filter === null) {
+                $results[] = $fullPath;
+            } elseif (is_string($filter)) {
+                if (fnmatch($filter, $entry)) {
+                    $results[] = $fullPath;
+                }
+            } elseif ($filter($fullPath)) {
+                $results[] = $fullPath;
+            }
+        }
+
+        closedir($handle);
+
+        sort($results);
+
+        return $results;
+    }
+
+    /**
      * Sets file and directory permissions to make a path writable.
      *
      * When the path points to a directory, permissions are applied recursively to
@@ -209,6 +634,53 @@ class Files extends StaticClass
         }
 
         chmod($path, $fileMode);
+    }
+
+    /**
+     * Returns the MIME type of a file detected from the file's content.
+     *
+     * Uses the system's MIME database to determine the file type by examining
+     * the file's actual content rather than relying on the file extension. This
+     * provides a more accurate result than extension-based detection.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::mimeType('/path/to/image.png'); // 'image/png'
+     * Files::mimeType('/path/to/document.pdf'); // 'application/pdf'
+     * Files::mimeType('/path/to/script.php'); // 'text/x-php'
+     * ```
+     *
+     * @param string $path The file path to detect the MIME type for
+     * @return string The MIME type of the file (for example, 'text/plain', 'image/png')
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the file does not exist or the MIME type cannot be detected
+     * @see \Phuture\Coherence\Files::extension()
+     */
+    public static function mimeType(string $path): string
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: File {$path} does not exist"
+            );
+        }
+
+        if (!is_readable($path)) {
+            throw new RuntimeException(
+                "Runtime Error: File {$path} is not readable"
+            );
+        }
+
+        $mimeType = mime_content_type($path);
+
+        if ($mimeType === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to detect MIME type for {$path}"
+            );
+        }
+
+        return $mimeType;
     }
 
     /**
@@ -270,57 +742,141 @@ class Files extends StaticClass
     }
 
     /**
-     * Renames a file or directory to a new name within the same directory.
+     * Returns the name of a file or directory from a path (the final segment with optional extension).
      *
-     * Unlike `move()`, which accepts a full destination path, this method takes
-     * only the new name and keeps the file in its current parent directory. When
-     * `$overwrite` is false and a file with the new name already exists, a
-     * `\Phuture\Coherence\Exception\RuntimeException` is thrown.
+     * Optionally, a suffix can be stripped from the end of the name. This is
+     * commonly used to remove the file extension.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::rename('/path/to/old.txt', 'new.txt');
-     * Files::rename('/path/to/old_dir', 'new_dir', overwrite: false);
+     * Files::name('/path/to/file.txt'); // 'file.txt'
+     * Files::name('/path/to/file.txt', '.txt'); // 'file'
+     * Files::name('/path/to/directory/'); // 'directory'
      * ```
      *
-     * @param string $path The current file or directory path
-     * @param string $newName The new name (without directory path)
-     * @param bool $overwrite Whether to overwrite an existing file with the new name (default: true)
-     * @throws \Phuture\Coherence\Exception\RuntimeException
-     *     When the path does not exist, the new name is empty, or the rename fails
-     * @see \Phuture\Coherence\Files::move()
-     * @see \Phuture\Coherence\Files::name()
+     * @param string $path The file path to extract the name from
+     * @param string|null $suffix An optional suffix to remove from the name (default: null)
+     * @return string The name of the file or directory without the parent path
+     * @see \Phuture\Coherence\Files::directory()
+     * @see \Phuture\Coherence\Files::extension()
      */
-    public static function rename(string $path, string $newName, bool $overwrite = true): void
+    public static function name(string $path, ?string $suffix = null): string
     {
-        if (!file_exists($path)) {
+        return basename($path, $suffix ?? '');
+    }
+
+    /**
+     * Normalizes a path by resolving `.` and `..` references and converting slashes.
+     *
+     * Removes `.` segments, resolves `..` by removing the preceding directory,
+     * and converts all directory separators to the system's standard separator.
+     * A trailing slash is preserved only when the original path ends with a separator.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::normalizePath('/file/.'); // '/file/'
+     * Files::normalizePath('\\file\\..'); // '/file'
+     * Files::normalizePath('/file/../..'); // '/..'
+     * Files::normalizePath('file/../../bar'); // '/../bar'
+     * ```
+     *
+     * @param string $path The path to normalize
+     * @return string The normalized path using the system's directory separator
+     * @see \Phuture\Coherence\Files::joinPaths()
+     * @see \Phuture\Coherence\Files::unixSlashes()
+     */
+    public static function normalizePath(string $path): string
+    {
+        $parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
+        $resolved = [];
+
+        foreach ($parts as $part) {
+            if ($part === '..' && $resolved && end($resolved) !== '..' && end($resolved) !== '') {
+                array_pop($resolved);
+            } elseif ($part !== '.') {
+                $resolved[] = $part;
+            }
+        }
+
+        return $resolved === ['']
+            ? DIRECTORY_SEPARATOR
+            : implode(DIRECTORY_SEPARATOR, $resolved);
+    }
+
+    /**
+     * Creates a fluent wrapper around the given file path for method chaining.
+     *
+     * Returns a `\Phuture\Coherence\Type\Files` instance that wraps the provided
+     * file path and exposes chainable file manipulation methods alongside the
+     * `\Phuture\Coherence\Interface\Fileable` inspection methods.
+     *
+     * The path must point to an existing file. Directories are not accepted.
+     * The path is resolved to its full absolute real path before being passed
+     * to the wrapper.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $content = Files::of('/path/to/draft.txt')
+     *     ->copy('/path/to/backup.txt')
+     *     ->rename('final.txt')
+     *     ->write('Updated content')
+     *     ->read();
+     * // 'Updated content'
+     * ```
+     *
+     * @param string $path The file path to wrap for fluent operations
+     * @return \Phuture\Coherence\Type\Files A fluent wrapper instance that enables method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or is a directory
+     * @see \Phuture\Coherence\Type\Files For the fluent wrapper implementation
+     */
+    public static function of(string $path): Type\Files
+    {
+        $realPath = realpath($path);
+
+        if ($realPath === false) {
             throw new RuntimeException(
-                "Runtime Error: Path {$path} does not exist"
+                "Runtime Error: File {$path} does not exist"
             );
         }
 
-        if ($newName === '') {
+        if (is_dir($realPath)) {
             throw new RuntimeException(
-                "Runtime Error: New name cannot be empty"
+                "Runtime Error: Path {$path} is a directory, not a file"
             );
         }
 
-        $directory = dirname($path);
-        $newPath = $directory . DIRECTORY_SEPARATOR . $newName;
+        return new Type\Files($realPath);
+    }
 
-        if (!$overwrite && file_exists($newPath)) {
-            throw new RuntimeException(
-                "Runtime Error: File {$newPath} already exists"
-            );
-        }
-
-        if (!rename($path, $newPath)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to rename {$path} to {$newPath}"
-            );
-        }
+    /**
+     * Converts all directory separators in a path to the current platform's standard.
+     *
+     * On Windows, backslashes are used. On all other platforms, forward slashes
+     * are used.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * // On Linux/macOS:
+     * Files::platformSlashes('path\\to\\file.txt'); // 'path/to/file.txt'
+     * // On Windows:
+     * Files::platformSlashes('path/to/file.txt'); // 'path\to\file.txt'
+     * ```
+     *
+     * @param string $path The path to convert
+     * @return string The path with platform-specific slashes
+     * @see \Phuture\Coherence\Files::unixSlashes()
+     */
+    public static function platformSlashes(string $path): string
+    {
+        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
     }
 
     /**
@@ -424,498 +980,30 @@ class Files extends StaticClass
     }
 
     /**
-     * Writes content to a file, creating the file if it does not exist.
+     * Renames a file or directory to a new name within the same directory.
      *
-     * If the file already exists, its contents are replaced entirely. Parent
-     * directories are created automatically when they do not exist.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::write('/path/to/file.txt', 'Hello, World!');
-     * Files::write('/path/to/new/file.txt', 'New content', 0644);
-     * ```
-     *
-     * @param string $path The file path to write to
-     * @param string $content The content to write to the file
-     * @param int $mode The permission mode for the file (default: 0666)
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
-     * @see \Phuture\Coherence\Files::read()
-     */
-    public static function write(string $path, string $content, int $mode = 0666): void
-    {
-        $directory = dirname($path);
-
-        if (!is_dir($directory)) {
-            self::createDirectory($directory);
-        }
-
-        $result = file_put_contents($path, $content);
-
-        if ($result === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to write to file {$path}"
-            );
-        }
-
-        if (file_exists($path)) {
-            chmod($path, $mode);
-        }
-    }
-
-    /**
-     * Extracts the file extension from a path.
-     *
-     * Returns the extension without the leading dot. When the file has no
-     * extension, an empty string is returned.
+     * Unlike `move()`, which accepts a full destination path, this method takes
+     * only the new name and keeps the file in its current parent directory. When
+     * `$overwrite` is false and a file with the new name already exists, a
+     * `\Phuture\Coherence\Exception\RuntimeException` is thrown.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::extension('/path/to/file.txt'); // 'txt'
-     * Files::extension('/path/to/archive.tar.gz'); // 'gz'
-     * Files::extension('/path/to/README'); // ''
+     * Files::rename('/path/to/old.txt', 'new.txt');
+     * Files::rename('/path/to/old_dir', 'new_dir', overwrite: false);
      * ```
      *
-     * @param string $path The file path to extract the extension from
-     * @return string The file extension without the leading dot, or an empty string when there is none
-     * @see \Phuture\Coherence\Files::name()
-     * @see \Phuture\Coherence\Files::mimeType()
-     */
-    public static function extension(string $path): string
-    {
-        return pathinfo($path, PATHINFO_EXTENSION);
-    }
-
-    /**
-     * Determines whether a path is absolute.
-     *
-     * An absolute path starts with a forward slash on Unix systems or a drive
-     * letter followed by a colon on Windows (for example, `C:/`).
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isAbsolute('/usr/local/bin'); // true
-     * Files::isAbsolute('relative/path'); // false
-     * Files::isAbsolute('C:/Windows'); // true
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path is absolute, false when it is relative
-     * @see \Phuture\Coherence\Files::normalizePath()
-     * @see \Phuture\Coherence\Files::joinPaths()
-     */
-    public static function isAbsolute(string $path): bool
-    {
-        return strlen($path) > 0 && (
-            $path[0] === '/' || $path[0] === '\\'
-            || (
-                strlen($path) > 3
-                && ctype_alpha($path[0])
-                && $path[1] === ':'
-                && ($path[2] === '/' || $path[2] === '\\')
-            )
-        );
-    }
-
-    /**
-     * Joins multiple path segments into a single normalized path.
-     *
-     * Segments are joined with forward slashes and the resulting path is
-     * normalized to resolve `.` and `..` references. Trailing slashes on
-     * individual segments are handled correctly.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::joinPaths('a', 'b', 'file.txt'); // 'a/b/file.txt'
-     * Files::joinPaths('/a/', '/b/'); // '/a/b/'
-     * Files::joinPaths('/a/', '/../b'); // '/b'
-     * ```
-     *
-     * @param string ...$segments The path segments to join together
-     * @return string The joined and normalized path
-     * @see \Phuture\Coherence\Files::normalizePath()
-     * @see \Phuture\Coherence\Files::isAbsolute()
-     */
-    public static function joinPaths(string ...$segments): string
-    {
-        return self::normalizePath(implode('/', $segments));
-    }
-
-    /**
-     * Normalizes a path by resolving `.` and `..` references and converting slashes.
-     *
-     * Removes `.` segments, resolves `..` by removing the preceding directory,
-     * and converts all directory separators to the system's standard separator.
-     * A trailing slash is preserved only when the original path ends with a separator.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::normalizePath('/file/.'); // '/file/'
-     * Files::normalizePath('\\file\\..'); // '/file'
-     * Files::normalizePath('/file/../..'); // '/..'
-     * Files::normalizePath('file/../../bar'); // '/../bar'
-     * ```
-     *
-     * @param string $path The path to normalize
-     * @return string The normalized path using the system's directory separator
-     * @see \Phuture\Coherence\Files::joinPaths()
-     * @see \Phuture\Coherence\Files::unixSlashes()
-     */
-    public static function normalizePath(string $path): string
-    {
-        $parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
-        $resolved = [];
-
-        foreach ($parts as $part) {
-            if ($part === '..' && $resolved && end($resolved) !== '..' && end($resolved) !== '') {
-                array_pop($resolved);
-            } elseif ($part !== '.') {
-                $resolved[] = $part;
-            }
-        }
-
-        return $resolved === ['']
-            ? DIRECTORY_SEPARATOR
-            : implode(DIRECTORY_SEPARATOR, $resolved);
-    }
-
-    /**
-     * Converts all directory separators in a path to forward slashes (Unix style).
-     *
-     * Useful for normalizing paths for display or for use in contexts that
-     * require forward slashes regardless of the operating system.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::unixSlashes('path\\to\\file.txt'); // 'path/to/file.txt'
-     * ```
-     *
-     * @param string $path The path to convert
-     * @return string The path with forward slashes
-     * @see \Phuture\Coherence\Files::platformSlashes()
-     * @see \Phuture\Coherence\Files::normalizePath()
-     */
-    public static function unixSlashes(string $path): string
-    {
-        return str_replace('\\', '/', $path);
-    }
-
-    /**
-     * Converts all directory separators in a path to the current platform's standard.
-     *
-     * On Windows, backslashes are used. On all other platforms, forward slashes
-     * are used.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * // On Linux/macOS:
-     * Files::platformSlashes('path\\to\\file.txt'); // 'path/to/file.txt'
-     * // On Windows:
-     * Files::platformSlashes('path/to/file.txt'); // 'path\to\file.txt'
-     * ```
-     *
-     * @param string $path The path to convert
-     * @return string The path with platform-specific slashes
-     * @see \Phuture\Coherence\Files::unixSlashes()
-     */
-    public static function platformSlashes(string $path): string
-    {
-        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
-    }
-
-    /**
-     * Finds files and directories matching the given glob-style patterns.
-     *
-     * Returns all files and directories within the specified directory that match
-     * any of the provided masks. When `$recursive` is true, subdirectories are
-     * searched as well. Masks use glob patterns: `*` matches any characters, `?`
-     * matches a single character, and `[...]` matches a character class.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $all = Files::find('*', '/path/to/dir');
-     * $phpAndMd = Files::find(['*.php', '*.md'], '/path/to/src', recursive: true);
-     * ```
-     *
-     * @param string|array $masks One or more glob patterns to match against (default: '*')
-     * @param string $directory The directory to search in (default: '.')
-     * @param bool $recursive Whether to search subdirectories (default: false)
-     * @return array Array of file and directory paths matching the patterns
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
-     * @see \Phuture\Coherence\Files::findFiles()
-     * @see \Phuture\Coherence\Files::findDirectories()
-     */
-    public static function find(string|array $masks = '*', string $directory = '.', bool $recursive = false): array
-    {
-        return self::findByType($masks, $directory, $recursive, null);
-    }
-
-    /**
-     * Finds only files matching the given glob-style patterns.
-     *
-     * Works like `find()` but excludes directories from the results. Only
-     * regular files that match any of the provided masks are returned.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $phpFiles = Files::findFiles('*.php', '/path/to/src');
-     * $allCode = Files::findFiles(['*.php', '*.js'], '/path/to/project', recursive: true);
-     * ```
-     *
-     * @param string|array $masks One or more glob patterns to match against (default: '*')
-     * @param string $directory The directory to search in (default: '.')
-     * @param bool $recursive Whether to search subdirectories (default: false)
-     * @return array Array of file paths matching the patterns
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
-     * @see \Phuture\Coherence\Files::find()
-     * @see \Phuture\Coherence\Files::findDirectories()
-     */
-    public static function findFiles(string|array $masks = '*', string $directory = '.', bool $recursive = false): array
-    {
-        return self::findByType($masks, $directory, $recursive, 'file');
-    }
-
-    /**
-     * Finds only directories matching the given glob-style patterns.
-     *
-     * Works like `find()` but excludes files from the results. Only
-     * directories that match any of the provided masks are returned.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $dirs = Files::findDirectories('*', '/path/to/project');
-     * $srcDirs = Files::findDirectories('src*', '/path/to', recursive: true);
-     * ```
-     *
-     * @param string|array $masks One or more glob patterns to match against (default: '*')
-     * @param string $directory The directory to search in (default: '.')
-     * @param bool $recursive Whether to search subdirectories (default: false)
-     * @return array Array of directory paths matching the patterns
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory does not exist
-     * @see \Phuture\Coherence\Files::find()
-     * @see \Phuture\Coherence\Files::findFiles()
-     */
-    public static function findDirectories(
-        string|array $masks = '*',
-        string $directory = '.',
-        bool $recursive = false
-    ): array {
-        return self::findByType($masks, $directory, $recursive, 'dir');
-    }
-
-    /**
-     * Returns the name of a file or directory from a path (the final segment with optional extension).
-     *
-     * Optionally, a suffix can be stripped from the end of the name. This is
-     * commonly used to remove the file extension.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::name('/path/to/file.txt'); // 'file.txt'
-     * Files::name('/path/to/file.txt', '.txt'); // 'file'
-     * Files::name('/path/to/directory/'); // 'directory'
-     * ```
-     *
-     * @param string $path The file path to extract the name from
-     * @param string|null $suffix An optional suffix to remove from the name (default: null)
-     * @return string The name of the file or directory without the parent path
-     * @see \Phuture\Coherence\Files::directory()
-     * @see \Phuture\Coherence\Files::extension()
-     */
-    public static function name(string $path, ?string $suffix = null): string
-    {
-        return basename($path, $suffix ?? '');
-    }
-
-    /**
-     * Returns the parent directory path of a file or directory.
-     *
-     * Optionally, you can specify the number of levels to go up. For example,
-     * a `$levels` of 2 goes up two parent directories.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::directory('/path/to/file.txt'); // '/path/to'
-     * Files::directory('/path/to/file.txt', 2); // '/path'
-     * Files::directory('/path/to/directory/'); // '/path/to'
-     * ```
-     *
-     * @param string $path The file or directory path
-     * @param int $levels The number of parent directories to go up (default: 1)
-     * @return string The parent directory path
+     * @param string $path The current file or directory path
+     * @param string $newName The new name (without directory path)
+     * @param bool $overwrite Whether to overwrite an existing file with the new name (default: true)
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the path does not exist, the new name is empty, or the rename fails
+     * @see \Phuture\Coherence\Files::move()
      * @see \Phuture\Coherence\Files::name()
      */
-    public static function directory(string $path, int $levels = 1): string
-    {
-        return dirname($path, $levels);
-    }
-
-    /**
-     * Determines whether a file or directory exists at the given path.
-     *
-     * Returns true for both files and directories. Use `isFile()` or
-     * `isDirectory()` for type-specific checks.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::exists('/path/to/file.txt'); // true or false
-     * Files::exists('/path/to/directory'); // true or false
-     * ```
-     *
-     * @param string $path The path to check for existence
-     * @return bool True when a file or directory exists at the path
-     * @see \Phuture\Coherence\Files::isFile()
-     * @see \Phuture\Coherence\Files::isDirectory()
-     */
-    public static function exists(string $path): bool
-    {
-        return file_exists($path);
-    }
-
-    /**
-     * Determines whether a directory is empty (contains no files or subdirectories).
-     *
-     * Returns true when the directory exists and contains no entries. Returns
-     * false when the directory contains at least one file or subdirectory.
-     * Throws when the path is not a valid directory.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isEmpty('/path/to/empty/dir'); // true
-     * Files::isEmpty('/path/to/full/dir'); // false
-     * ```
-     *
-     * @param string $path The directory path to check
-     * @return bool True when the directory is empty, false when it contains entries
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the path is not a directory
-     * @see \Phuture\Coherence\Files::isDirectory()
-     * @see \Phuture\Coherence\Files::listing()
-     */
-    public static function isEmpty(string $path): bool
-    {
-        if (!is_dir($path)) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Path {$path} is not a directory"
-            );
-        }
-
-        $handle = opendir($path);
-
-        if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open directory {$path}"
-            );
-        }
-
-        $isEmpty = true;
-
-        while (($entry = readdir($handle)) !== false) {
-            if ($entry !== '.' && $entry !== '..') {
-                $isEmpty = false;
-                break;
-            }
-        }
-
-        closedir($handle);
-
-        return $isEmpty;
-    }
-
-    /**
-     * Determines whether the given path is a regular file (not a directory).
-     *
-     * Returns false for directories, symlinks pointing to directories, and
-     * non-existent paths.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isFile('/path/to/file.txt'); // true
-     * Files::isFile('/path/to/directory'); // false
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path is a regular file
-     * @see \Phuture\Coherence\Files::isDirectory()
-     * @see \Phuture\Coherence\Files::exists()
-     */
-    public static function isFile(string $path): bool
-    {
-        return is_file($path);
-    }
-
-    /**
-     * Determines whether the given path is a directory.
-     *
-     * Returns false for regular files, symlinks pointing to files, and
-     * non-existent paths.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isDirectory('/path/to/directory'); // true
-     * Files::isDirectory('/path/to/file.txt'); // false
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path is a directory
-     * @see \Phuture\Coherence\Files::isFile()
-     * @see \Phuture\Coherence\Files::exists()
-     */
-    public static function isDirectory(string $path): bool
-    {
-        return is_dir($path);
-    }
-
-    /**
-     * Returns the last modification time of a file as a Unix timestamp.
-     *
-     * The timestamp represents the number of seconds since the Unix epoch
-     * (January 1, 1970, 00:00:00 UTC) when the file was last modified.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $timestamp = Files::lastModified('/path/to/file.txt');
-     * echo date('Y-m-d H:i:s', $timestamp);
-     * ```
-     *
-     * @param string $path The file path to check
-     * @return int The last modification time as a Unix timestamp
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
-     * @see \Phuture\Coherence\Files::size()
-     */
-    public static function lastModified(string $path): int
+    public static function rename(string $path, string $newName, bool $overwrite = true): void
     {
         if (!file_exists($path)) {
             throw new RuntimeException(
@@ -923,15 +1011,26 @@ class Files extends StaticClass
             );
         }
 
-        $time = filemtime($path);
-
-        if ($time === false) {
+        if ($newName === '') {
             throw new RuntimeException(
-                "Runtime Error: Unable to get modification time for {$path}"
+                "Runtime Error: New name cannot be empty"
             );
         }
 
-        return $time;
+        $directory = dirname($path);
+        $newPath = $directory . DIRECTORY_SEPARATOR . $newName;
+
+        if (!$overwrite && file_exists($newPath)) {
+            throw new RuntimeException(
+                "Runtime Error: File {$newPath} already exists"
+            );
+        }
+
+        if (!rename($path, $newPath)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to rename {$path} to {$newPath}"
+            );
+        }
     }
 
     /**
@@ -974,51 +1073,26 @@ class Files extends StaticClass
     }
 
     /**
-     * Returns the MIME type of a file detected from the file's content.
+     * Converts all directory separators in a path to forward slashes (Unix style).
      *
-     * Uses the system's MIME database to determine the file type by examining
-     * the file's actual content rather than relying on the file extension. This
-     * provides a more accurate result than extension-based detection.
+     * Useful for normalizing paths for display or for use in contexts that
+     * require forward slashes regardless of the operating system.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::mimeType('/path/to/image.png'); // 'image/png'
-     * Files::mimeType('/path/to/document.pdf'); // 'application/pdf'
-     * Files::mimeType('/path/to/script.php'); // 'text/x-php'
+     * Files::unixSlashes('path\\to\\file.txt'); // 'path/to/file.txt'
      * ```
      *
-     * @param string $path The file path to detect the MIME type for
-     * @return string The MIME type of the file (for example, 'text/plain', 'image/png')
-     * @throws \Phuture\Coherence\Exception\RuntimeException
-     *     When the file does not exist or the MIME type cannot be detected
-     * @see \Phuture\Coherence\Files::extension()
+     * @param string $path The path to convert
+     * @return string The path with forward slashes
+     * @see \Phuture\Coherence\Files::platformSlashes()
+     * @see \Phuture\Coherence\Files::normalizePath()
      */
-    public static function mimeType(string $path): string
+    public static function unixSlashes(string $path): string
     {
-        if (!file_exists($path)) {
-            throw new RuntimeException(
-                "Runtime Error: File {$path} does not exist"
-            );
-        }
-
-        if (!is_readable($path)) {
-            throw new RuntimeException(
-                "Runtime Error: File {$path} is not readable"
-            );
-        }
-
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->file($path);
-
-        if ($mimeType === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to detect MIME type for {$path}"
-            );
-        }
-
-        return $mimeType;
+        return str_replace('\\', '/', $path);
     }
 
     /**
@@ -1073,119 +1147,44 @@ class Files extends StaticClass
     }
 
     /**
-     * Lists the contents of a directory, optionally filtered by a pattern or callback.
+     * Writes content to a file, creating the file if it does not exist.
      *
-     * Returns an array of file and directory paths within the specified directory.
-     * When `$filter` is a string, only entries matching the glob pattern are included.
-     * When `$filter` is a callable, it receives each entry path and must return true
-     * to include it.
+     * If the file already exists, its contents are replaced entirely. Parent
+     * directories are created automatically when they do not exist.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * $all = Files::listing('/path/to/dir');
-     * $phpFiles = Files::listing('/path/to/dir', '*.php');
-     * $largeFiles = Files::listing('/path/to/dir', fn($path) => filesize($path) > 1024);
+     * Files::write('/path/to/file.txt', 'Hello, World!');
+     * Files::write('/path/to/new/file.txt', 'New content', 0644);
      * ```
      *
-     * @param string $path The directory path to list
-     * @param string|callable|null $filter A glob pattern string, a callback function,
-     *     or null for no filtering (default: null)
-     * @return array Array of file and directory paths within the directory
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the path is not a directory
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be opened
-     * @see \Phuture\Coherence\Files::findFiles()
-     * @see \Phuture\Coherence\Files::isEmpty()
+     * @param string $path The file path to write to
+     * @param string $content The content to write to the file
+     * @param int $mode The permission mode for the file (default: 0666)
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
+     * @see \Phuture\Coherence\Files::read()
      */
-    public static function listing(string $path, string|callable|null $filter = null): array
+    public static function write(string $path, string $content, int $mode = 0666): void
     {
-        if (!is_dir($path)) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Path {$path} is not a directory"
-            );
+        $directory = dirname($path);
+
+        if (!is_dir($directory)) {
+            self::createDirectory($directory);
         }
 
-        $handle = opendir($path);
+        $result = file_put_contents($path, $content);
 
-        if ($handle === false) {
+        if ($result === false) {
             throw new RuntimeException(
-                "Runtime Error: Unable to open directory {$path}"
+                "Runtime Error: Unable to write to file {$path}"
             );
         }
 
-        $results = [];
-
-        while (($entry = readdir($handle)) !== false) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-
-            $fullPath = $path . DIRECTORY_SEPARATOR . $entry;
-
-            if ($filter === null) {
-                $results[] = $fullPath;
-            } elseif (is_string($filter)) {
-                if (fnmatch($filter, $entry)) {
-                    $results[] = $fullPath;
-                }
-            } elseif ($filter($fullPath)) {
-                $results[] = $fullPath;
-            }
+        if (file_exists($path)) {
+            chmod($path, $mode);
         }
-
-        closedir($handle);
-
-        sort($results);
-
-        return $results;
-    }
-
-    /**
-     * Creates a fluent wrapper around the given file path for method chaining.
-     *
-     * Returns a `\Phuture\Coherence\Type\Files` instance that wraps the provided
-     * file path and exposes chainable file manipulation methods alongside the
-     * `\Phuture\Coherence\Interface\Fileable` inspection methods.
-     *
-     * The path must point to an existing file. Directories are not accepted.
-     * The path is resolved to its full absolute real path before being passed
-     * to the wrapper.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $content = Files::of('/path/to/draft.txt')
-     *     ->copy('/path/to/backup.txt')
-     *     ->rename('final.txt')
-     *     ->write('Updated content')
-     *     ->read();
-     * // 'Updated content'
-     * ```
-     *
-     * @param string $path The file path to wrap for fluent operations
-     * @return \Phuture\Coherence\Type\Files A fluent wrapper instance that enables method chaining
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or is a directory
-     * @see \Phuture\Coherence\Type\Files For the fluent wrapper implementation
-     */
-    public static function of(string $path): Type\Files
-    {
-        $realPath = realpath($path);
-
-        if ($realPath === false) {
-            throw new RuntimeException(
-                "Runtime Error: File {$path} does not exist"
-            );
-        }
-
-        if (is_dir($realPath)) {
-            throw new RuntimeException(
-                "Runtime Error: Path {$path} is a directory, not a file"
-            );
-        }
-
-        return new Type\Files($realPath);
     }
 
     /**
@@ -1333,21 +1332,34 @@ class Files extends StaticClass
     }
 
     /**
-     * Checks whether a filename matches any of the given glob patterns.
+     * Handles a multiple file upload by processing each file individually.
      *
-     * @param string $filename The filename to test
-     * @param array $masks The glob patterns to match against
-     * @return bool True when the filename matches at least one pattern
+     * @param array $files The upload information array with array values from $_FILES
+     * @param string $destination The directory to save files in
+     * @return array Array of file information arrays for each successfully uploaded file
      */
-    private static function matchesAnyMask(string $filename, array $masks): bool
+    private static function handleMultipleUpload(array $files, string $destination): array
     {
-        foreach ($masks as $mask) {
-            if (fnmatch($mask, $filename)) {
-                return true;
+        $results = [];
+        $count = count($files['name']);
+
+        for ($i = 0; $i < $count; $i++) {
+            $file = [
+                'name' => $files['name'][$i],
+                'type' => $files['type'][$i],
+                'tmp_name' => $files['tmp_name'][$i],
+                'error' => $files['error'][$i],
+                'size' => $files['size'][$i],
+            ];
+
+            $result = self::handleSingleUpload($file, $destination);
+
+            if ($result !== false) {
+                $results[] = $result;
             }
         }
 
-        return false;
+        return $results;
     }
 
     /**
@@ -1384,33 +1396,20 @@ class Files extends StaticClass
     }
 
     /**
-     * Handles a multiple file upload by processing each file individually.
+     * Checks whether a filename matches any of the given glob patterns.
      *
-     * @param array $files The upload information array with array values from $_FILES
-     * @param string $destination The directory to save files in
-     * @return array Array of file information arrays for each successfully uploaded file
+     * @param string $filename The filename to test
+     * @param array $masks The glob patterns to match against
+     * @return bool True when the filename matches at least one pattern
      */
-    private static function handleMultipleUpload(array $files, string $destination): array
+    private static function matchesAnyMask(string $filename, array $masks): bool
     {
-        $results = [];
-        $count = count($files['name']);
-
-        for ($i = 0; $i < $count; $i++) {
-            $file = [
-                'name' => $files['name'][$i],
-                'type' => $files['type'][$i],
-                'tmp_name' => $files['tmp_name'][$i],
-                'error' => $files['error'][$i],
-                'size' => $files['size'][$i],
-            ];
-
-            $result = self::handleSingleUpload($file, $destination);
-
-            if ($result !== false) {
-                $results[] = $result;
+        foreach ($masks as $mask) {
+            if (fnmatch($mask, $filename)) {
+                return true;
             }
         }
 
-        return $results;
+        return false;
     }
 }
