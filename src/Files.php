@@ -26,6 +26,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * - **MIME Type Detection**: Identify file types using the system's MIME database
  * - **File Uploads**: Handle single and multiple file uploads from HTTP requests
  * - **Directory Listing**: List and filter directory contents
+ * - **Fluent Interface**: Call `Files::of()` to obtain a chainable `\Phuture\Coherence\Type\Files` wrapper
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -1138,6 +1139,34 @@ class Files extends StaticClass
         sort($results);
 
         return $results;
+    }
+
+    /**
+     * Creates a fluent wrapper around the given file path for method chaining.
+     *
+     * Returns a `\Phuture\Coherence\Type\Files` instance that wraps the provided
+     * file path and exposes chainable file manipulation methods alongside the
+     * `\Phuture\Coherence\Interface\Fileable` inspection methods.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $content = Files::of('/path/to/draft.txt')
+     *     ->copy('/path/to/backup.txt')
+     *     ->rename('final.txt')
+     *     ->write('Updated content')
+     *     ->read();
+     * // 'Updated content'
+     * ```
+     *
+     * @param string $path The file path to wrap for fluent operations
+     * @return \Phuture\Coherence\Type\Files A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Type\Files For the fluent wrapper implementation
+     */
+    public static function of(string $path): Type\Files
+    {
+        return new Type\Files($path);
     }
 
     /**
