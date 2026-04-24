@@ -44,14 +44,6 @@ class Files extends FluentClass implements Fileable
      * the source). Use `copyTo()` when you want the path to switch to the
      * destination after copying.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')
-     *     ->copy('/path/to/backup.txt');
-     * ```
-     *
      * @param string $destination The destination file or directory path to copy to
      * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
      * @return self Returns the current instance for method chaining
@@ -71,16 +63,6 @@ class Files extends FluentClass implements Fileable
      *
      * This is the same as `copy()` but after copying, the internal path is updated
      * to point to the destination, so subsequent operations act on the copy.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/original.txt')
-     *     ->copyTo('/path/to/copy.txt')
-     *     ->write('modified');
-     * // Writes to /path/to/copy.txt, not the original
-     * ```
      *
      * @param string $destination The destination file or directory path to copy to
      * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
@@ -103,14 +85,6 @@ class Files extends FluentClass implements Fileable
      * When the wrapped path is a directory that should be created, this method
      * ensures it exists, including any parent directories.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/new/directory')
-     *     ->createDirectory();
-     * ```
-     *
      * @param int $mode The permission mode for the directory (default: 0777)
      * @return self Returns the current instance for method chaining
      * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be created
@@ -129,14 +103,6 @@ class Files extends FluentClass implements Fileable
      * After deletion, the internal path is set to an empty string. Further
      * chainable operations will fail because the path no longer exists.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/temp.txt')
-     *     ->delete();
-     * ```
-     *
      * @return self Returns the current instance for method chaining
      * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be deleted
      * @see \Phuture\Coherence\Files::delete()
@@ -151,14 +117,6 @@ class Files extends FluentClass implements Fileable
 
     /**
      * Sets file permissions to make the current path writable.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')
-     *     ->makeWritable();
-     * ```
      *
      * @param int $directoryMode The permission mode for directories (default: 0777)
      * @param int $fileMode The permission mode for files (default: 0666)
@@ -177,16 +135,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Moves the wrapped file to a new location and updates the internal path to the destination.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/old.txt')
-     *     ->move('/path/to/new.txt')
-     *     ->read();
-     * // Reads from /path/to/new.txt
-     * ```
-     *
      * @param string $destination The new file or directory path
      * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
      * @return self Returns the current instance for method chaining
@@ -204,15 +152,6 @@ class Files extends FluentClass implements Fileable
 
     /**
      * Renames the file within its current directory and updates the internal path.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/draft.txt')
-     *     ->rename('final.txt');
-     * // Internal path is now '/path/to/final.txt'
-     * ```
      *
      * @param string $newName The new name (without directory path)
      * @param bool $overwrite Whether to overwrite an existing file with the new name (default: true)
@@ -233,14 +172,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Writes content to the wrapped file, creating it if it does not exist.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')
-     *     ->write('Hello, World!');
-     * ```
-     *
      * @param string $content The content to write to the file
      * @param int $mode The permission mode for the file (default: 0666)
      * @return self Returns the current instance for method chaining
@@ -257,13 +188,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Returns the file extension without the leading dot.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')->extension(); // 'txt'
-     * ```
-     *
      * @return string The file extension without the leading dot, or an empty string when there is none
      * @see \Phuture\Coherence\Files::extension()
      */
@@ -275,13 +199,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Returns the full absolute path to the file.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')->path(); // '/path/to/file.txt'
-     * ```
-     *
      * @return string The full absolute path to the file
      */
     public function path(): string
@@ -291,13 +208,6 @@ class Files extends FluentClass implements Fileable
 
     /**
      * Returns the name of the file including its extension.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/file.txt')->name(); // 'file.txt'
-     * ```
      *
      * @return string The file name with extension
      * @see \Phuture\Coherence\Files::name()
@@ -310,13 +220,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Returns the last modification time of the file as a Unix timestamp.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $timestamp = Files::of('/path/to/file.txt')->lastModified();
-     * ```
-     *
      * @return int The last modification time as a Unix timestamp
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
      * @see \Phuture\Coherence\Files::lastModified()
@@ -328,13 +231,6 @@ class Files extends FluentClass implements Fileable
 
     /**
      * Returns the MIME type of the file detected from its content.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::of('/path/to/image.png')->mimeType(); // 'image/png'
-     * ```
      *
      * @return string The MIME type of the file (e.g., 'text/plain', 'image/png')
      * @throws \Phuture\Coherence\Exception\RuntimeException
@@ -349,13 +245,6 @@ class Files extends FluentClass implements Fileable
     /**
      * Reads and returns the entire contents of the file as a string.
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $content = Files::of('/path/to/file.txt')->read();
-     * ```
-     *
      * @return string The complete contents of the file
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be read
      * @see \Phuture\Coherence\Files::read()
@@ -367,13 +256,6 @@ class Files extends FluentClass implements Fileable
 
     /**
      * Returns the size of the file in bytes.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $bytes = Files::of('/path/to/file.txt')->size();
-     * ```
      *
      * @return int The file size in bytes
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the size cannot be read
