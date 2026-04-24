@@ -51,14 +51,8 @@ class HashTest extends TestCase
         foreach ($algorithms as $algorithm) {
             if (Hash::hmacSupports($algorithm)) {
                 $hmac = Hash::hmac($data, $key, false, $algorithm);
-                Assert::true(
-                    strlen($hmac) > 0,
-                    "HMAC with algorithm {$algorithm} should produce output"
-                );
-                Assert::true(
-                    Hash::hmacCheck($data, $key, $hmac, $algorithm),
-                    "HMAC check should pass for algorithm {$algorithm}"
-                );
+                Assert::true(strlen($hmac) > 0, "HMAC with algorithm {$algorithm} should produce output");
+                Assert::true(Hash::hmacCheck($data, $key, $hmac, $algorithm), "HMAC check should pass for algorithm {$algorithm}");
             }
         }
     }
@@ -138,11 +132,7 @@ class HashTest extends TestCase
 
     public function testEmptyData(): void
     {
-        Assert::same(
-            'e3b0c44298fc1c149afbf4c8996fb924'
-            . '27ae41e4649b934ca495991b7852b855',
-            Hash::sha256('')
-        ); // Empty string SHA256
+        Assert::same('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', Hash::sha256('')); // Empty string SHA256
         Assert::same('d41d8cd98f00b204e9800998ecf8427e', Hash::md5('')); // Empty string MD5
     }
 
@@ -331,6 +321,7 @@ class HashTest extends TestCase
                     Assert::same($manualHmac, $fileHmac, "File HMAC should match manual HMAC for algorithm {$algo}");
                 }
             }
+
         } finally {
             unlink($tempFile);
         }
@@ -343,13 +334,9 @@ class HashTest extends TestCase
         file_put_contents($tempFile, 'test content');
 
         try {
-            Assert::exception(
-                function () use ($tempFile) {
-                    Hash::hmacFile($tempFile, 'key', false, 'invalid_algorithm');
-                },
-                InvalidArgumentException::class,
-                'Invalid Argument: invalid_algorithm is not a valid HMAC hash algorithm'
-            );
+            Assert::exception(function () use ($tempFile) {
+                Hash::hmacFile($tempFile, 'key', false, 'invalid_algorithm');
+            }, InvalidArgumentException::class, 'Invalid Argument: invalid_algorithm is not a valid HMAC hash algorithm');
         } finally {
             unlink($tempFile);
         }
@@ -633,21 +620,13 @@ class HashTest extends TestCase
         }, InvalidArgumentException::class, 'Invalid Argument: Length must be between 1 and 100000');
 
         // Test unsupported algorithm
-        Assert::exception(
-            function () {
-                Hash::pbkdf2('password', 'salt', 1000, 32, 'md5');
-            },
-            InvalidArgumentException::class,
-            'Invalid Argument: Algorithm md5 is not supported for PBKDF2'
-        );
+        Assert::exception(function () {
+            Hash::pbkdf2('password', 'salt', 1000, 32, 'md5');
+        }, InvalidArgumentException::class, 'Invalid Argument: Algorithm md5 is not supported for PBKDF2');
 
-        Assert::exception(
-            function () {
-                Hash::pbkdf2('password', 'salt', 1000, 32, 'invalid_algorithm');
-            },
-            InvalidArgumentException::class,
-            'Invalid Argument: Algorithm invalid_algorithm is not supported for PBKDF2'
-        );
+        Assert::exception(function () {
+            Hash::pbkdf2('password', 'salt', 1000, 32, 'invalid_algorithm');
+        }, InvalidArgumentException::class, 'Invalid Argument: Algorithm invalid_algorithm is not supported for PBKDF2');
     }
 
     public function testPbkdf2Supports(): void
@@ -713,24 +692,13 @@ class HashTest extends TestCase
     public function testSha384(): void
     {
         $hash = Hash::sha384('Hello, World!');
-        Assert::same(
-            '5485cc9b3365b4305dfb4e8337e0a598'
-            . 'a574f8242bf17289e0dd6c20a3cd44a0'
-            . '89de16ab4ab308f63e44b1170eb5f515',
-            $hash
-        );
+        Assert::same('5485cc9b3365b4305dfb4e8337e0a598a574f8242bf17289e0dd6c20a3cd44a089de16ab4ab308f63e44b1170eb5f515', $hash);
     }
 
     public function testSha512(): void
     {
         $hash = Hash::sha512('Hello, World!');
-        Assert::same(
-            '374d794a95cdcfd8b35993185fef9ba3'
-            . '68f160d8daf432d08ba9f1ed1e5abe6c'
-            . 'c69291e0fa2fe0006a52570ef18c19de'
-            . 'f4e617c33ce52ef0a6e5fbe318cb0387',
-            $hash
-        );
+        Assert::same('374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387', $hash);
         Assert::true(strlen($hash) === 128); // SHA512 produces 128 hex chars
     }
 
@@ -784,13 +752,7 @@ class HashTest extends TestCase
     public function testUuid(): void
     {
         $uuid = Hash::uuid();
-        Assert::true(
-            preg_match(
-                '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}'
-                . '-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
-                $uuid
-            ) === 1
-        );
+        Assert::true(preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $uuid) === 1);
 
         // Different calls should produce different UUIDs
         $uuid2 = Hash::uuid();
