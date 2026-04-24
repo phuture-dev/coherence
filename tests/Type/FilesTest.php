@@ -19,6 +19,7 @@ class FilesTest extends TestCase
     {
         $this->tempDir = sys_get_temp_dir() . '/coherence_type_files_test_' . uniqid();
         mkdir($this->tempDir, 0777, true);
+        $this->tempDir = (string) realpath($this->tempDir);
     }
 
     protected function tearDown(): void

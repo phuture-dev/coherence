@@ -182,7 +182,7 @@ class Dates extends StaticClass
      */
     public static function addSeconds(DateTimeImmutable|string $date, int $seconds): DateTimeImmutable
     {
-        return self::resolveDate($date)->modify("+{$seconds} seconds");
+        return self::resolveDate($date)->modify("{$seconds} seconds");
     }
 
     /**
