@@ -57,6 +57,15 @@ class FilesTest extends TestCase
         );
     }
 
+    public function testOfThrowsForDirectory(): void
+    {
+        $dir = $this->tempDir;
+        Assert::exception(
+            static fn () => Files::of($dir),
+            RuntimeException::class
+        );
+    }
+
     public function testFromReturnsFluentInstance(): void
     {
         $path = $this->tempDir . '/from.txt';
