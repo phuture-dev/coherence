@@ -202,6 +202,63 @@ class FilesTest extends TestCase
         );
     }
 
+    public function testRename(): void
+    {
+        $file = $this->tempDir . '/old.txt';
+        file_put_contents($file, 'content');
+
+        Files::rename($file, 'new.txt');
+
+        Assert::false(file_exists($file));
+        Assert::true(file_exists($this->tempDir . '/new.txt'));
+        Assert::same('content', file_get_contents($this->tempDir . '/new.txt'));
+    }
+
+    public function testRenameDirectory(): void
+    {
+        $dir = $this->tempDir . '/old_dir';
+        mkdir($dir);
+        file_put_contents($dir . '/file.txt', 'data');
+
+        Files::rename($dir, 'new_dir');
+
+        Assert::false(file_exists($dir));
+        Assert::true(is_dir($this->tempDir . '/new_dir'));
+        Assert::true(file_exists($this->tempDir . '/new_dir/file.txt'));
+    }
+
+    public function testRenameNoOverwriteThrows(): void
+    {
+        $file = $this->tempDir . '/source.txt';
+        $existing = $this->tempDir . '/target.txt';
+        file_put_contents($file, 'content');
+        file_put_contents($existing, 'existing');
+
+        Assert::exception(
+            static fn () => Files::rename($file, 'target.txt', overwrite: false),
+            RuntimeException::class
+        );
+    }
+
+    public function testRenameNonExistentThrows(): void
+    {
+        Assert::exception(
+            static fn () => Files::rename('/non/existent/file.txt', 'new.txt'),
+            RuntimeException::class
+        );
+    }
+
+    public function testRenameEmptyNameThrows(): void
+    {
+        $file = $this->tempDir . '/file.txt';
+        file_put_contents($file, 'content');
+
+        Assert::exception(
+            static fn () => Files::rename($file, ''),
+            RuntimeException::class
+        );
+    }
+
     public function testRead(): void
     {
         $file = $this->tempDir . '/read.txt';
@@ -387,17 +444,17 @@ class FilesTest extends TestCase
         );
     }
 
-    public function testBasename(): void
+    public function testName(): void
     {
-        Assert::same('file.txt', Files::basename('/path/to/file.txt'));
-        Assert::same('file', Files::basename('/path/to/file.txt', '.txt'));
-        Assert::same('directory', Files::basename('/path/to/directory/'));
+        Assert::same('file.txt', Files::name('/path/to/file.txt'));
+        Assert::same('file', Files::name('/path/to/file.txt', '.txt'));
+        Assert::same('directory', Files::name('/path/to/directory/'));
     }
 
-    public function testDirname(): void
+    public function testDirectory(): void
     {
-        Assert::same('/path/to', Files::dirname('/path/to/file.txt'));
-        Assert::same('/path', Files::dirname('/path/to/file.txt', 2));
+        Assert::same('/path/to', Files::directory('/path/to/file.txt'));
+        Assert::same('/path', Files::directory('/path/to/file.txt', 2));
     }
 
     public function testExists(): void

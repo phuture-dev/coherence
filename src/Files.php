@@ -269,6 +269,60 @@ class Files extends StaticClass
     }
 
     /**
+     * Renames a file or directory to a new name within the same directory.
+     *
+     * Unlike `move()`, which accepts a full destination path, this method takes
+     * only the new name and keeps the file in its current parent directory. When
+     * `$overwrite` is false and a file with the new name already exists, a
+     * `\Phuture\Coherence\Exception\RuntimeException` is thrown.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::rename('/path/to/old.txt', 'new.txt');
+     * Files::rename('/path/to/old_dir', 'new_dir', overwrite: false);
+     * ```
+     *
+     * @param string $path The current file or directory path
+     * @param string $newName The new name (without directory path)
+     * @param bool $overwrite Whether to overwrite an existing file with the new name (default: true)
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the path does not exist, the new name is empty, or the rename fails
+     * @see \Phuture\Coherence\Files::move()
+     * @see \Phuture\Coherence\Files::name()
+     */
+    public static function rename(string $path, string $newName, bool $overwrite = true): void
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} does not exist"
+            );
+        }
+
+        if ($newName === '') {
+            throw new RuntimeException(
+                "Runtime Error: New name cannot be empty"
+            );
+        }
+
+        $directory = dirname($path);
+        $newPath = $directory . DIRECTORY_SEPARATOR . $newName;
+
+        if (!$overwrite && file_exists($newPath)) {
+            throw new RuntimeException(
+                "Runtime Error: File {$newPath} already exists"
+            );
+        }
+
+        if (!rename($path, $newPath)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to rename {$path} to {$newPath}"
+            );
+        }
+    }
+
+    /**
      * Reads and returns the entire contents of a file.
      *
      * Loads the complete file contents into a string. For large files, consider
@@ -426,7 +480,7 @@ class Files extends StaticClass
      *
      * @param string $path The file path to extract the extension from
      * @return string The file extension without the leading dot, or an empty string when there is none
-     * @see \Phuture\Coherence\Files::basename()
+     * @see \Phuture\Coherence\Files::name()
      * @see \Phuture\Coherence\Files::mimeType()
      */
     public static function extension(string $path): string
@@ -668,27 +722,27 @@ class Files extends StaticClass
     }
 
     /**
-     * Returns the base name of a file path (the filename with optional extension).
+     * Returns the name of a file or directory from a path (the final segment with optional extension).
      *
-     * Optionally, a suffix can be stripped from the end of the basename. This is
+     * Optionally, a suffix can be stripped from the end of the name. This is
      * commonly used to remove the file extension.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::basename('/path/to/file.txt'); // 'file.txt'
-     * Files::basename('/path/to/file.txt', '.txt'); // 'file'
-     * Files::basename('/path/to/directory/'); // 'directory'
+     * Files::name('/path/to/file.txt'); // 'file.txt'
+     * Files::name('/path/to/file.txt', '.txt'); // 'file'
+     * Files::name('/path/to/directory/'); // 'directory'
      * ```
      *
-     * @param string $path The file path to extract the basename from
-     * @param string|null $suffix An optional suffix to remove from the basename (default: null)
-     * @return string The base name of the file without the directory path
-     * @see \Phuture\Coherence\Files::dirname()
+     * @param string $path The file path to extract the name from
+     * @param string|null $suffix An optional suffix to remove from the name (default: null)
+     * @return string The name of the file or directory without the parent path
+     * @see \Phuture\Coherence\Files::directory()
      * @see \Phuture\Coherence\Files::extension()
      */
-    public static function basename(string $path, ?string $suffix = null): string
+    public static function name(string $path, ?string $suffix = null): string
     {
         return basename($path, $suffix ?? '');
     }
@@ -703,17 +757,17 @@ class Files extends StaticClass
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::dirname('/path/to/file.txt'); // '/path/to'
-     * Files::dirname('/path/to/file.txt', 2); // '/path'
-     * Files::dirname('/path/to/directory/'); // '/path/to'
+     * Files::directory('/path/to/file.txt'); // '/path/to'
+     * Files::directory('/path/to/file.txt', 2); // '/path'
+     * Files::directory('/path/to/directory/'); // '/path/to'
      * ```
      *
      * @param string $path The file or directory path
      * @param int $levels The number of parent directories to go up (default: 1)
      * @return string The parent directory path
-     * @see \Phuture\Coherence\Files::basename()
+     * @see \Phuture\Coherence\Files::name()
      */
-    public static function dirname(string $path, int $levels = 1): string
+    public static function directory(string $path, int $levels = 1): string
     {
         return dirname($path, $levels);
     }
