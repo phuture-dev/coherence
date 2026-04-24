@@ -114,16 +114,13 @@ class FilesTest extends TestCase
         Assert::true(file_exists($this->tempDir . '/new.txt'));
     }
 
-    public function testDeleteClearsPath(): void
+    public function testDeleteRemovesFile(): void
     {
         $file = $this->tempDir . '/to_delete.txt';
         file_put_contents($file, 'gone');
 
-        $path = Files::of($file)
-            ->delete()
-            ->get();
+        Files::of($file)->delete();
 
-        Assert::same('', $path);
         Assert::false(file_exists($file));
     }
 

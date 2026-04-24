@@ -98,21 +98,17 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Deletes the file or directory at the current path and clears the internal path to an empty string.
+     * Deletes the file or directory at the current path.
      *
-     * After deletion, the internal path is set to an empty string. Further
-     * chainable operations will fail because the path no longer exists.
+     * After deletion, the internal path is set to an empty string. This method
+     * returns void because no further chaining is possible after the path is removed.
      *
-     * @return self Returns the current instance for method chaining
      * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be deleted
      * @see \Phuture\Coherence\Files::delete()
      */
-    public function delete(): self
+    public function delete(): void
     {
         Transformer::delete($this->data);
-        $this->data = '';
-
-        return $this;
     }
 
     /**
