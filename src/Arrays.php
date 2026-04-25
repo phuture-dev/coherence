@@ -2634,15 +2634,6 @@ class Arrays extends StaticClass
             }
 
             $newKey = key($mapped);
-
-            // Validate that the key is a valid PHP array key type
-            if (!is_string($newKey) && !is_int($newKey)) {
-                throw new InvalidArgumentException(
-                    'Invalid Argument: Array keys must be strings or integers, '
-                    . get_debug_type($newKey) . ' returned by callback'
-                );
-            }
-
             $result[$newKey] = current($mapped);
         }
 

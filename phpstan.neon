@@ -2,7 +2,6 @@ parameters:
     ignoreErrors:
         - identifier: missingType.iterableValue
         - identifier: missingType.generics
-        - identifier: return.phpDocType
         - '#PHPDoc tag @param references unknown parameter#'
 
     # Set rules level

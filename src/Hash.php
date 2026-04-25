@@ -156,7 +156,7 @@ class Hash extends StaticClass
      */
     public static function check(string $data, string $hash, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if (empty($hash)) {
             return false;
         }
 
@@ -189,7 +189,7 @@ class Hash extends StaticClass
      */
     public static function checkWithSalt(string $data, string $hash, string $salt, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if (empty($hash)) {
             return false;
         }
 
@@ -707,7 +707,7 @@ class Hash extends StaticClass
      */
     public static function hmacCheck(string $data, string $key, string $hash, string $algo = 'sha256'): bool
     {
-        if ($hash === null || $hash === '') {
+        if (empty($hash)) {
             return false;
         }
 
@@ -746,7 +746,7 @@ class Hash extends StaticClass
         string $salt,
         string $algo = 'sha256'
     ): bool {
-        if ($hash === null || $hash === '') {
+        if (empty($hash)) {
             return false;
         }
 

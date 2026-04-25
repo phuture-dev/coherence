@@ -1119,7 +1119,7 @@ class Callables extends StaticClass
         $calls = &self::$calls[serialize($callback)];
 
         return function (...$args) use ($callback, &$calls, $maxAttempts, $milliseconds) {
-            $now = (int) (microtime() / 1000);
+            $now = (int) (microtime(true) * 1000);
 
             // Clear old calls
             $calls = array_filter($calls, fn ($time) => $time > $now - $milliseconds);
