@@ -124,7 +124,7 @@ class ReflectorTest extends TestCase
     public function testAliasFunctionDoesNotExist(): void
     {
         Assert::exception(function () {
-            Reflector::aliasFunction('non_existent_function_xyz', 'str_length_alias');
+            Reflector::aliasFunction('non_existent_function_xyz', 'non_existent_function_alias');
         }, InvalidArgumentException::class, 'Invalid Argument: The given function does not exist');
     }
 
