@@ -10,9 +10,8 @@ use ReflectionFunction;
 use ReflectionProperty;
 use ReflectionParameter;
 use Phuture\Coherence\Support\StaticClass;
-use Nette\PhpGenerator\{GlobalFunction, Literal};
+use Nette\PhpGenerator\{ClassType, GlobalFunction, Literal};
 use Phuture\Coherence\Exception\{InvalidArgumentException, ReflectionException};
-use Throwable;
 
 /**
  * Reflection utility class for inspecting classes, methods, properties, and functions.
@@ -77,7 +76,14 @@ class Reflector extends StaticClass
             );
         }
 
-        return class_alias($className, $alias, true);
+        $reflector = new ReflectionClass($class);
+        if (!$reflector->isInternal()) {
+            return class_alias($className, $alias, true);
+        } else {
+            eval((new ClassType($alias))->setExtends($className));
+
+            return class_exists($alias);
+        }
     }
 
     /**
@@ -658,7 +664,7 @@ class Reflector extends StaticClass
     {
         try {
             $reflection = new ReflectionClass($class);
-        // @phpstan-ignore-next-line
+            // @phpstan-ignore-next-line
         } catch (\ReflectionException $e) {
             throw new ReflectionException(
                 "Reflection Error: " . $e->getMessage()
