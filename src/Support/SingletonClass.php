@@ -46,7 +46,7 @@ abstract class SingletonClass
      *
      * @var static|null
      */
-    private static ?SingletonClass $instance = null;
+    protected static ?SingletonClass $instance = null;
 
     /**
      * Class is static and cannot be instantiated.
