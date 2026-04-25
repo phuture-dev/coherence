@@ -55,6 +55,7 @@ use Phuture\Coherence\Exception\MemberAccessException;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
+/** @phpstan-consistent-constructor */
 abstract class FluentClass
 {
     /**

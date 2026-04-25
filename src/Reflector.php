@@ -12,6 +12,7 @@ use ReflectionParameter;
 use Phuture\Coherence\Support\StaticClass;
 use Nette\PhpGenerator\{GlobalFunction, Literal};
 use Phuture\Coherence\Exception\{InvalidArgumentException, ReflectionException};
+use Throwable;
 
 /**
  * Reflection utility class for inspecting classes, methods, properties, and functions.
@@ -115,20 +116,16 @@ class Reflector extends StaticClass
             );
         }
 
-        if (!function_exists($alias)) {
-            $closure = (new GlobalFunction($alias))
-                ->setBody(
-                    (string) new Literal(
-                        'return call_user_func_array(?, func_get_args());',
-                        [$function]
-                    )
-                );
-            eval($closure);
+        $closure = (new GlobalFunction($alias))
+            ->setBody(
+                (string) new Literal(
+                    'return call_user_func_array(?, func_get_args());',
+                    [$function]
+                )
+            );
+        eval($closure);
 
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -620,6 +617,7 @@ class Reflector extends StaticClass
         }
 
         try {
+            // @phpstan-ignore-next-line
             return match (true) {
                 (new ReflectionMethod($class, $method))->isPublic() => 'public',
                 (new ReflectionMethod($class, $method))->isPrivate() => 'private',
@@ -660,6 +658,7 @@ class Reflector extends StaticClass
     {
         try {
             $reflection = new ReflectionClass($class);
+        // @phpstan-ignore-next-line
         } catch (\ReflectionException $e) {
             throw new ReflectionException(
                 "Reflection Error: " . $e->getMessage()
@@ -912,6 +911,7 @@ class Reflector extends StaticClass
         }
 
         try {
+            // @phpstan-ignore-next-line
             return match (true) {
                 (new ReflectionProperty($class, $property))->isPublic() => 'public',
                 (new ReflectionProperty($class, $property))->isPrivate() => 'private',

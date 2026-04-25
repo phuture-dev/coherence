@@ -38,6 +38,7 @@ use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
+/** @phpstan-consistent-constructor */
 abstract class SingletonClass
 {
     /**
@@ -89,7 +90,6 @@ abstract class SingletonClass
      */
     private function __clone()
     {
-        return false;
     }
 
     /**
