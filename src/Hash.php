@@ -43,8 +43,24 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  */
 class Hash extends StaticClass
 {
+    /**
+     * Default number of iterations for PBKDF2 key derivation.
+     *
+     * This value provides a reasonable balance between security and performance.
+     * Higher values increase security but slow down the derivation process.
+     *
+     * @see \Phuture\Coherence\Hash::pbkdf2()
+     */
     public const DEFAULT_PBKDF2_ITERATIONS = 100000;
 
+    /**
+     * Maximum allowed length in bytes for a derived key.
+     *
+     * Prevents excessively large key derivation requests that could consume
+     * excessive memory or computation time.
+     *
+     * @see \Phuture\Coherence\Hash::pbkdf2()
+     */
     public const MAX_DERIVED_KEY_LENGTH = 100000;
 
     /**
