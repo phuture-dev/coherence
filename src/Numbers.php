@@ -998,7 +998,7 @@ class Numbers extends StaticClass
         int $precision = 0,
         RoundingMode $mode = RoundingMode::HalfUp
     ): float {
-        return round((float) $number, $precision, $mode->toNativeRoundingMode());
+        return round((float) $number, $precision, $mode->toPhpConstant());
     }
 
     /**

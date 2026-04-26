@@ -20,11 +20,14 @@ This repository contains the official **Phuture Coherence** package. To learn mo
 ## Features
 
 - 🎯 **Arrays** - Advanced manipulation and data processing for arrays
-- 📝 **Strings** - Powerful string utilities
+- 📞 **Callables** - Function composition, memoization, throttling, and retry utilities
+- 📅 **Dates** - Immutable date and time creation, formatting, arithmetic, and comparison
+- 📁 **Files** - Filesystem manipulation, path utilities, searching, and MIME detection
 - 🔐 **Hash** - Secure hashing, passwords, HMAC, and more
-- 🔗 **URL** - URL parsing, building, and manipulation
-- 🌐 **HTML** - HTML escaping, sanitization, and building
-- 📞 **Callables** - Function, methods and classes composition and utilities
+- 🌐 **HTML** - HTML generation, escaping, conversion to/from Markdown and plain text
+- 🔢 **Numbers** - Precise arithmetic, comparison, formatting, and human-readable output
+- 🔍 **Reflector** - Inspect classes, methods, properties, and functions at runtime
+- 📝 **Strings** - Multibyte-safe string utilities, case conversion, and validation
 
 ## Installation
 

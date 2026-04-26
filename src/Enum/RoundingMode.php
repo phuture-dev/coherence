@@ -17,29 +17,12 @@ namespace Phuture\Coherence\Enum;
 enum RoundingMode
 {
     /**
-     * Returns the corresponding native PHP RoundingMode enum case.
-     *
-     * Maps this custom enum to the native `\RoundingMode` used by PHP 8.4+'s
-     * `round()` function.
-     *
-     * @return \RoundingMode The native PHP RoundingMode enum case
-     */
-    public function toNativeRoundingMode(): \RoundingMode
-    {
-        return match ($this) {
-            self::HalfUp => \RoundingMode::HalfAwayFromZero,
-            self::HalfDown => \RoundingMode::HalfTowardsZero,
-            self::HalfEven => \RoundingMode::HalfEven,
-            self::HalfOdd => \RoundingMode::HalfOdd,
-        };
-    }
-
-    /**
      * Returns the corresponding PHP rounding constant for this mode.
      *
      * Maps the enum case to the native PHP constant used by `round()`.
      *
      * @return int The PHP rounding constant
+     * @phpstan-return 1|2|3|4
      */
     public function toPhpConstant(): int
     {
