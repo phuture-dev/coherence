@@ -86,6 +86,7 @@ class HashTest extends TestCase
 
         Assert::true(Hash::check($data, $hash));
         Assert::false(Hash::check('different data', $hash));
+        Assert::false(Hash::check($data, ''));
     }
 
     public function testCheckWithSalt(): void
@@ -95,6 +96,7 @@ class HashTest extends TestCase
 
         Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
         Assert::false(Hash::checkWithSalt('wrongpassword', $result['hash'], $result['salt']));
+        Assert::false(Hash::checkWithSalt($data, '', $result['salt']));
     }
 
     public function testCrc32(): void
@@ -215,6 +217,13 @@ class HashTest extends TestCase
         }, InvalidArgumentException::class, 'Invalid Argument: invalid_algorithm is not a valid hash algorithm');
     }
 
+    public function testInitWithInvalidAlgorithm(): void
+    {
+        Assert::exception(function () {
+            Hash::init('invalid_algorithm');
+        }, InvalidArgumentException::class, 'Invalid Argument: invalid_algorithm is not a valid hash algorithm');
+    }
+
     public function testHmac(): void
     {
         $data = 'important message';
@@ -245,6 +254,7 @@ class HashTest extends TestCase
         Assert::true(Hash::hmacCheck($data, $key, $hmac));
         Assert::false(Hash::hmacCheck('different data', $key, $hmac));
         Assert::false(Hash::hmacCheck($data, 'different key', $hmac));
+        Assert::false(Hash::hmacCheck($data, $key, ''));
     }
 
     public function testHmacConsistency(): void
@@ -321,7 +331,6 @@ class HashTest extends TestCase
                     Assert::same($manualHmac, $fileHmac, "File HMAC should match manual HMAC for algorithm {$algo}");
                 }
             }
-
         } finally {
             unlink($tempFile);
         }
