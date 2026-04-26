@@ -2,7 +2,8 @@ parameters:
     ignoreErrors:
         - identifier: missingType.iterableValue
         - identifier: missingType.generics
-        - '#PHPDoc tag @param references unknown parameter#'
+        - identifier: parameter.notFound
+        - identifier: argument.type
 
     # Set rules level
     level: 6

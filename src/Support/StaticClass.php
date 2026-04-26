@@ -38,7 +38,6 @@ use Phuture\Coherence\Exception\MemberAccessException;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-/** @phpstan-consistent-constructor */
 abstract class StaticClass
 {
     /**
@@ -55,7 +54,7 @@ abstract class StaticClass
      * @param array $arguments Enumerated array containing the parameters passed to the method
      * @throws MemberAccessException If the called static method does not exist on the class
      */
-    public static function __callStatic(string $name, array $arguments): mixed
+    public static function __callStatic(string $name, array $arguments): void
     {
         $class = static::class;
         throw new MemberAccessException(

@@ -82,7 +82,7 @@ abstract class FluentClass
      * @param array $arguments Enumerated array containing the parameters passed to the method
      * @throws MemberAccessException If the called method does not exist on the class
      */
-    public function __call(string $name, array $arguments): mixed
+    public function __call(string $name, array $arguments): void
     {
         $class = get_class($this);
         throw new MemberAccessException(
@@ -97,7 +97,7 @@ abstract class FluentClass
      * @param array $arguments Enumerated array containing the parameters passed to the method
      * @throws MemberAccessException If the called static method does not exist on the class
      */
-    public static function __callStatic(string $name, array $arguments): mixed
+    public static function __callStatic(string $name, array $arguments): void
     {
         $class = static::class;
         throw new MemberAccessException(

@@ -22,7 +22,6 @@ enum RoundingMode
      * Maps the enum case to the native PHP constant used by `round()`.
      *
      * @return int The PHP rounding constant
-     * @phpstan-return 1|2|3|4
      */
     public function toPhpConstant(): int
     {

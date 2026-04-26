@@ -12,7 +12,7 @@ use Traversable;
 use JsonSerializable;
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Interface\{Arrayable, Jsonable};
+use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Support\{ArgumentExtractor, StaticClass};
 use Phuture\Coherence\Exception\{InvalidArgumentException, InvalidDataTypeException, OutOfBoundsException};
 
@@ -3855,7 +3855,7 @@ class Arrays extends StaticClass
         bool $reverse = false,
         ?callable $callback = null
     ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
+        if (!is_null($callback)) {
             if ($reverse) {
                 return usort($array, fn ($a, $b) => $callback($b, $a));
             }
@@ -3918,7 +3918,7 @@ class Arrays extends StaticClass
         bool $reverse = false,
         ?callable $callback = null
     ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
+        if (!is_null($callback)) {
             if ($reverse) {
                 return uasort($array, fn ($a, $b) => $callback($b, $a));
             }
@@ -4088,7 +4088,7 @@ class Arrays extends StaticClass
         bool $reverse = false,
         ?callable $callback = null,
     ): bool {
-        if (!is_null($callback) && is_callable($callback)) {
+        if (!is_null($callback)) {
             if ($reverse) {
                 return uksort($array, fn ($a, $b) => $callback($b, $a));
             }
@@ -4325,11 +4325,6 @@ class Arrays extends StaticClass
         // Handle Arrayable objects
         if ($value instanceof Arrayable || (is_object($value) && method_exists($value, 'toArray'))) {
             return $value->toArray();
-        }
-
-        // Handle Jsonable objects
-        if ($value instanceof Jsonable || (is_object($value) && method_exists($value, 'toJson'))) {
-            return json_decode($value->toJson(), true);
         }
 
         // Handle WeakMap objects
