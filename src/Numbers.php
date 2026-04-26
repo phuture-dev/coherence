@@ -1128,6 +1128,45 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Converts a value of any supported type into a numeric int or float.
+     *
+     * Each input type is handled differently:
+     * - **array**: returns the number of elements (equivalent to `count()`)
+     * - **bool**: returns `1` for `true`, `0` for `false`
+     * - **string**: casts to `float` (e.g. `'3.14'` becomes `3.14`)
+     * - **int / float**: returned as-is
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::toNumber(true); // 1
+     * Numbers::toNumber('3.14'); // 3.14
+     * Numbers::toNumber([1, 2, 3]); // 3
+     * Numbers::toNumber(42); // 42
+     * ```
+     *
+     * @param int|float|string|bool|array $number The value to convert
+     * @return int|float The numeric representation of the given value
+     */
+    public static function toNumber(int|float|string|bool|array $number): int|float
+    {
+        if (is_array($number)) {
+            return count($number);
+        }
+
+        if (is_bool($number)) {
+            return (int) $number;
+        }
+
+        if (is_string($number)) {
+            return (float) $number;
+        }
+
+        return $number;
+    }
+
+    /**
      * Removes trailing zeros from a numeric string representation.
      *
      * Converts the number to a string and strips any trailing zeros after

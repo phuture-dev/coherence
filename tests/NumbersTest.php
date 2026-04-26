@@ -538,6 +538,36 @@ class NumbersTest extends TestCase
         Assert::same('42', Numbers::trimTrailingZeros('42'));
         Assert::same('100', Numbers::trimTrailingZeros(100));
     }
+
+    public function testToNumber(): void
+    {
+        // int and float pass through unchanged
+        Assert::same(42, Numbers::toNumber(42));
+        Assert::same(3.14, Numbers::toNumber(3.14));
+        Assert::same(0, Numbers::toNumber(0));
+        Assert::same(0.0, Numbers::toNumber(0.0));
+    }
+
+    public function testToNumberFromBool(): void
+    {
+        Assert::same(1, Numbers::toNumber(true));
+        Assert::same(0, Numbers::toNumber(false));
+    }
+
+    public function testToNumberFromString(): void
+    {
+        Assert::same(3.14, Numbers::toNumber('3.14'));
+        Assert::same(0.0, Numbers::toNumber('0'));
+        Assert::same(42.0, Numbers::toNumber('42'));
+        Assert::same(-7.5, Numbers::toNumber('-7.5'));
+    }
+
+    public function testToNumberFromArray(): void
+    {
+        Assert::same(3, Numbers::toNumber([1, 2, 3]));
+        Assert::same(0, Numbers::toNumber([]));
+        Assert::same(1, Numbers::toNumber(['only']));
+    }
 }
 
 (new NumbersTest())->run();
