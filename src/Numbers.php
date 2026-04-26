@@ -817,6 +817,34 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Creates a fluent Numbers instance for chaining number operations.
+     *
+     * This method provides a convenient entry point for building a sequence of number
+     * operations using method chaining. Instead of calling static methods one by one,
+     * you can chain operations together in a single readable expression.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * $result = Numbers::of(10)
+     *     ->add(5)
+     *     ->multiply(2)
+     *     ->get();
+     *
+     * // Returns: '30'
+     * ```
+     *
+     * @param int|float $number The starting number to wrap in the fluent interface
+     * @return \Phuture\Coherence\Type\Numbers Returns a fluent Numbers instance for chaining
+     * @see \Phuture\Coherence\Type\Numbers
+     */
+    public static function of(int|float $number): Type\Numbers
+    {
+        return new Type\Numbers($number);
+    }
+
+    /**
      * Returns the arithmetic opposite (negation) of a number.
      *
      * Flips the sign of the number: positive values become negative and
