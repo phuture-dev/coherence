@@ -56,13 +56,12 @@ class Numbers extends FluentClass implements Numberable
      * Adds a number to the wrapped value using BCMath for precision.
      *
      * @param int|float $b The addend
-     * @param int $scale The number of decimal places in the result (default: 10)
      * @return self Returns the current instance for method chaining
      * @see Transformer::add()
      */
-    public function add(int|float $b, int $scale = 10): self
+    public function add(int|float $b): self
     {
-        $this->data = Transformer::add($this->numericValue(), $b, $scale);
+        $this->data = Transformer::add($this->numericValue(), $b);
 
         return $this;
     }
@@ -135,13 +134,12 @@ class Numbers extends FluentClass implements Numberable
      * Divides the wrapped number by another using BCMath for precision.
      *
      * @param int|float $b The divisor (must not be zero)
-     * @param int $scale The number of decimal places in the result (default: 10)
      * @return self Returns the current instance for method chaining
      * @see Transformer::divide()
      */
-    public function divide(int|float $b, int $scale = 10): self
+    public function divide(int|float $b): self
     {
-        $this->data = Transformer::divide($this->numericValue(), $b, $scale);
+        $this->data = Transformer::divide($this->numericValue(), $b);
 
         return $this;
     }
@@ -334,13 +332,12 @@ class Numbers extends FluentClass implements Numberable
      * Multiplies the wrapped number by another using BCMath for precision.
      *
      * @param int|float $b The multiplier
-     * @param int $scale The number of decimal places in the result (default: 10)
      * @return self Returns the current instance for method chaining
      * @see Transformer::multiply()
      */
-    public function multiply(int|float $b, int $scale = 10): self
+    public function multiply(int|float $b): self
     {
-        $this->data = Transformer::multiply($this->numericValue(), $b, $scale);
+        $this->data = Transformer::multiply($this->numericValue(), $b);
 
         return $this;
     }
@@ -426,13 +423,12 @@ class Numbers extends FluentClass implements Numberable
      * Subtracts a number from the wrapped value using BCMath for precision.
      *
      * @param int|float $b The subtrahend
-     * @param int $scale The number of decimal places in the result (default: 10)
      * @return self Returns the current instance for method chaining
      * @see Transformer::subtract()
      */
-    public function subtract(int|float $b, int $scale = 10): self
+    public function subtract(int|float $b): self
     {
-        $this->data = Transformer::subtract($this->numericValue(), $b, $scale);
+        $this->data = Transformer::subtract($this->numericValue(), $b);
 
         return $this;
     }

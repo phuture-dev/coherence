@@ -24,8 +24,8 @@ class NumbersTest extends TestCase
     public function testAdd(): void
     {
         Assert::same('0.3000000000', FluentNumbers::from(0.1)->add(0.2)->get());
-        Assert::same('300.00', FluentNumbers::from(100)->add(200, 2)->get());
-        Assert::same('4', FluentNumbers::from(1.5)->add(2.5, 0)->get());
+        Assert::same('300.0000000000', FluentNumbers::from(100)->add(200)->get());
+        Assert::same('4.0000000000', FluentNumbers::from(1.5)->add(2.5)->get());
     }
 
     public function testAbbreviate(): void
@@ -74,7 +74,7 @@ class NumbersTest extends TestCase
     public function testDivide(): void
     {
         Assert::same('3.3333333333', FluentNumbers::from(10)->divide(3)->get());
-        Assert::same('25.00', FluentNumbers::from(100)->divide(4, 2)->get());
+        Assert::same('25.0000000000', FluentNumbers::from(100)->divide(4)->get());
     }
 
     public function testDivideByZero(): void
@@ -193,8 +193,8 @@ class NumbersTest extends TestCase
     public function testMultiply(): void
     {
         Assert::same('0.0200000000', FluentNumbers::from(0.1)->multiply(0.2)->get());
-        Assert::same('12', FluentNumbers::from(3)->multiply(4, 0)->get());
-        Assert::same('10.00', FluentNumbers::from(2.5)->multiply(4.0, 2)->get());
+        Assert::same('12.0000000000', FluentNumbers::from(3)->multiply(4)->get());
+        Assert::same('10.0000000000', FluentNumbers::from(2.5)->multiply(4.0)->get());
     }
 
     public function testOpposite(): void
@@ -258,8 +258,8 @@ class NumbersTest extends TestCase
     public function testSubtract(): void
     {
         Assert::same('7.0000000000', FluentNumbers::from(10)->subtract(3)->get());
-        Assert::same('3.00', FluentNumbers::from(5.5)->subtract(2.5, 2)->get());
-        Assert::same('0', FluentNumbers::from(1)->subtract(1, 0)->get());
+        Assert::same('3.0000000000', FluentNumbers::from(5.5)->subtract(2.5)->get());
+        Assert::same('0.0000000000', FluentNumbers::from(1)->subtract(1)->get());
     }
 
     public function testToFloat(): void
@@ -270,7 +270,7 @@ class NumbersTest extends TestCase
 
     public function testToFloatAfterBcmath(): void
     {
-        Assert::same(0.3, FluentNumbers::from(0.1)->add(0.2, 1)->toFloat());
+        Assert::same(0.3, FluentNumbers::from(0.1)->add(0.2)->toFloat());
     }
 
     public function testToInt(): void
@@ -288,13 +288,13 @@ class NumbersTest extends TestCase
 
     public function testToNumberAfterBcmath(): void
     {
-        Assert::same(0.3, FluentNumbers::from(0.1)->add(0.2, 1)->toNumber());
+        Assert::same(0.3, FluentNumbers::from(0.1)->add(0.2)->toNumber());
     }
 
     public function testTrimTrailingZeros(): void
     {
-        Assert::same('13.14', FluentNumbers::from(10)->add(3.14, 5)->trimTrailingZeros());
-        Assert::same('5', FluentNumbers::from(2.5)->add(2.5, 2)->trimTrailingZeros());
+        Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
+        Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
     }
 
     public function testChaining(): void

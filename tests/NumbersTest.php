@@ -25,8 +25,8 @@ class NumbersTest extends TestCase
     public function testAdd(): void
     {
         Assert::same('0.3000000000', Numbers::add(0.1, 0.2));
-        Assert::same('300.00', Numbers::add(100, 200, 2));
-        Assert::same('4', Numbers::add(1.5, 2.5, 0));
+        Assert::same('300.0000000000', Numbers::add(100, 200));
+        Assert::same('4.0000000000', Numbers::add(1.5, 2.5));
         Assert::same('0.0000000000', Numbers::add(0, 0));
     }
 
@@ -133,8 +133,8 @@ class NumbersTest extends TestCase
     public function testDivide(): void
     {
         Assert::same('3.3333333333', Numbers::divide(10, 3));
-        Assert::same('25.00', Numbers::divide(100, 4, 2));
-        Assert::same('0.3333', Numbers::divide(1, 3, 4));
+        Assert::same('25.0000000000', Numbers::divide(100, 4));
+        Assert::same('0.3333333333', Numbers::divide(1, 3));
     }
 
     public function testDivideByZero(): void
@@ -314,8 +314,8 @@ class NumbersTest extends TestCase
     public function testMultiply(): void
     {
         Assert::same('0.0200000000', Numbers::multiply(0.1, 0.2));
-        Assert::same('12', Numbers::multiply(3, 4, 0));
-        Assert::same('10.00', Numbers::multiply(2.5, 4.0, 2));
+        Assert::same('12.0000000000', Numbers::multiply(3, 4));
+        Assert::same('10.0000000000', Numbers::multiply(2.5, 4.0));
     }
 
     public function testOpposite(): void
@@ -434,8 +434,8 @@ class NumbersTest extends TestCase
     public function testSubtract(): void
     {
         Assert::same('7.0000000000', Numbers::subtract(10, 3));
-        Assert::same('3.00', Numbers::subtract(5.5, 2.5, 2));
-        Assert::same('0', Numbers::subtract(1, 1, 0));
+        Assert::same('3.0000000000', Numbers::subtract(5.5, 2.5));
+        Assert::same('0.0000000000', Numbers::subtract(1, 1));
     }
 
     public function testTrimTrailingZeros(): void
@@ -470,14 +470,14 @@ class NumbersTest extends TestCase
 
     public function testArithmeticPrecision(): void
     {
-        $result = Numbers::add(0.1, 0.2, 1);
-        Assert::same('0.3', $result);
+        $result = Numbers::add(0.1, 0.2);
+        Assert::same('0.3000000000', $result);
 
-        $result = Numbers::multiply(0.1, 0.2, 1);
-        Assert::same('0.0', $result);
+        $result = Numbers::multiply(0.1, 0.2);
+        Assert::same('0.0200000000', $result);
 
-        $result = Numbers::subtract(0.3, 0.1, 1);
-        Assert::same('0.2', $result);
+        $result = Numbers::subtract(0.3, 0.1);
+        Assert::same('0.2000000000', $result);
     }
 }
 

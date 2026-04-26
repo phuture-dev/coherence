@@ -72,26 +72,25 @@ class Numbers extends StaticClass
      * Adds two numbers using BCMath for precision and returns the result as a string.
      *
      * Both values are converted to strings and added using BCMath to avoid
-     * floating-point precision loss. The result preserves up to `$scale` decimal places.
+     * floating-point precision loss. The result preserves up to 10 decimal places.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
      * Numbers::add(0.1, 0.2); // '0.3000000000'
-     * Numbers::add(100, 200, 2); // '300.00'
-     * Numbers::add(1.5, 2.5, 0); // '4'
+     * Numbers::add(100, 200); // '300.0000000000'
+     * Numbers::add(1.5, 2.5); // '4.0000000000'
      * ```
      *
      * @param int|float $a The first addend
      * @param int|float $b The second addend
-     * @param int $scale The number of decimal places in the result (default: 10)
-     * @return string The sum as a string with the specified number of decimal places
+     * @return string The sum as a string with up to 10 decimal places
      * @see \Phuture\Coherence\Numbers::subtract()
      */
-    public static function add(int|float $a, int|float $b, int $scale = self::DEFAULT_SCALE): string
+    public static function add(int|float $a, int|float $b): string
     {
-        return bcadd((string) $a, (string) $b, $scale);
+        return bcadd((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
@@ -269,25 +268,25 @@ class Numbers extends StaticClass
      * Divides the first number by the second using BCMath for precision.
      *
      * Both values are converted to strings and divided using BCMath to avoid
-     * floating-point precision loss. Throws when dividing by zero.
+     * floating-point precision loss. Throws when dividing by zero. The result
+     * preserves up to 10 decimal places.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
      * Numbers::divide(10, 3); // '3.3333333333'
-     * Numbers::divide(100, 4, 2); // '25.00'
-     * Numbers::divide(1, 3, 4); // '0.3333'
+     * Numbers::divide(100, 4); // '25.0000000000'
+     * Numbers::divide(1, 3); // '0.3333333333'
      * ```
      *
      * @param int|float $a The dividend
      * @param int|float $b The divisor (must not be zero)
-     * @param int $scale The number of decimal places in the result (default: 10)
-     * @return string The quotient as a string with the specified number of decimal places
+     * @return string The quotient as a string with up to 10 decimal places
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the divisor is zero
      * @see \Phuture\Coherence\Numbers::multiply()
      */
-    public static function divide(int|float $a, int|float $b, int $scale = self::DEFAULT_SCALE): string
+    public static function divide(int|float $a, int|float $b): string
     {
         if ((float) $b === 0.0) {
             throw new InvalidArgumentException(
@@ -295,7 +294,7 @@ class Numbers extends StaticClass
             );
         }
 
-        return bcdiv((string) $a, (string) $b, $scale);
+        return bcdiv((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
@@ -743,26 +742,25 @@ class Numbers extends StaticClass
      * Multiplies two numbers using BCMath for precision and returns the result as a string.
      *
      * Both values are converted to strings and multiplied using BCMath to avoid
-     * floating-point precision loss.
+     * floating-point precision loss. The result preserves up to 10 decimal places.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
      * Numbers::multiply(0.1, 0.2); // '0.0200000000'
-     * Numbers::multiply(3, 4, 0); // '12'
-     * Numbers::multiply(2.5, 4.0, 2); // '10.00'
+     * Numbers::multiply(3, 4); // '12.0000000000'
+     * Numbers::multiply(2.5, 4.0); // '10.0000000000'
      * ```
      *
      * @param int|float $a The first factor
      * @param int|float $b The second factor
-     * @param int $scale The number of decimal places in the result (default: 10)
-     * @return string The product as a string with the specified number of decimal places
+     * @return string The product as a string with up to 10 decimal places
      * @see \Phuture\Coherence\Numbers::divide()
      */
-    public static function multiply(int|float $a, int|float $b, int $scale = self::DEFAULT_SCALE): string
+    public static function multiply(int|float $a, int|float $b): string
     {
-        return bcmul((string) $a, (string) $b, $scale);
+        return bcmul((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
@@ -1012,26 +1010,25 @@ class Numbers extends StaticClass
      * Subtracts the second number from the first using BCMath for precision.
      *
      * Both values are converted to strings and subtracted using BCMath to avoid
-     * floating-point precision loss.
+     * floating-point precision loss. The result preserves up to 10 decimal places.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
      * Numbers::subtract(10, 3); // '7.0000000000'
-     * Numbers::subtract(5.5, 2.5, 2); // '3.00'
-     * Numbers::subtract(1, 1, 0); // '0'
+     * Numbers::subtract(5.5, 2.5); // '3.0000000000'
+     * Numbers::subtract(1, 1); // '0.0000000000'
      * ```
      *
      * @param int|float $a The minuend
      * @param int|float $b The subtrahend
-     * @param int $scale The number of decimal places in the result (default: 10)
-     * @return string The difference as a string with the specified number of decimal places
+     * @return string The difference as a string with up to 10 decimal places
      * @see \Phuture\Coherence\Numbers::add()
      */
-    public static function subtract(int|float $a, int|float $b, int $scale = self::DEFAULT_SCALE): string
+    public static function subtract(int|float $a, int|float $b): string
     {
-        return bcsub((string) $a, (string) $b, $scale);
+        return bcsub((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
