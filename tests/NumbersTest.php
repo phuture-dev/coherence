@@ -521,24 +521,6 @@ class NumbersTest extends TestCase
         Assert::same('0.0000000000', Numbers::subtract(1, 1));
     }
 
-    public function testTrimTrailingZeros(): void
-    {
-        Assert::same('3.14', Numbers::trimTrailingZeros('3.14000'));
-        Assert::same('5', Numbers::trimTrailingZeros('5.00'));
-        Assert::same('100', Numbers::trimTrailingZeros('100.000'));
-    }
-
-    public function testTrimTrailingZerosFromFloat(): void
-    {
-        Assert::same('7.5', Numbers::trimTrailingZeros(7.5));
-    }
-
-    public function testTrimTrailingZerosNoDecimal(): void
-    {
-        Assert::same('42', Numbers::trimTrailingZeros('42'));
-        Assert::same('100', Numbers::trimTrailingZeros(100));
-    }
-
     public function testToNumber(): void
     {
         // int and float pass through unchanged
@@ -546,6 +528,13 @@ class NumbersTest extends TestCase
         Assert::same(3.14, Numbers::toNumber(3.14));
         Assert::same(0, Numbers::toNumber(0));
         Assert::same(0.0, Numbers::toNumber(0.0));
+    }
+
+    public function testToNumberFromArray(): void
+    {
+        Assert::same(3, Numbers::toNumber([1, 2, 3]));
+        Assert::same(0, Numbers::toNumber([]));
+        Assert::same(1, Numbers::toNumber(['only']));
     }
 
     public function testToNumberFromBool(): void
@@ -562,11 +551,22 @@ class NumbersTest extends TestCase
         Assert::same(-7.5, Numbers::toNumber('-7.5'));
     }
 
-    public function testToNumberFromArray(): void
+    public function testTrimTrailingZeros(): void
     {
-        Assert::same(3, Numbers::toNumber([1, 2, 3]));
-        Assert::same(0, Numbers::toNumber([]));
-        Assert::same(1, Numbers::toNumber(['only']));
+        Assert::same('3.14', Numbers::trimTrailingZeros('3.14000'));
+        Assert::same('5', Numbers::trimTrailingZeros('5.00'));
+        Assert::same('100', Numbers::trimTrailingZeros('100.000'));
+    }
+
+    public function testTrimTrailingZerosFromFloat(): void
+    {
+        Assert::same('7.5', Numbers::trimTrailingZeros(7.5));
+    }
+
+    public function testTrimTrailingZerosNoDecimal(): void
+    {
+        Assert::same('42', Numbers::trimTrailingZeros('42'));
+        Assert::same('100', Numbers::trimTrailingZeros(100));
     }
 }
 
