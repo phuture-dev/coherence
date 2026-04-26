@@ -17,12 +17,39 @@ namespace Phuture\Coherence\Enum;
 enum RoundingMode
 {
     /**
-     * Round halves up (away from zero).
+     * Returns the corresponding native PHP RoundingMode enum case.
      *
-     * When the discarded fraction is exactly 0.5, the value is rounded up
-     * to the next higher absolute value. This is the most common rounding mode.
+     * Maps this custom enum to the native `\RoundingMode` used by PHP 8.4+'s
+     * `round()` function.
+     *
+     * @return \RoundingMode The native PHP RoundingMode enum case
      */
-    case HalfUp;
+    public function toNativeRoundingMode(): \RoundingMode
+    {
+        return match ($this) {
+            self::HalfUp => \RoundingMode::HalfAwayFromZero,
+            self::HalfDown => \RoundingMode::HalfTowardsZero,
+            self::HalfEven => \RoundingMode::HalfEven,
+            self::HalfOdd => \RoundingMode::HalfOdd,
+        };
+    }
+
+    /**
+     * Returns the corresponding PHP rounding constant for this mode.
+     *
+     * Maps the enum case to the native PHP constant used by `round()`.
+     *
+     * @return int The PHP rounding constant
+     */
+    public function toPhpConstant(): int
+    {
+        return match ($this) {
+            self::HalfUp => PHP_ROUND_HALF_UP,
+            self::HalfDown => PHP_ROUND_HALF_DOWN,
+            self::HalfEven => PHP_ROUND_HALF_EVEN,
+            self::HalfOdd => PHP_ROUND_HALF_ODD,
+        };
+    }
 
     /**
      * Round halves down (toward zero).
@@ -47,39 +74,11 @@ enum RoundingMode
      * the nearest odd number.
      */
     case HalfOdd;
-
     /**
-     * Returns the corresponding PHP rounding constant for this mode.
+     * Round halves up (away from zero).
      *
-     * Maps the enum case to the native PHP constant used by `round()`.
-     *
-     * @return int The PHP rounding constant
+     * When the discarded fraction is exactly 0.5, the value is rounded up
+     * to the next higher absolute value. This is the most common rounding mode.
      */
-    public function toPhpConstant(): int
-    {
-        return match ($this) {
-            self::HalfUp => PHP_ROUND_HALF_UP,
-            self::HalfDown => PHP_ROUND_HALF_DOWN,
-            self::HalfEven => PHP_ROUND_HALF_EVEN,
-            self::HalfOdd => PHP_ROUND_HALF_ODD,
-        };
-    }
-
-    /**
-     * Returns the corresponding native PHP RoundingMode enum case.
-     *
-     * Maps this custom enum to the native `\RoundingMode` used by PHP 8.4+'s
-     * `round()` function.
-     *
-     * @return \RoundingMode The native PHP RoundingMode enum case
-     */
-    public function toNativeRoundingMode(): \RoundingMode
-    {
-        return match ($this) {
-            self::HalfUp => \RoundingMode::HalfAwayFromZero,
-            self::HalfDown => \RoundingMode::HalfTowardsZero,
-            self::HalfEven => \RoundingMode::HalfEven,
-            self::HalfOdd => \RoundingMode::HalfOdd,
-        };
-    }
+    case HalfUp;
 }

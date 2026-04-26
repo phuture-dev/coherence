@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Type;
 
 use Phuture\Coherence\Enum\RoundingMode;
-use Phuture\Coherence\Interface\Numberable;
 use Phuture\Coherence\Support\FluentClass;
+use Phuture\Coherence\Interface\Numberable;
 use Phuture\Coherence\Numbers as Transformer;
 
 /**
@@ -40,6 +40,17 @@ use Phuture\Coherence\Numbers as Transformer;
 class Numbers extends FluentClass implements Numberable
 {
     /**
+     * Abbreviates the wrapped number using suffix letters (K, M, B, T).
+     *
+     * @param int $precision The number of decimal places to keep (default: 1)
+     * @return string The abbreviated number string
+     * @see Transformer::abbreviate()
+     */
+    public function abbreviate(int $precision = 1): string
+    {
+        return Transformer::abbreviate($this->numericValue(), $precision);
+    }
+    /**
      * Returns the absolute (non-negative) value of the wrapped number.
      *
      * @return self Returns the current instance for method chaining
@@ -64,18 +75,6 @@ class Numbers extends FluentClass implements Numberable
         $this->data = Transformer::add($this->numericValue(), $b);
 
         return $this;
-    }
-
-    /**
-     * Abbreviates the wrapped number using suffix letters (K, M, B, T).
-     *
-     * @param int $precision The number of decimal places to keep (default: 1)
-     * @return string The abbreviated number string
-     * @see Transformer::abbreviate()
-     */
-    public function abbreviate(int $precision = 1): string
-    {
-        return Transformer::abbreviate($this->numericValue(), $precision);
     }
 
     /**
@@ -195,6 +194,17 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
+     * Determines whether the wrapped number is a float with a fractional part.
+     *
+     * @return bool True when the wrapped value has a fractional part
+     * @see Transformer::isFloat()
+     */
+    public function isFloat(): bool
+    {
+        return Transformer::isFloat($this->numericValue());
+    }
+
+    /**
      * Determines whether the wrapped number is greater than another within epsilon tolerance.
      *
      * @param int|float $b The value to compare against
@@ -230,28 +240,6 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
-     * Determines whether the wrapped number is a float with a fractional part.
-     *
-     * @return bool True when the wrapped value has a fractional part
-     * @see Transformer::isFloat()
-     */
-    public function isFloat(): bool
-    {
-        return Transformer::isFloat($this->numericValue());
-    }
-
-    /**
-     * Determines whether the wrapped value is a valid numeric representation.
-     *
-     * @return bool True when the wrapped value is numeric
-     * @see Transformer::isNumber()
-     */
-    public function isNumber(): bool
-    {
-        return Transformer::isNumber($this->data);
-    }
-
-    /**
      * Determines whether the wrapped number is less than another within epsilon tolerance.
      *
      * @param int|float $b The value to compare against
@@ -284,6 +272,17 @@ class Numbers extends FluentClass implements Numberable
     public function isNegative(): bool
     {
         return Transformer::isNegative($this->numericValue());
+    }
+
+    /**
+     * Determines whether the wrapped value is a valid numeric representation.
+     *
+     * @return bool True when the wrapped value is numeric
+     * @see Transformer::isNumber()
+     */
+    public function isNumber(): bool
+    {
+        return Transformer::isNumber($this->data);
     }
 
     /**

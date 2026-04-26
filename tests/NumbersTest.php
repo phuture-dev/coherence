@@ -4,15 +4,34 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests;
 
-use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
 require __DIR__ . '/bootstrap.php';
 
 class NumbersTest extends TestCase
 {
+    public function testAbbreviate(): void
+    {
+        Assert::same('500.0', Numbers::abbreviate(500));
+        Assert::same('1.5K', Numbers::abbreviate(1500));
+        Assert::same('1.0M', Numbers::abbreviate(1000000));
+        Assert::same('1.0B', Numbers::abbreviate(1000000000));
+        Assert::same('1.0T', Numbers::abbreviate(1000000000000));
+    }
+
+    public function testAbbreviateNegative(): void
+    {
+        Assert::same('-1.5K', Numbers::abbreviate(-1500));
+    }
+
+    public function testAbbreviateWithPrecision(): void
+    {
+        Assert::same('1.50K', Numbers::abbreviate(1500, 2));
+        Assert::same('123.5M', Numbers::abbreviate(123456789));
+    }
     public function testAbsolute(): void
     {
         Assert::same(5, Numbers::absolute(-5));
@@ -36,26 +55,6 @@ class NumbersTest extends TestCase
         Assert::same('0.0000000000', Numbers::add(-5, 5));
     }
 
-    public function testAbbreviate(): void
-    {
-        Assert::same('500.0', Numbers::abbreviate(500));
-        Assert::same('1.5K', Numbers::abbreviate(1500));
-        Assert::same('1.0M', Numbers::abbreviate(1000000));
-        Assert::same('1.0B', Numbers::abbreviate(1000000000));
-        Assert::same('1.0T', Numbers::abbreviate(1000000000000));
-    }
-
-    public function testAbbreviateWithPrecision(): void
-    {
-        Assert::same('1.50K', Numbers::abbreviate(1500, 2));
-        Assert::same('123.5M', Numbers::abbreviate(123456789));
-    }
-
-    public function testAbbreviateNegative(): void
-    {
-        Assert::same('-1.5K', Numbers::abbreviate(-1500));
-    }
-
     public function testAreEqual(): void
     {
         Assert::true(Numbers::areEqual(0.1 + 0.2, 0.3));
@@ -75,6 +74,18 @@ class NumbersTest extends TestCase
             fn () => Numbers::areEqual(1.0, NAN),
             LogicException::class
         );
+    }
+
+    public function testArithmeticPrecision(): void
+    {
+        $result = Numbers::add(0.1, 0.2);
+        Assert::same('0.3000000000', $result);
+
+        $result = Numbers::multiply(0.1, 0.2);
+        Assert::same('0.0200000000', $result);
+
+        $result = Numbers::subtract(0.3, 0.1);
+        Assert::same('0.2000000000', $result);
     }
 
     public function testCeil(): void
@@ -164,6 +175,18 @@ class NumbersTest extends TestCase
         Assert::same('0 B', Numbers::fileSize(0));
     }
 
+    public function testFloatComparisonPrecision(): void
+    {
+        $a = 0.1 + 0.2;
+        $b = 0.3;
+
+        Assert::true(Numbers::areEqual($a, $b));
+        Assert::false(Numbers::isGreaterThan($a, $b));
+        Assert::false(Numbers::isLessThan($a, $b));
+        Assert::true(Numbers::isGreaterThanOrEqualTo($a, $b));
+        Assert::true(Numbers::isLessThanOrEqualTo($a, $b));
+    }
+
     public function testFloor(): void
     {
         Assert::same(3.0, Numbers::floor(3.8));
@@ -181,14 +204,14 @@ class NumbersTest extends TestCase
         Assert::same('1.0 trillion', Numbers::forHumans(1000000000000));
     }
 
-    public function testForHumansWithPrecision(): void
-    {
-        Assert::same('1.23 thousand', Numbers::forHumans(1234, 2));
-    }
-
     public function testForHumansNegative(): void
     {
         Assert::same('-1.5 thousand', Numbers::forHumans(-1500));
+    }
+
+    public function testForHumansWithPrecision(): void
+    {
+        Assert::same('1.23 thousand', Numbers::forHumans(1234, 2));
     }
 
     public function testFormat(): void
@@ -204,11 +227,30 @@ class NumbersTest extends TestCase
         Assert::same('100', Numbers::format(100));
     }
 
+    public function testIsFloat(): void
+    {
+        Assert::true(Numbers::isFloat(3.14));
+        Assert::true(Numbers::isFloat(0.5));
+        Assert::true(Numbers::isFloat(-0.1));
+        Assert::false(Numbers::isFloat(5));
+        Assert::false(Numbers::isFloat(5.0));
+        Assert::false(Numbers::isFloat(-3.0));
+        Assert::false(Numbers::isFloat(INF));
+        Assert::false(Numbers::isFloat(NAN));
+    }
+
     public function testIsGreaterThan(): void
     {
         Assert::true(Numbers::isGreaterThan(10.0, 5.0));
         Assert::false(Numbers::isGreaterThan(5.0, 10.0));
         Assert::false(Numbers::isGreaterThan(10.0, 10.0));
+    }
+
+    public function testIsGreaterThanOrEqualTo(): void
+    {
+        Assert::true(Numbers::isGreaterThanOrEqualTo(10.0, 5.0));
+        Assert::true(Numbers::isGreaterThanOrEqualTo(10.0, 10.0));
+        Assert::false(Numbers::isGreaterThanOrEqualTo(5.0, 10.0));
     }
 
     public function testIsGreaterThanWithNan(): void
@@ -217,13 +259,6 @@ class NumbersTest extends TestCase
             fn () => Numbers::isGreaterThan(NAN, 1.0),
             LogicException::class
         );
-    }
-
-    public function testIsGreaterThanOrEqualTo(): void
-    {
-        Assert::true(Numbers::isGreaterThanOrEqualTo(10.0, 5.0));
-        Assert::true(Numbers::isGreaterThanOrEqualTo(10.0, 10.0));
-        Assert::false(Numbers::isGreaterThanOrEqualTo(5.0, 10.0));
     }
 
     public function testIsInteger(): void
@@ -237,16 +272,34 @@ class NumbersTest extends TestCase
         Assert::false(Numbers::isInteger(NAN));
     }
 
-    public function testIsFloat(): void
+    public function testIsLessThan(): void
     {
-        Assert::true(Numbers::isFloat(3.14));
-        Assert::true(Numbers::isFloat(0.5));
-        Assert::true(Numbers::isFloat(-0.1));
-        Assert::false(Numbers::isFloat(5));
-        Assert::false(Numbers::isFloat(5.0));
-        Assert::false(Numbers::isFloat(-3.0));
-        Assert::false(Numbers::isFloat(INF));
-        Assert::false(Numbers::isFloat(NAN));
+        Assert::true(Numbers::isLessThan(5.0, 10.0));
+        Assert::false(Numbers::isLessThan(10.0, 5.0));
+        Assert::false(Numbers::isLessThan(10.0, 10.0));
+    }
+
+    public function testIsLessThanOrEqualTo(): void
+    {
+        Assert::true(Numbers::isLessThanOrEqualTo(5.0, 10.0));
+        Assert::true(Numbers::isLessThanOrEqualTo(10.0, 10.0));
+        Assert::false(Numbers::isLessThanOrEqualTo(15.0, 10.0));
+    }
+
+    public function testIsLessThanWithNan(): void
+    {
+        Assert::exception(
+            fn () => Numbers::isLessThan(NAN, 1.0),
+            LogicException::class
+        );
+    }
+
+    public function testIsNegative(): void
+    {
+        Assert::true(Numbers::isNegative(-5));
+        Assert::true(Numbers::isNegative(-0.1));
+        Assert::false(Numbers::isNegative(0));
+        Assert::false(Numbers::isNegative(3));
     }
 
     public function testIsNumber(): void
@@ -261,36 +314,6 @@ class NumbersTest extends TestCase
         Assert::false(Numbers::isNumber(''));
         Assert::false(Numbers::isNumber(null));
         Assert::false(Numbers::isNumber([]));
-    }
-
-    public function testIsLessThan(): void
-    {
-        Assert::true(Numbers::isLessThan(5.0, 10.0));
-        Assert::false(Numbers::isLessThan(10.0, 5.0));
-        Assert::false(Numbers::isLessThan(10.0, 10.0));
-    }
-
-    public function testIsLessThanWithNan(): void
-    {
-        Assert::exception(
-            fn () => Numbers::isLessThan(NAN, 1.0),
-            LogicException::class
-        );
-    }
-
-    public function testIsLessThanOrEqualTo(): void
-    {
-        Assert::true(Numbers::isLessThanOrEqualTo(5.0, 10.0));
-        Assert::true(Numbers::isLessThanOrEqualTo(10.0, 10.0));
-        Assert::false(Numbers::isLessThanOrEqualTo(15.0, 10.0));
-    }
-
-    public function testIsNegative(): void
-    {
-        Assert::true(Numbers::isNegative(-5));
-        Assert::true(Numbers::isNegative(-0.1));
-        Assert::false(Numbers::isNegative(0));
-        Assert::false(Numbers::isNegative(3));
     }
 
     public function testIsPositive(): void
@@ -374,12 +397,28 @@ class NumbersTest extends TestCase
         Assert::same('-2nd', Numbers::ordinal(-2));
     }
 
-    public function testPercentage(): void
+    public function testParseFloat(): void
     {
-        Assert::same('75.0%', Numbers::percentage(0.75));
-        Assert::same('75.00%', Numbers::percentage(0.75, 2));
-        Assert::same('150.0%', Numbers::percentage(1.5, 1));
-        Assert::same('3%', Numbers::percentage(3, 0, 1));
+        Assert::same(3.14, Numbers::parseFloat('3.14'));
+        Assert::same(-2.5, Numbers::parseFloat('-2.5'));
+        Assert::same(100.0, Numbers::parseFloat(100));
+        Assert::same(3.14, Numbers::parseFloat(3.14));
+    }
+
+    public function testParseFloatInvalidArgument(): void
+    {
+        Assert::exception(
+            fn () => Numbers::parseFloat('abc'),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseFloat(''),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseFloat(null),
+            InvalidArgumentException::class
+        );
     }
 
     public function testParseInt(): void
@@ -407,28 +446,12 @@ class NumbersTest extends TestCase
         );
     }
 
-    public function testParseFloat(): void
+    public function testPercentage(): void
     {
-        Assert::same(3.14, Numbers::parseFloat('3.14'));
-        Assert::same(-2.5, Numbers::parseFloat('-2.5'));
-        Assert::same(100.0, Numbers::parseFloat(100));
-        Assert::same(3.14, Numbers::parseFloat(3.14));
-    }
-
-    public function testParseFloatInvalidArgument(): void
-    {
-        Assert::exception(
-            fn () => Numbers::parseFloat('abc'),
-            InvalidArgumentException::class
-        );
-        Assert::exception(
-            fn () => Numbers::parseFloat(''),
-            InvalidArgumentException::class
-        );
-        Assert::exception(
-            fn () => Numbers::parseFloat(null),
-            InvalidArgumentException::class
-        );
+        Assert::same('75.0%', Numbers::percentage(0.75));
+        Assert::same('75.00%', Numbers::percentage(0.75, 2));
+        Assert::same('150.0%', Numbers::percentage(1.5, 1));
+        Assert::same('3%', Numbers::percentage(3, 0, 1));
     }
 
     public function testRound(): void
@@ -449,21 +472,6 @@ class NumbersTest extends TestCase
         Assert::same(-3.0, Numbers::round(-3.456, 0));
     }
 
-    public function testSquareRoot(): void
-    {
-        Assert::same('3.0000000000', Numbers::squareRoot(9));
-        Assert::same('1.4142', Numbers::squareRoot(2, 4));
-        Assert::same('0.0000000000', Numbers::squareRoot(0));
-    }
-
-    public function testSquareRootNegative(): void
-    {
-        Assert::exception(
-            fn () => Numbers::squareRoot(-1),
-            InvalidArgumentException::class
-        );
-    }
-
     public function testSpell(): void
     {
         Assert::same('zero', Numbers::spell(0));
@@ -481,14 +489,29 @@ class NumbersTest extends TestCase
         Assert::same('one million', Numbers::spell(1000000));
     }
 
+    public function testSpellLargeNumber(): void
+    {
+        Assert::same('1000000000', Numbers::spell(1000000000));
+    }
+
     public function testSpellNegative(): void
     {
         Assert::same('negative five', Numbers::spell(-5));
     }
 
-    public function testSpellLargeNumber(): void
+    public function testSquareRoot(): void
     {
-        Assert::same('1000000000', Numbers::spell(1000000000));
+        Assert::same('3.0000000000', Numbers::squareRoot(9));
+        Assert::same('1.4142', Numbers::squareRoot(2, 4));
+        Assert::same('0.0000000000', Numbers::squareRoot(0));
+    }
+
+    public function testSquareRootNegative(): void
+    {
+        Assert::exception(
+            fn () => Numbers::squareRoot(-1),
+            InvalidArgumentException::class
+        );
     }
 
     public function testSubtract(): void
@@ -514,30 +537,6 @@ class NumbersTest extends TestCase
     {
         Assert::same('42', Numbers::trimTrailingZeros('42'));
         Assert::same('100', Numbers::trimTrailingZeros(100));
-    }
-
-    public function testFloatComparisonPrecision(): void
-    {
-        $a = 0.1 + 0.2;
-        $b = 0.3;
-
-        Assert::true(Numbers::areEqual($a, $b));
-        Assert::false(Numbers::isGreaterThan($a, $b));
-        Assert::false(Numbers::isLessThan($a, $b));
-        Assert::true(Numbers::isGreaterThanOrEqualTo($a, $b));
-        Assert::true(Numbers::isLessThanOrEqualTo($a, $b));
-    }
-
-    public function testArithmeticPrecision(): void
-    {
-        $result = Numbers::add(0.1, 0.2);
-        Assert::same('0.3000000000', $result);
-
-        $result = Numbers::multiply(0.1, 0.2);
-        Assert::same('0.0200000000', $result);
-
-        $result = Numbers::subtract(0.3, 0.1);
-        Assert::same('0.2000000000', $result);
     }
 }
 

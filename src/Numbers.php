@@ -31,6 +31,10 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 class Numbers extends StaticClass
 {
     /**
+     * Number of decimal places used by default in BCMath arithmetic operations.
+     */
+    private const DEFAULT_SCALE = 10;
+    /**
      * Epsilon used for float comparison to tolerate small precision errors.
      *
      * Mathematical operations with floating-point numbers can produce results
@@ -40,9 +44,43 @@ class Numbers extends StaticClass
     private const EPSILON = 1e-10;
 
     /**
-     * Number of decimal places used by default in BCMath arithmetic operations.
+     * Abbreviates a number using suffix letters (K, M, B, T).
+     *
+     * Converts large numbers into shorter human-readable strings by dividing
+     * the value and appending a suffix. For example, 1500 becomes "1.5K".
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::abbreviate(1500); // '1.5K'
+     * Numbers::abbreviate(1000000); // '1.0M'
+     * Numbers::abbreviate(123456789); // '123.5M'
+     * Numbers::abbreviate(1500, 2); // '1.50K'
+     * ```
+     *
+     * @param int|float $number The number to abbreviate
+     * @param int $precision The number of decimal places to keep (default: 1)
+     * @return string The abbreviated number string
+     * @see \Phuture\Coherence\Numbers::forHumans()
      */
-    private const DEFAULT_SCALE = 10;
+    public static function abbreviate(int|float $number, int $precision = 1): string
+    {
+        $suffixes = ['', 'K', 'M', 'B', 'T'];
+        $absolute = abs($number);
+        $sign = $number < 0 ? '-' : '';
+
+        if ($absolute < 1000) {
+            return $sign . number_format($number, $precision);
+        }
+
+        $exp = (int) floor(log($absolute, 1000));
+        $exp = min($exp, count($suffixes) - 1);
+        $divisor = pow(1000, $exp);
+        $abbreviated = round($absolute / $divisor, $precision);
+
+        return $sign . number_format($abbreviated, $precision) . $suffixes[$exp];
+    }
 
     /**
      * Returns the absolute (non-negative) value of a number.
@@ -91,45 +129,6 @@ class Numbers extends StaticClass
     public static function add(int|float $a, int|float $b): string
     {
         return bcadd((string) $a, (string) $b, self::DEFAULT_SCALE);
-    }
-
-    /**
-     * Abbreviates a number using suffix letters (K, M, B, T).
-     *
-     * Converts large numbers into shorter human-readable strings by dividing
-     * the value and appending a suffix. For example, 1500 becomes "1.5K".
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Numbers;
-     *
-     * Numbers::abbreviate(1500); // '1.5K'
-     * Numbers::abbreviate(1000000); // '1.0M'
-     * Numbers::abbreviate(123456789); // '123.5M'
-     * Numbers::abbreviate(1500, 2); // '1.50K'
-     * ```
-     *
-     * @param int|float $number The number to abbreviate
-     * @param int $precision The number of decimal places to keep (default: 1)
-     * @return string The abbreviated number string
-     * @see \Phuture\Coherence\Numbers::forHumans()
-     */
-    public static function abbreviate(int|float $number, int $precision = 1): string
-    {
-        $suffixes = ['', 'K', 'M', 'B', 'T'];
-        $absolute = abs($number);
-        $sign = $number < 0 ? '-' : '';
-
-        if ($absolute < 1000) {
-            return $sign . number_format($number, $precision);
-        }
-
-        $exp = (int) floor(log($absolute, 1000));
-        $exp = min($exp, count($suffixes) - 1);
-        $divisor = pow(1000, $exp);
-        $abbreviated = round($absolute / $divisor, $precision);
-
-        return $sign . number_format($abbreviated, $precision) . $suffixes[$exp];
     }
 
     /**
@@ -432,6 +431,33 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Determines whether a value is a floating-point number (has a fractional part).
+     *
+     * Returns true when the value is a finite float that is not a whole number.
+     * Integer values, infinity, and NAN return false. This is the logical
+     * inverse of `isInteger()` for finite numeric values.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::isFloat(3.14); // true
+     * Numbers::isFloat(0.5); // true
+     * Numbers::isFloat(5); // false
+     * Numbers::isFloat(5.0); // false
+     * Numbers::isFloat(INF); // false
+     * ```
+     *
+     * @param int|float $value The value to check
+     * @return bool True when the value is a float with a fractional part
+     * @see \Phuture\Coherence\Numbers::isInteger()
+     */
+    public static function isFloat(int|float $value): bool
+    {
+        return is_finite((float) $value) && floor((float) $value) !== (float) $value;
+    }
+
+    /**
      * Determines whether a number is greater than another within epsilon tolerance.
      *
      * Returns true when `$a` is strictly greater than `$b`, accounting for
@@ -522,60 +548,6 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a value is a floating-point number (has a fractional part).
-     *
-     * Returns true when the value is a finite float that is not a whole number.
-     * Integer values, infinity, and NAN return false. This is the logical
-     * inverse of `isInteger()` for finite numeric values.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Numbers;
-     *
-     * Numbers::isFloat(3.14); // true
-     * Numbers::isFloat(0.5); // true
-     * Numbers::isFloat(5); // false
-     * Numbers::isFloat(5.0); // false
-     * Numbers::isFloat(INF); // false
-     * ```
-     *
-     * @param int|float $value The value to check
-     * @return bool True when the value is a float with a fractional part
-     * @see \Phuture\Coherence\Numbers::isInteger()
-     */
-    public static function isFloat(int|float $value): bool
-    {
-        return is_finite((float) $value) && floor((float) $value) !== (float) $value;
-    }
-
-    /**
-     * Determines whether a value is a valid numeric representation.
-     *
-     * Accepts integers, floats, and numeric strings. Returns false for
-     * non-numeric strings, NAN, infinity, arrays, objects, and null.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Numbers;
-     *
-     * Numbers::isNumber(42); // true
-     * Numbers::isNumber(3.14); // true
-     * Numbers::isNumber('100'); // true
-     * Numbers::isNumber('abc'); // false
-     * Numbers::isNumber(null); // false
-     * ```
-     *
-     * @param mixed $value The value to check
-     * @return bool True when the value is a valid number or numeric string
-     * @see \Phuture\Coherence\Numbers::parseInt()
-     * @see \Phuture\Coherence\Numbers::parseFloat()
-     */
-    public static function isNumber(mixed $value): bool
-    {
-        return is_numeric($value);
-    }
-
-    /**
      * Determines whether a number is less than another within epsilon tolerance.
      *
      * Returns true when `$a` is strictly less than `$b`, accounting for
@@ -660,6 +632,33 @@ class Numbers extends StaticClass
     public static function isNegative(int|float $number): bool
     {
         return (float) $number < 0.0;
+    }
+
+    /**
+     * Determines whether a value is a valid numeric representation.
+     *
+     * Accepts integers, floats, and numeric strings. Returns false for
+     * non-numeric strings, NAN, infinity, arrays, objects, and null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::isNumber(42); // true
+     * Numbers::isNumber(3.14); // true
+     * Numbers::isNumber('100'); // true
+     * Numbers::isNumber('abc'); // false
+     * Numbers::isNumber(null); // false
+     * ```
+     *
+     * @param mixed $value The value to check
+     * @return bool True when the value is a valid number or numeric string
+     * @see \Phuture\Coherence\Numbers::parseInt()
+     * @see \Phuture\Coherence\Numbers::parseFloat()
+     */
+    public static function isNumber(mixed $value): bool
+    {
+        return is_numeric($value);
     }
 
     /**
@@ -880,30 +879,35 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Converts a number into a human-readable percentage string.
+     * Parses a string to a float using PHP's floatval function.
      *
-     * Multiplies the number by the given multiplicand (default 100) and appends
-     * the percent sign. Useful for displaying ratios as percentages.
+     * Converts the given value to a floating-point number. Throws when the value
+     * is not a valid numeric representation (non-numeric strings, null, arrays, etc.).
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::percentage(0.75); // '75.0%'
-     * Numbers::percentage(0.75, 2); // '75.00%'
-     * Numbers::percentage(1.5, 1); // '150.0%'
-     * Numbers::percentage(3, 0, 1); // '300%'
+     * Numbers::parseFloat('3.14'); // 3.14
+     * Numbers::parseFloat('-2.5'); // -2.5
+     * Numbers::parseFloat('abc'); // throws InvalidArgumentException
      * ```
      *
-     * @param int|float $number The number to convert to a percentage
-     * @param int $precision The number of decimal places (default: 1)
-     * @param int $multiplicand The value to multiply by before formatting (default: 100)
-     * @return string The formatted percentage string with a percent sign
-     * @see \Phuture\Coherence\Numbers::format()
+     * @param mixed $value The value to parse
+     * @return float The parsed float value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the value is not numeric
+     * @see \Phuture\Coherence\Numbers::parseInt()
+     * @see \Phuture\Coherence\Numbers::isNumber()
      */
-    public static function percentage(int|float $number, int $precision = 1, int $multiplicand = 100): string
+    public static function parseFloat(mixed $value): float
     {
-        return number_format((float) $number * $multiplicand, $precision) . '%';
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The value must be a valid numeric representation'
+            );
+        }
+
+        return floatval($value);
     }
 
     /**
@@ -940,35 +944,30 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Parses a string to a float using PHP's floatval function.
+     * Converts a number into a human-readable percentage string.
      *
-     * Converts the given value to a floating-point number. Throws when the value
-     * is not a valid numeric representation (non-numeric strings, null, arrays, etc.).
+     * Multiplies the number by the given multiplicand (default 100) and appends
+     * the percent sign. Useful for displaying ratios as percentages.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::parseFloat('3.14'); // 3.14
-     * Numbers::parseFloat('-2.5'); // -2.5
-     * Numbers::parseFloat('abc'); // throws InvalidArgumentException
+     * Numbers::percentage(0.75); // '75.0%'
+     * Numbers::percentage(0.75, 2); // '75.00%'
+     * Numbers::percentage(1.5, 1); // '150.0%'
+     * Numbers::percentage(3, 0, 1); // '300%'
      * ```
      *
-     * @param mixed $value The value to parse
-     * @return float The parsed float value
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the value is not numeric
-     * @see \Phuture\Coherence\Numbers::parseInt()
-     * @see \Phuture\Coherence\Numbers::isNumber()
+     * @param int|float $number The number to convert to a percentage
+     * @param int $precision The number of decimal places (default: 1)
+     * @param int $multiplicand The value to multiply by before formatting (default: 100)
+     * @return string The formatted percentage string with a percent sign
+     * @see \Phuture\Coherence\Numbers::format()
      */
-    public static function parseFloat(mixed $value): float
+    public static function percentage(int|float $number, int $precision = 1, int $multiplicand = 100): string
     {
-        if (!is_numeric($value)) {
-            throw new InvalidArgumentException(
-                'Invalid Argument: The value must be a valid numeric representation'
-            );
-        }
-
-        return floatval($value);
+        return number_format((float) $number * $multiplicand, $precision) . '%';
     }
 
     /**
@@ -1000,37 +999,6 @@ class Numbers extends StaticClass
         RoundingMode $mode = RoundingMode::HalfUp
     ): float {
         return round((float) $number, $precision, $mode->toNativeRoundingMode());
-    }
-
-    /**
-     * Computes the square root of a number using BCMath for precision.
-     *
-     * Returns the square root as a string with the specified number of decimal places.
-     * Throws when the number is negative.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Numbers;
-     *
-     * Numbers::squareRoot(9); // '3.0000000000'
-     * Numbers::squareRoot(2, 4); // '1.4142'
-     * Numbers::squareRoot(0); // '0.0000000000'
-     * ```
-     *
-     * @param int|float $number The number to compute the square root of (must be non-negative)
-     * @param int $scale The number of decimal places in the result (default: 10)
-     * @return string The square root as a string
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the number is negative
-     */
-    public static function squareRoot(int|float $number, int $scale = self::DEFAULT_SCALE): string
-    {
-        if ((float) $number < 0) {
-            throw new InvalidArgumentException(
-                'Invalid Argument: Square root of a negative number is not supported'
-            );
-        }
-
-        return bcsqrt((string) $number, $scale);
     }
 
     /**
@@ -1073,6 +1041,37 @@ class Numbers extends StaticClass
         }
 
         return self::convertNumberToWords($number);
+    }
+
+    /**
+     * Computes the square root of a number using BCMath for precision.
+     *
+     * Returns the square root as a string with the specified number of decimal places.
+     * Throws when the number is negative.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::squareRoot(9); // '3.0000000000'
+     * Numbers::squareRoot(2, 4); // '1.4142'
+     * Numbers::squareRoot(0); // '0.0000000000'
+     * ```
+     *
+     * @param int|float $number The number to compute the square root of (must be non-negative)
+     * @param int $scale The number of decimal places in the result (default: 10)
+     * @return string The square root as a string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the number is negative
+     */
+    public static function squareRoot(int|float $number, int $scale = self::DEFAULT_SCALE): string
+    {
+        if ((float) $number < 0) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Square root of a negative number is not supported'
+            );
+        }
+
+        return bcsqrt((string) $number, $scale);
     }
 
     /**
@@ -1154,26 +1153,6 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Detects the number of decimal places in a numeric value.
-     *
-     * Examines the string representation of the number to determine how many
-     * digits follow the decimal point.
-     *
-     * @param int|float $number The number to inspect
-     * @return int The number of decimal places found
-     */
-    private static function detectPrecision(int|float $number): int
-    {
-        $string = (string) $number;
-
-        if (!str_contains($string, '.')) {
-            return 0;
-        }
-
-        return strlen(substr($string, strpos($string, '.') + 1));
-    }
-
-    /**
      * Converts an integer between 0 and 999,999,999 into English words.
      *
      * Breaks the number into groups of three digits and converts each group
@@ -1230,5 +1209,25 @@ class Numbers extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Detects the number of decimal places in a numeric value.
+     *
+     * Examines the string representation of the number to determine how many
+     * digits follow the decimal point.
+     *
+     * @param int|float $number The number to inspect
+     * @return int The number of decimal places found
+     */
+    private static function detectPrecision(int|float $number): int
+    {
+        $string = (string) $number;
+
+        if (!str_contains($string, '.')) {
+            return 0;
+        }
+
+        return strlen(substr($string, strpos($string, '.') + 1));
     }
 }

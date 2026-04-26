@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Type;
 
-use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Type\Numbers as FluentNumbers;
-use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
+use Phuture\Coherence\Exception\{InvalidArgumentException};
 
 require __DIR__ . '/../bootstrap.php';
 
 class NumbersTest extends TestCase
 {
+    public function testAbbreviate(): void
+    {
+        Assert::same(Numbers::abbreviate(1500), FluentNumbers::from(1500)->abbreviate());
+        Assert::same(Numbers::abbreviate(1000000), FluentNumbers::from(1000000)->abbreviate());
+        Assert::same(Numbers::abbreviate(1500, 2), FluentNumbers::from(1500)->abbreviate(2));
+    }
     public function testAbsolute(): void
     {
         Assert::same(5, FluentNumbers::from(-5)->absolute()->get());
@@ -28,13 +34,6 @@ class NumbersTest extends TestCase
         Assert::same('4.0000000000', FluentNumbers::from(1.5)->add(2.5)->get());
     }
 
-    public function testAbbreviate(): void
-    {
-        Assert::same(Numbers::abbreviate(1500), FluentNumbers::from(1500)->abbreviate());
-        Assert::same(Numbers::abbreviate(1000000), FluentNumbers::from(1000000)->abbreviate());
-        Assert::same(Numbers::abbreviate(1500, 2), FluentNumbers::from(1500)->abbreviate(2));
-    }
-
     public function testAreEqual(): void
     {
         Assert::true(FluentNumbers::from(0.1 + 0.2)->areEqual(0.3));
@@ -42,11 +41,50 @@ class NumbersTest extends TestCase
         Assert::false(FluentNumbers::from(1.0)->areEqual(2.0));
     }
 
+    public function testBcmathStringPreserved(): void
+    {
+        $result = FluentNumbers::from(0.1)->add(0.2)->get();
+        Assert::same('0.3000000000', $result);
+    }
+
     public function testCeil(): void
     {
         Assert::same(4.0, FluentNumbers::from(3.2)->ceil()->get());
         Assert::same(-1.0, FluentNumbers::from(-1.1)->ceil()->get());
         Assert::same(5.0, FluentNumbers::from(5.0)->ceil()->get());
+    }
+
+    public function testChaining(): void
+    {
+        $result = FluentNumbers::from(10)
+            ->add(5)
+            ->multiply(2)
+            ->subtract(3)
+            ->round(0)
+            ->get();
+
+        Assert::same(27.0, $result);
+    }
+
+    public function testChainingAbsoluteAndOpposite(): void
+    {
+        Assert::same(5, FluentNumbers::from(-5)->absolute()->get());
+        Assert::same(5, FluentNumbers::from(-5)->opposite()->absolute()->get());
+        Assert::same(-5, FluentNumbers::from(5)->opposite()->get());
+    }
+
+    public function testChainingClampAndRound(): void
+    {
+        Assert::same(100.0, FluentNumbers::from(150.7)->clamp(0, 100)->round(0)->get());
+        Assert::same(0.0, FluentNumbers::from(-5.3)->clamp(0, 100)->round(0)->get());
+    }
+
+    public function testChainingWithComparison(): void
+    {
+        $num = FluentNumbers::from(10)->add(5);
+        Assert::true($num->isPositive());
+        Assert::false($num->isZero());
+        Assert::true($num->isGreaterThan(10));
     }
 
     public function testClamp(): void
@@ -112,6 +150,26 @@ class NumbersTest extends TestCase
         Assert::same(Numbers::format(1234567, 0), FluentNumbers::from(1234567)->format(0));
     }
 
+    public function testGetReturnsStoredData(): void
+    {
+        Assert::same(42, FluentNumbers::from(42)->get());
+        Assert::same(3.14, FluentNumbers::from(3.14)->get());
+    }
+
+    public function testInvokeReturnsStoredData(): void
+    {
+        $num = FluentNumbers::from(42);
+        Assert::same(42, $num());
+    }
+
+    public function testIsFloat(): void
+    {
+        Assert::true(FluentNumbers::from(3.14)->isFloat());
+        Assert::true(FluentNumbers::from(0.5)->isFloat());
+        Assert::false(FluentNumbers::from(5)->isFloat());
+        Assert::false(FluentNumbers::from(5.0)->isFloat());
+    }
+
     public function testIsGreaterThan(): void
     {
         Assert::true(FluentNumbers::from(10.0)->isGreaterThan(5.0));
@@ -131,22 +189,6 @@ class NumbersTest extends TestCase
         Assert::true(FluentNumbers::from(5)->isInteger());
         Assert::true(FluentNumbers::from(5.0)->isInteger());
         Assert::false(FluentNumbers::from(3.14)->isInteger());
-    }
-
-    public function testIsFloat(): void
-    {
-        Assert::true(FluentNumbers::from(3.14)->isFloat());
-        Assert::true(FluentNumbers::from(0.5)->isFloat());
-        Assert::false(FluentNumbers::from(5)->isFloat());
-        Assert::false(FluentNumbers::from(5.0)->isFloat());
-    }
-
-    public function testIsNumber(): void
-    {
-        Assert::true(FluentNumbers::from(42)->isNumber());
-        Assert::true(FluentNumbers::from(3.14)->isNumber());
-        Assert::true(FluentNumbers::from('100')->isNumber());
-        Assert::false(FluentNumbers::from('abc')->isNumber());
     }
 
     public function testIsLessThan(): void
@@ -169,6 +211,14 @@ class NumbersTest extends TestCase
         Assert::true(FluentNumbers::from(-0.1)->isNegative());
         Assert::false(FluentNumbers::from(0)->isNegative());
         Assert::false(FluentNumbers::from(3)->isNegative());
+    }
+
+    public function testIsNumber(): void
+    {
+        Assert::true(FluentNumbers::from(42)->isNumber());
+        Assert::true(FluentNumbers::from(3.14)->isNumber());
+        Assert::true(FluentNumbers::from('100')->isNumber());
+        Assert::false(FluentNumbers::from('abc')->isNumber());
     }
 
     public function testIsPositive(): void
@@ -311,57 +361,6 @@ class NumbersTest extends TestCase
     {
         Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
         Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
-    }
-
-    public function testChaining(): void
-    {
-        $result = FluentNumbers::from(10)
-            ->add(5)
-            ->multiply(2)
-            ->subtract(3)
-            ->round(0)
-            ->get();
-
-        Assert::same(27.0, $result);
-    }
-
-    public function testChainingWithComparison(): void
-    {
-        $num = FluentNumbers::from(10)->add(5);
-        Assert::true($num->isPositive());
-        Assert::false($num->isZero());
-        Assert::true($num->isGreaterThan(10));
-    }
-
-    public function testChainingAbsoluteAndOpposite(): void
-    {
-        Assert::same(5, FluentNumbers::from(-5)->absolute()->get());
-        Assert::same(5, FluentNumbers::from(-5)->opposite()->absolute()->get());
-        Assert::same(-5, FluentNumbers::from(5)->opposite()->get());
-    }
-
-    public function testChainingClampAndRound(): void
-    {
-        Assert::same(100.0, FluentNumbers::from(150.7)->clamp(0, 100)->round(0)->get());
-        Assert::same(0.0, FluentNumbers::from(-5.3)->clamp(0, 100)->round(0)->get());
-    }
-
-    public function testGetReturnsStoredData(): void
-    {
-        Assert::same(42, FluentNumbers::from(42)->get());
-        Assert::same(3.14, FluentNumbers::from(3.14)->get());
-    }
-
-    public function testInvokeReturnsStoredData(): void
-    {
-        $num = FluentNumbers::from(42);
-        Assert::same(42, $num());
-    }
-
-    public function testBcmathStringPreserved(): void
-    {
-        $result = FluentNumbers::from(0.1)->add(0.2)->get();
-        Assert::same('0.3000000000', $result);
     }
 }
 
