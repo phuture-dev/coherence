@@ -43,10 +43,9 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  */
 class Hash extends StaticClass
 {
-    /**
-     * Maximum recursion depth for nested operations to prevent infinite recursion.
-     */
-    public const RECURSION_LIMIT = 100000;
+    public const DEFAULT_PBKDF2_ITERATIONS = 100000;
+
+    public const MAX_DERIVED_KEY_LENGTH = 100000;
 
     /**
      * Generates an Adler-32 hash of the given data.
@@ -61,7 +60,7 @@ class Hash extends StaticClass
      *
      * $checksum = Hash::adler32('Hello, World!');
      *
-     * // Returns: '1e38733c'
+     * // Returns: '1f9e046a'
      * ```
      *
      * @param string $data The data to generate a checksum for
@@ -156,11 +155,11 @@ class Hash extends StaticClass
      */
     public static function check(string $data, string $hash, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
-        return hash_equals($hash, self::hash($data, false, $algo));
+        return self::equals($hash, self::hash($data, false, $algo));
     }
 
     /**
@@ -168,6 +167,8 @@ class Hash extends StaticClass
      *
      * This method checks if data matches a previously created salted hash by
      * recombining the data with the same salt and comparing the resulting hashes.
+     * The salt is internally hashed using SHA-256 regardless of the chosen algorithm
+     * to ensure a consistent and secure salt preprocessing step.
      *
      * Example:
      * ```php
@@ -189,7 +190,7 @@ class Hash extends StaticClass
      */
     public static function checkWithSalt(string $data, string $hash, string $salt, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
@@ -209,7 +210,7 @@ class Hash extends StaticClass
      *
      * $checksum = Hash::crc32('Hello, World!');
      *
-     * // Returns: '0d4a1185'
+     * // Returns: 'dffed8e6'
      * ```
      *
      * @param string $data The data to generate a checksum for
@@ -593,7 +594,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::hash('Hello, World!', false, 'md5');
      *
-     * // Returns: '6cd3556deb0da54bca060b4c39479839'
+     * // Returns: '65a8e27d8879283831b664bd8b7f0ad4'
      * ```
      *
      * @param string $data The data to hash
@@ -707,11 +708,11 @@ class Hash extends StaticClass
      */
     public static function hmacCheck(string $data, string $key, string $hash, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
-        return hash_equals($hash, self::hmac($data, $key, false, $algo));
+        return self::equals($hash, self::hmac($data, $key, false, $algo));
     }
 
     /**
@@ -719,6 +720,8 @@ class Hash extends StaticClass
      *
      * This method checks if data matches a previously created salted HMAC by
      * recombining the data with the same salt and comparing the resulting HMACs.
+     * The salt is internally hashed using SHA-256 regardless of the chosen algorithm
+     * to ensure a consistent and secure salt preprocessing step.
      *
      * Example:
      * ```php
@@ -746,7 +749,7 @@ class Hash extends StaticClass
         string $salt,
         string $algo = 'sha256'
     ): bool {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
@@ -1127,11 +1130,18 @@ class Hash extends StaticClass
      *
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return HashContext Returns a hash context for incremental hashing
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the specified algorithm is not supported
      * @see \Phuture\Coherence\Hash::update() For adding data to the context
      * @see \Phuture\Coherence\Hash::final() For completing the hash calculation
      */
     public static function init(string $algo = 'sha256'): HashContext
     {
+        if (!in_array($algo, hash_algos())) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: {$algo} is not a valid hash algorithm"
+            );
+        }
+
         return hash_init($algo);
     }
 
@@ -1148,7 +1158,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md2('Hello, World!');
      *
-     * // Returns: 'd1cde6a0'
+     * // Returns: '1c8f1e6a94aaa7145210bf90bb52871a'
      * ```
      *
      * @param string $data The data to hash
@@ -1175,7 +1185,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md4('Hello, World!');
      *
-     * // Returns: '3bb38598'
+     * // Returns: '94e3cb0fa9aa7a5ee3db74b79e915989'
      * ```
      *
      * @param string $data The data to hash
@@ -1202,7 +1212,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md5('Hello, World!');
      *
-     * // Returns: '6cd3556deb0da54bca060b4c39479839'
+     * // Returns: '65a8e27d8879283831b664bd8b7f0ad4'
      * ```
      *
      * @param string $data The data to hash
@@ -1401,7 +1411,7 @@ class Hash extends StaticClass
     public static function pbkdf2(
         string $password,
         ?string $salt = null,
-        int $iterations = self::RECURSION_LIMIT,
+        int $iterations = self::DEFAULT_PBKDF2_ITERATIONS,
         int $length = 32,
         string $algo = 'sha256'
     ): string {
@@ -1411,9 +1421,9 @@ class Hash extends StaticClass
             );
         }
 
-        if ($length <= 0 || $length > self::RECURSION_LIMIT) {
+        if ($length <= 0 || $length > self::MAX_DERIVED_KEY_LENGTH) {
             throw new InvalidArgumentException(
-                "Invalid Argument: Length must be between 1 and " . self::RECURSION_LIMIT
+                "Invalid Argument: Length must be between 1 and " . self::MAX_DERIVED_KEY_LENGTH
             );
         }
 
@@ -1493,7 +1503,7 @@ class Hash extends StaticClass
      * $randomBinary = Hash::random(16, true); // 16 bytes of raw binary data
      * ```
      *
-     * @param int $length The desired length of the output (default: 128)
+     * @param int $length The desired length of the output in characters for hex, or bytes for binary (default: 128)
      * @param bool $binary Whether to return raw binary data (default: false for hex string)
      * @return string Returns random data as hex string or raw binary
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to generate random bytes
@@ -1503,7 +1513,11 @@ class Hash extends StaticClass
     public static function random(int $length = 128, bool $binary = false): string
     {
         try {
-            return $binary ? random_bytes($length) : mb_substr(bin2hex(random_bytes($length)), 0, $length);
+            if ($binary) {
+                return random_bytes($length);
+            }
+
+            return substr(bin2hex(random_bytes((int) ceil($length / 2))), 0, $length);
         } catch (RandomException $e) {
             throw new RuntimeException(
                 "Runtime Error: Unable to generate random bytes"
@@ -1524,7 +1538,7 @@ class Hash extends StaticClass
      *
      * $salt = Hash::salt(16);
      *
-     * // Returns: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456'
+     * // Returns: 'a1b2c3d4e5f678901234567890123456' (32 hex characters for 16 bytes)
      * ```
      *
      * @param int $length The desired length of the salt in bytes (default: 16)
@@ -1559,7 +1573,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha1('Hello, World!');
      *
-     * // Returns: '0a4d55a5d7e277a849a0f18b891c2b56c'
+     * // Returns: '0a0a9f2a6772942557ab5355d76af442f8f65e01'
      * ```
      *
      * @param string $data The data to hash
@@ -1614,7 +1628,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha384('Hello, World!');
      *
-     * // Returns: '86958c9f7c7cdbc8c09a0d23b3a4142d9dd3b7793713d86ec017a236b0b009c4a4e'
+     * // Returns: '5485cc9b3365b4305dfb4e8337e0a598a574f8242bf17289e0dd6c20a3cd44a089de16ab4ab308f63e44b1170eb5f515'
      * ```
      *
      * @param string $data The data to hash
@@ -1642,7 +1656,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha512('Hello, World!');
      *
-     * // Returns: '2ef7bde608ce5404e97d5f042f95f89f1c232871'
+     * // Returns: '374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387'
      * ```
      *
      * @param string $data The data to hash
@@ -1737,7 +1751,7 @@ class Hash extends StaticClass
     public static function unique(): string
     {
         try {
-            return self::sha256(uniqid('', true) . random_bytes(16));
+            return self::sha256(random_bytes(32));
         } catch (RandomException $e) {
             throw new RuntimeException(
                 "Runtime Error: Unable to generate random bytes"
