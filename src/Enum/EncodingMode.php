@@ -10,15 +10,6 @@ namespace Phuture\Coherence\Enum;
  * This enum defines how HTML encoding and decoding operations handle characters.
  * Each case represents a different level of encoding strictness.
  *
- * Example:
- * ```php
- * use Phuture\Coherence\Enum\EncodingMode;
- * use Phuture\Coherence\Html;
- *
- * Html::encode('café', EncodingMode::All); // 'caf&eacute;'
- * Html::encode('café', EncodingMode::SpecialChars); // 'café'
- * ```
- *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture

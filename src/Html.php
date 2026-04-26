@@ -385,37 +385,6 @@ class Html extends StaticClass
     }
 
     /**
-     * Generates an HTML track element for media elements.
-     *
-     * Creates a `<track>` element used inside `<video>` or `<audio>` elements
-     * to specify timed text tracks such as subtitles or captions.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Html;
-     *
-     * Html::track('subtitles.vtt', 'subtitles', 'en', 'English');
-     * // '<track src="subtitles.vtt" kind="subtitles" srclang="en" label="English">'
-     * ```
-     *
-     * @param string $src The URL of the track file (WebVTT format)
-     * @param string $kind The kind of timed track (e.g., 'subtitles', 'captions')
-     * @param string $srcLanguage The language code of the track
-     * @param string $label A human-readable title for the track
-     * @return string The generated `<track>` element
-     * @see \Phuture\Coherence\Html::tag()
-     */
-    public static function track(string $src, string $kind, string $srcLanguage, string $label): string
-    {
-        return self::tag('track', '', [
-            'src' => $src,
-            'kind' => $kind,
-            'srclang' => $srcLanguage,
-            'label' => $label,
-        ]);
-    }
-
-    /**
      * Builds HTML from a multi-dimensional array structure.
      *
      * Recursively generates HTML elements from an array of tag definitions.
