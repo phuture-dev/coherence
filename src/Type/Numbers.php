@@ -230,6 +230,28 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
+     * Determines whether the wrapped number is a float with a fractional part.
+     *
+     * @return bool True when the wrapped value has a fractional part
+     * @see Transformer::isFloat()
+     */
+    public function isFloat(): bool
+    {
+        return Transformer::isFloat($this->numericValue());
+    }
+
+    /**
+     * Determines whether the wrapped value is a valid numeric representation.
+     *
+     * @return bool True when the wrapped value is numeric
+     * @see Transformer::isNumber()
+     */
+    public function isNumber(): bool
+    {
+        return Transformer::isNumber($this->data);
+    }
+
+    /**
      * Determines whether the wrapped number is less than another within epsilon tolerance.
      *
      * @param int|float $b The value to compare against

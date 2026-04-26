@@ -522,6 +522,60 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Determines whether a value is a floating-point number (has a fractional part).
+     *
+     * Returns true when the value is a finite float that is not a whole number.
+     * Integer values, infinity, and NAN return false. This is the logical
+     * inverse of `isInteger()` for finite numeric values.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::isFloat(3.14); // true
+     * Numbers::isFloat(0.5); // true
+     * Numbers::isFloat(5); // false
+     * Numbers::isFloat(5.0); // false
+     * Numbers::isFloat(INF); // false
+     * ```
+     *
+     * @param int|float $value The value to check
+     * @return bool True when the value is a float with a fractional part
+     * @see \Phuture\Coherence\Numbers::isInteger()
+     */
+    public static function isFloat(int|float $value): bool
+    {
+        return is_finite((float) $value) && floor((float) $value) !== (float) $value;
+    }
+
+    /**
+     * Determines whether a value is a valid numeric representation.
+     *
+     * Accepts integers, floats, and numeric strings. Returns false for
+     * non-numeric strings, NAN, infinity, arrays, objects, and null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::isNumber(42); // true
+     * Numbers::isNumber(3.14); // true
+     * Numbers::isNumber('100'); // true
+     * Numbers::isNumber('abc'); // false
+     * Numbers::isNumber(null); // false
+     * ```
+     *
+     * @param mixed $value The value to check
+     * @return bool True when the value is a valid number or numeric string
+     * @see \Phuture\Coherence\Numbers::parseInt()
+     * @see \Phuture\Coherence\Numbers::parseFloat()
+     */
+    public static function isNumber(mixed $value): bool
+    {
+        return is_numeric($value);
+    }
+
+    /**
      * Determines whether a number is less than another within epsilon tolerance.
      *
      * Returns true when `$a` is strictly less than `$b`, accounting for
@@ -853,11 +907,10 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Parses a string to an integer using PHP's native casting.
+     * Parses a string to an integer using PHP's intval function.
      *
-     * Strips whitespace and converts the string to an integer. Non-numeric
-     * characters after the number are ignored. Returns 0 when the string
-     * does not start with a valid number.
+     * Converts the given value to an integer. Throws when the value is not
+     * a valid numeric representation (non-numeric strings, null, arrays, etc.).
      *
      * Example:
      * ```php
@@ -866,23 +919,31 @@ class Numbers extends StaticClass
      * Numbers::parseInt('42'); // 42
      * Numbers::parseInt('-7'); // -7
      * Numbers::parseInt('3.9'); // 3
-     * Numbers::parseInt('abc'); // 0
+     * Numbers::parseInt('abc'); // throws InvalidArgumentException
      * ```
      *
-     * @param string $value The string to parse
+     * @param mixed $value The value to parse
      * @return int The parsed integer value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the value is not numeric
      * @see \Phuture\Coherence\Numbers::parseFloat()
+     * @see \Phuture\Coherence\Numbers::isNumber()
      */
-    public static function parseInt(string $value): int
+    public static function parseInt(mixed $value): int
     {
-        return (int) $value;
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The value must be a valid numeric representation'
+            );
+        }
+
+        return intval($value);
     }
 
     /**
-     * Parses a string to a float using PHP's native casting.
+     * Parses a string to a float using PHP's floatval function.
      *
-     * Strips whitespace and converts the string to a floating-point number.
-     * Returns 0.0 when the string does not start with a valid number.
+     * Converts the given value to a floating-point number. Throws when the value
+     * is not a valid numeric representation (non-numeric strings, null, arrays, etc.).
      *
      * Example:
      * ```php
@@ -890,16 +951,24 @@ class Numbers extends StaticClass
      *
      * Numbers::parseFloat('3.14'); // 3.14
      * Numbers::parseFloat('-2.5'); // -2.5
-     * Numbers::parseFloat('abc'); // 0.0
+     * Numbers::parseFloat('abc'); // throws InvalidArgumentException
      * ```
      *
-     * @param string $value The string to parse
+     * @param mixed $value The value to parse
      * @return float The parsed float value
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the value is not numeric
      * @see \Phuture\Coherence\Numbers::parseInt()
+     * @see \Phuture\Coherence\Numbers::isNumber()
      */
-    public static function parseFloat(string $value): float
+    public static function parseFloat(mixed $value): float
     {
-        return (float) $value;
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The value must be a valid numeric representation'
+            );
+        }
+
+        return floatval($value);
     }
 
     /**

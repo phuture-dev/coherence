@@ -133,6 +133,22 @@ class NumbersTest extends TestCase
         Assert::false(FluentNumbers::from(3.14)->isInteger());
     }
 
+    public function testIsFloat(): void
+    {
+        Assert::true(FluentNumbers::from(3.14)->isFloat());
+        Assert::true(FluentNumbers::from(0.5)->isFloat());
+        Assert::false(FluentNumbers::from(5)->isFloat());
+        Assert::false(FluentNumbers::from(5.0)->isFloat());
+    }
+
+    public function testIsNumber(): void
+    {
+        Assert::true(FluentNumbers::from(42)->isNumber());
+        Assert::true(FluentNumbers::from(3.14)->isNumber());
+        Assert::true(FluentNumbers::from('100')->isNumber());
+        Assert::false(FluentNumbers::from('abc')->isNumber());
+    }
+
     public function testIsLessThan(): void
     {
         Assert::true(FluentNumbers::from(5.0)->isLessThan(10.0));

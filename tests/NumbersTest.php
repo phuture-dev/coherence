@@ -237,6 +237,32 @@ class NumbersTest extends TestCase
         Assert::false(Numbers::isInteger(NAN));
     }
 
+    public function testIsFloat(): void
+    {
+        Assert::true(Numbers::isFloat(3.14));
+        Assert::true(Numbers::isFloat(0.5));
+        Assert::true(Numbers::isFloat(-0.1));
+        Assert::false(Numbers::isFloat(5));
+        Assert::false(Numbers::isFloat(5.0));
+        Assert::false(Numbers::isFloat(-3.0));
+        Assert::false(Numbers::isFloat(INF));
+        Assert::false(Numbers::isFloat(NAN));
+    }
+
+    public function testIsNumber(): void
+    {
+        Assert::true(Numbers::isNumber(42));
+        Assert::true(Numbers::isNumber(3.14));
+        Assert::true(Numbers::isNumber('100'));
+        Assert::true(Numbers::isNumber('3.14'));
+        Assert::true(Numbers::isNumber('-7'));
+        Assert::true(Numbers::isNumber('0'));
+        Assert::false(Numbers::isNumber('abc'));
+        Assert::false(Numbers::isNumber(''));
+        Assert::false(Numbers::isNumber(null));
+        Assert::false(Numbers::isNumber([]));
+    }
+
     public function testIsLessThan(): void
     {
         Assert::true(Numbers::isLessThan(5.0, 10.0));
@@ -361,14 +387,48 @@ class NumbersTest extends TestCase
         Assert::same(42, Numbers::parseInt('42'));
         Assert::same(-7, Numbers::parseInt('-7'));
         Assert::same(3, Numbers::parseInt('3.9'));
-        Assert::same(0, Numbers::parseInt('abc'));
+        Assert::same(100, Numbers::parseInt(100));
+        Assert::same(5, Numbers::parseInt(5.9));
+    }
+
+    public function testParseIntInvalidArgument(): void
+    {
+        Assert::exception(
+            fn () => Numbers::parseInt('abc'),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseInt(''),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseInt(null),
+            InvalidArgumentException::class
+        );
     }
 
     public function testParseFloat(): void
     {
         Assert::same(3.14, Numbers::parseFloat('3.14'));
         Assert::same(-2.5, Numbers::parseFloat('-2.5'));
-        Assert::same(0.0, Numbers::parseFloat('abc'));
+        Assert::same(100.0, Numbers::parseFloat(100));
+        Assert::same(3.14, Numbers::parseFloat(3.14));
+    }
+
+    public function testParseFloatInvalidArgument(): void
+    {
+        Assert::exception(
+            fn () => Numbers::parseFloat('abc'),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseFloat(''),
+            InvalidArgumentException::class
+        );
+        Assert::exception(
+            fn () => Numbers::parseFloat(null),
+            InvalidArgumentException::class
+        );
     }
 
     public function testRound(): void
