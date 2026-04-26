@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests;
 
+use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
@@ -379,7 +380,7 @@ class NumbersTest extends TestCase
 
     public function testRoundHalfDown(): void
     {
-        Assert::same(3.0, Numbers::round(3.5, 0, PHP_ROUND_HALF_DOWN));
+        Assert::same(3.0, Numbers::round(3.5, 0, RoundingMode::HalfDown));
     }
 
     public function testRoundNegative(): void

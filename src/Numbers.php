@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
+use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
@@ -53,9 +54,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::absolute(-5);    // 5
-     * Numbers::absolute(3.14);  // 3.14
-     * Numbers::absolute(0);     // 0
+     * Numbers::absolute(-5); // 5
+     * Numbers::absolute(3.14); // 3.14
+     * Numbers::absolute(0); // 0
      * ```
      *
      * @param int|float $number The number to convert
@@ -77,9 +78,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::add(0.1, 0.2);         // '0.3000000000'
-     * Numbers::add(100, 200, 2);      // '300.00'
-     * Numbers::add(1.5, 2.5, 0);      // '4'
+     * Numbers::add(0.1, 0.2); // '0.3000000000'
+     * Numbers::add(100, 200, 2); // '300.00'
+     * Numbers::add(1.5, 2.5, 0); // '4'
      * ```
      *
      * @param int|float $a The first addend
@@ -103,10 +104,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::abbreviate(1500);       // '1.5K'
-     * Numbers::abbreviate(1000000);    // '1.0M'
-     * Numbers::abbreviate(123456789);  // '123.5M'
-     * Numbers::abbreviate(1500, 2);    // '1.50K'
+     * Numbers::abbreviate(1500); // '1.5K'
+     * Numbers::abbreviate(1000000); // '1.0M'
+     * Numbers::abbreviate(123456789); // '123.5M'
+     * Numbers::abbreviate(1500, 2); // '1.50K'
      * ```
      *
      * @param int|float $number The number to abbreviate
@@ -133,9 +134,9 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether two floating-point numbers are equal within epsilon tolerance.
+     * Determines whether two numbers are equal within epsilon tolerance.
      *
-     * Compares two floats while accounting for small precision errors that are
+     * Compares two numbers while accounting for small precision errors that are
      * inherent in floating-point arithmetic. For example, `0.1 + 0.2` and `0.3`
      * are considered equal even though they differ by a tiny amount.
      *
@@ -146,19 +147,19 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::areEqual(0.1 + 0.2, 0.3);  // true
-     * Numbers::areEqual(10, 10.0);         // true
-     * Numbers::areEqual(1.0, 2.0);         // false
+     * Numbers::areEqual(0.1 + 0.2, 0.3); // true
+     * Numbers::areEqual(10, 10.0); // true
+     * Numbers::areEqual(1.0, 2.0); // false
      * ```
      *
-     * @param float $a The first value to compare
-     * @param float $b The second value to compare
+     * @param int|float $a The first value to compare
+     * @param int|float $b The second value to compare
      * @return bool True when both values are equal within epsilon tolerance
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::compare()
      * @see \Phuture\Coherence\Numbers::isZero()
      */
-    public static function areEqual(float $a, float $b): bool
+    public static function areEqual(int|float $a, int|float $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -176,9 +177,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::ceil(3.2);   // 4.0
-     * Numbers::ceil(-1.1);  // -1.0
-     * Numbers::ceil(5.0);   // 5.0
+     * Numbers::ceil(3.2); // 4.0
+     * Numbers::ceil(-1.1); // -1.0
+     * Numbers::ceil(5.0); // 5.0
      * ```
      *
      * @param int|float $number The number to round up
@@ -201,9 +202,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::clamp(5, 1, 10);     // 5
-     * Numbers::clamp(-3, 0, 100);   // 0
-     * Numbers::clamp(150, 0, 100);  // 100
+     * Numbers::clamp(5, 1, 10); // 5
+     * Numbers::clamp(-3, 0, 100); // 0
+     * Numbers::clamp(150, 0, 100); // 100
      * ```
      *
      * @param int|float $number The number to restrict
@@ -226,7 +227,7 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Compares two floating-point numbers and returns their relative order.
+     * Compares two numbers and returns their relative order.
      *
      * Returns -1 when `$a` is less than `$b`, 0 when they are equal within
      * epsilon tolerance, and 1 when `$a` is greater than `$b`. Suitable for
@@ -238,21 +239,21 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::compare(1.0, 2.0);   // -1
-     * Numbers::compare(2.0, 1.0);   // 1
-     * Numbers::compare(1.0, 1.0);   // 0
+     * Numbers::compare(1.0, 2.0); // -1
+     * Numbers::compare(2.0, 1.0); // 1
+     * Numbers::compare(1.0, 1.0); // 0
      *
      * $arr = [3, 1, 2];
      * usort($arr, [Numbers::class, 'compare']); // [1, 2, 3]
      * ```
      *
-     * @param float $a The first value to compare
-     * @param float $b The second value to compare
+     * @param int|float $a The first value to compare
+     * @param int|float $b The second value to compare
      * @return int -1 when $a < $b, 0 when equal, 1 when $a > $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::areEqual()
      */
-    public static function compare(float $a, float $b): int
+    public static function compare(int|float $a, int|float $b): int
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -274,9 +275,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::divide(10, 3);         // '3.3333333333'
-     * Numbers::divide(100, 4, 2);     // '25.00'
-     * Numbers::divide(1, 3, 4);       // '0.3333'
+     * Numbers::divide(10, 3); // '3.3333333333'
+     * Numbers::divide(100, 4, 2); // '25.00'
+     * Numbers::divide(1, 3, 4); // '0.3333'
      * ```
      *
      * @param int|float $a The dividend
@@ -307,11 +308,11 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::fileSize(500);           // '500 B'
-     * Numbers::fileSize(1024);          // '1 KB'
-     * Numbers::fileSize(1048576);       // '1 MB'
-     * Numbers::fileSize(1073741824);    // '1 GB'
-     * Numbers::fileSize(1500, 2);       // '1.46 KB'
+     * Numbers::fileSize(500); // '500 B'
+     * Numbers::fileSize(1024); // '1 KB'
+     * Numbers::fileSize(1048576); // '1 MB'
+     * Numbers::fileSize(1073741824); // '1 GB'
+     * Numbers::fileSize(1500, 2); // '1.46 KB'
      * ```
      *
      * @param int|float $bytes The file size in bytes
@@ -347,9 +348,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::floor(3.8);   // 3.0
-     * Numbers::floor(-1.1);  // -2.0
-     * Numbers::floor(5.0);   // 5.0
+     * Numbers::floor(3.8); // 3.0
+     * Numbers::floor(-1.1); // -2.0
+     * Numbers::floor(5.0); // 5.0
      * ```
      *
      * @param int|float $number The number to round down
@@ -372,9 +373,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::forHumans(1500);       // '1.5 thousand'
-     * Numbers::forHumans(1000000);    // '1.0 million'
-     * Numbers::forHumans(1234, 2);    // '1.23 thousand'
+     * Numbers::forHumans(1500); // '1.5 thousand'
+     * Numbers::forHumans(1000000); // '1.0 million'
+     * Numbers::forHumans(1234, 2); // '1.23 thousand'
      * ```
      *
      * @param int|float $number The number to format
@@ -411,9 +412,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::format(1234567.8912, 2);   // '1,234,567.89'
-     * Numbers::format(1234567, 0);         // '1,234,567'
-     * Numbers::format(1234.5678, 4);       // '1,234.5678'
+     * Numbers::format(1234567.8912, 2); // '1,234,567.89'
+     * Numbers::format(1234567, 0); // '1,234,567'
+     * Numbers::format(1234.5678, 4); // '1,234.5678'
      * ```
      *
      * @param int|float $number The number to format
@@ -432,7 +433,7 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a floating-point number is greater than another within epsilon tolerance.
+     * Determines whether a number is greater than another within epsilon tolerance.
      *
      * Returns true when `$a` is strictly greater than `$b`, accounting for
      * floating-point precision errors.
@@ -443,19 +444,19 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isGreaterThan(10.0, 5.0);    // true
-     * Numbers::isGreaterThan(5.0, 10.0);     // false
-     * Numbers::isGreaterThan(10.0, 10.0);    // false
+     * Numbers::isGreaterThan(10.0, 5.0); // true
+     * Numbers::isGreaterThan(5.0, 10.0); // false
+     * Numbers::isGreaterThan(10.0, 10.0); // false
      * ```
      *
-     * @param float $a The value to test
-     * @param float $b The value to compare against
+     * @param int|float $a The value to test
+     * @param int|float $b The value to compare against
      * @return bool True when $a is strictly greater than $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isGreaterThanOrEqualTo()
      * @see \Phuture\Coherence\Numbers::isLessThan()
      */
-    public static function isGreaterThan(float $a, float $b): bool
+    public static function isGreaterThan(int|float $a, int|float $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -464,7 +465,7 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a floating-point number is greater than or equal to another.
+     * Determines whether a number is greater than or equal to another.
      *
      * Returns true when `$a` is greater than or equal to `$b`, accounting for
      * floating-point precision errors.
@@ -475,19 +476,19 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isGreaterThanOrEqualTo(10.0, 5.0);   // true
-     * Numbers::isGreaterThanOrEqualTo(10.0, 10.0);   // true
-     * Numbers::isGreaterThanOrEqualTo(5.0, 10.0);    // false
+     * Numbers::isGreaterThanOrEqualTo(10.0, 5.0); // true
+     * Numbers::isGreaterThanOrEqualTo(10.0, 10.0); // true
+     * Numbers::isGreaterThanOrEqualTo(5.0, 10.0); // false
      * ```
      *
-     * @param float $a The value to test
-     * @param float $b The value to compare against
+     * @param int|float $a The value to test
+     * @param int|float $b The value to compare against
      * @return bool True when $a is greater than or equal to $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isGreaterThan()
      * @see \Phuture\Coherence\Numbers::isLessThanOrEqualTo()
      */
-    public static function isGreaterThanOrEqualTo(float $a, float $b): bool
+    public static function isGreaterThanOrEqualTo(int|float $a, int|float $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -505,11 +506,11 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isInteger(5);      // true
-     * Numbers::isInteger(5.0);    // true
-     * Numbers::isInteger(-3.0);   // true
-     * Numbers::isInteger(3.14);   // false
-     * Numbers::isInteger(INF);    // false
+     * Numbers::isInteger(5); // true
+     * Numbers::isInteger(5.0); // true
+     * Numbers::isInteger(-3.0); // true
+     * Numbers::isInteger(3.14); // false
+     * Numbers::isInteger(INF); // false
      * ```
      *
      * @param int|float $value The value to check
@@ -522,7 +523,7 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a floating-point number is less than another within epsilon tolerance.
+     * Determines whether a number is less than another within epsilon tolerance.
      *
      * Returns true when `$a` is strictly less than `$b`, accounting for
      * floating-point precision errors.
@@ -533,19 +534,19 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isLessThan(5.0, 10.0);    // true
-     * Numbers::isLessThan(10.0, 5.0);     // false
-     * Numbers::isLessThan(10.0, 10.0);    // false
+     * Numbers::isLessThan(5.0, 10.0); // true
+     * Numbers::isLessThan(10.0, 5.0); // false
+     * Numbers::isLessThan(10.0, 10.0); // false
      * ```
      *
-     * @param float $a The value to test
-     * @param float $b The value to compare against
+     * @param int|float $a The value to test
+     * @param int|float $b The value to compare against
      * @return bool True when $a is strictly less than $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isLessThanOrEqualTo()
      * @see \Phuture\Coherence\Numbers::isGreaterThan()
      */
-    public static function isLessThan(float $a, float $b): bool
+    public static function isLessThan(int|float $a, int|float $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -554,7 +555,7 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a floating-point number is less than or equal to another.
+     * Determines whether a number is less than or equal to another.
      *
      * Returns true when `$a` is less than or equal to `$b`, accounting for
      * floating-point precision errors.
@@ -565,19 +566,19 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isLessThanOrEqualTo(5.0, 10.0);    // true
-     * Numbers::isLessThanOrEqualTo(10.0, 10.0);    // true
-     * Numbers::isLessThanOrEqualTo(15.0, 10.0);    // false
+     * Numbers::isLessThanOrEqualTo(5.0, 10.0); // true
+     * Numbers::isLessThanOrEqualTo(10.0, 10.0); // true
+     * Numbers::isLessThanOrEqualTo(15.0, 10.0); // false
      * ```
      *
-     * @param float $a The value to test
-     * @param float $b The value to compare against
+     * @param int|float $a The value to test
+     * @param int|float $b The value to compare against
      * @return bool True when $a is less than or equal to $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isLessThan()
      * @see \Phuture\Coherence\Numbers::isGreaterThanOrEqualTo()
      */
-    public static function isLessThanOrEqualTo(float $a, float $b): bool
+    public static function isLessThanOrEqualTo(int|float $a, int|float $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -592,10 +593,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isNegative(-5);    // true
-     * Numbers::isNegative(-0.1);  // true
-     * Numbers::isNegative(0);     // false
-     * Numbers::isNegative(3);     // false
+     * Numbers::isNegative(-5); // true
+     * Numbers::isNegative(-0.1); // true
+     * Numbers::isNegative(0); // false
+     * Numbers::isNegative(3); // false
      * ```
      *
      * @param int|float $number The number to check
@@ -615,10 +616,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isPositive(5);     // true
-     * Numbers::isPositive(0.1);   // true
-     * Numbers::isPositive(0);     // false
-     * Numbers::isPositive(-3);    // false
+     * Numbers::isPositive(5); // true
+     * Numbers::isPositive(0.1); // true
+     * Numbers::isPositive(0); // false
+     * Numbers::isPositive(-3); // false
      * ```
      *
      * @param int|float $number The number to check
@@ -641,10 +642,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::isZero(0);     // true
-     * Numbers::isZero(0.0);   // true
-     * Numbers::isZero(0.5);   // false
-     * Numbers::isZero(-0.0);  // true
+     * Numbers::isZero(0); // true
+     * Numbers::isZero(0.0); // true
+     * Numbers::isZero(0.5); // false
+     * Numbers::isZero(-0.0); // true
      * ```
      *
      * @param int|float $number The number to check
@@ -666,8 +667,8 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::max(3, 7);      // 7
-     * Numbers::max(-5, -2);    // -2
+     * Numbers::max(3, 7); // 7
+     * Numbers::max(-5, -2); // -2
      * Numbers::max(3.14, 2.7); // 3.14
      * ```
      *
@@ -691,8 +692,8 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::min(3, 7);      // 3
-     * Numbers::min(-5, -2);    // -5
+     * Numbers::min(3, 7); // 3
+     * Numbers::min(-5, -2); // -5
      * Numbers::min(3.14, 2.7); // 2.7
      * ```
      *
@@ -716,9 +717,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::modulus(10, 3);    // '1'
-     * Numbers::modulus(10, 2);    // '0'
-     * Numbers::modulus(7.5, 2);   // '1.5'
+     * Numbers::modulus(10, 3); // '1'
+     * Numbers::modulus(10, 2); // '0'
+     * Numbers::modulus(7.5, 2); // '1.5'
      * ```
      *
      * @param int|float $a The dividend
@@ -748,9 +749,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::multiply(0.1, 0.2);         // '0.0200000000'
-     * Numbers::multiply(3, 4, 0);          // '12'
-     * Numbers::multiply(2.5, 4.0, 2);      // '10.00'
+     * Numbers::multiply(0.1, 0.2); // '0.0200000000'
+     * Numbers::multiply(3, 4, 0); // '12'
+     * Numbers::multiply(2.5, 4.0, 2); // '10.00'
      * ```
      *
      * @param int|float $a The first factor
@@ -774,9 +775,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::opposite(5);     // -5
-     * Numbers::opposite(-3.2);  // 3.2
-     * Numbers::opposite(0);     // 0
+     * Numbers::opposite(5); // -5
+     * Numbers::opposite(-3.2); // 3.2
+     * Numbers::opposite(0); // 0
      * ```
      *
      * @param int|float $number The number to negate
@@ -798,12 +799,12 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::ordinal(1);   // '1st'
-     * Numbers::ordinal(2);   // '2nd'
-     * Numbers::ordinal(3);   // '3rd'
-     * Numbers::ordinal(4);   // '4th'
-     * Numbers::ordinal(11);  // '11th'
-     * Numbers::ordinal(21);  // '21st'
+     * Numbers::ordinal(1); // '1st'
+     * Numbers::ordinal(2); // '2nd'
+     * Numbers::ordinal(3); // '3rd'
+     * Numbers::ordinal(4); // '4th'
+     * Numbers::ordinal(11); // '11th'
+     * Numbers::ordinal(21); // '21st'
      * ```
      *
      * @param int $number The integer to convert
@@ -836,10 +837,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::percentage(0.75);         // '75.0%'
-     * Numbers::percentage(0.75, 2);      // '75.00%'
-     * Numbers::percentage(1.5, 1);       // '150.0%'
-     * Numbers::percentage(3, 0, 1);      // '300%'
+     * Numbers::percentage(0.75); // '75.0%'
+     * Numbers::percentage(0.75, 2); // '75.00%'
+     * Numbers::percentage(1.5, 1); // '150.0%'
+     * Numbers::percentage(3, 0, 1); // '300%'
      * ```
      *
      * @param int|float $number The number to convert to a percentage
@@ -864,10 +865,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::parseInt('42');       // 42
-     * Numbers::parseInt('-7');       // -7
-     * Numbers::parseInt('3.9');      // 3
-     * Numbers::parseInt('abc');      // 0
+     * Numbers::parseInt('42'); // 42
+     * Numbers::parseInt('-7'); // -7
+     * Numbers::parseInt('3.9'); // 3
+     * Numbers::parseInt('abc'); // 0
      * ```
      *
      * @param string $value The string to parse
@@ -889,9 +890,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::parseFloat('3.14');    // 3.14
-     * Numbers::parseFloat('-2.5');    // -2.5
-     * Numbers::parseFloat('abc');     // 0.0
+     * Numbers::parseFloat('3.14'); // 3.14
+     * Numbers::parseFloat('-2.5'); // -2.5
+     * Numbers::parseFloat('abc'); // 0.0
      * ```
      *
      * @param string $value The string to parse
@@ -912,34 +913,26 @@ class Numbers extends StaticClass
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
+     * use Phuture\Coherence\Enum\RoundingMode;
      *
-     * Numbers::round(3.456, 2);           // 3.46
-     * Numbers::round(3.456, 0);           // 3.0
-     * Numbers::round(3.5, 0, PHP_ROUND_HALF_DOWN); // 3.0
+     * Numbers::round(3.456, 2); // 3.46
+     * Numbers::round(3.456, 0); // 3.0
+     * Numbers::round(3.5, 0, RoundingMode::HalfDown); // 3.0
      * ```
      *
      * @param int|float $number The number to round
      * @param int $precision The number of decimal places (default: 0)
-     * @param int $mode The rounding mode: PHP_ROUND_HALF_UP, PHP_ROUND_HALF_DOWN,
-     *   PHP_ROUND_HALF_EVEN, or PHP_ROUND_HALF_ODD (default: PHP_ROUND_HALF_UP)
+     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
      * @return float The rounded value
      * @see \Phuture\Coherence\Numbers::ceil()
      * @see \Phuture\Coherence\Numbers::floor()
      */
-    public static function round(int|float $number, int $precision = 0, int $mode = PHP_ROUND_HALF_UP): float
-    {
-        $validModes = [
-            PHP_ROUND_HALF_UP,
-            PHP_ROUND_HALF_DOWN,
-            PHP_ROUND_HALF_EVEN,
-            PHP_ROUND_HALF_ODD,
-        ];
-
-        if (!in_array($mode, $validModes, true)) {
-            $mode = PHP_ROUND_HALF_UP;
-        }
-
-        return round((float) $number, $precision, $mode);
+    public static function round(
+        int|float $number,
+        int $precision = 0,
+        RoundingMode $mode = RoundingMode::HalfUp
+    ): float {
+        return round((float) $number, $precision, $mode->toNativeRoundingMode());
     }
 
     /**
@@ -952,9 +945,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::squareRoot(9);        // '3.0000000000'
-     * Numbers::squareRoot(2, 4);     // '1.4142'
-     * Numbers::squareRoot(0);        // '0.0000000000'
+     * Numbers::squareRoot(9); // '3.0000000000'
+     * Numbers::squareRoot(2, 4); // '1.4142'
+     * Numbers::squareRoot(0); // '0.0000000000'
      * ```
      *
      * @param int|float $number The number to compute the square root of (must be non-negative)
@@ -984,12 +977,12 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::spell(0);       // 'zero'
-     * Numbers::spell(7);       // 'seven'
-     * Numbers::spell(42);      // 'forty-two'
-     * Numbers::spell(-5);      // 'negative five'
-     * Numbers::spell(100);     // 'one hundred'
-     * Numbers::spell(1000);    // 'one thousand'
+     * Numbers::spell(0); // 'zero'
+     * Numbers::spell(7); // 'seven'
+     * Numbers::spell(42); // 'forty-two'
+     * Numbers::spell(-5); // 'negative five'
+     * Numbers::spell(100); // 'one hundred'
+     * Numbers::spell(1000); // 'one thousand'
      * ```
      *
      * @param int|float $number The number to spell out
@@ -1025,9 +1018,9 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::subtract(10, 3);          // '7.0000000000'
-     * Numbers::subtract(5.5, 2.5, 2);    // '3.00'
-     * Numbers::subtract(1, 1, 0);        // '0'
+     * Numbers::subtract(10, 3); // '7.0000000000'
+     * Numbers::subtract(5.5, 2.5, 2); // '3.00'
+     * Numbers::subtract(1, 1, 0); // '0'
      * ```
      *
      * @param int|float $a The minuend
@@ -1052,10 +1045,10 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::trimTrailingZeros('3.14000');    // '3.14'
-     * Numbers::trimTrailingZeros('5.00');       // '5'
-     * Numbers::trimTrailingZeros('100.000');    // '100'
-     * Numbers::trimTrailingZeros(7.500);        // '7.5'
+     * Numbers::trimTrailingZeros('3.14000'); // '3.14'
+     * Numbers::trimTrailingZeros('5.00'); // '5'
+     * Numbers::trimTrailingZeros('100.000'); // '100'
+     * Numbers::trimTrailingZeros(7.500); // '7.5'
      * ```
      *
      * @param int|float|string $number The number or numeric string to trim
