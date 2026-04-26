@@ -51,21 +51,4 @@ interface Numberable
      * @return int The integer representation of the object
      */
     public function toInt(): int;
-
-    /**
-     * Converts the object to either an integer or float.
-     *
-     * This method should return the most appropriate numeric representation
-     * of the object. If the value contains decimal places, it should return
-     * a float; otherwise, it should return an integer.
-     *
-     * Example:
-     * ```php
-     * $number = new SomeNumberableObject();
-     * $value = $number->toNumber(); // Returns: 42 or 42.5
-     * ```
-     *
-     * @return int|float The numeric representation of the object
-     */
-    public function toNumber(): int|float;
 }

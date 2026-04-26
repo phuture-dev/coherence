@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
 use Phuture\Coherence\Enum\EncodingMode;
-use Phuture\Coherence\Exception\InvalidArgumentException;
+use League\CommonMark\CommonMarkConverter;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Exception\InvalidArgumentException;
 
 /**
  * Comprehensive HTML manipulation utility class.
@@ -45,154 +45,61 @@ class Html extends StaticClass
     ];
 
     /**
-     * Converts HTML to plain text.
+     * Builds HTML from a multi-dimensional array structure.
      *
-     * Removes all HTML tags and returns readable text. The `<br>` tag is
-     * converted to a newline character before stripping, and all HTML entities
-     * are decoded. If the content between block-level tags appears on separate
-     * lines, the spacing is preserved for readability.
+     * Recursively generates HTML elements from an array of tag definitions.
+     * Each element in the array must contain a `tag` key with the tag name,
+     * and may optionally contain `attributes` (an associative array) and
+     * `content` (either a string or another tag definition array for nesting).
      *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Html;
-     *
-     * Html::toText('<p>Hello <b>world</b></p>'); // 'Hello world'
-     * Html::toText('Line 1<br>Line 2'); // "Line 1\nLine 2"
-     * Html::toText('Tom &amp; Jerry'); // 'Tom & Jerry'
-     * ```
-     *
-     * @param string $html The HTML string to convert to plain text
-     * @return string The plain text with all tags removed and entities decoded
-     * @see \Phuture\Coherence\Html::toHtml()
-     * @see \Phuture\Coherence\Html::decode()
-     */
-    public static function toText(string $html): string
-    {
-        $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
-        $blockTags = 'p|div|h[1-6]|li|tr|blockquote|pre|section'
-            . '|article|header|footer|aside|main|nav|address'
-            . '|figcaption|figure|details|summary';
-        $html = preg_replace(
-            '/<\/?(' . $blockTags . ')[^>]*>/i',
-            "\n",
-            $html
-        );
-
-        $text = strip_tags($html);
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/[ \t]+/', ' ', $text);
-        $text = preg_replace('/\n{3,}/', "\n\n", $text);
-
-        return trim($text);
-    }
-
-    /**
-     * Converts plain text or Markdown to HTML.
-     *
-     * When the input is detected as Markdown (contains Markdown syntax patterns),
-     * it is converted using the CommonMark parser. When the input is plain text,
-     * HTML special characters are encoded and newlines are converted to `<br>` tags.
-     *
-     * Markdown detection looks for common Markdown patterns such as headings (#),
-     * emphasis (*, _), links ([text](url)), images (![alt](src)), lists (-, *),
-     * code blocks (```), and blockquotes (>).
+     * When `content` is an array matching the tag definition format, it is
+     * recursively processed. When `content` is a plain array of tag definitions,
+     * each element is processed and concatenated.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Html;
      *
-     * Html::toHtml('Hello & goodbye'); // 'Hello &amp; goodbye'
-     * Html::toHtml("Line 1\nLine 2"); // 'Line 1<br>\nLine 2'
-     * Html::toHtml('# Heading'); // '<h1>Heading</h1>'
-     * Html::toHtml('**bold**'); // '<p><strong>bold</strong></p>'
+     * Html::build([
+     *     ['tag' => 'div', 'attributes' => ['class' => 'container'], 'content' => [
+     *         ['tag' => 'h1', 'content' => 'Title'],
+     *         ['tag' => 'p', 'content' => 'Paragraph text'],
+     *     ]],
+     * ]);
+     * // '<div class="container"><h1>Title</h1><p>Paragraph text</p></div>'
+     *
+     * Html::build([
+     *     ['tag' => 'ul', 'content' => [
+     *         ['tag' => 'li', 'content' => 'Item 1'],
+     *         ['tag' => 'li', 'content' => 'Item 2'],
+     *     ]],
+     * ]);
+     * // '<ul><li>Item 1</li><li>Item 2</li></ul>'
      * ```
      *
-     * @param string $content The plain text or Markdown content to convert
-     * @return string The resulting HTML string
-     * @see \Phuture\Coherence\Html::toText()
-     * @see \Phuture\Coherence\Html::toMarkdown()
+     * @param array $elements An array of tag definition arrays to build
+     * @return string The concatenated HTML string for all elements
+     * @see \Phuture\Coherence\Html::tag()
      */
-    public static function toHtml(string $content): string
+    public static function build(array $elements): string
     {
-        if (self::isMarkdown($content)) {
-            return self::convertMarkdownToHtml($content);
+        $html = '';
+
+        foreach ($elements as $element) {
+            $name = $element['tag'] ?? '';
+            $attributes = $element['attributes'] ?? [];
+            $content = $element['content'] ?? '';
+
+            if (is_array($content) && isset($content['tag'])) {
+                $content = self::build([$content]);
+            } elseif (is_array($content)) {
+                $content = self::build($content);
+            }
+
+            $html .= self::tag($name, (string) $content, $attributes);
         }
-
-        $html = self::encode($content, EncodingMode::SpecialChars);
-        $html = nl2br($html, false);
 
         return $html;
-    }
-
-    /**
-     * Converts HTML to Markdown.
-     *
-     * Uses the league/html-to-markdown library to convert the given HTML string
-     * into its Markdown representation. This is useful for generating Markdown
-     * from rich HTML content.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Html;
-     *
-     * Html::toMarkdown('<h1>Heading</h1>'); // '# Heading'
-     * Html::toMarkdown('<p><strong>bold</strong></p>'); // '**bold**'
-     * Html::toMarkdown('<a href="https://example.com">Link</a>'); // '[Link](https://example.com)'
-     * ```
-     *
-     * @param string $html The HTML string to convert to Markdown
-     * @return string The Markdown representation of the HTML
-     * @see \Phuture\Coherence\Html::toHtml()
-     */
-    public static function toMarkdown(string $html): string
-    {
-        $converter = new HtmlConverter();
-        $converter->getConfig()->setOption('header_style', 'atx');
-        $converter->getConfig()->setOption('strip_tags', true);
-        $converter->getConfig()->setOption('remove_nodes', '');
-
-        return trim($converter->convert($html));
-    }
-
-    /**
-     * Encodes characters in a string to their HTML entity equivalents.
-     *
-     * The encoding behaviour is controlled by the `$mode` parameter using the
-     * `\Phuture\Coherence\Enum\EncodingMode` enum. When set to `All`, every character
-     * that has an HTML entity equivalent is converted using `htmlentities()`. When set
-     * to `SpecialChars`, only the five characters with special meaning in HTML
-     * (`&`, `"`, `'`, `<`, `>`) are encoded using `htmlspecialchars()`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Html;
-     * use Phuture\Coherence\Enum\EncodingMode;
-     *
-     * Html::encode('Tom & Jerry'); // 'Tom &amp; Jerry'
-     * Html::encode('<p>Hello</p>'); // '&lt;p&gt;Hello&lt;/p&gt;'
-     * Html::encode('Tom & Jerry', EncodingMode::SpecialChars); // 'Tom &amp; Jerry'
-     * Html::encode('café', EncodingMode::All); // 'caf&eacute;'
-     * ```
-     *
-     * @param string $string The string to encode
-     * @param \Phuture\Coherence\Enum\EncodingMode $mode The encoding mode (default: EncodingMode::All)
-     * @param int $flags The bitmask of entity conversion flags (default: ENT_QUOTES)
-     * @param string $encoding The character encoding to use (default: 'UTF-8')
-     * @return string The encoded string with characters replaced by HTML entities
-     * @see \Phuture\Coherence\Html::decode()
-     * @see \Phuture\Coherence\Enum\EncodingMode
-     */
-    public static function encode(
-        string $string,
-        EncodingMode $mode = EncodingMode::All,
-        int $flags = ENT_QUOTES,
-        string $encoding = 'UTF-8',
-    ): string {
-        if ($mode === EncodingMode::SpecialChars) {
-            return htmlspecialchars($string, $flags, $encoding);
-        }
-
-        return htmlentities($string, $flags, $encoding);
     }
 
     /**
@@ -237,49 +144,44 @@ class Html extends StaticClass
     }
 
     /**
-     * Generates an HTML tag with attributes.
+     * Encodes characters in a string to their HTML entity equivalents.
      *
-     * Creates an opening and closing tag pair with the given content and attributes.
-     * Void elements (like `<img>`, `<br>`, `<hr>`) are rendered without a closing
-     * tag and the content parameter is ignored. Boolean attributes (where the value
-     * is `true`) are rendered as just the attribute name, and attributes with a
-     * `false` or `null` value are omitted entirely.
+     * The encoding behaviour is controlled by the `$mode` parameter using the
+     * `\Phuture\Coherence\Enum\EncodingMode` enum. When set to `All`, every character
+     * that has an HTML entity equivalent is converted using `htmlentities()`. When set
+     * to `SpecialChars`, only the five characters with special meaning in HTML
+     * (`&`, `"`, `'`, `<`, `>`) are encoded using `htmlspecialchars()`.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Html;
+     * use Phuture\Coherence\Enum\EncodingMode;
      *
-     * Html::tag('p', 'Hello'); // '<p>Hello</p>'
-     * Html::tag('p', 'Hello', ['class' => 'greeting']); // '<p class="greeting">Hello</p>'
-     * Html::tag('br'); // '<br>'
-     * Html::tag('input', '', ['type' => 'text', 'required' => true]); // '<input type="text" required>'
+     * Html::encode('Tom & Jerry'); // 'Tom &amp; Jerry'
+     * Html::encode('<p>Hello</p>'); // '&lt;p&gt;Hello&lt;/p&gt;'
+     * Html::encode('Tom & Jerry', EncodingMode::SpecialChars); // 'Tom &amp; Jerry'
+     * Html::encode('café', EncodingMode::All); // 'caf&eacute;'
      * ```
      *
-     * @param string $name The tag name (e.g., 'p', 'div', 'img')
-     * @param string $content The inner content of the tag (default: '')
-     * @param array $attributes Associative array of HTML attributes (default: [])
-     * @return string The generated HTML tag
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the tag name is empty
-     * @see \Phuture\Coherence\Html::build()
-     * @see \Phuture\Coherence\Html::link()
-     * @see \Phuture\Coherence\Html::script()
+     * @param string $string The string to encode
+     * @param \Phuture\Coherence\Enum\EncodingMode $mode The encoding mode (default: EncodingMode::All)
+     * @param int $flags The bitmask of entity conversion flags (default: ENT_QUOTES)
+     * @param string $encoding The character encoding to use (default: 'UTF-8')
+     * @return string The encoded string with characters replaced by HTML entities
+     * @see \Phuture\Coherence\Html::decode()
+     * @see \Phuture\Coherence\Enum\EncodingMode
      */
-    public static function tag(string $name, string $content = '', array $attributes = []): string
-    {
-        if ($name === '') {
-            throw new InvalidArgumentException(
-                'Invalid Argument: Tag name cannot be empty'
-            );
+    public static function encode(
+        string $string,
+        EncodingMode $mode = EncodingMode::All,
+        int $flags = ENT_QUOTES,
+        string $encoding = 'UTF-8',
+    ): string {
+        if ($mode === EncodingMode::SpecialChars) {
+            return htmlspecialchars($string, $flags, $encoding);
         }
 
-        $name = strtolower($name);
-        $attributeString = self::buildAttributes($attributes);
-
-        if (in_array($name, self::VOID_ELEMENTS, true)) {
-            return '<' . $name . $attributeString . '>';
-        }
-
-        return '<' . $name . $attributeString . '>' . $content . '</' . $name . '>';
+        return htmlentities($string, $flags, $encoding);
     }
 
     /**
@@ -372,11 +274,6 @@ class Html extends StaticClass
         string $content = '',
         array $attributes = [],
     ): string {
-        if (is_array($src)) {
-            $attributes = $src;
-            $src = null;
-        }
-
         if ($src !== null) {
             $attributes['src'] = $src;
         }
@@ -385,61 +282,159 @@ class Html extends StaticClass
     }
 
     /**
-     * Builds HTML from a multi-dimensional array structure.
+     * Generates an HTML tag with attributes.
      *
-     * Recursively generates HTML elements from an array of tag definitions.
-     * Each element in the array must contain a `tag` key with the tag name,
-     * and may optionally contain `attributes` (an associative array) and
-     * `content` (either a string or another tag definition array for nesting).
-     *
-     * When `content` is an array matching the tag definition format, it is
-     * recursively processed. When `content` is a plain array of tag definitions,
-     * each element is processed and concatenated.
+     * Creates an opening and closing tag pair with the given content and attributes.
+     * Void elements (like `<img>`, `<br>`, `<hr>`) are rendered without a closing
+     * tag and the content parameter is ignored. Boolean attributes (where the value
+     * is `true`) are rendered as just the attribute name, and attributes with a
+     * `false` or `null` value are omitted entirely.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Html;
      *
-     * Html::build([
-     *     ['tag' => 'div', 'attributes' => ['class' => 'container'], 'content' => [
-     *         ['tag' => 'h1', 'content' => 'Title'],
-     *         ['tag' => 'p', 'content' => 'Paragraph text'],
-     *     ]],
-     * ]);
-     * // '<div class="container"><h1>Title</h1><p>Paragraph text</p></div>'
-     *
-     * Html::build([
-     *     ['tag' => 'ul', 'content' => [
-     *         ['tag' => 'li', 'content' => 'Item 1'],
-     *         ['tag' => 'li', 'content' => 'Item 2'],
-     *     ]],
-     * ]);
-     * // '<ul><li>Item 1</li><li>Item 2</li></ul>'
+     * Html::tag('p', 'Hello'); // '<p>Hello</p>'
+     * Html::tag('p', 'Hello', ['class' => 'greeting']); // '<p class="greeting">Hello</p>'
+     * Html::tag('br'); // '<br>'
+     * Html::tag('input', '', ['type' => 'text', 'required' => true]); // '<input type="text" required>'
      * ```
      *
-     * @param array $elements An array of tag definition arrays to build
-     * @return string The concatenated HTML string for all elements
-     * @see \Phuture\Coherence\Html::tag()
+     * @param string $name The tag name (e.g., 'p', 'div', 'img')
+     * @param string $content The inner content of the tag (default: '')
+     * @param array $attributes Associative array of HTML attributes (default: [])
+     * @return string The generated HTML tag
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the tag name is empty
+     * @see \Phuture\Coherence\Html::build()
+     * @see \Phuture\Coherence\Html::link()
+     * @see \Phuture\Coherence\Html::script()
      */
-    public static function build(array $elements): string
+    public static function tag(string $name, string $content = '', array $attributes = []): string
     {
-        $html = '';
-
-        foreach ($elements as $element) {
-            $name = $element['tag'] ?? '';
-            $attributes = $element['attributes'] ?? [];
-            $content = $element['content'] ?? '';
-
-            if (is_array($content) && isset($content['tag'])) {
-                $content = self::build([$content]);
-            } elseif (is_array($content)) {
-                $content = self::build($content);
-            }
-
-            $html .= self::tag($name, (string) $content, $attributes);
+        if ($name === '') {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Tag name cannot be empty'
+            );
         }
 
+        $name = strtolower($name);
+        $attributeString = self::buildAttributes($attributes);
+
+        if (in_array($name, self::VOID_ELEMENTS, true)) {
+            return '<' . $name . $attributeString . '>';
+        }
+
+        return '<' . $name . $attributeString . '>' . $content . '</' . $name . '>';
+    }
+
+    /**
+     * Converts plain text or Markdown to HTML.
+     *
+     * When the input is detected as Markdown (contains Markdown syntax patterns),
+     * it is converted using the CommonMark parser. When the input is plain text,
+     * HTML special characters are encoded and newlines are converted to `<br>` tags.
+     *
+     * Markdown detection looks for common Markdown patterns such as headings (#),
+     * emphasis (*, _), links ([text](url)), images (![alt](src)), lists (-, *),
+     * code blocks (```), and blockquotes (>).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::toHtml('Hello & goodbye'); // 'Hello &amp; goodbye'
+     * Html::toHtml("Line 1\nLine 2"); // 'Line 1<br>\nLine 2'
+     * Html::toHtml('# Heading'); // '<h1>Heading</h1>'
+     * Html::toHtml('**bold**'); // '<p><strong>bold</strong></p>'
+     * ```
+     *
+     * @param string $content The plain text or Markdown content to convert
+     * @return string The resulting HTML string
+     * @see \Phuture\Coherence\Html::toText()
+     * @see \Phuture\Coherence\Html::toMarkdown()
+     */
+    public static function toHtml(string $content): string
+    {
+        if (self::isMarkdown($content)) {
+            return self::convertMarkdownToHtml($content);
+        }
+
+        $html = self::encode($content, EncodingMode::SpecialChars);
+        $html = nl2br($html, false);
+
         return $html;
+    }
+
+    /**
+     * Converts HTML to Markdown.
+     *
+     * Uses the league/html-to-markdown library to convert the given HTML string
+     * into its Markdown representation. This is useful for generating Markdown
+     * from rich HTML content.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::toMarkdown('<h1>Heading</h1>'); // '# Heading'
+     * Html::toMarkdown('<p><strong>bold</strong></p>'); // '**bold**'
+     * Html::toMarkdown('<a href="https://example.com">Link</a>'); // '[Link](https://example.com)'
+     * ```
+     *
+     * @param string $html The HTML string to convert to Markdown
+     * @return string The Markdown representation of the HTML
+     * @see \Phuture\Coherence\Html::toHtml()
+     */
+    public static function toMarkdown(string $html): string
+    {
+        $converter = new HtmlConverter();
+        $converter->getConfig()->setOption('header_style', 'atx');
+        $converter->getConfig()->setOption('strip_tags', true);
+        $converter->getConfig()->setOption('remove_nodes', '');
+
+        return trim($converter->convert($html));
+    }
+
+    /**
+     * Converts HTML to plain text.
+     *
+     * Removes all HTML tags and returns readable text. The `<br>` tag is
+     * converted to a newline character before stripping, and all HTML entities
+     * are decoded. If the content between block-level tags appears on separate
+     * lines, the spacing is preserved for readability.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::toText('<p>Hello <b>world</b></p>'); // 'Hello world'
+     * Html::toText('Line 1<br>Line 2'); // "Line 1\nLine 2"
+     * Html::toText('Tom &amp; Jerry'); // 'Tom & Jerry'
+     * ```
+     *
+     * @param string $html The HTML string to convert to plain text
+     * @return string The plain text with all tags removed and entities decoded
+     * @see \Phuture\Coherence\Html::toHtml()
+     * @see \Phuture\Coherence\Html::decode()
+     */
+    public static function toText(string $html): string
+    {
+        $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
+        $blockTags = 'p|div|h[1-6]|li|tr|blockquote|pre|section'
+            . '|article|header|footer|aside|main|nav|address'
+            . '|figcaption|figure|details|summary';
+        $html = preg_replace(
+            '/<\/?(' . $blockTags . ')[^>]*>/i',
+            "\n",
+            $html
+        );
+
+        $text = strip_tags($html);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+
+        return trim($text);
     }
 
     /**
@@ -470,6 +465,19 @@ class Html extends StaticClass
         }
 
         return $html;
+    }
+
+    /**
+     * Converts Markdown content to HTML using the CommonMark parser.
+     *
+     * @param string $markdown The Markdown string to convert
+     * @return string The resulting HTML
+     */
+    private static function convertMarkdownToHtml(string $markdown): string
+    {
+        $converter = new CommonMarkConverter();
+
+        return trim((string) $converter->convert($markdown));
     }
 
     /**
@@ -504,18 +512,5 @@ class Html extends StaticClass
         }
 
         return false;
-    }
-
-    /**
-     * Converts Markdown content to HTML using the CommonMark parser.
-     *
-     * @param string $markdown The Markdown string to convert
-     * @return string The resulting HTML
-     */
-    private static function convertMarkdownToHtml(string $markdown): string
-    {
-        $converter = new CommonMarkConverter();
-
-        return trim((string) $converter->convert($markdown));
     }
 }
