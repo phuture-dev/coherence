@@ -1026,7 +1026,12 @@ class Numbers extends StaticClass
         int $precision = 0,
         RoundingMode $mode = RoundingMode::HalfUp
     ): float {
-        return round((float) $number, $precision, $mode->toPhpConstant());
+        return round((float) $number, $precision, match ($mode) {
+            RoundingMode::HalfUp   => PHP_ROUND_HALF_UP,
+            RoundingMode::HalfDown => PHP_ROUND_HALF_DOWN,
+            RoundingMode::HalfEven => PHP_ROUND_HALF_EVEN,
+            RoundingMode::HalfOdd  => PHP_ROUND_HALF_ODD,
+        });
     }
 
     /**

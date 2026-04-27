@@ -17,23 +17,6 @@ namespace Phuture\Coherence\Enum;
 enum RoundingMode
 {
     /**
-     * Returns the corresponding PHP rounding constant for this mode.
-     *
-     * Maps the enum case to the native PHP constant used by `round()`.
-     *
-     * @return int The PHP rounding constant
-     */
-    public function toPhpConstant(): int
-    {
-        return match ($this) {
-            self::HalfUp => PHP_ROUND_HALF_UP,
-            self::HalfDown => PHP_ROUND_HALF_DOWN,
-            self::HalfEven => PHP_ROUND_HALF_EVEN,
-            self::HalfOdd => PHP_ROUND_HALF_ODD,
-        };
-    }
-
-    /**
      * Round halves down (toward zero).
      *
      * When the discarded fraction is exactly 0.5, the value is rounded down
@@ -56,6 +39,7 @@ enum RoundingMode
      * the nearest odd number.
      */
     case HalfOdd;
+
     /**
      * Round halves up (away from zero).
      *
