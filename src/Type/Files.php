@@ -70,6 +70,11 @@ class Files extends FluentClass implements Fileable
     public function copyTo(string $destination, bool $overwrite = true): self
     {
         Transformer::copy($this->data, $destination, $overwrite);
+
+        if (is_dir($destination)) {
+            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
+        }
+
         $this->data = $destination;
 
         return $this;
@@ -87,6 +92,7 @@ class Files extends FluentClass implements Fileable
     public function delete(): void
     {
         Transformer::delete($this->data);
+        $this->data = '';
     }
 
     /**
@@ -154,8 +160,14 @@ class Files extends FluentClass implements Fileable
      */
     public function move(string $destination, bool $overwrite = true): self
     {
+        $resolvedDestination = $destination;
+
+        if (file_exists($destination) && is_dir($destination)) {
+            $resolvedDestination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
+        }
+
         Transformer::move($this->data, $destination, $overwrite);
-        $this->data = $destination;
+        $this->data = $resolvedDestination;
 
         return $this;
     }
