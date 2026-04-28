@@ -249,6 +249,50 @@ class FilesTest extends TestCase
         Assert::same('Hello, fluent!', $content);
     }
 
+    public function testDeleteClearsInternalData(): void
+    {
+        $file = $this->tempDir . '/to_delete.txt';
+        file_put_contents($file, 'gone');
+
+        $fluent = Files::of($file);
+        $fluent->delete();
+
+        Assert::same('', $fluent->get());
+        Assert::false(file_exists($file));
+    }
+
+    public function testMoveIntoDirectoryTracksResolvedPath(): void
+    {
+        $source = $this->tempDir . '/source.txt';
+        $destDir = $this->tempDir . '/target_dir';
+        file_put_contents($source, 'moving');
+        mkdir($destDir);
+
+        $path = Files::of($source)
+            ->move($destDir)
+            ->get();
+
+        Assert::same($destDir . '/source.txt', $path);
+        Assert::false(file_exists($source));
+        Assert::true(file_exists($destDir . '/source.txt'));
+    }
+
+    public function testCopyToIntoDirectoryTracksResolvedPath(): void
+    {
+        $source = $this->tempDir . '/source.txt';
+        $destDir = $this->tempDir . '/target_dir';
+        file_put_contents($source, 'copying');
+        mkdir($destDir);
+
+        $path = Files::of($source)
+            ->copyTo($destDir)
+            ->get();
+
+        Assert::same($destDir . '/source.txt', $path);
+        Assert::true(file_exists($source));
+        Assert::true(file_exists($destDir . '/source.txt'));
+    }
+
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/coherence_type_files_test_' . uniqid();
