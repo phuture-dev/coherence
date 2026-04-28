@@ -803,6 +803,39 @@ class ArraysTest extends TestCase
         Assert::same(['short' => 'a', 'medium' => 'bb', 'long' => 'ccc'], $result);
     }
 
+    public function testSortBy(): void
+    {
+        $users = new Arrays([
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ]);
+
+        $result = $users->sortBy('age')->toArray();
+        Assert::same([
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Bob', 'age' => 35],
+        ], $result);
+
+        $users = new Arrays([
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ]);
+
+        $result = $users->sortBy('age', true)->toArray();
+        Assert::same([
+            ['name' => 'Bob', 'age' => 35],
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+        ], $result);
+
+        $words = new Arrays(['apple', 'Banana', 'CHERRY', 'date']);
+        $result = $words->sortBy(fn ($item) => strtolower($item))->toArray();
+        Assert::same(['apple', 'Banana', 'CHERRY', 'date'], $result);
+    }
+
     public function testSortKeys(): void
     {
         $data = new Arrays(['c' => 'cherry', 'a' => 'apple', 'b' => 'banana']);

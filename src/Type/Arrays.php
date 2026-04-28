@@ -620,7 +620,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function rename(string|int|array $oldKey, string|int $newKey): self
     {
-        Transformer::rename($this->data, $oldKey, $newKey);
+        $data = $this->data;
+        Transformer::rename($data, $oldKey, $newKey);
+        $this->data = $data;
 
         return $this;
     }
@@ -691,7 +693,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function sort(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sort($this->data, $reverse, $callback);
+        $data = $this->data;
+        Transformer::sort($data, $reverse, $callback);
+        $this->data = $data;
 
         return $this;
     }
@@ -706,7 +710,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function sortAssoc(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sortAssoc($this->data, $reverse, $callback);
+        $data = $this->data;
+        Transformer::sortAssoc($data, $reverse, $callback);
+        $this->data = $data;
 
         return $this;
     }
@@ -722,7 +728,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function sortBy(string|array|callable $criteria, bool $reverse = false, int $flags = 0): self
     {
-        Transformer::sortBy($this->data, $criteria, $reverse, $flags);
+        $data = $this->data;
+        Transformer::sortBy($data, $criteria, $reverse, $flags);
+        $this->data = $data;
 
         return $this;
     }
@@ -737,7 +745,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function sortKeys(bool $reverse = false, ?callable $callback = null): self
     {
-        Transformer::sortKeys($this->data, $reverse, $callback);
+        $data = $this->data;
+        Transformer::sortKeys($data, $reverse, $callback);
+        $this->data = $data;
 
         return $this;
     }
@@ -751,7 +761,9 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      */
     public function sortNatural(bool $case_insensitive = false): self
     {
-        Transformer::sortNatural($this->data, $case_insensitive);
+        $data = $this->data;
+        Transformer::sortNatural($data, $case_insensitive);
+        $this->data = $data;
 
         return $this;
     }
