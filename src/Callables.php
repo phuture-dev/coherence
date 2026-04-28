@@ -417,7 +417,7 @@ class Callables extends StaticClass
      * @throws RuntimeException When unable to determine function arity automatically
      * @see Reflector::arity()
      */
-    public static function curry(callable $callback, int $arity = null): Closure
+    public static function curry(callable $callback, ?int $arity = null): Closure
     {
         try {
             if ($arity === null) {
@@ -1341,13 +1341,14 @@ class Callables extends StaticClass
      */
     public static function throttle(callable $callback, int $milliseconds = self::EXECUTION_DELAY): Closure
     {
-        $lastRun = null;
+        $lastRunByArgs = [];
 
-        return function (...$args) use ($callback, &$lastRun, $milliseconds) {
+        return function (...$args) use ($callback, &$lastRunByArgs, $milliseconds) {
+            $key = serialize($args);
             $now = microtime(true) * 1000;
 
-            if ($now - ($lastRun ?? 0) >= $milliseconds) {
-                $lastRun = $now;
+            if ($now - ($lastRunByArgs[$key] ?? 0) >= $milliseconds) {
+                $lastRunByArgs[$key] = $now;
 
                 return $callback(...$args);
             }
