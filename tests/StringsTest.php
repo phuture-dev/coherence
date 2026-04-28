@@ -1688,6 +1688,13 @@ class StringsTest extends TestCase
         Assert::same('nano', Strings::swap('ñaño', ['ñ' => 'n', 'o' => 'o']));
     }
 
+    public function testSwapChainedReplacementDoesNotCorrupt(): void
+    {
+        Assert::same('world', Strings::swap('hello', ['hello' => 'world', 'world' => 'hi']));
+        Assert::same('world hi', Strings::swap('hello world', ['hello' => 'world', 'world' => 'hi']));
+        Assert::same('b c', Strings::swap('a b', ['a' => 'b', 'b' => 'c']));
+    }
+
     public function testTake(): void
     {
         Assert::same('hello', Strings::take('hello world', 5));
