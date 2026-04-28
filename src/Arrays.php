@@ -2318,7 +2318,7 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to search for the largest value
-     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly. Defaults to null.
+     * @param string|null $key Optional key for nested array comparison (default: null)
      * @return mixed The largest value, or null if the array is empty
      * @see \Phuture\Coherence\Arrays::min()
      * @see \Phuture\Coherence\Arrays::average()
@@ -2404,7 +2404,7 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array The array to search for the smallest value
-     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly. Defaults to null.
+     * @param string|null $key Optional key for nested array comparison (default: null)
      * @return mixed The smallest value, or null if the array is empty
      * @see \Phuture\Coherence\Arrays::max()
      * @see \Phuture\Coherence\Arrays::average()
