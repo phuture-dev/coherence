@@ -915,12 +915,24 @@ class HashTest extends TestCase
     public function testRandom(): void
     {
         $random = Hash::random(32);
-        Assert::same(32, strlen($random));
-        Assert::true(ctype_xdigit($random)); // Should be hex characters only
+        Assert::same(64, strlen($random)); // 32 bytes = 64 hex characters
+        Assert::true(ctype_xdigit($random));
 
         // Test binary output
         $binary = Hash::random(16, true);
         Assert::same(16, strlen($binary));
+
+        // Test default length
+        $defaultHex = Hash::random();
+        Assert::same(256, strlen($defaultHex)); // 128 bytes = 256 hex characters
+
+        // Test default binary length
+        $defaultBinary = Hash::random(128, true);
+        Assert::same(128, strlen($defaultBinary));
+
+        // Verify different calls produce different values
+        $another = Hash::random(32);
+        Assert::notSame($random, $another);
     }
 
     public function testSalt(): void
