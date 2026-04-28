@@ -80,6 +80,22 @@ class ArraysTest extends TestCase
         Assert::same([1 => 'John', 2 => 'Jane'], $result);
     }
 
+    public function testAssociateThrowsOnNullKey(): void
+    {
+        Assert::exception(
+            fn () => Arrays::associate([['id' => null, 'name' => 'John']], 'id'),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testAssociateThrowsOnMissingKey(): void
+    {
+        Assert::exception(
+            fn () => Arrays::associate([['name' => 'John']], 'id'),
+            InvalidArgumentException::class
+        );
+    }
+
     public function testChangeKeyCase(): void
     {
         $array = ['Name' => 'John', 'AGE' => 30];

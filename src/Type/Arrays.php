@@ -53,6 +53,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * @param string|int $key The field to use as the associative array key
      * @param string|int|null $value Optional field to use as the value. If null, uses the entire item
      * @return self An instance of the Arrays class with the transformed array
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When an item has a null or missing value for the specified key field
      * @see \Phuture\Coherence\Arrays::associate()
      */
     public function associate(string|int $key, string|int|null $value = null): self

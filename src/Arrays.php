@@ -200,6 +200,7 @@ class Arrays extends StaticClass
      * @param string|int $key The field to use as the associative array key.
      * @param string|int|null $value Optional field to use as the value. If null, uses the entire item.
      * @return array Returns an associative array indexed by the specified key
+     * @throws InvalidArgumentException When an item has a null or missing value for the specified key field
      */
     public static function associate(array $array, string|int $key, string|int|null $value = null): array
     {
@@ -209,14 +210,14 @@ class Arrays extends StaticClass
 
         $result = [];
         foreach ($array as $item) {
-            // Support both array and object access
             $keyValue = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
 
             if ($keyValue === null) {
-                continue;
+                throw new InvalidArgumentException(
+                    sprintf('Cannot associate array: the key field "%s" is null or missing in an item.', $key)
+                );
             }
 
-            // If no value field specified, use the entire item
             if ($value === null) {
                 $result[$keyValue] = $item;
             } else {

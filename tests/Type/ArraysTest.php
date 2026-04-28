@@ -99,6 +99,15 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
+    public function testAssociateThrowsOnNullKey(): void
+    {
+        $arrays = new Arrays([['id' => null, 'name' => 'John']]);
+        Assert::exception(
+            fn () => $arrays->associate('id'),
+            InvalidArgumentException::class
+        );
+    }
+
     public function testChangeKeyCase(): void
     {
         $data = new Arrays(['NAME' => 'John', 'AGE' => 30, 'Email' => 'john@example.com']);
