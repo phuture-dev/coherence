@@ -851,6 +851,68 @@ class ArraysTest extends TestCase
         Assert::same([1, 2, 3], $result);
     }
 
+    public function testFlattenWithDepthOne(): void
+    {
+        $array = [1, [2, [3, 4], 5], 6];
+        $result = Arrays::flatten($array, 1);
+        Assert::same([1, 2, [3, 4], 5, 6], $result);
+    }
+
+    public function testFlattenWithDepthTwo(): void
+    {
+        $array = [1, [2, [3, [4]]], 5];
+        $result = Arrays::flatten($array, 2);
+        Assert::same([1, 2, 3, [4], 5], $result);
+    }
+
+    public function testFlattenWithDepthZero(): void
+    {
+        $array = [1, [2, [3]], 4];
+        $result = Arrays::flatten($array, 0);
+        Assert::same([1, [2, [3]], 4], $result);
+    }
+
+    public function testFlattenWithDepthOnEmptyArray(): void
+    {
+        $result = Arrays::flatten([], 2);
+        Assert::same([], $result);
+    }
+
+    public function testFlattenWithDepthPreservesRemainingNesting(): void
+    {
+        $array = ['a' => ['b' => ['c' => ['d' => 'value']]]];
+        $result = Arrays::flatten($array, 1);
+        Assert::same([['c' => ['d' => 'value']]], $result);
+    }
+
+    public function testFlattenWithDepthEqualToNestingLevel(): void
+    {
+        $array = [1, [2, [3]]];
+        $result = Arrays::flatten($array, 2);
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testFlattenWithDepthGreaterThanNestingLevel(): void
+    {
+        $array = [1, [2, [3]]];
+        $result = Arrays::flatten($array, 10);
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testFlattenWithDepthOnMixedTypes(): void
+    {
+        $array = [
+            'string' => 'hello',
+            'nested' => [
+                'number' => 42,
+                'deeper' => ['value' => 'deep'],
+            ],
+            'simple' => true,
+        ];
+        $result = Arrays::flatten($array, 1);
+        Assert::same(['hello', 42, ['value' => 'deep'], true], $result);
+    }
+
     public function testFlip(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];

@@ -1179,12 +1179,15 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Flattens a multidimensional array into a single level.
+     * Flattens a multidimensional array into a single level, with optional depth control.
      *
-     * This method recursively flattens all nested arrays into a single-dimensional array.
+     * This method recursively flattens nested arrays into a single-dimensional array.
      * Unlike collapse() which only merges one level of arrays, flatten() recursively
-     * traverses through ALL levels of nesting and collects only the scalar values.
+     * traverses through multiple levels of nesting. The depth parameter controls how
+     * many levels of nesting are flattened.
      *
+     * When no depth is specified, all levels are flattened completely.
+     * When depth is 1, only the first level of nesting is flattened.
      * Keys from associative arrays are not preserved in the flattened result.
      *
      * Example:
@@ -1199,15 +1202,26 @@ class Arrays extends StaticClass
      * $array = ['a' => 1, 'b' => ['c' => 2, 'd' => ['e' => 3]]];
      * $result = Arrays::flatten($array);
      * // Returns: [1, 2, 3]
+     *
+     * // Depth-controlled flattening (flatten only 1 level)
+     * $array = [1, [2, [3, 4], 5], 6];
+     * $result = Arrays::flatten($array, 1);
+     * // Returns: [1, 2, [3, 4], 5, 6]
+     *
+     * // Depth-controlled flattening (flatten 2 levels)
+     * $array = [1, [2, [3, [4]]], 5];
+     * $result = Arrays::flatten($array, 2);
+     * // Returns: [1, 2, 3, [4], 5]
      * ```
      *
      * @param array $array A potentially multidimensional array to flatten
-     * @return array Returns a single-dimensional array containing all scalar values from the nested structure
+     * @param int $depth The number of levels to flatten (default: all levels)
+     * @return array Returns a flattened array containing values from the nested structure
      * @see Arrays::collapse()
      */
-    public static function flatten(array $array): array
+    public static function flatten(array $array, int $depth = PHP_INT_MAX): array
     {
-        return NetteArrays::flatten($array);
+        return self::flattenRecursive($array, $depth, 0);
     }
 
     /**
@@ -4088,13 +4102,36 @@ class Arrays extends StaticClass
             }
 
             if (is_array($value) && ! self::isList($value)) {
-                // Recursively convert nested arrays to objects
                 $result->{$key} = new stdClass();
                 self::toObjectRecursive($value, $result->{$key}, $depth + 1);
             } else {
-                // Keep scalar values
                 $result->{$key} = $value;
             }
         }
+    }
+
+    private static function flattenRecursive(array $array, int $remainingDepth, int $recursionDepth): array
+    {
+        if ($recursionDepth >= self::RECURSION_LIMIT) {
+            throw new LogicException(
+                "Limit Exceeded: Recursion depth exceeded limit of " . self::RECURSION_LIMIT
+            );
+        }
+
+        $result = [];
+
+        foreach ($array as $value) {
+            if (!is_array($value)) {
+                $result[] = $value;
+            } elseif ($remainingDepth >= 1) {
+                foreach (self::flattenRecursive($value, $remainingDepth - 1, $recursionDepth + 1) as $item) {
+                    $result[] = $item;
+                }
+            } else {
+                $result[] = $value;
+            }
+        }
+
+        return $result;
     }
 }

@@ -251,17 +251,19 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Flattens a multidimensional array into a single level.
+     * Flattens a multidimensional array into a single level, with optional depth control.
      *
-     * This method recursively flattens all nested arrays into a single-dimensional array,
-     * traversing through ALL levels of nesting and collecting only the scalar values.
+     * This method recursively flattens nested arrays into a single-dimensional array.
+     * The depth parameter controls how many levels of nesting are flattened.
+     * When no depth is specified, all levels are flattened completely.
      *
+     * @param int $depth The number of levels to flatten (default: all levels)
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::flatten()
      */
-    public function flatten(): self
+    public function flatten(int $depth = PHP_INT_MAX): self
     {
-        $this->data = Transformer::flatten($this->data);
+        $this->data = Transformer::flatten($this->data, $depth);
 
         return $this;
     }

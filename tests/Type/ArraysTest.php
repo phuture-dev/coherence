@@ -311,6 +311,20 @@ class ArraysTest extends TestCase
         Assert::same(['John', 30], $result);
     }
 
+    public function testFlattenWithDepth(): void
+    {
+        $nested = new Arrays([1, [2, [3, 4], 5], 6]);
+        $result = $nested->flatten(1)->toArray();
+        Assert::same([1, 2, [3, 4], 5, 6], $result);
+    }
+
+    public function testFlattenWithDepthZero(): void
+    {
+        $nested = new Arrays([1, [2, [3]], 4]);
+        $result = $nested->flatten(0)->toArray();
+        Assert::same([1, [2, [3]], 4], $result);
+    }
+
     public function testFlip(): void
     {
         $data = new Arrays(['a' => 'apple', 'b' => 'banana']);
