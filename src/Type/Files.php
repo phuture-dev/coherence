@@ -161,7 +161,6 @@ class Files extends FluentClass implements Fileable
     public function move(string $destination, bool $overwrite = true): self
     {
         $resolvedDestination = $destination;
-
         if (file_exists($destination) && is_dir($destination)) {
             $resolvedDestination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
         }
@@ -218,6 +217,7 @@ class Files extends FluentClass implements Fileable
     public function rename(string $newName, bool $overwrite = true): self
     {
         $directory = dirname($this->data);
+
         Transformer::rename($this->data, $newName, $overwrite);
         $this->data = $directory . DIRECTORY_SEPARATOR . $newName;
 
