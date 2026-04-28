@@ -479,6 +479,15 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
+    public function testMax(): void
+    {
+        $data = new Arrays([3, 7, 1, 9, 4]);
+        Assert::same(9, $data->max());
+
+        $empty = new Arrays([]);
+        Assert::null($empty->max());
+    }
+
     public function testMerge(): void
     {
         $base = new Arrays(['a' => 'apple', 'b' => 'banana']);
@@ -494,6 +503,24 @@ class ArraysTest extends TestCase
         $numeric = new Arrays([1, 2]);
         $result = $numeric->merge([3, 4])->toArray();
         Assert::same([1, 2, 3, 4], $result);
+    }
+
+    public function testMin(): void
+    {
+        $data = new Arrays([3, 7, 1, 9, 4]);
+        Assert::same(1, $data->min());
+
+        $empty = new Arrays([]);
+        Assert::null($empty->min());
+    }
+
+    public function testMode(): void
+    {
+        $data = new Arrays(['apple', 'banana', 'apple', 'orange', 'banana', 'apple']);
+        Assert::same(['apple'], $data->mode());
+
+        $empty = new Arrays([]);
+        Assert::same([], $empty->mode());
     }
 
     public function testNormalize(): void

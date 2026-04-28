@@ -452,6 +452,17 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Finds the largest value in the array.
+     *
+     * @return int|float|null The largest value found, or null if the array is empty
+     * @see \Phuture\Coherence\Arrays::max()
+     */
+    public function max(): int|float|null
+    {
+        return Transformer::max($this->data);
+    }
+
+    /**
      * Merge the array with the given arrays.
      *
      * @param array ...$arrays Arrays to merge with
@@ -463,6 +474,28 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
         $this->data = Transformer::merge($this->data, ...$arrays);
 
         return $this;
+    }
+
+    /**
+     * Finds the smallest value in the array.
+     *
+     * @return int|float|null The smallest value found, or null if the array is empty
+     * @see \Phuture\Coherence\Arrays::min()
+     */
+    public function min(): int|float|null
+    {
+        return Transformer::min($this->data);
+    }
+
+    /**
+     * Finds the most frequently occurring value or values in the array.
+     *
+     * @return array An array of the most frequently occurring values, ordered by first appearance
+     * @see \Phuture\Coherence\Arrays::mode()
+     */
+    public function mode(): array
+    {
+        return Transformer::mode($this->data);
     }
 
     /**

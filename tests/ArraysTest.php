@@ -1471,6 +1471,19 @@ class ArraysTest extends TestCase
         Assert::same($expected, $result);
     }
 
+    public function testMax(): void
+    {
+        Assert::same(9, Arrays::max([3, 7, 1, 9, 4]));
+        Assert::same(20.0, Arrays::max([10.5, 20.0, 15.75]));
+        Assert::same(5, Arrays::max([5]));
+        Assert::same(-1, Arrays::max([-5, -3, -1, -10]));
+    }
+
+    public function testMaxEmpty(): void
+    {
+        Assert::null(Arrays::max([]));
+    }
+
     public function testMerge(): void
     {
         $result = Arrays::merge([1, 2], [3, 4]);
@@ -1501,6 +1514,47 @@ class ArraysTest extends TestCase
             fn () => Arrays::merge([1, 2, 3]),
             InvalidArgumentException::class
         );
+    }
+
+    public function testMin(): void
+    {
+        Assert::same(1, Arrays::min([3, 7, 1, 9, 4]));
+        Assert::same(10.5, Arrays::min([10.5, 20.0, 15.75]));
+        Assert::same(5, Arrays::min([5]));
+        Assert::same(-10, Arrays::min([-5, -3, -1, -10]));
+    }
+
+    public function testMinEmpty(): void
+    {
+        Assert::null(Arrays::min([]));
+    }
+
+    public function testMode(): void
+    {
+        Assert::same(['apple'], Arrays::mode(['apple', 'banana', 'apple', 'orange', 'banana', 'apple']));
+        Assert::same([2, 3], Arrays::mode([1, 2, 2, 3, 3]));
+        Assert::same([1], Arrays::mode([1]));
+    }
+
+    public function testModeEmpty(): void
+    {
+        Assert::same([], Arrays::mode([]));
+    }
+
+    public function testModePreservesFirstAppearanceOrder(): void
+    {
+        $result = Arrays::mode([3, 1, 2, 1, 3, 2]);
+        Assert::same([3, 1, 2], $result);
+    }
+
+    public function testModeSingleElement(): void
+    {
+        Assert::same(['only'], Arrays::mode(['only']));
+    }
+
+    public function testModeAllSameFrequency(): void
+    {
+        Assert::same([1, 2, 3], Arrays::mode([1, 2, 3]));
     }
 
     public function testNormalize(): void

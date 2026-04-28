@@ -2291,6 +2291,41 @@ class Arrays extends StaticClass
     }
 
     /**
+     * Finds the largest value in an array.
+     *
+     * This method searches through all values in an array and returns the largest one.
+     * If the array is empty, this method returns null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [3, 7, 1, 9, 4];
+     * $result = Arrays::max($numbers);
+     * // Returns: 9
+     *
+     * $prices = [10.5, 20.0, 15.75];
+     * $result = Arrays::max($prices);
+     * // Returns: 20.0
+     *
+     * $result = Arrays::max([]);
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing values to compare
+     * @return int|float|null The largest value found, or null if the array is empty
+     * @see Arrays::min()
+     */
+    public static function max(array $array): int|float|null
+    {
+        if (empty($array)) {
+            return null;
+        }
+
+        return max($array);
+    }
+
+    /**
      * Combines multiple arrays into one.
      *
      * This method merges two or more arrays together into a single array. When merging,
@@ -2330,6 +2365,90 @@ class Arrays extends StaticClass
         }
 
         return array_merge_recursive(...$arrays);
+    }
+
+    /**
+     * Finds the smallest value in an array.
+     *
+     * This method searches through all values in an array and returns the smallest one.
+     * If the array is empty, this method returns null.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $numbers = [3, 7, 1, 9, 4];
+     * $result = Arrays::min($numbers);
+     * // Returns: 1
+     *
+     * $prices = [10.5, 20.0, 15.75];
+     * $result = Arrays::min($prices);
+     * // Returns: 10.5
+     *
+     * $result = Arrays::min([]);
+     * // Returns: null
+     * ```
+     *
+     * @param array $array The array containing values to compare
+     * @return int|float|null The smallest value found, or null if the array is empty
+     * @see Arrays::max()
+     */
+    public static function min(array $array): int|float|null
+    {
+        if (empty($array)) {
+            return null;
+        }
+
+        return min($array);
+    }
+
+    /**
+     * Finds the most frequently occurring value or values in an array.
+     *
+     * This method counts how many times each unique value appears and returns all values
+     * that share the highest frequency. When there is a single clear winner, an array with
+     * one element is returned. When multiple values are tied for the highest frequency,
+     * all of them are included in the result, ordered by their first appearance in the array.
+     *
+     * If the array is empty, this method returns an empty array.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $votes = ['apple', 'banana', 'apple', 'orange', 'banana', 'apple'];
+     * $result = Arrays::mode($votes);
+     * // Returns: ['apple']
+     *
+     * $numbers = [1, 2, 2, 3, 3];
+     * $result = Arrays::mode($numbers);
+     * // Returns: [2, 3]
+     *
+     * $result = Arrays::mode([]);
+     * // Returns: []
+     * ```
+     *
+     * @param array $array The array containing values to analyze
+     * @return array An array of the most frequently occurring values, ordered by first appearance
+     * @see Arrays::count()
+     */
+    public static function mode(array $array): array
+    {
+        if (empty($array)) {
+            return [];
+        }
+
+        $frequencies = array_count_values($array);
+        $highestFrequency = max($frequencies);
+
+        $modes = [];
+        foreach ($array as $value) {
+            if ($frequencies[$value] === $highestFrequency && !in_array($value, $modes, true)) {
+                $modes[] = $value;
+            }
+        }
+
+        return $modes;
     }
 
     /**
