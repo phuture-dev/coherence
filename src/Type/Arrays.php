@@ -452,14 +452,15 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Finds the largest value in the array.
+     * Returns the largest value in the array.
      *
-     * @return int|float|null The largest value found, or null if the array is empty
+     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly
+     * @return mixed The largest value, or null if the array is empty
      * @see \Phuture\Coherence\Arrays::max()
      */
-    public function max(): int|float|null
+    public function max(?string $key = null): mixed
     {
-        return Transformer::max($this->data);
+        return Transformer::max($this->data, $key);
     }
 
     /**
@@ -477,14 +478,15 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
-     * Finds the smallest value in the array.
+     * Returns the smallest value in the array.
      *
-     * @return int|float|null The smallest value found, or null if the array is empty
+     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly
+     * @return mixed The smallest value, or null if the array is empty
      * @see \Phuture\Coherence\Arrays::min()
      */
-    public function min(): int|float|null
+    public function min(?string $key = null): mixed
     {
-        return Transformer::min($this->data);
+        return Transformer::min($this->data, $key);
     }
 
     /**

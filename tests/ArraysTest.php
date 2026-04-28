@@ -1484,6 +1484,17 @@ class ArraysTest extends TestCase
         Assert::null(Arrays::max([]));
     }
 
+    public function testMaxWithKey(): void
+    {
+        $users = [['name' => 'Alice', 'age' => 30], ['name' => 'Bob', 'age' => 25]];
+        Assert::same(30, Arrays::max($users, 'age'));
+    }
+
+    public function testMaxWithStrings(): void
+    {
+        Assert::same('zebra', Arrays::max(['apple', 'banana', 'zebra', 'mango']));
+    }
+
     public function testMerge(): void
     {
         $result = Arrays::merge([1, 2], [3, 4]);
@@ -1527,6 +1538,17 @@ class ArraysTest extends TestCase
     public function testMinEmpty(): void
     {
         Assert::null(Arrays::min([]));
+    }
+
+    public function testMinWithKey(): void
+    {
+        $users = [['name' => 'Alice', 'age' => 30], ['name' => 'Bob', 'age' => 25]];
+        Assert::same(25, Arrays::min($users, 'age'));
+    }
+
+    public function testMinWithStrings(): void
+    {
+        Assert::same('apple', Arrays::min(['apple', 'banana', 'zebra', 'mango']));
     }
 
     public function testMode(): void

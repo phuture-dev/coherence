@@ -2291,9 +2291,12 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Finds the largest value in an array.
+     * Returns the largest value in an array.
      *
-     * This method searches through all values in an array and returns the largest one.
+     * This method finds the largest value in an array. When working with arrays
+     * of arrays (like database rows), you can specify a key to find the largest
+     * value of that particular field across all rows.
+     *
      * If the array is empty, this method returns null.
      *
      * Example:
@@ -2304,25 +2307,31 @@ class Arrays extends StaticClass
      * $result = Arrays::max($numbers);
      * // Returns: 9
      *
-     * $prices = [10.5, 20.0, 15.75];
-     * $result = Arrays::max($prices);
-     * // Returns: 20.0
+     * // With a key for nested arrays
+     * $users = [['name' => 'Alice', 'age' => 30], ['name' => 'Bob', 'age' => 25]];
+     * $maxAge = Arrays::max($users, 'age');
+     * // Returns: 30
      *
+     * // Empty array returns null
      * $result = Arrays::max([]);
      * // Returns: null
      * ```
      *
-     * @param array $array The array containing values to compare
-     * @return int|float|null The largest value found, or null if the array is empty
-     * @see Arrays::min()
+     * @param array $array The array to search for the largest value
+     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly. Defaults to null.
+     * @return mixed The largest value, or null if the array is empty
+     * @see \Phuture\Coherence\Arrays::min()
+     * @see \Phuture\Coherence\Arrays::average()
      */
-    public static function max(array $array): int|float|null
+    public static function max(array $array, ?string $key = null): mixed
     {
         if (empty($array)) {
             return null;
         }
 
-        return max($array);
+        $values = $key !== null ? array_column($array, $key) : $array;
+
+        return max($values);
     }
 
     /**
@@ -2368,9 +2377,12 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Finds the smallest value in an array.
+     * Returns the smallest value in an array.
      *
-     * This method searches through all values in an array and returns the smallest one.
+     * This method finds the smallest value in an array. When working with arrays
+     * of arrays (like database rows), you can specify a key to find the smallest
+     * value of that particular field across all rows.
+     *
      * If the array is empty, this method returns null.
      *
      * Example:
@@ -2381,25 +2393,31 @@ class Arrays extends StaticClass
      * $result = Arrays::min($numbers);
      * // Returns: 1
      *
-     * $prices = [10.5, 20.0, 15.75];
-     * $result = Arrays::min($prices);
-     * // Returns: 10.5
+     * // With a key for nested arrays
+     * $users = [['name' => 'Alice', 'age' => 30], ['name' => 'Bob', 'age' => 25]];
+     * $minAge = Arrays::min($users, 'age');
+     * // Returns: 25
      *
+     * // Empty array returns null
      * $result = Arrays::min([]);
      * // Returns: null
      * ```
      *
-     * @param array $array The array containing values to compare
-     * @return int|float|null The smallest value found, or null if the array is empty
-     * @see Arrays::max()
+     * @param array $array The array to search for the smallest value
+     * @param string|null $key The key to use when comparing nested arrays, or null to compare values directly. Defaults to null.
+     * @return mixed The smallest value, or null if the array is empty
+     * @see \Phuture\Coherence\Arrays::max()
+     * @see \Phuture\Coherence\Arrays::average()
      */
-    public static function min(array $array): int|float|null
+    public static function min(array $array, ?string $key = null): mixed
     {
         if (empty($array)) {
             return null;
         }
 
-        return min($array);
+        $values = $key !== null ? array_column($array, $key) : $array;
+
+        return min($values);
     }
 
     /**
@@ -2430,7 +2448,8 @@ class Arrays extends StaticClass
      *
      * @param array $array The array containing values to analyze
      * @return array An array of the most frequently occurring values, ordered by first appearance
-     * @see Arrays::count()
+     * @see \Phuture\Coherence\Arrays::count()
+     * @see \Phuture\Coherence\Arrays::average()
      */
     public static function mode(array $array): array
     {
