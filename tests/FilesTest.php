@@ -788,6 +788,42 @@ class FilesTest extends TestCase
         Assert::same('two', file_get_contents($destDir . '/sub/file2.txt'));
     }
 
+    public function testCopyDirectoryWithTrailingSlashOnDestination(): void
+    {
+        $sourceDir = $this->tempDir . '/source_dir';
+        $destDir = $this->tempDir . '/dest_dir/';
+        mkdir($sourceDir);
+        file_put_contents($sourceDir . '/file1.txt', 'one');
+        mkdir($sourceDir . '/sub');
+        file_put_contents($sourceDir . '/sub/file2.txt', 'two');
+
+        Files::copy($sourceDir, $destDir);
+
+        $normalizedDest = rtrim($destDir, '/\\');
+        Assert::true(file_exists($normalizedDest . '/file1.txt'));
+        Assert::same('one', file_get_contents($normalizedDest . '/file1.txt'));
+        Assert::true(file_exists($normalizedDest . '/sub/file2.txt'));
+        Assert::same('two', file_get_contents($normalizedDest . '/sub/file2.txt'));
+    }
+
+    public function testCopyDirectoryWithTrailingSlashOnBothPaths(): void
+    {
+        $sourceDir = $this->tempDir . '/source_dir/';
+        $destDir = $this->tempDir . '/dest_dir/';
+        mkdir($sourceDir);
+        file_put_contents($sourceDir . 'file1.txt', 'one');
+        mkdir($sourceDir . 'sub');
+        file_put_contents($sourceDir . 'sub/file2.txt', 'two');
+
+        Files::copy($sourceDir, $destDir);
+
+        $normalizedDest = rtrim($destDir, '/\\');
+        Assert::true(file_exists($normalizedDest . '/file1.txt'));
+        Assert::same('one', file_get_contents($normalizedDest . '/file1.txt'));
+        Assert::true(file_exists($normalizedDest . '/sub/file2.txt'));
+        Assert::same('two', file_get_contents($normalizedDest . '/sub/file2.txt'));
+    }
+
     public function testCopyFileIntoExistingDirectory(): void
     {
         $source = $this->tempDir . '/source.txt';
