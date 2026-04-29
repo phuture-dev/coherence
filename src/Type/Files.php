@@ -297,7 +297,7 @@ class Files extends FluentClass implements Fileable
      */
     public function name(bool $includeExtension = true): string
     {
-        return Transformer::name($this->data, null, $includeExtension);
+        return Transformer::name($this->data, $includeExtension);
     }
 
     /**

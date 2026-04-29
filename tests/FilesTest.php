@@ -492,7 +492,7 @@ class FilesTest extends TestCase
     public function testName(): void
     {
         Assert::same('file.txt', Files::name('/path/to/file.txt'));
-        Assert::same('file', Files::name('/path/to/file.txt', '.txt'));
+        Assert::same('file', Files::name('/path/to/file.txt', includeExtension: false));
         Assert::same('directory', Files::name('/path/to/directory/'));
     }
 
@@ -766,7 +766,6 @@ class FilesTest extends TestCase
         Assert::same('deep content', file_get_contents($file));
     }
 
-<<<<<<< feature/ADV-97-files-helper-enhancements
     public function testAppendCreatesFile(): void
     {
         $file = $this->tempDir . '/append_new.txt';
@@ -941,7 +940,10 @@ class FilesTest extends TestCase
 
         Assert::exception(
             static fn () => Files::unlink($file),
-=======
+            RuntimeException::class
+        );
+    }
+
     public function testIsAbsoluteWindowsRootPath(): void
     {
         Assert::true(Files::isAbsolute('C:/'));
@@ -1003,12 +1005,10 @@ class FilesTest extends TestCase
 
         Assert::exception(
             static fn () => Files::move($sourceDir, $destFile),
->>>>>>> develop
             RuntimeException::class
         );
     }
 
-<<<<<<< feature/ADV-97-files-helper-enhancements
     public function testReplaceInFile(): void
     {
         $file = $this->tempDir . '/replace.txt';
@@ -1058,8 +1058,8 @@ class FilesTest extends TestCase
     {
         Assert::same('file', Files::name('/path/to/file.txt', includeExtension: false));
         Assert::same('file.txt', Files::name('/path/to/file.txt', includeExtension: true));
-        Assert::same('file', Files::name('/path/to/file.txt', '.txt'));
-=======
+    }
+
     public function testMoveDirectoryOverDirectory(): void
     {
         $sourceDir = $this->tempDir . '/source_dir';
@@ -1103,7 +1103,6 @@ class FilesTest extends TestCase
 
         Assert::true(in_array('file1.txt', $capturedNames, true));
         Assert::true(in_array('file2.php', $capturedNames, true));
->>>>>>> develop
     }
 
     protected function setUp(): void

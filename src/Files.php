@@ -795,7 +795,13 @@ class Files extends StaticClass
             self::createDirectory($destinationDirectory);
         }
 
-        if (is_dir($source) && file_exists($destination)) {
+        if (is_dir($source) && file_exists($destination) && !is_dir($destination)) {
+            throw new RuntimeException(
+                "Runtime Error: Cannot move directory {$source} over existing file {$destination}"
+            );
+        }
+
+        if (is_dir($source) && is_dir($destination)) {
             $tempDestination = $destination . '.replacing.' . uniqid('', true);
             rename($destination, $tempDestination);
             $moveSuccess = rename($source, $destination);
@@ -824,8 +830,6 @@ class Files extends StaticClass
      *
      * By default, returns the full basename including the extension. When
      * `$includeExtension` is false, the extension is stripped from the result.
-     * Optionally, a custom suffix can be removed by passing it as the second
-     * argument.
      *
      * Example:
      * ```php
@@ -833,23 +837,17 @@ class Files extends StaticClass
      *
      * Files::name('/path/to/file.txt'); // 'file.txt'
      * Files::name('/path/to/file.txt', includeExtension: false); // 'file'
-     * Files::name('/path/to/file.txt', '.txt'); // 'file'
      * Files::name('/path/to/directory/'); // 'directory'
      * ```
      *
      * @param string $path The file path to extract the name from
-     * @param string|null $suffix An optional suffix to remove from the name (default: null)
      * @param bool $includeExtension Whether to include the file extension in the result (default: true)
      * @return string The name of the file or directory without the parent path
      * @see \Phuture\Coherence\Files::directory()
      * @see \Phuture\Coherence\Files::extension()
      */
-    public static function name(string $path, ?string $suffix = null, bool $includeExtension = true): string
+    public static function name(string $path, bool $includeExtension = true): string
     {
-        if ($suffix !== null) {
-            return basename($path, $suffix);
-        }
-
         if (!$includeExtension) {
             return pathinfo($path, PATHINFO_FILENAME);
         }
