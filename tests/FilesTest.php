@@ -16,6 +16,60 @@ class FilesTest extends TestCase
 {
     private string $tempDir;
 
+    public function testAppendCreatesFile(): void
+    {
+        $file = $this->tempDir . '/append_new.txt';
+
+        Files::append($file, 'first line');
+
+        Assert::same('first line', file_get_contents($file));
+    }
+
+    public function testAppendToExistingFile(): void
+    {
+        $file = $this->tempDir . '/append.txt';
+        file_put_contents($file, 'first');
+
+        Files::append($file, ' second');
+
+        Assert::same('first second', file_get_contents($file));
+    }
+
+    public function testChgrpNonExistentThrows(): void
+    {
+        Assert::exception(
+            static fn () => Files::chgrp('/non/existent/file.txt', 'root'),
+            RuntimeException::class
+        );
+    }
+
+    public function testChmod(): void
+    {
+        $file = $this->tempDir . '/chmod.txt';
+        file_put_contents($file, 'content');
+
+        Files::chmod($file, 0755);
+
+        clearstatcache(true, $file);
+        Assert::same(0755, fileperms($file) & 0777);
+    }
+
+    public function testChmodNonExistentThrows(): void
+    {
+        Assert::exception(
+            static fn () => Files::chmod('/non/existent/file.txt', 0755),
+            RuntimeException::class
+        );
+    }
+
+    public function testChownNonExistentThrows(): void
+    {
+        Assert::exception(
+            static fn () => Files::chown('/non/existent/file.txt', 'root'),
+            RuntimeException::class
+        );
+    }
+
     public function testCopyDirectory(): void
     {
         $sourceDir = $this->tempDir . '/source_dir';
@@ -34,6 +88,23 @@ class FilesTest extends TestCase
         Assert::same('two', file_get_contents($destDir . '/sub/file2.txt'));
     }
 
+    public function testCopyDirectoryWithTrailingSlash(): void
+    {
+        $sourceDir = $this->tempDir . '/source_dir/';
+        $destDir = $this->tempDir . '/dest_dir';
+        mkdir($sourceDir);
+        file_put_contents($sourceDir . 'file1.txt', 'one');
+        mkdir($sourceDir . 'sub');
+        file_put_contents($sourceDir . 'sub/file2.txt', 'two');
+
+        Files::copy($sourceDir, $destDir);
+
+        Assert::true(file_exists($destDir . '/file1.txt'));
+        Assert::same('one', file_get_contents($destDir . '/file1.txt'));
+        Assert::true(file_exists($destDir . '/sub/file2.txt'));
+        Assert::same('two', file_get_contents($destDir . '/sub/file2.txt'));
+    }
+
     public function testCopyFile(): void
     {
         $source = $this->tempDir . '/source.txt';
@@ -44,6 +115,20 @@ class FilesTest extends TestCase
 
         Assert::true(file_exists($destination));
         Assert::same('Hello, World!', file_get_contents($destination));
+    }
+
+    public function testCopyFileIntoExistingDirectory(): void
+    {
+        $source = $this->tempDir . '/source.txt';
+        $destDir = $this->tempDir . '/target_dir';
+        file_put_contents($source, 'file content');
+        mkdir($destDir);
+
+        Files::copy($source, $destDir);
+
+        Assert::true(file_exists($destDir . '/source.txt'));
+        Assert::same('file content', file_get_contents($destDir . '/source.txt'));
+        Assert::true(file_exists($source));
     }
 
     public function testCopyFileNoOverwriteThrows(): void
@@ -91,28 +176,48 @@ class FilesTest extends TestCase
         Assert::same($content, Files::read($destination));
     }
 
+    public function testCreateAlreadyExisting(): void
+    {
+        $file = $this->tempDir . '/existing.txt';
+        file_put_contents($file, 'data');
+
+        Files::create($file);
+
+        Assert::same('data', file_get_contents($file));
+    }
+
     public function testCreateDirectory(): void
     {
-        $dir = $this->tempDir . '/new/directory/structure';
+        $dir = $this->tempDir . '/new/directory/structure/';
 
-        Files::createDirectory($dir);
+        Files::create($dir);
 
-        Assert::true(is_dir($dir));
+        Assert::true(is_dir(rtrim($dir, '/')));
     }
 
     public function testCreateDirectoryAlreadyExists(): void
     {
-        Files::createDirectory($this->tempDir);
+        Files::create($this->tempDir . '/');
 
         Assert::true(is_dir($this->tempDir));
     }
 
     public function testCreateDirectoryWithMode(): void
     {
-        $dir = $this->tempDir . '/mode_test';
-        Files::createDirectory($dir, 0755);
+        $dir = $this->tempDir . '/mode_test/';
+        Files::create($dir, 0755);
 
-        Assert::true(is_dir($dir));
+        Assert::true(is_dir(rtrim($dir, '/')));
+    }
+
+    public function testCreateFile(): void
+    {
+        $file = $this->tempDir . '/created.txt';
+
+        Files::create($file);
+
+        Assert::true(file_exists($file));
+        Assert::same('', file_get_contents($file));
     }
 
     public function testDeleteDirectory(): void
@@ -176,6 +281,18 @@ class FilesTest extends TestCase
         $results = Files::find('*', $this->tempDir);
 
         Assert::count(2, $results);
+    }
+
+    public function testFindByTypeNonRecursiveFindsDotfiles(): void
+    {
+        file_put_contents($this->tempDir . '/.env', 'APP_KEY=secret');
+        file_put_contents($this->tempDir . '/regular.txt', 'normal');
+
+        $results = Files::find('*', $this->tempDir);
+
+        $basenames = array_map(static fn ($p) => basename($p), $results);
+        Assert::true(in_array('.env', $basenames, true));
+        Assert::true(in_array('regular.txt', $basenames, true));
     }
 
     public function testFindDirectories(): void
@@ -252,6 +369,27 @@ class FilesTest extends TestCase
         );
     }
 
+    public function testGetLink(): void
+    {
+        $target = $this->tempDir . '/getlink_target.txt';
+        $link = $this->tempDir . '/getlink';
+        file_put_contents($target, 'content');
+        symlink($target, $link);
+
+        Assert::same($target, Files::getLink($link));
+    }
+
+    public function testGetLinkNonLinkThrows(): void
+    {
+        $file = $this->tempDir . '/not_a_link.txt';
+        file_put_contents($file, 'content');
+
+        Assert::exception(
+            static fn () => Files::getLink($file),
+            RuntimeException::class
+        );
+    }
+
     public function testIsAbsolute(): void
     {
         Assert::true(Files::isAbsolute('/usr/local/bin'));
@@ -260,6 +398,12 @@ class FilesTest extends TestCase
         Assert::false(Files::isAbsolute('./relative'));
         Assert::true(Files::isAbsolute('C:/Windows'));
         Assert::true(Files::isAbsolute('D:\\data'));
+    }
+
+    public function testIsAbsoluteWindowsRootPath(): void
+    {
+        Assert::true(Files::isAbsolute('C:/'));
+        Assert::true(Files::isAbsolute('D:\\'));
     }
 
     public function testIsDirectory(): void
@@ -301,6 +445,50 @@ class FilesTest extends TestCase
         Assert::false(Files::isFile('/non/existent/file.txt'));
     }
 
+    public function testIsLink(): void
+    {
+        $file = $this->tempDir . '/target.txt';
+        $link = $this->tempDir . '/link_to_target';
+        file_put_contents($file, 'content');
+        symlink($file, $link);
+
+        Assert::true(Files::isLink($link));
+        Assert::false(Files::isLink($file));
+    }
+
+    public function testIsLockedNonExistentThrows(): void
+    {
+        Assert::exception(
+            static fn () => Files::isLocked('/non/existent/file.txt'),
+            RuntimeException::class
+        );
+    }
+
+    public function testIsLockedUnlockedFile(): void
+    {
+        $file = $this->tempDir . '/unlocked.txt';
+        file_put_contents($file, 'content');
+
+        Assert::false(Files::isLocked($file));
+    }
+
+    public function testIsReadable(): void
+    {
+        $file = $this->tempDir . '/readable.txt';
+        file_put_contents($file, 'content');
+
+        Assert::true(Files::isReadable($file));
+        Assert::false(Files::isReadable('/non/existent/file.txt'));
+    }
+
+    public function testIsWritable(): void
+    {
+        $file = $this->tempDir . '/writable_check.txt';
+        file_put_contents($file, 'content');
+
+        Assert::true(Files::isWritable($file));
+    }
+
     public function testJoinPaths(): void
     {
         Assert::same('a/b/file.txt', Files::joinPaths('a', 'b', 'file.txt'));
@@ -328,6 +516,18 @@ class FilesTest extends TestCase
         );
     }
 
+    public function testLink(): void
+    {
+        $target = $this->tempDir . '/link_target.txt';
+        $link = $this->tempDir . '/symlink';
+        file_put_contents($target, 'content');
+
+        Files::link($target, $link);
+
+        Assert::true(is_link($link));
+        Assert::same($target, readlink($link));
+    }
+
     public function testListing(): void
     {
         file_put_contents($this->tempDir . '/file1.txt', 'a');
@@ -337,6 +537,22 @@ class FilesTest extends TestCase
         $results = Files::listing($this->tempDir);
 
         Assert::count(3, $results);
+    }
+
+    public function testListingCallbackReceivesEntryName(): void
+    {
+        file_put_contents($this->tempDir . '/file1.txt', 'a');
+        file_put_contents($this->tempDir . '/file2.php', 'b');
+
+        $capturedNames = [];
+        Files::listing($this->tempDir, function ($fullPath, $entryName) use (&$capturedNames): bool {
+            $capturedNames[] = $entryName;
+
+            return true;
+        });
+
+        Assert::true(in_array('file1.txt', $capturedNames, true));
+        Assert::true(in_array('file2.php', $capturedNames, true));
     }
 
     public function testListingEmptyDirectory(): void
@@ -456,6 +672,51 @@ class FilesTest extends TestCase
         Assert::same('move me', file_get_contents($destination));
     }
 
+    public function testMoveDirectoryOverDirectory(): void
+    {
+        $sourceDir = $this->tempDir . '/source_dir';
+        $destDir = $this->tempDir . '/dest_dir';
+        mkdir($sourceDir);
+        file_put_contents($sourceDir . '/file.txt', 'content');
+        mkdir($destDir);
+        file_put_contents($destDir . '/old.txt', 'old');
+
+        Files::move($sourceDir, $destDir);
+
+        Assert::false(file_exists($sourceDir));
+        Assert::true(file_exists($destDir . '/file.txt'));
+        Assert::same('content', file_get_contents($destDir . '/file.txt'));
+        Assert::false(file_exists($destDir . '/old.txt'));
+    }
+
+    public function testMoveDirectoryOverFileThrows(): void
+    {
+        $sourceDir = $this->tempDir . '/source_dir';
+        $destFile = $this->tempDir . '/target_file.txt';
+        mkdir($sourceDir);
+        file_put_contents($sourceDir . '/inner.txt', 'data');
+        file_put_contents($destFile, 'existing file');
+
+        Assert::exception(
+            static fn () => Files::move($sourceDir, $destFile),
+            RuntimeException::class
+        );
+    }
+
+    public function testMoveFileIntoExistingDirectoryNoOverwrite(): void
+    {
+        $source = $this->tempDir . '/source.txt';
+        $destDir = $this->tempDir . '/target_dir';
+        file_put_contents($source, 'moved content');
+        mkdir($destDir);
+
+        Files::move($source, $destDir, overwrite: false);
+
+        Assert::false(file_exists($source));
+        Assert::true(file_exists($destDir . '/source.txt'));
+        Assert::same('moved content', file_get_contents($destDir . '/source.txt'));
+    }
+
     public function testMoveNonExistentSourceThrows(): void
     {
         Assert::exception(
@@ -496,6 +757,12 @@ class FilesTest extends TestCase
         Assert::same('directory', Files::name('/path/to/directory/'));
     }
 
+    public function testNameWithoutExtension(): void
+    {
+        Assert::same('file', Files::name('/path/to/file.txt', includeExtension: false));
+        Assert::same('file.txt', Files::name('/path/to/file.txt', includeExtension: true));
+    }
+
     public function testNormalizePath(): void
     {
         $ds = DIRECTORY_SEPARATOR;
@@ -513,6 +780,25 @@ class FilesTest extends TestCase
         $expected = 'path' . DIRECTORY_SEPARATOR . 'to' . DIRECTORY_SEPARATOR . 'file.txt';
         Assert::same($expected, Files::platformSlashes('path/to/file.txt'));
         Assert::same($expected, Files::platformSlashes('path\\to\\file.txt'));
+    }
+
+    public function testPrependCreatesFile(): void
+    {
+        $file = $this->tempDir . '/prepend_new.txt';
+
+        Files::prepend($file, 'content');
+
+        Assert::same('content', file_get_contents($file));
+    }
+
+    public function testPrependToExistingFile(): void
+    {
+        $file = $this->tempDir . '/prepend.txt';
+        file_put_contents($file, 'trailer');
+
+        Files::prepend($file, 'header ');
+
+        Assert::same('header trailer', file_get_contents($file));
     }
 
     public function testRead(): void
@@ -623,6 +909,26 @@ class FilesTest extends TestCase
         );
     }
 
+    public function testReplaceInFile(): void
+    {
+        $file = $this->tempDir . '/replace.txt';
+        file_put_contents($file, 'Hello old world, old friend');
+
+        Files::replaceInFile($file, 'old', 'new');
+
+        Assert::same('Hello new world, new friend', file_get_contents($file));
+    }
+
+    public function testReplaceInFileWithArrays(): void
+    {
+        $file = $this->tempDir . '/replace_multi.txt';
+        file_put_contents($file, 'Hello {{name}}, your email is {{email}}');
+
+        Files::replaceInFile($file, ['{{name}}', '{{email}}'], ['John', 'john@example.com']);
+
+        Assert::same('Hello John, your email is john@example.com', file_get_contents($file));
+    }
+
     public function testSize(): void
     {
         $file = $this->tempDir . '/sized.txt';
@@ -654,6 +960,30 @@ class FilesTest extends TestCase
     {
         Assert::same('path/to/file.txt', Files::unixSlashes('path\\to\\file.txt'));
         Assert::same('path/to/file.txt', Files::unixSlashes('path/to/file.txt'));
+    }
+
+    public function testUnlink(): void
+    {
+        $target = $this->tempDir . '/unlink_target.txt';
+        $link = $this->tempDir . '/unlink_link';
+        file_put_contents($target, 'content');
+        symlink($target, $link);
+
+        Files::unlink($link);
+
+        Assert::false(is_link($link));
+        Assert::true(file_exists($target));
+    }
+
+    public function testUnlinkNonLinkThrows(): void
+    {
+        $file = $this->tempDir . '/unlink_file.txt';
+        file_put_contents($file, 'content');
+
+        Assert::exception(
+            static fn () => Files::unlink($file),
+            RuntimeException::class
+        );
     }
 
     public function testUploadErrorReturnsFalse(): void
@@ -766,285 +1096,6 @@ class FilesTest extends TestCase
         Assert::same('deep content', file_get_contents($file));
     }
 
-    public function testAppendCreatesFile(): void
-    {
-        $file = $this->tempDir . '/append_new.txt';
-
-        Files::append($file, 'first line');
-
-        Assert::same('first line', file_get_contents($file));
-    }
-
-    public function testAppendToExistingFile(): void
-    {
-        $file = $this->tempDir . '/append.txt';
-        file_put_contents($file, 'first');
-
-        Files::append($file, ' second');
-
-        Assert::same('first second', file_get_contents($file));
-    }
-
-    public function testPrependToExistingFile(): void
-    {
-        $file = $this->tempDir . '/prepend.txt';
-        file_put_contents($file, 'trailer');
-
-        Files::prepend($file, 'header ');
-
-        Assert::same('header trailer', file_get_contents($file));
-    }
-
-    public function testPrependCreatesFile(): void
-    {
-        $file = $this->tempDir . '/prepend_new.txt';
-
-        Files::prepend($file, 'content');
-
-        Assert::same('content', file_get_contents($file));
-    }
-
-    public function testChmod(): void
-    {
-        $file = $this->tempDir . '/chmod.txt';
-        file_put_contents($file, 'content');
-
-        Files::chmod($file, 0755);
-
-        clearstatcache(true, $file);
-        Assert::same(0755, fileperms($file) & 0777);
-    }
-
-    public function testChmodNonExistentThrows(): void
-    {
-        Assert::exception(
-            static fn () => Files::chmod('/non/existent/file.txt', 0755),
-            RuntimeException::class
-        );
-    }
-
-    public function testChownNonExistentThrows(): void
-    {
-        Assert::exception(
-            static fn () => Files::chown('/non/existent/file.txt', 'root'),
-            RuntimeException::class
-        );
-    }
-
-    public function testChgrpNonExistentThrows(): void
-    {
-        Assert::exception(
-            static fn () => Files::chgrp('/non/existent/file.txt', 'root'),
-            RuntimeException::class
-        );
-    }
-
-    public function testCreateFile(): void
-    {
-        $file = $this->tempDir . '/created.txt';
-
-        Files::create($file);
-
-        Assert::true(file_exists($file));
-        Assert::same('', file_get_contents($file));
-    }
-
-    public function testCreateAlreadyExisting(): void
-    {
-        $file = $this->tempDir . '/existing.txt';
-        file_put_contents($file, 'data');
-
-        Files::create($file);
-
-        Assert::same('data', file_get_contents($file));
-    }
-
-    public function testIsReadable(): void
-    {
-        $file = $this->tempDir . '/readable.txt';
-        file_put_contents($file, 'content');
-
-        Assert::true(Files::isReadable($file));
-        Assert::false(Files::isReadable('/non/existent/file.txt'));
-    }
-
-    public function testIsWritable(): void
-    {
-        $file = $this->tempDir . '/writable_check.txt';
-        file_put_contents($file, 'content');
-
-        Assert::true(Files::isWritable($file));
-    }
-
-    public function testIsLink(): void
-    {
-        $file = $this->tempDir . '/target.txt';
-        $link = $this->tempDir . '/link_to_target';
-        file_put_contents($file, 'content');
-        symlink($file, $link);
-
-        Assert::true(Files::isLink($link));
-        Assert::false(Files::isLink($file));
-    }
-
-    public function testLink(): void
-    {
-        $target = $this->tempDir . '/link_target.txt';
-        $link = $this->tempDir . '/symlink';
-        file_put_contents($target, 'content');
-
-        Files::link($target, $link);
-
-        Assert::true(is_link($link));
-        Assert::same($target, readlink($link));
-    }
-
-    public function testGetLink(): void
-    {
-        $target = $this->tempDir . '/getlink_target.txt';
-        $link = $this->tempDir . '/getlink';
-        file_put_contents($target, 'content');
-        symlink($target, $link);
-
-        Assert::same($target, Files::getLink($link));
-    }
-
-    public function testGetLinkNonLinkThrows(): void
-    {
-        $file = $this->tempDir . '/not_a_link.txt';
-        file_put_contents($file, 'content');
-
-        Assert::exception(
-            static fn () => Files::getLink($file),
-            RuntimeException::class
-        );
-    }
-
-    public function testUnlink(): void
-    {
-        $target = $this->tempDir . '/unlink_target.txt';
-        $link = $this->tempDir . '/unlink_link';
-        file_put_contents($target, 'content');
-        symlink($target, $link);
-
-        Files::unlink($link);
-
-        Assert::false(is_link($link));
-        Assert::true(file_exists($target));
-    }
-
-    public function testUnlinkNonLinkThrows(): void
-    {
-        $file = $this->tempDir . '/unlink_file.txt';
-        file_put_contents($file, 'content');
-
-        Assert::exception(
-            static fn () => Files::unlink($file),
-            RuntimeException::class
-        );
-    }
-
-    public function testIsAbsoluteWindowsRootPath(): void
-    {
-        Assert::true(Files::isAbsolute('C:/'));
-        Assert::true(Files::isAbsolute('D:\\'));
-    }
-
-    public function testCopyDirectoryWithTrailingSlash(): void
-    {
-        $sourceDir = $this->tempDir . '/source_dir/';
-        $destDir = $this->tempDir . '/dest_dir';
-        mkdir($sourceDir);
-        file_put_contents($sourceDir . 'file1.txt', 'one');
-        mkdir($sourceDir . 'sub');
-        file_put_contents($sourceDir . 'sub/file2.txt', 'two');
-
-        Files::copy($sourceDir, $destDir);
-
-        Assert::true(file_exists($destDir . '/file1.txt'));
-        Assert::same('one', file_get_contents($destDir . '/file1.txt'));
-        Assert::true(file_exists($destDir . '/sub/file2.txt'));
-        Assert::same('two', file_get_contents($destDir . '/sub/file2.txt'));
-    }
-
-    public function testCopyFileIntoExistingDirectory(): void
-    {
-        $source = $this->tempDir . '/source.txt';
-        $destDir = $this->tempDir . '/target_dir';
-        file_put_contents($source, 'file content');
-        mkdir($destDir);
-
-        Files::copy($source, $destDir);
-
-        Assert::true(file_exists($destDir . '/source.txt'));
-        Assert::same('file content', file_get_contents($destDir . '/source.txt'));
-        Assert::true(file_exists($source));
-    }
-
-    public function testMoveFileIntoExistingDirectoryNoOverwrite(): void
-    {
-        $source = $this->tempDir . '/source.txt';
-        $destDir = $this->tempDir . '/target_dir';
-        file_put_contents($source, 'moved content');
-        mkdir($destDir);
-
-        Files::move($source, $destDir, overwrite: false);
-
-        Assert::false(file_exists($source));
-        Assert::true(file_exists($destDir . '/source.txt'));
-        Assert::same('moved content', file_get_contents($destDir . '/source.txt'));
-    }
-
-    public function testMoveDirectoryOverFileThrows(): void
-    {
-        $sourceDir = $this->tempDir . '/source_dir';
-        $destFile = $this->tempDir . '/target_file.txt';
-        mkdir($sourceDir);
-        file_put_contents($sourceDir . '/inner.txt', 'data');
-        file_put_contents($destFile, 'existing file');
-
-        Assert::exception(
-            static fn () => Files::move($sourceDir, $destFile),
-            RuntimeException::class
-        );
-    }
-
-    public function testReplaceInFile(): void
-    {
-        $file = $this->tempDir . '/replace.txt';
-        file_put_contents($file, 'Hello old world, old friend');
-
-        Files::replaceInFile($file, 'old', 'new');
-
-        Assert::same('Hello new world, new friend', file_get_contents($file));
-    }
-
-    public function testReplaceInFileWithArrays(): void
-    {
-        $file = $this->tempDir . '/replace_multi.txt';
-        file_put_contents($file, 'Hello {{name}}, your email is {{email}}');
-
-        Files::replaceInFile($file, ['{{name}}', '{{email}}'], ['John', 'john@example.com']);
-
-        Assert::same('Hello John, your email is john@example.com', file_get_contents($file));
-    }
-
-    public function testIsLockedUnlockedFile(): void
-    {
-        $file = $this->tempDir . '/unlocked.txt';
-        file_put_contents($file, 'content');
-
-        Assert::false(Files::isLocked($file));
-    }
-
-    public function testIsLockedNonExistentThrows(): void
-    {
-        Assert::exception(
-            static fn () => Files::isLocked('/non/existent/file.txt'),
-            RuntimeException::class
-        );
-    }
-
     public function testWriteWithLock(): void
     {
         $file = $this->tempDir . '/locked_write.txt';
@@ -1052,57 +1103,6 @@ class FilesTest extends TestCase
         Files::write($file, 'locked content', 0666, true);
 
         Assert::same('locked content', file_get_contents($file));
-    }
-
-    public function testNameWithoutExtension(): void
-    {
-        Assert::same('file', Files::name('/path/to/file.txt', includeExtension: false));
-        Assert::same('file.txt', Files::name('/path/to/file.txt', includeExtension: true));
-    }
-
-    public function testMoveDirectoryOverDirectory(): void
-    {
-        $sourceDir = $this->tempDir . '/source_dir';
-        $destDir = $this->tempDir . '/dest_dir';
-        mkdir($sourceDir);
-        file_put_contents($sourceDir . '/file.txt', 'content');
-        mkdir($destDir);
-        file_put_contents($destDir . '/old.txt', 'old');
-
-        Files::move($sourceDir, $destDir);
-
-        Assert::false(file_exists($sourceDir));
-        Assert::true(file_exists($destDir . '/file.txt'));
-        Assert::same('content', file_get_contents($destDir . '/file.txt'));
-        Assert::false(file_exists($destDir . '/old.txt'));
-    }
-
-    public function testFindByTypeNonRecursiveFindsDotfiles(): void
-    {
-        file_put_contents($this->tempDir . '/.env', 'APP_KEY=secret');
-        file_put_contents($this->tempDir . '/regular.txt', 'normal');
-
-        $results = Files::find('*', $this->tempDir);
-
-        $basenames = array_map(static fn ($p) => basename($p), $results);
-        Assert::true(in_array('.env', $basenames, true));
-        Assert::true(in_array('regular.txt', $basenames, true));
-    }
-
-    public function testListingCallbackReceivesEntryName(): void
-    {
-        file_put_contents($this->tempDir . '/file1.txt', 'a');
-        file_put_contents($this->tempDir . '/file2.php', 'b');
-
-        $capturedNames = [];
-        Files::listing($this->tempDir, function ($fullPath, $entryName) use (&$capturedNames): bool {
-            $capturedNames[] = $entryName;
-
-            return true;
-        });
-
-        Assert::true(in_array('file1.txt', $capturedNames, true));
-        Assert::true(in_array('file2.php', $capturedNames, true));
     }
 
     protected function setUp(): void

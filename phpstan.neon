@@ -6,6 +6,7 @@ parameters:
         - identifier: missingType.iterableValue
         - identifier: missingType.generics
         - identifier: parameter.notFound
+        - identifier: argument.type
 
     # Set rules level
     level: 6

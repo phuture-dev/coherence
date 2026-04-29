@@ -34,53 +34,6 @@ use Phuture\Coherence\Files as Transformer;
 class Files extends FluentClass implements Fileable
 {
     /**
-     * Copies the wrapped file to a new location and updates the internal path.
-     *
-     * After copying, the internal path remains unchanged (it still points to
-     * the source). Use `copyTo()` when you want the path to switch to the
-     * destination after copying.
-     *
-     * @param string $destination The destination file or directory path to copy to
-     * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
-     * @return self Returns the current instance for method chaining
-     * @throws \Phuture\Coherence\Exception\RuntimeException
-     *     When the source does not exist or the destination cannot be written
-     * @see \Phuture\Coherence\Files::copy()
-     */
-    public function copy(string $destination, bool $overwrite = true): self
-    {
-        Transformer::copy($this->data, $destination, $overwrite);
-
-        return $this;
-    }
-
-    /**
-     * Copies the wrapped file to a new location and switches the internal path to the destination.
-     *
-     * This is the same as `copy()` but after copying, the internal path is updated
-     * to point to the destination, so subsequent operations act on the copy.
-     *
-     * @param string $destination The destination file or directory path to copy to
-     * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
-     * @return self Returns the current instance for method chaining
-     * @throws \Phuture\Coherence\Exception\RuntimeException
-     *     When the source does not exist or the destination cannot be written
-     * @see \Phuture\Coherence\Files::copy()
-     */
-    public function copyTo(string $destination, bool $overwrite = true): self
-    {
-        Transformer::copy($this->data, $destination, $overwrite);
-
-        if (is_dir($destination)) {
-            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
-        }
-
-        $this->data = $destination;
-
-        return $this;
-    }
-
-    /**
      * Appends content to the end of the wrapped file.
      *
      * @param string $content The content to append to the file
@@ -136,6 +89,52 @@ class Files extends FluentClass implements Fileable
     public function chown(string|int $user): self
     {
         Transformer::chown($this->data, $user);
+
+        return $this;
+    }
+    /**
+     * Copies the wrapped file to a new location and updates the internal path.
+     *
+     * After copying, the internal path remains unchanged (it still points to
+     * the source). Use `copyTo()` when you want the path to switch to the
+     * destination after copying.
+     *
+     * @param string $destination The destination file or directory path to copy to
+     * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the source does not exist or the destination cannot be written
+     * @see \Phuture\Coherence\Files::copy()
+     */
+    public function copy(string $destination, bool $overwrite = true): self
+    {
+        Transformer::copy($this->data, $destination, $overwrite);
+
+        return $this;
+    }
+
+    /**
+     * Copies the wrapped file to a new location and switches the internal path to the destination.
+     *
+     * This is the same as `copy()` but after copying, the internal path is updated
+     * to point to the destination, so subsequent operations act on the copy.
+     *
+     * @param string $destination The destination file or directory path to copy to
+     * @param bool $overwrite Whether to overwrite existing files at the destination (default: true)
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException
+     *     When the source does not exist or the destination cannot be written
+     * @see \Phuture\Coherence\Files::copy()
+     */
+    public function copyTo(string $destination, bool $overwrite = true): self
+    {
+        Transformer::copy($this->data, $destination, $overwrite);
+
+        if (is_dir($destination)) {
+            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
+        }
+
+        $this->data = $destination;
 
         return $this;
     }
@@ -222,7 +221,8 @@ class Files extends FluentClass implements Fileable
     {
         $resolvedDestination = $destination;
         if (file_exists($destination) && is_dir($destination)) {
-            $resolvedDestination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($this->data);
+            $resolvedDestination = rtrim($destination, DIRECTORY_SEPARATOR)
+                . DIRECTORY_SEPARATOR . basename($this->data);
         }
 
         Transformer::move($this->data, $destination, $overwrite);

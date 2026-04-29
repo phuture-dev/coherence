@@ -173,18 +173,18 @@ class ArraysTest extends TestCase
         Assert::same(['a', 'b', 'c', 'd' => 4, 'e'], $result);
     }
 
-    public function testCollapseWithSingleArray(): void
-    {
-        $arrays = [[1, 2, 3]];
-        $result = Arrays::collapse($arrays);
-        Assert::same([1, 2, 3], $result);
-    }
-
     public function testCollapseWithNonArrayElements(): void
     {
         $arrays = [1, [2, 3], 'string', [4]];
         $result = Arrays::collapse($arrays);
         Assert::same([2, 3, 4], $result);
+    }
+
+    public function testCollapseWithNullElement(): void
+    {
+        $arrays = [null, [1, 2], null, [3]];
+        $result = Arrays::collapse($arrays);
+        Assert::same([1, 2, 3], $result);
     }
 
     public function testCollapseWithOnlyNonArrayElements(): void
@@ -194,9 +194,9 @@ class ArraysTest extends TestCase
         Assert::same([], $result);
     }
 
-    public function testCollapseWithNullElement(): void
+    public function testCollapseWithSingleArray(): void
     {
-        $arrays = [null, [1, 2], null, [3]];
+        $arrays = [[1, 2, 3]];
         $result = Arrays::collapse($arrays);
         Assert::same([1, 2, 3], $result);
     }
