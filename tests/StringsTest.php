@@ -1678,6 +1678,13 @@ class StringsTest extends TestCase
         Assert::same('hello world', Strings::swap('foo bar', ['foo' => 'hello', 'bar' => 'world']));
     }
 
+    public function testSwapChainedReplacementDoesNotCorrupt(): void
+    {
+        Assert::same('world', Strings::swap('hello', ['hello' => 'world', 'world' => 'hi']));
+        Assert::same('world hi', Strings::swap('hello world', ['hello' => 'world', 'world' => 'hi']));
+        Assert::same('b c', Strings::swap('a b', ['a' => 'b', 'b' => 'c']));
+    }
+
     public function testSwapEmptyReplacements(): void
     {
         Assert::same('hello', Strings::swap('hello', []));
@@ -1686,13 +1693,6 @@ class StringsTest extends TestCase
     public function testSwapMultibyte(): void
     {
         Assert::same('nano', Strings::swap('ñaño', ['ñ' => 'n', 'o' => 'o']));
-    }
-
-    public function testSwapChainedReplacementDoesNotCorrupt(): void
-    {
-        Assert::same('world', Strings::swap('hello', ['hello' => 'world', 'world' => 'hi']));
-        Assert::same('world hi', Strings::swap('hello world', ['hello' => 'world', 'world' => 'hi']));
-        Assert::same('b c', Strings::swap('a b', ['a' => 'b', 'b' => 'c']));
     }
 
     public function testTake(): void

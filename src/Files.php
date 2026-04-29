@@ -1747,6 +1747,7 @@ class Files extends StaticClass
     private static function copyDirectory(string $source, string $destination, bool $overwrite): void
     {
         $source = rtrim($source, '/\\');
+        $destination = rtrim($destination, '/\\');
 
         self::createDirectory($destination);
 
