@@ -1827,21 +1827,23 @@ class Hash extends StaticClass
     /**
      * Generates cryptographically secure random data.
      *
-     * This method creates random data suitable for cryptographic purposes. By default,
-     * it returns a hexadecimal string, but can also return raw binary data. This is
-     * useful for generating encryption keys, salts, nonces, and other security data.
+     * Creates the given number of random bytes, returned as either a hex string
+     * (twice the byte length) or raw binary data (exactly the byte length). The
+     * length parameter always represents the number of random bytes generated,
+     * regardless of output format. Useful for encryption keys, salts, nonces,
+     * and other security-sensitive data.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
      *
-     * $randomHex = Hash::random(32); // 32 character hex string
+     * $randomHex = Hash::random(32); // 64-character hex string (32 bytes of entropy)
      * $randomBinary = Hash::random(16, true); // 16 bytes of raw binary data
      * ```
      *
-     * @param int $length The desired length of the output in characters for hex, or bytes for binary (default: 128)
-     * @param bool $binary Whether to return raw binary data (default: false for hex string)
-     * @return string Returns random data as hex string or raw binary
+     * @param int $length The number of random bytes to generate (default: 128)
+     * @param bool $binary Whether to return raw binary data instead of a hex string (default: false)
+     * @return string A hex string of twice the given length, or raw binary bytes of the given length
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to generate random bytes
      * @see \Phuture\Coherence\Hash::salt() For generating a random salt
      * @see \Phuture\Coherence\Hash::token() For generating a random token
@@ -1853,7 +1855,7 @@ class Hash extends StaticClass
                 return random_bytes($length);
             }
 
-            return substr(bin2hex(random_bytes((int) ceil($length / 2))), 0, $length);
+            return bin2hex(random_bytes($length));
         } catch (RandomException $e) {
             throw new RuntimeException(
                 "Runtime Error: Unable to generate random bytes"
