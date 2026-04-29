@@ -2621,7 +2621,11 @@ class Strings extends StaticClass
      */
     public static function swap(string $string, array $replacements): string
     {
-        return str_replace(array_keys($replacements), array_values($replacements), $string);
+        if ($replacements === []) {
+            return $string;
+        }
+
+        return strtr($string, $replacements);
     }
 
     /**

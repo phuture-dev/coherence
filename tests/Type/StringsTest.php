@@ -483,6 +483,18 @@ class StringsTest extends TestCase
         );
     }
 
+    public function testSwapChainedReplacementDoesNotCorrupt(): void
+    {
+        Assert::same(
+            Strings::swap('hello', ['hello' => 'world', 'world' => 'hi']),
+            FluentStrings::from('hello')->swap(['hello' => 'world', 'world' => 'hi'])->get()
+        );
+        Assert::same(
+            Strings::swap('a b', ['a' => 'b', 'b' => 'c']),
+            FluentStrings::from('a b')->swap(['a' => 'b', 'b' => 'c'])->get()
+        );
+    }
+
     public function testTake(): void
     {
         Assert::same(Strings::take('hello world', 5), FluentStrings::from('hello world')->take(5)->get());
