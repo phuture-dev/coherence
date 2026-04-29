@@ -443,7 +443,7 @@ class Callables extends StaticClass
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to determine function arity automatically
      * @see Reflector::arity()
      */
-    public static function curry(callable $callback, int $arity = null): Closure
+    public static function curry(callable $callback, ?int $arity = null): Closure
     {
         try {
             if ($arity === null) {
@@ -1121,7 +1121,7 @@ class Callables extends StaticClass
         return function (...$args) use ($callback, &$calls, $maxAttempts, $milliseconds) {
             $now = (int) (microtime(true) * 1000);
 
-            // Clear old calls
+            $calls = $calls ?? [];
             $calls = array_filter($calls, fn ($time) => $time > $now - $milliseconds);
 
             if (count($calls) >= $maxAttempts) {

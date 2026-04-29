@@ -35,6 +35,151 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 class Files extends StaticClass
 {
     /**
+     * Appends content to the end of an existing file.
+     *
+     * When the file does not exist, it is created. Parent directories are
+     * created automatically when they do not exist.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::write('/path/to/log.txt', 'First line');
+     * Files::append('/path/to/log.txt', 'Second line');
+     * ```
+     *
+     * @param string $path The file path to append to
+     * @param string $content The content to append to the file
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
+     * @see \Phuture\Coherence\Files::write()
+     * @see \Phuture\Coherence\Files::prepend()
+     */
+    public static function append(string $path, string $content): void
+    {
+        $directory = dirname($path);
+
+        if (!is_dir($directory)) {
+            self::createDirectory($directory);
+        }
+
+        $handle = fopen($path, 'a');
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to open file {$path} for appending"
+            );
+        }
+
+        try {
+            $result = fwrite($handle, $content);
+
+            if ($result === false) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to append to file {$path}"
+                );
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Changes the group ownership of a file or directory.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::chgrp('/path/to/file.txt', 'www-data');
+     * Files::chgrp('/path/to/directory', 1000);
+     * ```
+     *
+     * @param string $path The file or directory path
+     * @param string|int $group The new group name or numeric group ID
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or the group cannot be changed
+     * @see \Phuture\Coherence\Files::chmod()
+     * @see \Phuture\Coherence\Files::chown()
+     */
+    public static function chgrp(string $path, string|int $group): void
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} does not exist"
+            );
+        }
+
+        if (!chgrp($path, $group)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to change group of {$path}"
+            );
+        }
+    }
+
+    /**
+     * Changes the permission mode of a file or directory.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::chmod('/path/to/file.txt', 0644);
+     * Files::chmod('/path/to/directory', 0755);
+     * ```
+     *
+     * @param string $path The file or directory path
+     * @param int $mode The permission mode (octal notation, e.g. 0755)
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or permissions cannot be changed
+     * @see \Phuture\Coherence\Files::chown()
+     * @see \Phuture\Coherence\Files::chgrp()
+     * @see \Phuture\Coherence\Files::makeWritable()
+     */
+    public static function chmod(string $path, int $mode): void
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} does not exist"
+            );
+        }
+
+        if (!chmod($path, $mode)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to change permissions of {$path}"
+            );
+        }
+    }
+
+    /**
+     * Changes the owner of a file or directory.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::chown('/path/to/file.txt', 'www-data');
+     * Files::chown('/path/to/directory', 1000);
+     * ```
+     *
+     * @param string $path The file or directory path
+     * @param string|int $user The new owner name or numeric user ID
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or the owner cannot be changed
+     * @see \Phuture\Coherence\Files::chmod()
+     * @see \Phuture\Coherence\Files::chgrp()
+     */
+    public static function chown(string $path, string|int $user): void
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} does not exist"
+            );
+        }
+
+        if (!chown($path, $user)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to change owner of {$path}"
+            );
+        }
+    }
+    /**
      * Copies a file or an entire directory to a new location.
      *
      * When copying a directory, all files and subdirectories within it are copied
@@ -107,6 +252,58 @@ class Files extends StaticClass
                 "Runtime Error: Unable to copy {$source} to {$destination}"
             );
         }
+    }
+
+    /**
+     * Creates a file or directory at the given path.
+     *
+     * When the path ends with a directory separator or contains no extension,
+     * a directory is created (including parent directories). Otherwise, an
+     * empty file is created using `touch()`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::create('/path/to/new/file.txt'); // creates empty file
+     * Files::create('/path/to/new/directory/'); // creates directory
+     * ```
+     *
+     * @param string $path The file or directory path to create
+     * @param int $mode The permission mode (default: 0777 for directories, 0666 for files)
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be created
+     * @see \Phuture\Coherence\Files::createDirectory()
+     * @see \Phuture\Coherence\Files::delete()
+     */
+    public static function create(string $path, int $mode = 0777): void
+    {
+        if (file_exists($path)) {
+            return;
+        }
+
+        $isDirectory = str_ends_with($path, '/') || str_ends_with($path, '\\') || (
+            !str_contains(basename($path), '.') && !str_contains($path, '.')
+        );
+
+        if ($isDirectory) {
+            self::createDirectory($path, $mode);
+
+            return;
+        }
+
+        $directory = dirname($path);
+
+        if (!is_dir($directory)) {
+            self::createDirectory($directory, $mode);
+        }
+
+        if (!touch($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create file {$path}"
+            );
+        }
+
+        chmod($path, $mode & 0666);
     }
 
     /**
@@ -374,6 +571,44 @@ class Files extends StaticClass
     }
 
     /**
+     * Returns the target of a symbolic link.
+     *
+     * Returns the path that the symbolic link points to. The returned path
+     * may be relative or absolute depending on how the link was created.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $target = Files::getLink('/path/to/symlink');
+     * ```
+     *
+     * @param string $path The symbolic link path
+     * @return string The target path that the link points to
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path is not a symbolic link or cannot be read
+     * @see \Phuture\Coherence\Files::isLink()
+     * @see \Phuture\Coherence\Files::link()
+     */
+    public static function getLink(string $path): string
+    {
+        if (!is_link($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Path {$path} is not a symbolic link"
+            );
+        }
+
+        $target = readlink($path);
+
+        if ($target === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to read symbolic link {$path}"
+            );
+        }
+
+        return $target;
+    }
+
+    /**
      * Determines whether a path is absolute.
      *
      * An absolute path starts with a forward slash on Unix systems or a drive
@@ -506,6 +741,114 @@ class Files extends StaticClass
     }
 
     /**
+     * Determines whether the given path is a symbolic link.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isLink('/path/to/symlink'); // true or false
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path is a symbolic link
+     * @see \Phuture\Coherence\Files::link()
+     * @see \Phuture\Coherence\Files::getLink()
+     * @see \Phuture\Coherence\Files::unlink()
+     */
+    public static function isLink(string $path): bool
+    {
+        return is_link($path);
+    }
+
+    /**
+     * Determines whether a file has an exclusive lock.
+     *
+     * Attempts to acquire a non-blocking shared lock on the file. When the
+     * lock cannot be acquired because another process holds an exclusive
+     * lock, returns true.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * if (Files::isLocked('/path/to/file.txt')) {
+     *     echo 'File is locked by another process';
+     * }
+     * ```
+     *
+     * @param string $path The file path to check
+     * @return bool True when the file appears to be exclusively locked
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be opened
+     * @see \Phuture\Coherence\Files::write()
+     */
+    public static function isLocked(string $path): bool
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException(
+                "Runtime Error: File {$path} does not exist"
+            );
+        }
+
+        $handle = fopen($path, 'r');
+
+        if ($handle === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to open file {$path}"
+            );
+        }
+
+        $wouldBlock = false;
+        $locked = !flock($handle, LOCK_SH | LOCK_NB, $wouldBlock);
+
+        if (!$locked) {
+            flock($handle, LOCK_UN);
+        }
+
+        fclose($handle);
+
+        return $locked;
+    }
+
+    /**
+     * Determines whether a file or directory is readable.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isReadable('/path/to/file.txt'); // true or false
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path exists and is readable
+     * @see \Phuture\Coherence\Files::isWritable()
+     */
+    public static function isReadable(string $path): bool
+    {
+        return is_readable($path);
+    }
+
+    /**
+     * Determines whether a file or directory is writable.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::isWritable('/path/to/file.txt'); // true or false
+     * ```
+     *
+     * @param string $path The path to check
+     * @return bool True when the path exists and is writable
+     * @see \Phuture\Coherence\Files::isReadable()
+     */
+    public static function isWritable(string $path): bool
+    {
+        return is_writable($path);
+    }
+
+    /**
      * Joins multiple path segments into a single normalized path.
      *
      * Segments are joined with forward slashes and the resulting path is
@@ -567,6 +910,38 @@ class Files extends StaticClass
         }
 
         return $time;
+    }
+
+    /**
+     * Creates a symbolic link from the target to the link path.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::link('/path/to/target', '/path/to/symlink');
+     * ```
+     *
+     * @param string $target The path that the link will point to
+     * @param string $link The path where the symbolic link will be created
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the link cannot be created
+     * @see \Phuture\Coherence\Files::isLink()
+     * @see \Phuture\Coherence\Files::getLink()
+     * @see \Phuture\Coherence\Files::unlink()
+     */
+    public static function link(string $target, string $link): void
+    {
+        $directory = dirname($link);
+
+        if (!is_dir($directory)) {
+            self::createDirectory($directory);
+        }
+
+        if (!symlink($target, $link)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create symbolic link from {$target} to {$link}"
+            );
+        }
     }
 
     /**
@@ -968,6 +1343,33 @@ class Files extends StaticClass
     }
 
     /**
+     * Prepends content to the beginning of an existing file.
+     *
+     * When the file does not exist, it is created with the given content.
+     * Parent directories are created automatically when they do not exist.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::write('/path/to/file.txt', 'Original content');
+     * Files::prepend('/path/to/file.txt', 'Header: ');
+     * ```
+     *
+     * @param string $path The file path to prepend to
+     * @param string $content The content to prepend to the file
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
+     * @see \Phuture\Coherence\Files::write()
+     * @see \Phuture\Coherence\Files::append()
+     */
+    public static function prepend(string $path, string $content): void
+    {
+        $existing = file_exists($path) ? self::read($path) : '';
+
+        self::write($path, $content . $existing);
+    }
+
+    /**
      * Reads and returns the entire contents of a file.
      *
      * Loads the complete file contents into a string. For large files, consider
@@ -1122,6 +1524,36 @@ class Files extends StaticClass
     }
 
     /**
+     * Replaces all occurrences of a search string with a replacement string within a file.
+     *
+     * Reads the file, performs the replacement, and writes the result back.
+     * When `$search` is an array, each occurrence of any search value is
+     * replaced with the corresponding value in `$replace`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * Files::replaceInFile('/path/to/config.php', 'old-value', 'new-value');
+     * Files::replaceInFile('/path/to/template.html', ['{{name}}', '{{email}}'], ['John', 'john@example.com']);
+     * ```
+     *
+     * @param string $path The file path to modify
+     * @param string|array $search The value or values to search for
+     * @param string|array $replace The replacement value or values
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be written
+     * @see \Phuture\Coherence\Files::write()
+     * @see \Phuture\Coherence\Files::read()
+     */
+    public static function replaceInFile(string $path, string|array $search, string|array $replace): void
+    {
+        $content = self::read($path);
+        $replaced = str_replace($search, $replace, $content);
+
+        self::write($path, $replaced);
+    }
+
+    /**
      * Returns the size of a file or directory in bytes.
      *
      * When the path points to a file, returns its exact size. When the path
@@ -1192,363 +1624,6 @@ class Files extends StaticClass
     public static function unixSlashes(string $path): string
     {
         return str_replace('\\', '/', $path);
-    }
-
-    /**
-     * Changes the group ownership of a file or directory.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::chgrp('/path/to/file.txt', 'www-data');
-     * Files::chgrp('/path/to/directory', 1000);
-     * ```
-     *
-     * @param string $path The file or directory path
-     * @param string|int $group The new group name or numeric group ID
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or the group cannot be changed
-     * @see \Phuture\Coherence\Files::chmod()
-     * @see \Phuture\Coherence\Files::chown()
-     */
-    public static function chgrp(string $path, string|int $group): void
-    {
-        if (!file_exists($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Path {$path} does not exist"
-            );
-        }
-
-        if (!chgrp($path, $group)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change group of {$path}"
-            );
-        }
-    }
-
-    /**
-     * Changes the permission mode of a file or directory.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::chmod('/path/to/file.txt', 0644);
-     * Files::chmod('/path/to/directory', 0755);
-     * ```
-     *
-     * @param string $path The file or directory path
-     * @param int $mode The permission mode (octal notation, e.g. 0755)
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or permissions cannot be changed
-     * @see \Phuture\Coherence\Files::chown()
-     * @see \Phuture\Coherence\Files::chgrp()
-     * @see \Phuture\Coherence\Files::makeWritable()
-     */
-    public static function chmod(string $path, int $mode): void
-    {
-        if (!file_exists($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Path {$path} does not exist"
-            );
-        }
-
-        if (!chmod($path, $mode)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change permissions of {$path}"
-            );
-        }
-    }
-
-    /**
-     * Changes the owner of a file or directory.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::chown('/path/to/file.txt', 'www-data');
-     * Files::chown('/path/to/directory', 1000);
-     * ```
-     *
-     * @param string $path The file or directory path
-     * @param string|int $user The new owner name or numeric user ID
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path does not exist or the owner cannot be changed
-     * @see \Phuture\Coherence\Files::chmod()
-     * @see \Phuture\Coherence\Files::chgrp()
-     */
-    public static function chown(string $path, string|int $user): void
-    {
-        if (!file_exists($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Path {$path} does not exist"
-            );
-        }
-
-        if (!chown($path, $user)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change owner of {$path}"
-            );
-        }
-    }
-
-    /**
-     * Creates a file or directory at the given path.
-     *
-     * When the path ends with a directory separator or contains no extension,
-     * a directory is created (including parent directories). Otherwise, an
-     * empty file is created using `touch()`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::create('/path/to/new/file.txt'); // creates empty file
-     * Files::create('/path/to/new/directory/'); // creates directory
-     * ```
-     *
-     * @param string $path The file or directory path to create
-     * @param int $mode The permission mode (default: 0777 for directories, 0666 for files)
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be created
-     * @see \Phuture\Coherence\Files::createDirectory()
-     * @see \Phuture\Coherence\Files::delete()
-     */
-    public static function create(string $path, int $mode = 0777): void
-    {
-        if (file_exists($path)) {
-            return;
-        }
-
-        $isDirectory = str_ends_with($path, '/') || str_ends_with($path, '\\') || (
-            !str_contains(basename($path), '.') && !str_contains($path, '.')
-        );
-
-        if ($isDirectory) {
-            self::createDirectory($path, $mode);
-
-            return;
-        }
-
-        $directory = dirname($path);
-
-        if (!is_dir($directory)) {
-            self::createDirectory($directory, $mode);
-        }
-
-        if (!touch($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create file {$path}"
-            );
-        }
-
-        chmod($path, $mode & 0666);
-    }
-
-    /**
-     * Returns the target of a symbolic link.
-     *
-     * Returns the path that the symbolic link points to. The returned path
-     * may be relative or absolute depending on how the link was created.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * $target = Files::getLink('/path/to/symlink');
-     * ```
-     *
-     * @param string $path The symbolic link path
-     * @return string The target path that the link points to
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path is not a symbolic link or cannot be read
-     * @see \Phuture\Coherence\Files::isLink()
-     * @see \Phuture\Coherence\Files::link()
-     */
-    public static function getLink(string $path): string
-    {
-        if (!is_link($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Path {$path} is not a symbolic link"
-            );
-        }
-
-        $target = readlink($path);
-
-        if ($target === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to read symbolic link {$path}"
-            );
-        }
-
-        return $target;
-    }
-
-    /**
-     * Determines whether a file has an exclusive lock.
-     *
-     * Attempts to acquire a non-blocking shared lock on the file. When the
-     * lock cannot be acquired because another process holds an exclusive
-     * lock, returns true.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * if (Files::isLocked('/path/to/file.txt')) {
-     *     echo 'File is locked by another process';
-     * }
-     * ```
-     *
-     * @param string $path The file path to check
-     * @return bool True when the file appears to be exclusively locked
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be opened
-     * @see \Phuture\Coherence\Files::write()
-     */
-    public static function isLocked(string $path): bool
-    {
-        if (!file_exists($path)) {
-            throw new RuntimeException(
-                "Runtime Error: File {$path} does not exist"
-            );
-        }
-
-        $handle = fopen($path, 'r');
-
-        if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open file {$path}"
-            );
-        }
-
-        $wouldBlock = false;
-        $locked = !flock($handle, LOCK_SH | LOCK_NB, $wouldBlock);
-
-        if (!$locked) {
-            flock($handle, LOCK_UN);
-        }
-
-        fclose($handle);
-
-        return $locked;
-    }
-
-    /**
-     * Determines whether the given path is a symbolic link.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isLink('/path/to/symlink'); // true or false
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path is a symbolic link
-     * @see \Phuture\Coherence\Files::link()
-     * @see \Phuture\Coherence\Files::getLink()
-     * @see \Phuture\Coherence\Files::unlink()
-     */
-    public static function isLink(string $path): bool
-    {
-        return is_link($path);
-    }
-
-    /**
-     * Determines whether a file or directory is readable.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isReadable('/path/to/file.txt'); // true or false
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path exists and is readable
-     * @see \Phuture\Coherence\Files::isWritable()
-     */
-    public static function isReadable(string $path): bool
-    {
-        return is_readable($path);
-    }
-
-    /**
-     * Determines whether a file or directory is writable.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::isWritable('/path/to/file.txt'); // true or false
-     * ```
-     *
-     * @param string $path The path to check
-     * @return bool True when the path exists and is writable
-     * @see \Phuture\Coherence\Files::isReadable()
-     */
-    public static function isWritable(string $path): bool
-    {
-        return is_writable($path);
-    }
-
-    /**
-     * Creates a symbolic link from the target to the link path.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::link('/path/to/target', '/path/to/symlink');
-     * ```
-     *
-     * @param string $target The path that the link will point to
-     * @param string $link The path where the symbolic link will be created
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the link cannot be created
-     * @see \Phuture\Coherence\Files::isLink()
-     * @see \Phuture\Coherence\Files::getLink()
-     * @see \Phuture\Coherence\Files::unlink()
-     */
-    public static function link(string $target, string $link): void
-    {
-        $directory = dirname($link);
-
-        if (!is_dir($directory)) {
-            self::createDirectory($directory);
-        }
-
-        if (!symlink($target, $link)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create symbolic link from {$target} to {$link}"
-            );
-        }
-    }
-
-    /**
-     * Replaces all occurrences of a search string with a replacement string within a file.
-     *
-     * Reads the file, performs the replacement, and writes the result back.
-     * When `$search` is an array, each occurrence of any search value is
-     * replaced with the corresponding value in `$replace`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::replaceInFile('/path/to/config.php', 'old-value', 'new-value');
-     * Files::replaceInFile('/path/to/template.html', ['{{name}}', '{{email}}'], ['John', 'john@example.com']);
-     * ```
-     *
-     * @param string $path The file path to modify
-     * @param string|array $search The value or values to search for
-     * @param string|array $replace The replacement value or values
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be written
-     * @see \Phuture\Coherence\Files::write()
-     * @see \Phuture\Coherence\Files::read()
-     */
-    public static function replaceInFile(string $path, string|array $search, string|array $replace): void
-    {
-        $content = self::read($path);
-        $replaced = str_replace($search, $replace, $content);
-
-        self::write($path, $replaced);
     }
 
     /**
@@ -1636,82 +1711,6 @@ class Files extends StaticClass
     }
 
     /**
-     * Appends content to the end of an existing file.
-     *
-     * When the file does not exist, it is created. Parent directories are
-     * created automatically when they do not exist.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::write('/path/to/log.txt', 'First line');
-     * Files::append('/path/to/log.txt', 'Second line');
-     * ```
-     *
-     * @param string $path The file path to append to
-     * @param string $content The content to append to the file
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
-     * @see \Phuture\Coherence\Files::write()
-     * @see \Phuture\Coherence\Files::prepend()
-     */
-    public static function append(string $path, string $content): void
-    {
-        $directory = dirname($path);
-
-        if (!is_dir($directory)) {
-            self::createDirectory($directory);
-        }
-
-        $handle = fopen($path, 'a');
-
-        if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open file {$path} for appending"
-            );
-        }
-
-        try {
-            $result = fwrite($handle, $content);
-
-            if ($result === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to append to file {$path}"
-                );
-            }
-        } finally {
-            fclose($handle);
-        }
-    }
-
-    /**
-     * Prepends content to the beginning of an existing file.
-     *
-     * When the file does not exist, it is created with the given content.
-     * Parent directories are created automatically when they do not exist.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     *
-     * Files::write('/path/to/file.txt', 'Original content');
-     * Files::prepend('/path/to/file.txt', 'Header: ');
-     * ```
-     *
-     * @param string $path The file path to prepend to
-     * @param string $content The content to prepend to the file
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
-     * @see \Phuture\Coherence\Files::write()
-     * @see \Phuture\Coherence\Files::append()
-     */
-    public static function prepend(string $path, string $content): void
-    {
-        $existing = file_exists($path) ? self::read($path) : '';
-
-        self::write($path, $content . $existing);
-    }
-
-    /**
      * Writes content to a file, creating the file if it does not exist.
      *
      * If the file already exists, its contents are replaced entirely. Parent
@@ -1771,28 +1770,6 @@ class Files extends StaticClass
         if (file_exists($path)) {
             chmod($path, $mode);
         }
-    }
-
-    /**
-     * Calculates the total size of all files in a directory recursively.
-     *
-     * @param string $path The directory path to calculate size for
-     * @return int The total size in bytes
-     */
-    private static function directorySize(string $path): int
-    {
-        $totalSize = 0;
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)
-        );
-
-        foreach ($iterator as $item) {
-            if ($item->isFile()) {
-                $totalSize += $item->getSize();
-            }
-        }
-
-        return $totalSize;
     }
 
     /**
@@ -1872,6 +1849,28 @@ class Files extends StaticClass
                 "Runtime Error: Unable to remove directory {$path}"
             );
         }
+    }
+
+    /**
+     * Calculates the total size of all files in a directory recursively.
+     *
+     * @param string $path The directory path to calculate size for
+     * @return int The total size in bytes
+     */
+    private static function directorySize(string $path): int
+    {
+        $totalSize = 0;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isFile()) {
+                $totalSize += $item->getSize();
+            }
+        }
+
+        return $totalSize;
     }
 
     /**
