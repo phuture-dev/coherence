@@ -232,17 +232,6 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Determines whether the wrapped path is a symbolic link.
-     *
-     * @return bool True when the path is a symbolic link
-     * @see \Phuture\Coherence\Files::isLink()
-     */
-    public function isLink(): bool
-    {
-        return Transformer::isLink($this->data);
-    }
-
-    /**
      * Returns the name of the file.
      *
      * @param bool $includeExtension Whether to include the file extension (default: true)
