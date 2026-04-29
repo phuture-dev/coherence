@@ -1,4 +1,7 @@
 parameters:
+    phpVersion: 80100
+    excludePaths:
+        - tests/*
     ignoreErrors:
         - identifier: missingType.iterableValue
         - identifier: missingType.generics

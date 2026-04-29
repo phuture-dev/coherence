@@ -72,6 +72,10 @@ class Files extends StaticClass
             return;
         }
 
+        if (file_exists($destination) && is_dir($destination)) {
+            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($source);
+        }
+
         $destinationDirectory = dirname($destination);
 
         if (!is_dir($destinationDirectory)) {
@@ -394,7 +398,7 @@ class Files extends StaticClass
         return strlen($path) > 0 && (
             $path[0] === '/' || $path[0] === '\\'
             || (
-                strlen($path) > 3
+                strlen($path) >= 3
                 && ctype_alpha($path[0])
                 && $path[1] === ':'
                 && ($path[2] === '/' || $path[2] === '\\')
@@ -570,8 +574,8 @@ class Files extends StaticClass
      *
      * Returns an array of file and directory paths within the specified directory.
      * When `$filter` is a string, only entries matching the glob pattern are included.
-     * When `$filter` is a callable, it receives each entry path and must return true
-     * to include it.
+     * When `$filter` is a callable, it receives each entry's full path as the first
+     * argument and the entry name as the second argument, and must return true to include it.
      *
      * Example:
      * ```php
@@ -579,12 +583,13 @@ class Files extends StaticClass
      *
      * $all = Files::listing('/path/to/dir');
      * $phpFiles = Files::listing('/path/to/dir', '*.php');
-     * $largeFiles = Files::listing('/path/to/dir', fn($path) => filesize($path) > 1024);
+     * $largeFiles = Files::listing('/path/to/dir', fn($path, $name) => filesize($path) > 1024);
      * ```
      *
      * @param string $path The directory path to list
      * @param string|callable|null $filter A glob pattern string, a callback function,
-     *     or null for no filtering (default: null)
+     *     or null for no filtering (default: null). The callback has the signature
+     *     `function (string $fullPath, string $entryName): bool`
      * @return array Array of file and directory paths within the directory
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the path is not a directory
      * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be opened
@@ -622,7 +627,7 @@ class Files extends StaticClass
                 if (fnmatch($filter, $entry)) {
                     $results[] = $fullPath;
                 }
-            } elseif ($filter($fullPath)) {
+            } elseif ($filter($fullPath, $entry)) {
                 $results[] = $fullPath;
             }
         }
@@ -665,7 +670,11 @@ class Files extends StaticClass
         }
 
         if (is_dir($path)) {
-            chmod($path, $directoryMode);
+            if (!chmod($path, $directoryMode)) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to change permissions for {$path}"
+                );
+            }
 
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -673,13 +682,23 @@ class Files extends StaticClass
             );
 
             foreach ($iterator as $item) {
-                chmod($item->getPathname(), $item->isDir() ? $directoryMode : $fileMode);
+                $itemMode = $item->isDir() ? $directoryMode : $fileMode;
+
+                if (!chmod($item->getPathname(), $itemMode)) {
+                    throw new RuntimeException(
+                        "Runtime Error: Unable to change permissions for {$item->getPathname()}"
+                    );
+                }
             }
 
             return;
         }
 
-        chmod($path, $fileMode);
+        if (!chmod($path, $fileMode)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to change permissions for {$path}"
+            );
+        }
     }
 
     /**
@@ -760,14 +779,14 @@ class Files extends StaticClass
             );
         }
 
+        if (file_exists($destination) && is_dir($destination) && !is_dir($source)) {
+            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($source);
+        }
+
         if (!$overwrite && file_exists($destination)) {
             throw new RuntimeException(
                 "Runtime Error: Destination path {$destination} already exists"
             );
-        }
-
-        if (file_exists($destination) && is_dir($destination) && !is_dir($source)) {
-            $destination = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($source);
         }
 
         $destinationDirectory = dirname($destination);
@@ -849,10 +868,10 @@ class Files extends StaticClass
      * ```php
      * use Phuture\Coherence\Files;
      *
-     * Files::normalizePath('/file/.'); // '/file/'
-     * Files::normalizePath('\\file\\..'); // '/file'
+     * Files::normalizePath('/file/.'); // '/file'
+     * Files::normalizePath('\\file\\..'); // '/'
      * Files::normalizePath('/file/../..'); // '/..'
-     * Files::normalizePath('file/../../bar'); // '/../bar'
+     * Files::normalizePath('file/../../bar'); // '../bar'
      * ```
      *
      * @param string $path The path to normalize
@@ -1787,6 +1806,8 @@ class Files extends StaticClass
      */
     private static function copyDirectory(string $source, string $destination, bool $overwrite): void
     {
+        $source = rtrim($source, '/\\');
+
         self::createDirectory($destination);
 
         $iterator = new RecursiveIteratorIterator(
@@ -1895,25 +1916,35 @@ class Files extends StaticClass
                 }
             }
         } else {
-            foreach ($masks as $mask) {
-                $matches = glob($directory . DIRECTORY_SEPARATOR . $mask);
+            $handle = opendir($directory);
 
-                if ($matches === false) {
+            if ($handle === false) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to open directory {$directory}"
+                );
+            }
+
+            while (($entry = readdir($handle)) !== false) {
+                if ($entry === '.' || $entry === '..') {
                     continue;
                 }
 
-                foreach ($matches as $match) {
-                    if ($type === 'file' && !is_file($match)) {
-                        continue;
-                    }
+                $fullPath = $directory . DIRECTORY_SEPARATOR . $entry;
 
-                    if ($type === 'dir' && !is_dir($match)) {
-                        continue;
-                    }
+                if ($type === 'file' && !is_file($fullPath)) {
+                    continue;
+                }
 
-                    $results[] = $match;
+                if ($type === 'dir' && !is_dir($fullPath)) {
+                    continue;
+                }
+
+                if (self::matchesAnyMask($entry, $masks)) {
+                    $results[] = $fullPath;
                 }
             }
+
+            closedir($handle);
         }
 
         $results = array_unique($results);

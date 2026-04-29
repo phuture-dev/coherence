@@ -50,7 +50,7 @@
         "server": "php -S localhost:8000",
         "phpstan": "phpstan analyse src --memory-limit=4294967296",
         "phpcs": "phpcs --standard=PSR12 src",
-        "tester": "tester tests -C"
+        "tester": "tester tests -s -C"
     },
     "config": {
         "sort-packages": true,

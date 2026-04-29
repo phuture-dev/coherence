@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests;
 
 use stdClass;
+use HashContext;
 use Phuture\Coherence\Hash;
-use Tester\{Assert, TestCase};
+use Tester\{Assert, Environment, TestCase};
+use Phuture\Coherence\Enum\PasswordAlgorithm;
 use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 require __DIR__ . '/bootstrap.php';
@@ -79,6 +81,142 @@ class HashTest extends TestCase
         Assert::same(32, strlen($binary)); // SHA256 produces 32 bytes
     }
 
+    public function testBlake2b(): void
+    {
+        if (!in_array('blake2b512', hash_algos())) {
+            Environment::skip('Blake2b not supported');
+        }
+
+        $hash = Hash::blake2b('Hello, World!');
+        Assert::same(128, strlen($hash)); // Blake2b-512 produces 128 hex chars
+        Assert::true(ctype_xdigit($hash));
+
+        // Cross-verify with direct hash() call
+        Assert::same(hash('blake2b512', 'Hello, World!'), $hash);
+
+        // Empty string
+        Assert::same(hash('blake2b512', ''), Hash::blake2b(''));
+
+        // Binary output: 64 bytes
+        $binary = Hash::blake2b('Hello, World!', true);
+        Assert::same(64, strlen($binary));
+        Assert::same(bin2hex($binary), $hash);
+    }
+
+    public function testBlake2bFileMethod(): void
+    {
+        if (!in_array('blake2b512', hash_algos())) {
+            Environment::skip('Blake2b not supported');
+        }
+
+        $content = 'Test data for Blake2b file hashing';
+        $tempFile = tempnam(sys_get_temp_dir(), 'blake2b_test_');
+        file_put_contents($tempFile, $content);
+
+        try {
+            Assert::same(Hash::blake2b($content), Hash::fileBlake2b($tempFile));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testBlake2bHmacMethod(): void
+    {
+        if (!in_array('blake2b512', hash_algos())) {
+            Environment::skip('Blake2b not supported');
+        }
+
+        if (!in_array('blake2b512', hash_hmac_algos())) {
+            Environment::skip('Blake2b HMAC not supported');
+        }
+
+        $data = 'message';
+        $key = 'secret';
+        $hmac = Hash::hmacBlake2b($data, $key);
+
+        Assert::same(128, strlen($hmac)); // Blake2b-512 HMAC produces 128 hex chars
+        Assert::same(hash_hmac('blake2b512', $data, $key), $hmac);
+    }
+
+    public function testBlake2bNotSupported(): void
+    {
+        if (in_array('blake2b512', hash_algos())) {
+            Environment::skip('Blake2b is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::blake2b('test');
+        }, RuntimeException::class, 'Runtime Error: Blake2b is not supported by the current PHP installation');
+    }
+
+    public function testBlake2s(): void
+    {
+        if (!in_array('blake2s256', hash_algos())) {
+            Environment::skip('Blake2s not supported');
+        }
+
+        $hash = Hash::blake2s('Hello, World!');
+        Assert::same(64, strlen($hash)); // Blake2s-256 produces 64 hex chars
+        Assert::true(ctype_xdigit($hash));
+
+        // Cross-verify with direct hash() call
+        Assert::same(hash('blake2s256', 'Hello, World!'), $hash);
+
+        // Empty string
+        Assert::same(hash('blake2s256', ''), Hash::blake2s(''));
+
+        // Binary output: 32 bytes
+        $binary = Hash::blake2s('Hello, World!', true);
+        Assert::same(32, strlen($binary));
+        Assert::same(bin2hex($binary), $hash);
+    }
+
+    public function testBlake2sFileMethod(): void
+    {
+        if (!in_array('blake2s256', hash_algos())) {
+            Environment::skip('Blake2s not supported');
+        }
+
+        $content = 'Test data for Blake2s file hashing';
+        $tempFile = tempnam(sys_get_temp_dir(), 'blake2s_test_');
+        file_put_contents($tempFile, $content);
+
+        try {
+            Assert::same(Hash::blake2s($content), Hash::fileBlake2s($tempFile));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testBlake2sHmacMethod(): void
+    {
+        if (!in_array('blake2s256', hash_algos())) {
+            Environment::skip('Blake2s not supported');
+        }
+
+        if (!in_array('blake2s256', hash_hmac_algos())) {
+            Environment::skip('Blake2s HMAC not supported');
+        }
+
+        $data = 'message';
+        $key = 'secret';
+        $hmac = Hash::hmacBlake2s($data, $key);
+
+        Assert::same(64, strlen($hmac)); // Blake2s-256 HMAC produces 64 hex chars
+        Assert::same(hash_hmac('blake2s256', $data, $key), $hmac);
+    }
+
+    public function testBlake2sNotSupported(): void
+    {
+        if (in_array('blake2s256', hash_algos())) {
+            Environment::skip('Blake2s is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::blake2s('test');
+        }, RuntimeException::class, 'Runtime Error: Blake2s is not supported by the current PHP installation');
+    }
+
     public function testCheck(): void
     {
         $data = 'important message';
@@ -86,6 +224,7 @@ class HashTest extends TestCase
 
         Assert::true(Hash::check($data, $hash));
         Assert::false(Hash::check('different data', $hash));
+        Assert::false(Hash::check($data, ''));
     }
 
     public function testCheckWithSalt(): void
@@ -95,6 +234,7 @@ class HashTest extends TestCase
 
         Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
         Assert::false(Hash::checkWithSalt('wrongpassword', $result['hash'], $result['salt']));
+        Assert::false(Hash::checkWithSalt($data, '', $result['salt']));
     }
 
     public function testCrc32(): void
@@ -245,6 +385,7 @@ class HashTest extends TestCase
         Assert::true(Hash::hmacCheck($data, $key, $hmac));
         Assert::false(Hash::hmacCheck('different data', $key, $hmac));
         Assert::false(Hash::hmacCheck($data, 'different key', $hmac));
+        Assert::false(Hash::hmacCheck($data, $key, ''));
     }
 
     public function testHmacConsistency(): void
@@ -321,7 +462,6 @@ class HashTest extends TestCase
                     Assert::same($manualHmac, $fileHmac, "File HMAC should match manual HMAC for algorithm {$algo}");
                 }
             }
-
         } finally {
             unlink($tempFile);
         }
@@ -347,6 +487,40 @@ class HashTest extends TestCase
         Assert::exception(function () {
             Hash::hmacFile('/non/existent/file.txt', 'key');
         }, RuntimeException::class, 'Runtime Error: File /non/existent/file.txt does not exist');
+    }
+
+    public function testHmacFinal(): void
+    {
+        $context = Hash::hmacInit('secret-key');
+        Hash::hmacUpdate($context, 'Hello, ');
+        Hash::hmacUpdate($context, 'World!');
+        $hmac = Hash::hmacFinal($context);
+
+        // Must match a one-shot HMAC of the same combined data
+        Assert::same(Hash::hmac('Hello, World!', 'secret-key'), $hmac);
+
+        // Binary output should be 32 bytes for SHA-256
+        $contextBin = Hash::hmacInit('secret-key');
+        Hash::hmacUpdate($contextBin, 'data');
+        $binary = Hash::hmacFinal($contextBin, true);
+        Assert::same(32, strlen($binary));
+    }
+
+    public function testHmacInit(): void
+    {
+        $context = Hash::hmacInit('my-key');
+        Assert::type(HashContext::class, $context);
+
+        // Different algorithms
+        $contextMd5 = Hash::hmacInit('key', 'md5');
+        Hash::hmacUpdate($contextMd5, 'test');
+        $hmacMd5 = Hash::hmacFinal($contextMd5);
+        Assert::same(Hash::hmacMd5('test', 'key'), $hmacMd5);
+
+        // Invalid algorithm must throw
+        Assert::exception(function () {
+            Hash::hmacInit('key', 'invalid_algo');
+        }, InvalidArgumentException::class, 'Invalid Argument: invalid_algo is not a valid HMAC hash algorithm');
     }
 
     public function testHmacMd2(): void
@@ -442,6 +616,26 @@ class HashTest extends TestCase
         Assert::same($result2, Hash::hmacTimingSafe('test-data', 'different-data', $key));
     }
 
+    public function testHmacUpdate(): void
+    {
+        // Single update
+        $context = Hash::hmacInit('secret');
+        Hash::hmacUpdate($context, 'hello');
+        Assert::same(Hash::hmac('hello', 'secret'), Hash::hmacFinal($context));
+
+        // Multiple updates concatenate data
+        $context = Hash::hmacInit('secret');
+        Hash::hmacUpdate($context, 'hel');
+        Hash::hmacUpdate($context, 'lo');
+        Assert::same(Hash::hmac('hello', 'secret'), Hash::hmacFinal($context));
+
+        // Empty update is a no-op
+        $context = Hash::hmacInit('secret');
+        Hash::hmacUpdate($context, '');
+        Hash::hmacUpdate($context, 'hello');
+        Assert::same(Hash::hmac('hello', 'secret'), Hash::hmacFinal($context));
+    }
+
     public function testHmacWithInvalidAlgorithm(): void
     {
         Assert::exception(function () {
@@ -461,6 +655,13 @@ class HashTest extends TestCase
 
         // Verify the salted HMAC
         Assert::true(Hash::hmacCheckWithSalt($data, $key, $result['hmac'], $result['salt']));
+    }
+
+    public function testInitWithInvalidAlgorithm(): void
+    {
+        Assert::exception(function () {
+            Hash::init('invalid_algorithm');
+        }, InvalidArgumentException::class, 'Invalid Argument: invalid_algorithm is not a valid hash algorithm');
     }
 
     public function testLargeData(): void
@@ -510,10 +711,33 @@ class HashTest extends TestCase
         Assert::true(Hash::passwordCheck($password, $hash));
         Assert::false(Hash::passwordCheck('wrongpassword', $hash));
 
-        // Test with bcrypt
-        $bcryptHash = Hash::password($password, true);
+        // BCrypt
+        $bcryptHash = Hash::password($password, PasswordAlgorithm::Bcrypt);
         Assert::true(strpos($bcryptHash, '$2y$') === 0); // Bcrypt hashes start with $2y$
         Assert::true(Hash::passwordCheck($password, $bcryptHash));
+
+        // Argon2ID
+        if (in_array('argon2id', password_algos())) {
+            $argonHash = Hash::password($password, PasswordAlgorithm::Argon2id);
+            Assert::true(strpos($argonHash, '$argon2id$') === 0);
+            Assert::true(Hash::passwordCheck($password, $argonHash));
+            Assert::false(Hash::passwordCheck('wrongpassword', $argonHash));
+
+            // Two calls must produce different hashes (distinct salts)
+            $argonHash2 = Hash::password($password, PasswordAlgorithm::Argon2id);
+            Assert::notSame($argonHash, $argonHash2);
+        }
+    }
+
+    public function testPasswordArgon2idNotSupported(): void
+    {
+        if (in_array('argon2id', password_algos())) {
+            Environment::skip('Argon2ID is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::password('test', PasswordAlgorithm::Argon2id);
+        }, RuntimeException::class, 'Runtime Error: Argon2ID is not supported by the current PHP installation');
     }
 
     public function testPasswordCheck(): void
@@ -529,12 +753,26 @@ class HashTest extends TestCase
     {
         $password = 'testpassword';
 
-        // Test with custom cost for bcrypt
-        $hash = Hash::password($password, true, ['cost' => 10]);
+        // BCrypt with custom cost
+        $hash = Hash::password($password, PasswordAlgorithm::Bcrypt, ['cost' => 10]);
         Assert::true(Hash::passwordCheck($password, $hash));
 
         $info = Hash::passwordInfo($hash);
         Assert::same(10, $info['options']['cost']);
+
+        // Argon2ID with custom options
+        if (in_array('argon2id', password_algos())) {
+            $argonHash = Hash::password($password, PasswordAlgorithm::Argon2id, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+                'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
+            ]);
+
+            Assert::true(Hash::passwordCheck($password, $argonHash));
+
+            $argonInfo = Hash::passwordInfo($argonHash);
+            Assert::same('argon2id', $argonInfo['algoName']);
+        }
     }
 
     public function testPasswordInfo(): void
@@ -551,10 +789,39 @@ class HashTest extends TestCase
 
     public function testPasswordNeedsRehash(): void
     {
-        $hash = Hash::password('password', true, ['cost' => 10]);
+        // BCrypt: lower cost → rehash needed
+        $hash = Hash::password('password', PasswordAlgorithm::Bcrypt, ['cost' => 10]);
+        Assert::true(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 12]));
+        Assert::false(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 10]));
 
-        Assert::true(Hash::passwordNeedsRehash($hash, true, ['cost' => 12]));
-        Assert::false(Hash::passwordNeedsRehash($hash, true, ['cost' => 10]));
+        // Argon2ID: lower memory cost → rehash needed
+        if (in_array('argon2id', password_algos())) {
+            $argonHash = Hash::password('password', PasswordAlgorithm::Argon2id, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]);
+
+            Assert::false(Hash::passwordNeedsRehash($argonHash, PasswordAlgorithm::Argon2id, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]));
+
+            Assert::true(Hash::passwordNeedsRehash($argonHash, PasswordAlgorithm::Argon2id, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST * 2,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]));
+        }
+    }
+
+    public function testPasswordNeedsRehashArgon2idNotSupported(): void
+    {
+        if (in_array('argon2id', password_algos())) {
+            Environment::skip('Argon2ID is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::passwordNeedsRehash('$argon2id$dummy', PasswordAlgorithm::Argon2id);
+        }, RuntimeException::class, 'Runtime Error: Argon2ID is not supported by the current PHP installation');
     }
 
     public function testPbkdf2(): void

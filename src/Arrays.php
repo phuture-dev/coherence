@@ -10,9 +10,9 @@ use TypeError;
 use ArrayAccess;
 use Traversable;
 use JsonSerializable;
+use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
-use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Support\{ArgumentExtractor, StaticClass};
 use Phuture\Coherence\Exception\{InvalidArgumentException, InvalidDataTypeException, OutOfBoundsException};
 

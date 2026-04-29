@@ -34,13 +34,6 @@ class NumbersTest extends TestCase
         Assert::same('4.0000000000', FluentNumbers::from(1.5)->add(2.5)->get());
     }
 
-    public function testAreEqual(): void
-    {
-        Assert::true(FluentNumbers::from(0.1 + 0.2)->areEqual(0.3));
-        Assert::true(FluentNumbers::from(10)->areEqual(10.0));
-        Assert::false(FluentNumbers::from(1.0)->areEqual(2.0));
-    }
-
     public function testBcmathStringPreserved(): void
     {
         $result = FluentNumbers::from(0.1)->add(0.2)->get();
@@ -77,14 +70,6 @@ class NumbersTest extends TestCase
     {
         Assert::same(100.0, FluentNumbers::from(150.7)->clamp(0, 100)->round(0)->get());
         Assert::same(0.0, FluentNumbers::from(-5.3)->clamp(0, 100)->round(0)->get());
-    }
-
-    public function testChainingWithComparison(): void
-    {
-        $num = FluentNumbers::from(10)->add(5);
-        Assert::true($num->isPositive());
-        Assert::false($num->isZero());
-        Assert::true($num->isGreaterThan(10));
     }
 
     public function testClamp(): void
@@ -160,80 +145,6 @@ class NumbersTest extends TestCase
     {
         $num = FluentNumbers::from(42);
         Assert::same(42, $num());
-    }
-
-    public function testIsFloat(): void
-    {
-        Assert::true(FluentNumbers::from(3.14)->isFloat());
-        Assert::true(FluentNumbers::from(0.5)->isFloat());
-        Assert::false(FluentNumbers::from(5)->isFloat());
-        Assert::false(FluentNumbers::from(5.0)->isFloat());
-    }
-
-    public function testIsGreaterThan(): void
-    {
-        Assert::true(FluentNumbers::from(10.0)->isGreaterThan(5.0));
-        Assert::false(FluentNumbers::from(5.0)->isGreaterThan(10.0));
-        Assert::false(FluentNumbers::from(10.0)->isGreaterThan(10.0));
-    }
-
-    public function testIsGreaterThanOrEqualTo(): void
-    {
-        Assert::true(FluentNumbers::from(10.0)->isGreaterThanOrEqualTo(5.0));
-        Assert::true(FluentNumbers::from(10.0)->isGreaterThanOrEqualTo(10.0));
-        Assert::false(FluentNumbers::from(5.0)->isGreaterThanOrEqualTo(10.0));
-    }
-
-    public function testIsInteger(): void
-    {
-        Assert::true(FluentNumbers::from(5)->isInteger());
-        Assert::true(FluentNumbers::from(5.0)->isInteger());
-        Assert::false(FluentNumbers::from(3.14)->isInteger());
-    }
-
-    public function testIsLessThan(): void
-    {
-        Assert::true(FluentNumbers::from(5.0)->isLessThan(10.0));
-        Assert::false(FluentNumbers::from(10.0)->isLessThan(5.0));
-        Assert::false(FluentNumbers::from(10.0)->isLessThan(10.0));
-    }
-
-    public function testIsLessThanOrEqualTo(): void
-    {
-        Assert::true(FluentNumbers::from(5.0)->isLessThanOrEqualTo(10.0));
-        Assert::true(FluentNumbers::from(10.0)->isLessThanOrEqualTo(10.0));
-        Assert::false(FluentNumbers::from(15.0)->isLessThanOrEqualTo(10.0));
-    }
-
-    public function testIsNegative(): void
-    {
-        Assert::true(FluentNumbers::from(-5)->isNegative());
-        Assert::true(FluentNumbers::from(-0.1)->isNegative());
-        Assert::false(FluentNumbers::from(0)->isNegative());
-        Assert::false(FluentNumbers::from(3)->isNegative());
-    }
-
-    public function testIsNumber(): void
-    {
-        Assert::true(FluentNumbers::from(42)->isNumber());
-        Assert::true(FluentNumbers::from(3.14)->isNumber());
-        Assert::true(FluentNumbers::from('100')->isNumber());
-        Assert::false(FluentNumbers::from('abc')->isNumber());
-    }
-
-    public function testIsPositive(): void
-    {
-        Assert::true(FluentNumbers::from(5)->isPositive());
-        Assert::true(FluentNumbers::from(0.1)->isPositive());
-        Assert::false(FluentNumbers::from(0)->isPositive());
-        Assert::false(FluentNumbers::from(-3)->isPositive());
-    }
-
-    public function testIsZero(): void
-    {
-        Assert::true(FluentNumbers::from(0)->isZero());
-        Assert::true(FluentNumbers::from(0.0)->isZero());
-        Assert::false(FluentNumbers::from(0.5)->isZero());
     }
 
     public function testMax(): void

@@ -27,7 +27,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ matrix.php-version }}
-        extensions: libxml, posix, mbstring, apcu, intl, bcmath, gd, openssl, mysqli, curl, imap, uuid
+        extensions: libxml, posix, mbstring, apcu, intl, bcmath, gd, openssl, mysqli, curl, imap, uuid, sodium, pcntl
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict

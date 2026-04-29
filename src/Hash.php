@@ -7,6 +7,7 @@ namespace Phuture\Coherence;
 use HashContext;
 use Random\RandomException;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Enum\PasswordAlgorithm;
 use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 /**
@@ -19,7 +20,9 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * Key features:
  *
  * - **Basic Hashing**: Support for MD2, MD4, MD5, SHA1, SHA256, SHA384, SHA512, and Adler-32/CRC32 algorithms
+ * - **Blake2 Hashing**: Support for Blake2b (512-bit) and Blake2s (256-bit) modern cryptographic hash algorithms
  * - **Password Security**: Secure password hashing with automatic salt generation and verification
+ * - **Argon2ID Password Hashing**: Memory-hard password hashing with resistance to GPU and side-channel attacks
  * - **HMAC Operations**: Message authentication codes for data integrity and authenticity
  * - **File Integrity**: Efficient file hashing for integrity verification and checksums
  * - **Streaming Support**: Memory-efficient streaming for large data processing
@@ -36,6 +39,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * - For new applications, prefer SHA256, SHA384, or SHA512 for better security
  * - Always use HMAC methods when authentication is required
  * - PBKDF2 provides key stretching for password-derived encryption keys
+ * - For modern password hashing, prefer Argon2ID via the dedicated passwordArgon2id() method when available
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -44,9 +48,24 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 class Hash extends StaticClass
 {
     /**
-     * Maximum recursion depth for nested operations to prevent infinite recursion.
+     * Default number of iterations for PBKDF2 key derivation.
+     *
+     * This value provides a reasonable balance between security and performance.
+     * Higher values increase security but slow down the derivation process.
+     *
+     * @see \Phuture\Coherence\Hash::pbkdf2()
      */
-    public const RECURSION_LIMIT = 100000;
+    public const DEFAULT_PBKDF2_ITERATIONS = 100000;
+
+    /**
+     * Maximum allowed length in bytes for a derived key.
+     *
+     * Prevents excessively large key derivation requests that could consume
+     * excessive memory or computation time.
+     *
+     * @see \Phuture\Coherence\Hash::pbkdf2()
+     */
+    public const MAX_DERIVED_KEY_LENGTH = 100000;
 
     /**
      * Generates an Adler-32 hash of the given data.
@@ -61,7 +80,7 @@ class Hash extends StaticClass
      *
      * $checksum = Hash::adler32('Hello, World!');
      *
-     * // Returns: '1e38733c'
+     * // Returns: '1f9e046a'
      * ```
      *
      * @param string $data The data to generate a checksum for
@@ -130,6 +149,78 @@ class Hash extends StaticClass
     }
 
     /**
+     * Generates a Blake2b hash of the given data.
+     *
+     * This method creates a Blake2b (512-bit variant) hash, which is a modern cryptographic
+     * hash function designed to be faster than MD5 and SHA families while providing security
+     * at least equal to SHA-3. Blake2b is optimized for 64-bit platforms and produces a
+     * 512-bit output represented as a 128 hexadecimal character string.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $hash = Hash::blake2b('Hello, World!');
+     *
+     * // Returns: 128-character hex string (Blake2b-512 hash)
+     * ```
+     *
+     * @param string $data The data to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2b hash as a 128-character hex string or 64 bytes of raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When Blake2b is not supported by this PHP installation
+     * @see \Phuture\Coherence\Hash::fileBlake2b() For hashing file contents with Blake2b
+     * @see \Phuture\Coherence\Hash::hmacBlake2b() For generating HMAC with Blake2b
+     * @see \Phuture\Coherence\Hash::blake2s() For the 256-bit Blake2s variant
+     */
+    public static function blake2b(string $data, bool $binary = false): string
+    {
+        if (!in_array('blake2b512', hash_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Blake2b is not supported by the current PHP installation"
+            );
+        }
+
+        return hash('blake2b512', $data, $binary);
+    }
+
+    /**
+     * Generates a Blake2s hash of the given data.
+     *
+     * This method creates a Blake2s (256-bit variant) hash, which is a modern cryptographic
+     * hash function designed as a faster and more secure alternative to MD5 and SHA-1. Blake2s
+     * is optimized for 8- to 32-bit platforms and produces a 256-bit output represented as a
+     * 64 hexadecimal character string, matching the output size of SHA256.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $hash = Hash::blake2s('Hello, World!');
+     *
+     * // Returns: 64-character hex string (Blake2s-256 hash)
+     * ```
+     *
+     * @param string $data The data to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2s hash as a 64-character hex string or 32 bytes of raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When Blake2s is not supported by this PHP installation
+     * @see \Phuture\Coherence\Hash::fileBlake2s() For hashing file contents with Blake2s
+     * @see \Phuture\Coherence\Hash::hmacBlake2s() For generating HMAC with Blake2s
+     * @see \Phuture\Coherence\Hash::blake2b() For the 512-bit Blake2b variant
+     */
+    public static function blake2s(string $data, bool $binary = false): string
+    {
+        if (!in_array('blake2s256', hash_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Blake2s is not supported by the current PHP installation"
+            );
+        }
+
+        return hash('blake2s256', $data, $binary);
+    }
+
+    /**
      * Verifies data against a hash by comparing the computed hash with the provided hash.
      *
      * This method is a convenient way to verify that data hasn't been tampered with.
@@ -156,11 +247,11 @@ class Hash extends StaticClass
      */
     public static function check(string $data, string $hash, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
-        return hash_equals($hash, self::hash($data, false, $algo));
+        return self::equals($hash, self::hash($data, false, $algo));
     }
 
     /**
@@ -168,6 +259,8 @@ class Hash extends StaticClass
      *
      * This method checks if data matches a previously created salted hash by
      * recombining the data with the same salt and comparing the resulting hashes.
+     * The salt is internally hashed using SHA-256 regardless of the chosen algorithm
+     * to ensure a consistent and secure salt preprocessing step.
      *
      * Example:
      * ```php
@@ -189,7 +282,7 @@ class Hash extends StaticClass
      */
     public static function checkWithSalt(string $data, string $hash, string $salt, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
@@ -209,7 +302,7 @@ class Hash extends StaticClass
      *
      * $checksum = Hash::crc32('Hello, World!');
      *
-     * // Returns: '0d4a1185'
+     * // Returns: 'dffed8e6'
      * ```
      *
      * @param string $data The data to generate a checksum for
@@ -349,6 +442,62 @@ class Hash extends StaticClass
         }
 
         return hash_file($algo, $file, $binary);
+    }
+
+    /**
+     * Generates a Blake2b hash of a file's contents.
+     *
+     * This method reads a file and generates a Blake2b-512 hash of its contents using
+     * memory-efficient streaming. It is suitable for hashing very large files (GB+ sizes)
+     * without memory issues. The streaming approach ensures constant memory usage
+     * regardless of file size.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $fileHash = Hash::fileBlake2b('/path/to/file.dat');
+     * ```
+     *
+     * @param string $file The path to the file to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2b file hash as a 128-character hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When Blake2b is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
+     * @see \Phuture\Coherence\Hash::blake2b() For hashing string data with Blake2b
+     * @see \Phuture\Coherence\Hash::hmacBlake2b() For generating HMAC with Blake2b
+     */
+    public static function fileBlake2b(string $file, bool $binary = false): string
+    {
+        return self::file($file, $binary, 'blake2b512');
+    }
+
+    /**
+     * Generates a Blake2s hash of a file's contents.
+     *
+     * This method reads a file and generates a Blake2s-256 hash of its contents using
+     * memory-efficient streaming. It is suitable for hashing very large files (GB+ sizes)
+     * without memory issues. The streaming approach ensures constant memory usage
+     * regardless of file size.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $fileHash = Hash::fileBlake2s('/path/to/file.dat');
+     * ```
+     *
+     * @param string $file The path to the file to hash
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2s file hash as a 64-character hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When Blake2s is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
+     * @see \Phuture\Coherence\Hash::blake2s() For hashing string data with Blake2s
+     * @see \Phuture\Coherence\Hash::hmacBlake2s() For generating HMAC with Blake2s
+     */
+    public static function fileBlake2s(string $file, bool $binary = false): string
+    {
+        return self::file($file, $binary, 'blake2s256');
     }
 
     /**
@@ -593,7 +742,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::hash('Hello, World!', false, 'md5');
      *
-     * // Returns: '6cd3556deb0da54bca060b4c39479839'
+     * // Returns: '65a8e27d8879283831b664bd8b7f0ad4'
      * ```
      *
      * @param string $data The data to hash
@@ -680,6 +829,64 @@ class Hash extends StaticClass
     }
 
     /**
+     * Generates an HMAC using the Blake2b algorithm.
+     *
+     * This method creates an HMAC using the Blake2b-512 hash algorithm with your data and
+     * secret key. Blake2b provides strong authentication with a 512-bit output and is
+     * significantly faster than SHA-512 based HMAC on 64-bit platforms.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $data = 'message';
+     * $key = 'secret';
+     * $hmac = Hash::hmacBlake2b($data, $key);
+     * ```
+     *
+     * @param string $data The data to authenticate
+     * @param string $key The secret key for authentication
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2b HMAC as a 128-character hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When Blake2b is not supported for HMAC
+     * @see \Phuture\Coherence\Hash::blake2b() For hashing string data with Blake2b
+     * @see \Phuture\Coherence\Hash::fileBlake2b() For hashing file contents with Blake2b
+     */
+    public static function hmacBlake2b(string $data, string $key, bool $binary = false): string
+    {
+        return self::hmac($data, $key, $binary, 'blake2b512');
+    }
+
+    /**
+     * Generates an HMAC using the Blake2s algorithm.
+     *
+     * This method creates an HMAC using the Blake2s-256 hash algorithm with your data and
+     * secret key. Blake2s provides strong authentication with a 256-bit output and is
+     * optimized for 8- to 32-bit platforms while remaining suitable for all environments.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $data = 'message';
+     * $key = 'secret';
+     * $hmac = Hash::hmacBlake2s($data, $key);
+     * ```
+     *
+     * @param string $data The data to authenticate
+     * @param string $key The secret key for authentication
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the Blake2s HMAC as a 64-character hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When Blake2s is not supported for HMAC
+     * @see \Phuture\Coherence\Hash::blake2s() For hashing string data with Blake2s
+     * @see \Phuture\Coherence\Hash::fileBlake2s() For hashing file contents with Blake2s
+     */
+    public static function hmacBlake2s(string $data, string $key, bool $binary = false): string
+    {
+        return self::hmac($data, $key, $binary, 'blake2s256');
+    }
+
+    /**
      * Verifies data against an HMAC hash using a secret key.
      *
      * This method verifies that data was signed with a specific secret key.
@@ -707,11 +914,11 @@ class Hash extends StaticClass
      */
     public static function hmacCheck(string $data, string $key, string $hash, string $algo = 'sha256'): bool
     {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
-        return hash_equals($hash, self::hmac($data, $key, false, $algo));
+        return self::equals($hash, self::hmac($data, $key, false, $algo));
     }
 
     /**
@@ -719,6 +926,8 @@ class Hash extends StaticClass
      *
      * This method checks if data matches a previously created salted HMAC by
      * recombining the data with the same salt and comparing the resulting HMACs.
+     * The salt is internally hashed using SHA-256 regardless of the chosen algorithm
+     * to ensure a consistent and secure salt preprocessing step.
      *
      * Example:
      * ```php
@@ -746,7 +955,7 @@ class Hash extends StaticClass
         string $salt,
         string $algo = 'sha256'
     ): bool {
-        if (empty($hash)) {
+        if ($hash === '') {
             return false;
         }
 
@@ -801,6 +1010,75 @@ class Hash extends StaticClass
         }
 
         return hash_hmac_file($algo, $file, $key, $binary);
+    }
+
+    /**
+     * Finalizes an incremental HMAC calculation and returns the result.
+     *
+     * This method completes the incremental HMAC process started with hmacInit() and
+     * returns the final authentication code. After calling this method, the context
+     * cannot be used for further updates.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $context = Hash::hmacInit('secret-key');
+     * Hash::hmacUpdate($context, 'First chunk');
+     * Hash::hmacUpdate($context, 'Second chunk');
+     * $hmac = Hash::hmacFinal($context);
+     *
+     * // Returns: HMAC-SHA256 of all data combined
+     * ```
+     *
+     * @param HashContext $context The HMAC hash context to finalize
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @return string Returns the final HMAC as a hexadecimal string or raw binary data
+     * @see \Phuture\Coherence\Hash::hmacInit() For creating an HMAC hash context
+     * @see \Phuture\Coherence\Hash::hmacUpdate() For adding data to the context
+     */
+    public static function hmacFinal(HashContext $context, bool $binary = false): string
+    {
+        return hash_final($context, $binary);
+    }
+
+    /**
+     * Initializes an incremental HMAC hashing context for streaming authentication.
+     *
+     * This method creates a new HMAC hash context that allows you to authenticate
+     * large amounts of data in chunks without loading everything into memory. This
+     * is ideal for processing large files, streams, or data that arrives over time,
+     * while still benefiting from authentication with a secret key.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $context = Hash::hmacInit('secret-key');
+     * Hash::hmacUpdate($context, 'First chunk of data');
+     * Hash::hmacUpdate($context, 'Second chunk of data');
+     * $hmac = Hash::hmacFinal($context);
+     *
+     * // Returns: HMAC of combined data, identical to Hash::hmac('First chunkSecond chunk', 'secret-key')
+     * ```
+     *
+     * @param string $key The secret key for HMAC authentication
+     * @param string $algo The hash algorithm to use (default: 'sha256')
+     * @return HashContext Returns an HMAC hash context for incremental hashing
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
+     * @see \Phuture\Coherence\Hash::hmacUpdate() For adding data to the context
+     * @see \Phuture\Coherence\Hash::hmacFinal() For completing the HMAC calculation
+     * @see \Phuture\Coherence\Hash::init() For non-authenticated incremental hashing
+     */
+    public static function hmacInit(string $key, string $algo = 'sha256'): HashContext
+    {
+        if (!in_array($algo, hash_hmac_algos())) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: {$algo} is not a valid HMAC hash algorithm"
+            );
+        }
+
+        return hash_init($algo, HASH_HMAC, $key);
     }
 
     /**
@@ -1060,6 +1338,36 @@ class Hash extends StaticClass
     }
 
     /**
+     * Adds data to an incremental HMAC hashing context.
+     *
+     * This method appends data to an existing HMAC context created by hmacInit(), allowing
+     * you to process large data in chunks. Multiple calls to hmacUpdate() accumulate all
+     * data for the final HMAC calculation performed by hmacFinal().
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $context = Hash::hmacInit('secret-key');
+     * Hash::hmacUpdate($context, 'First chunk');
+     * Hash::hmacUpdate($context, 'Second chunk');
+     * $hmac = Hash::hmacFinal($context);
+     *
+     * // Returns: HMAC of "First chunkSecond chunk"
+     * ```
+     *
+     * @param HashContext $context The HMAC context to update, created by hmacInit()
+     * @param string $data The data to add to the HMAC calculation
+     * @return void
+     * @see \Phuture\Coherence\Hash::hmacInit() For creating an HMAC context
+     * @see \Phuture\Coherence\Hash::hmacFinal() For completing the HMAC calculation
+     */
+    public static function hmacUpdate(HashContext $context, string $data): void
+    {
+        self::update($context, $data);
+    }
+
+    /**
      * Generates a salted HMAC using the specified algorithm.
      *
      * This method creates an HMAC by combining a salted hash of the salt with the data
@@ -1127,11 +1435,18 @@ class Hash extends StaticClass
      *
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return HashContext Returns a hash context for incremental hashing
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the specified algorithm is not supported
      * @see \Phuture\Coherence\Hash::update() For adding data to the context
      * @see \Phuture\Coherence\Hash::final() For completing the hash calculation
      */
     public static function init(string $algo = 'sha256'): HashContext
     {
+        if (!in_array($algo, hash_algos())) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: {$algo} is not a valid hash algorithm"
+            );
+        }
+
         return hash_init($algo);
     }
 
@@ -1148,7 +1463,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md2('Hello, World!');
      *
-     * // Returns: 'd1cde6a0'
+     * // Returns: '1c8f1e6a94aaa7145210bf90bb52871a'
      * ```
      *
      * @param string $data The data to hash
@@ -1175,7 +1490,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md4('Hello, World!');
      *
-     * // Returns: '3bb38598'
+     * // Returns: '94e3cb0fa9aa7a5ee3db74b79e915989'
      * ```
      *
      * @param string $data The data to hash
@@ -1202,7 +1517,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::md5('Hello, World!');
      *
-     * // Returns: '6cd3556deb0da54bca060b4c39479839'
+     * // Returns: '65a8e27d8879283831b664bd8b7f0ad4'
      * ```
      *
      * @param string $data The data to hash
@@ -1251,34 +1566,50 @@ class Hash extends StaticClass
      *
      * This method generates a strong hash for storing passwords securely. It uses PHP's
      * built-in password hashing functions which automatically handle salt generation and
-     * use cryptographically secure algorithms.
+     * use cryptographically secure algorithms. Use the \Phuture\Coherence\Enum\PasswordAlgorithm
+     * enum to choose between PHP's recommended default, BCrypt, or Argon2ID.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
+     * use Phuture\Coherence\Enum\PasswordAlgorithm;
      *
-     * $password = 'user123';
-     * $hash = Hash::password($password);
+     * // PHP's recommended default
+     * $hash = Hash::password('user123');
      *
-     * // Returns: $2y$10$AbCdEfGhIjKlMnOpQrStU.vWxYz1234567890abcdefg
+     * // BCrypt
+     * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt);
+     *
+     * // Argon2ID
+     * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id);
+     *
+     * // Returns: hashed password string
      * ```
      *
      * @param string $password The plain text password to hash
-     * @param bool $bcrypt If true, forces the use of BCRYPT algorithm (default: false for PHP's default)
-     * @param array $options Additional options like 'cost' for BCRYPT (default: [])
+     * @param PasswordAlgorithm $algo The algorithm to use (default: PasswordAlgorithm::Default)
+     * @param array $options Algorithm options: 'cost' for BCrypt; 'memory_cost', 'time_cost', 'threads' for Argon2ID
      * @return string Returns the hashed password string
+     * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
      * @see \Phuture\Coherence\Hash::passwordCheck() For verifying a password against its hash
      * @see \Phuture\Coherence\Hash::passwordNeedsRehash() For checking if a hash needs updating
      */
-    public static function password(string $password, bool $bcrypt = false, array $options = []): string
-    {
-        if ($bcrypt && !isset($options['cost'])) {
-            $options['cost'] = PASSWORD_BCRYPT_DEFAULT_COST;
+    public static function password(
+        string $password,
+        PasswordAlgorithm $algo = PasswordAlgorithm::Default,
+        array $options = []
+    ): string {
+        if ($algo === PasswordAlgorithm::Argon2id && !in_array('argon2id', password_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Argon2ID is not supported by the current PHP installation"
+            );
         }
 
-        return $bcrypt
-            ? password_hash($password, PASSWORD_BCRYPT, $options)
-            : password_hash($password, PASSWORD_DEFAULT, $options);
+        return match ($algo) {
+            PasswordAlgorithm::Argon2id => password_hash($password, PASSWORD_ARGON2ID, $options),
+            PasswordAlgorithm::Bcrypt => password_hash($password, PASSWORD_BCRYPT, $options),
+            PasswordAlgorithm::Default => password_hash($password, PASSWORD_DEFAULT, $options),
+        };
     }
 
     /**
@@ -1338,38 +1669,53 @@ class Hash extends StaticClass
     }
 
     /**
-     * Checks if a password hash needs to be rehashed with a stronger algorithm.
+     * Checks if a password hash needs to be rehashed with a stronger algorithm or updated options.
      *
-     * This method determines if a password hash was created using an outdated
-     * algorithm or options. It's useful for upgrading password hashes when you
-     * change your hashing parameters or when PHP updates its default algorithm.
+     * This method determines if a password hash was created using an outdated algorithm or
+     * options. It's useful for upgrading password hashes when you change your hashing parameters
+     * or when PHP updates its default algorithm. Use the \Phuture\Coherence\Enum\PasswordAlgorithm
+     * enum to specify which algorithm the hash should be checked against.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
+     * use Phuture\Coherence\Enum\PasswordAlgorithm;
      *
-     * $oldHash = '$2y$10$AbCdEfGhIjKlMnOpQrStU.vWxYz1234567890abcdefg';
-     * $needsRehash = Hash::passwordNeedsRehash($oldHash, true, ['cost' => 12]);
+     * // BCrypt cost upgrade
+     * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt, ['cost' => 10]);
+     * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 12]);
      *
-     * // Returns: true if cost should be increased to 12
+     * // Argon2ID memory upgrade
+     * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id, ['memory_cost' => 65536]);
+     * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Argon2id, ['memory_cost' => 131072]);
+     *
+     * // Returns: true if the hash was created with lower cost parameters
      * ```
      *
      * @param string $hash The password hash to check
-     * @param bool $bcrypt If true, forces checking against BCRYPT algorithm (default: false for PHP's default)
-     * @param array $options Options to compare against, like 'cost' for BCRYPT (default: [])
+     * @param PasswordAlgorithm $algo The algorithm to check against (default: PasswordAlgorithm::Default)
+     * @param array $options Options to compare against (default: [])
      * @return bool Returns true if the hash needs to be rehashed, false otherwise
+     * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
      * @see \Phuture\Coherence\Hash::password() For creating a password hash
      * @see \Phuture\Coherence\Hash::passwordCheck() For verifying a password
      */
-    public static function passwordNeedsRehash(string $hash, bool $bcrypt = false, array $options = []): bool
-    {
-        if ($bcrypt && !isset($options['cost'])) {
-            $options['cost'] = PASSWORD_BCRYPT_DEFAULT_COST;
+    public static function passwordNeedsRehash(
+        string $hash,
+        PasswordAlgorithm $algo = PasswordAlgorithm::Default,
+        array $options = []
+    ): bool {
+        if ($algo === PasswordAlgorithm::Argon2id && !in_array('argon2id', password_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Argon2ID is not supported by the current PHP installation"
+            );
         }
 
-        return $bcrypt
-            ? password_needs_rehash($hash, PASSWORD_BCRYPT, $options)
-            : password_needs_rehash($hash, PASSWORD_DEFAULT, $options);
+        return match ($algo) {
+            PasswordAlgorithm::Argon2id => password_needs_rehash($hash, PASSWORD_ARGON2ID, $options),
+            PasswordAlgorithm::Bcrypt => password_needs_rehash($hash, PASSWORD_BCRYPT, $options),
+            PasswordAlgorithm::Default => password_needs_rehash($hash, PASSWORD_DEFAULT, $options),
+        };
     }
 
     /**
@@ -1401,7 +1747,7 @@ class Hash extends StaticClass
     public static function pbkdf2(
         string $password,
         ?string $salt = null,
-        int $iterations = self::RECURSION_LIMIT,
+        int $iterations = self::DEFAULT_PBKDF2_ITERATIONS,
         int $length = 32,
         string $algo = 'sha256'
     ): string {
@@ -1411,9 +1757,9 @@ class Hash extends StaticClass
             );
         }
 
-        if ($length <= 0 || $length > self::RECURSION_LIMIT) {
+        if ($length <= 0 || $length > self::MAX_DERIVED_KEY_LENGTH) {
             throw new InvalidArgumentException(
-                "Invalid Argument: Length must be between 1 and " . self::RECURSION_LIMIT
+                "Invalid Argument: Length must be between 1 and " . self::MAX_DERIVED_KEY_LENGTH
             );
         }
 
@@ -1493,7 +1839,7 @@ class Hash extends StaticClass
      * $randomBinary = Hash::random(16, true); // 16 bytes of raw binary data
      * ```
      *
-     * @param int $length The desired length of the output (default: 128)
+     * @param int $length The desired length of the output in characters for hex, or bytes for binary (default: 128)
      * @param bool $binary Whether to return raw binary data (default: false for hex string)
      * @return string Returns random data as hex string or raw binary
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to generate random bytes
@@ -1503,7 +1849,11 @@ class Hash extends StaticClass
     public static function random(int $length = 128, bool $binary = false): string
     {
         try {
-            return $binary ? random_bytes($length) : mb_substr(bin2hex(random_bytes($length)), 0, $length);
+            if ($binary) {
+                return random_bytes($length);
+            }
+
+            return substr(bin2hex(random_bytes((int) ceil($length / 2))), 0, $length);
         } catch (RandomException $e) {
             throw new RuntimeException(
                 "Runtime Error: Unable to generate random bytes"
@@ -1524,7 +1874,7 @@ class Hash extends StaticClass
      *
      * $salt = Hash::salt(16);
      *
-     * // Returns: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456'
+     * // Returns: 'a1b2c3d4e5f678901234567890123456' (32 hex characters for 16 bytes)
      * ```
      *
      * @param int $length The desired length of the salt in bytes (default: 16)
@@ -1559,7 +1909,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha1('Hello, World!');
      *
-     * // Returns: '0a4d55a5d7e277a849a0f18b891c2b56c'
+     * // Returns: '0a0a9f2a6772942557ab5355d76af442f8f65e01'
      * ```
      *
      * @param string $data The data to hash
@@ -1614,7 +1964,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha384('Hello, World!');
      *
-     * // Returns: '86958c9f7c7cdbc8c09a0d23b3a4142d9dd3b7793713d86ec017a236b0b009c4a4e'
+     * // Returns: '5485cc9b3365b4305dfb4e8337e0a598a574f8242bf17289e0dd6c20a3cd44a089de16ab4ab308f63e44b1170eb5f515'
      * ```
      *
      * @param string $data The data to hash
@@ -1642,7 +1992,7 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha512('Hello, World!');
      *
-     * // Returns: '2ef7bde608ce5404e97d5f042f95f89f1c232871'
+     * // Returns: '374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387'
      * ```
      *
      * @param string $data The data to hash
@@ -1737,7 +2087,7 @@ class Hash extends StaticClass
     public static function unique(): string
     {
         try {
-            return self::sha256(uniqid('', true) . random_bytes(16));
+            return self::sha256(random_bytes(32));
         } catch (RandomException $e) {
             throw new RuntimeException(
                 "Runtime Error: Unable to generate random bytes"

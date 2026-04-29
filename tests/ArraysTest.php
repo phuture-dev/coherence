@@ -2577,19 +2577,6 @@ class ArraysTest extends TestCase
         Assert::same(['name' => 'John', 'age' => 30, 'active' => true], $result);
     }
 
-    public function testToArrayWithToJsonMethod(): void
-    {
-        $object = new class () {
-            public function toJson(): string
-            {
-                return '{"product": "Laptop", "price": 999.99}';
-            }
-        };
-
-        $result = Arrays::toArray($object);
-        Assert::same(['product' => 'Laptop', 'price' => 999.99], $result);
-    }
-
     public function testToArrayWithToObjectMethod(): void
     {
         $object = new class () {

@@ -78,18 +78,6 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
-     * Determines whether the wrapped number is equal to another within epsilon tolerance.
-     *
-     * @param int|float $b The value to compare against
-     * @return bool True when both values are equal within epsilon tolerance
-     * @see Transformer::areEqual()
-     */
-    public function areEqual(int|float $b): bool
-    {
-        return Transformer::areEqual($this->numericValue(), $b);
-    }
-
-    /**
      * Returns the smallest integer value greater than or equal to the wrapped number.
      *
      * @return self Returns the current instance for method chaining
@@ -191,120 +179,6 @@ class Numbers extends FluentClass implements Numberable
     public function format(?int $precision = null): string
     {
         return Transformer::format($this->numericValue(), $precision);
-    }
-
-    /**
-     * Determines whether the wrapped number is a float with a fractional part.
-     *
-     * @return bool True when the wrapped value has a fractional part
-     * @see Transformer::isFloat()
-     */
-    public function isFloat(): bool
-    {
-        return Transformer::isFloat($this->numericValue());
-    }
-
-    /**
-     * Determines whether the wrapped number is greater than another within epsilon tolerance.
-     *
-     * @param int|float $b The value to compare against
-     * @return bool True when the wrapped value is strictly greater than $b
-     * @see Transformer::isGreaterThan()
-     */
-    public function isGreaterThan(int|float $b): bool
-    {
-        return Transformer::isGreaterThan($this->numericValue(), $b);
-    }
-
-    /**
-     * Determines whether the wrapped number is greater than or equal to another.
-     *
-     * @param int|float $b The value to compare against
-     * @return bool True when the wrapped value is greater than or equal to $b
-     * @see Transformer::isGreaterThanOrEqualTo()
-     */
-    public function isGreaterThanOrEqualTo(int|float $b): bool
-    {
-        return Transformer::isGreaterThanOrEqualTo($this->numericValue(), $b);
-    }
-
-    /**
-     * Determines whether the wrapped number is an integer (has no fractional part).
-     *
-     * @return bool True when the wrapped value has no fractional part
-     * @see Transformer::isInteger()
-     */
-    public function isInteger(): bool
-    {
-        return Transformer::isInteger($this->numericValue());
-    }
-
-    /**
-     * Determines whether the wrapped number is less than another within epsilon tolerance.
-     *
-     * @param int|float $b The value to compare against
-     * @return bool True when the wrapped value is strictly less than $b
-     * @see Transformer::isLessThan()
-     */
-    public function isLessThan(int|float $b): bool
-    {
-        return Transformer::isLessThan($this->numericValue(), $b);
-    }
-
-    /**
-     * Determines whether the wrapped number is less than or equal to another.
-     *
-     * @param int|float $b The value to compare against
-     * @return bool True when the wrapped value is less than or equal to $b
-     * @see Transformer::isLessThanOrEqualTo()
-     */
-    public function isLessThanOrEqualTo(int|float $b): bool
-    {
-        return Transformer::isLessThanOrEqualTo($this->numericValue(), $b);
-    }
-
-    /**
-     * Determines whether the wrapped number is negative (strictly less than zero).
-     *
-     * @return bool True when the wrapped value is strictly less than zero
-     * @see Transformer::isNegative()
-     */
-    public function isNegative(): bool
-    {
-        return Transformer::isNegative($this->numericValue());
-    }
-
-    /**
-     * Determines whether the wrapped value is a valid numeric representation.
-     *
-     * @return bool True when the wrapped value is numeric
-     * @see Transformer::isNumber()
-     */
-    public function isNumber(): bool
-    {
-        return Transformer::isNumber($this->data);
-    }
-
-    /**
-     * Determines whether the wrapped number is positive (strictly greater than zero).
-     *
-     * @return bool True when the wrapped value is strictly greater than zero
-     * @see Transformer::isPositive()
-     */
-    public function isPositive(): bool
-    {
-        return Transformer::isPositive($this->numericValue());
-    }
-
-    /**
-     * Determines whether the wrapped number is equal to zero within epsilon tolerance.
-     *
-     * @return bool True when the wrapped value is zero within epsilon tolerance
-     * @see Transformer::isZero()
-     */
-    public function isZero(): bool
-    {
-        return Transformer::isZero($this->numericValue());
     }
 
     /**
