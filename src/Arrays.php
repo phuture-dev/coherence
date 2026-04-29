@@ -342,6 +342,9 @@ class Arrays extends StaticClass
      * multiple arrays that you want to combine into a single list while preserving
      * any deeper nested array structures.
      *
+     * Non-array elements are silently skipped, allowing mixed arrays to be collapsed
+     * without causing a type error.
+     *
      * Unlike flatten() which recursively flattens all nested levels, collapse() only merges
      * one level of nesting, preserving any deeper nested structures.
      *
@@ -359,15 +362,20 @@ class Arrays extends StaticClass
      * $arrays = [['a' => 1], ['b' => 2], ['c' => 3]];
      * $result = Arrays::collapse($arrays);
      * // Returns: ['a' => 1, 'b' => 2, 'c' => 3]
+     *
+     * // With mixed elements (non-array values are skipped)
+     * $arrays = [1, [2, 3], 'string', [4]];
+     * $result = Arrays::collapse($arrays);
+     * // Returns: [2, 3, 4]
      * ```
      *
-     * @param array $array An array containing other arrays to merge.
+     * @param array $array An array containing other arrays to merge. Non-array elements are silently skipped.
      * @return array Returns a single flattened array with all values from the nested arrays
      * @see \Phuture\Coherence\Arrays::flatten()
      */
     public static function collapse(array $array): array
     {
-        return array_merge([], ...$array);
+        return array_merge([], ...array_filter($array, 'is_array'));
     }
 
     /**
