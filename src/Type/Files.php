@@ -81,6 +81,66 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
+     * Appends content to the end of the wrapped file.
+     *
+     * @param string $content The content to append to the file
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
+     * @see \Phuture\Coherence\Files::append()
+     */
+    public function append(string $content): self
+    {
+        Transformer::append($this->data, $content);
+
+        return $this;
+    }
+
+    /**
+     * Changes the group ownership of the wrapped file.
+     *
+     * @param string|int $group The new group name or numeric group ID
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the group cannot be changed
+     * @see \Phuture\Coherence\Files::chgrp()
+     */
+    public function chgrp(string|int $group): self
+    {
+        Transformer::chgrp($this->data, $group);
+
+        return $this;
+    }
+
+    /**
+     * Changes the permission mode of the wrapped file.
+     *
+     * @param int $mode The permission mode (octal notation, e.g. 0644)
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When permissions cannot be changed
+     * @see \Phuture\Coherence\Files::chmod()
+     */
+    public function chmod(int $mode): self
+    {
+        Transformer::chmod($this->data, $mode);
+
+        return $this;
+    }
+
+    /**
+     * Changes the owner of the wrapped file.
+     *
+     * @param string|int $user The new owner name or numeric user ID
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the owner cannot be changed
+     * @see \Phuture\Coherence\Files::chown()
+     */
+    public function chown(string|int $user): self
+    {
+        Transformer::chown($this->data, $user);
+
+        return $this;
+    }
+
+    /**
      * Deletes the file or directory at the current path.
      *
      * After deletion, the internal path is set to an empty string. This method
@@ -172,14 +232,15 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Returns the name of the file including its extension.
+     * Returns the name of the file.
      *
-     * @return string The file name with extension
+     * @param bool $includeExtension Whether to include the file extension (default: true)
+     * @return string The file name with or without extension
      * @see \Phuture\Coherence\Files::name()
      */
-    public function name(): string
+    public function name(bool $includeExtension = true): string
     {
-        return Transformer::name($this->data);
+        return Transformer::name($this->data, $includeExtension);
     }
 
     /**
@@ -190,6 +251,21 @@ class Files extends FluentClass implements Fileable
     public function path(): string
     {
         return (string) $this->data;
+    }
+
+    /**
+     * Prepends content to the beginning of the wrapped file.
+     *
+     * @param string $content The content to prepend to the file
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
+     * @see \Phuture\Coherence\Files::prepend()
+     */
+    public function prepend(string $content): self
+    {
+        Transformer::prepend($this->data, $content);
+
+        return $this;
     }
 
     /**
@@ -225,6 +301,22 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
+     * Replaces all occurrences of a search string within the wrapped file.
+     *
+     * @param string|array $search The value or values to search for
+     * @param string|array $replace The replacement value or values
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read or written
+     * @see \Phuture\Coherence\Files::replaceInFile()
+     */
+    public function replaceInFile(string|array $search, string|array $replace): self
+    {
+        Transformer::replaceInFile($this->data, $search, $replace);
+
+        return $this;
+    }
+
+    /**
      * Returns the size of the file in bytes.
      *
      * @return int The file size in bytes
@@ -241,13 +333,14 @@ class Files extends FluentClass implements Fileable
      *
      * @param string $content The content to write to the file
      * @param int $mode The permission mode for the file (default: 0666)
+     * @param bool $lock Whether to acquire an exclusive lock before writing (default: false)
      * @return self Returns the current instance for method chaining
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be written
      * @see \Phuture\Coherence\Files::write()
      */
-    public function write(string $content, int $mode = 0666): self
+    public function write(string $content, int $mode = 0666, bool $lock = false): self
     {
-        Transformer::write($this->data, $content, $mode);
+        Transformer::write($this->data, $content, $mode, $lock);
 
         return $this;
     }
