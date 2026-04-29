@@ -517,6 +517,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD2 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::md2() For hashing string data with MD2
      * @see \Phuture\Coherence\Hash::hmacMd2() For generating HMAC with MD2
      */
@@ -542,6 +543,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD4 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::md4() For hashing string data with MD4
      * @see \Phuture\Coherence\Hash::hmacMd4() For generating HMAC with MD4
      */
@@ -567,6 +569,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD5 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::md5() For hashing string data with MD5
      * @see \Phuture\Coherence\Hash::hmacMd5() For generating HMAC with MD5
      */
@@ -592,6 +595,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA1 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::sha1() For hashing string data with SHA1
      * @see \Phuture\Coherence\Hash::hmacSha1() For generating HMAC with SHA1
      */
@@ -617,6 +621,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA256 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::sha256() For hashing string data with SHA256
      * @see \Phuture\Coherence\Hash::hmacSha256() For generating HMAC with SHA256
      */
@@ -642,6 +647,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA384 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::sha384() For hashing string data with SHA384
      * @see \Phuture\Coherence\Hash::hmacSha384() For generating HMAC with SHA384
      */
@@ -667,6 +673,7 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA512 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or is not readable
      * @see \Phuture\Coherence\Hash::sha512() For hashing string data with SHA512
      * @see \Phuture\Coherence\Hash::hmacSha512() For generating HMAC with SHA512
      */
@@ -1303,11 +1310,10 @@ class Hash extends StaticClass
     }
 
     /**
-     * Compare two HMAC values using timing-safe comparison
+     * Compares two data strings in a timing-safe manner using HMAC.
      *
-     * This method provides timing-safe comparison of two pieces of data by generating
-     * HMACs for both and comparing them using hash_equals(). This prevents timing attacks
-     * that could reveal information about the data being compared.
+     * This method provides timing-safe comparison of two data strings by generating HMACs
+     * for both using a shared secret key and comparing them using hash_equals().
      *
      * Example:
      * ```php
@@ -1741,6 +1747,7 @@ class Hash extends StaticClass
      * @param int $length Desired length of derived key in bytes (default: 32)
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return string Returns the derived key as raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When iterations is not positive, length is out of range, or the algorithm is not supported for PBKDF2
      * @see \Phuture\Coherence\Hash::pbkdf2Algorithms() For listing supported PBKDF2 algorithms
      * @see \Phuture\Coherence\Hash::pbkdf2Supports() For checking if an algorithm is supported for PBKDF2
      */
@@ -2193,6 +2200,8 @@ class Hash extends StaticClass
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return array Returns an array with 'hash' and 'salt' keys
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the specified algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When unable to generate random salt
      * @see \Phuture\Coherence\Hash::checkWithSalt() For verifying a salted hash
      * @see \Phuture\Coherence\Hash::hmacWithSalt() For generating a salted HMAC
      */

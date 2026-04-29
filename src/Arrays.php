@@ -525,12 +525,10 @@ class Arrays extends StaticClass
     }
 
     /**
-     * Checks if a value exists in an array.
+     * Checks if a value exists in an array using strict comparison.
      *
      * This method searches through an array to see if a specific value exists anywhere
-     * in it. By default, it uses strict comparison (===) which checks both value and
-     * type. You can disable strict mode to use loose comparison (==) which only checks
-     * the value.
+     * in it. It always uses strict comparison (===) which checks both value and type.
      *
      * Example:
      * ```php
@@ -968,6 +966,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function for keys that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are not found in other arrays
+     * @throws InvalidArgumentException When less than 1 comparison array is provided
      * @see \Phuture\Coherence\Arrays::difference()
      * @see \Phuture\Coherence\Arrays::differenceAssoc()
      */
@@ -1369,6 +1368,7 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array A potentially multidimensional array to flatten
+     * @param int $depth The maximum nesting depth to flatten (default: unlimited)
      * @return array Returns a single-dimensional array containing all scalar values from the nested structure
      * @see \Phuture\Coherence\Arrays::collapse()
      */
@@ -1470,7 +1470,6 @@ class Arrays extends StaticClass
      * @param string $separator The character or string to split on (default: space).
      * @param int $limit The maximum number of array elements to return (default: PHP's default).
      * @return array An array of string parts.
-     * @see \Phuture\Coherence\Arrays::toString()
      */
     public static function fromString(string $string, string $separator = ' ', int $limit = PHP_INT_MAX): array
     {
@@ -1724,7 +1723,7 @@ class Arrays extends StaticClass
      * // Returns: false
      * ```
      *
-     * @param array $array The array to check. for key existence
+     * @param array $array The array to check for key existence
      * @param string|int|array $key The key to check (string/int for simple key, array for nested path).
      * @return bool Returns true if the key exists, false otherwise
      */
@@ -1921,6 +1920,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values present in all arrays with keys preserved from the first array
+     * @throws InvalidArgumentException When less than 1 comparison array is provided
      * @see \Phuture\Coherence\Arrays::intersectAssoc()
      * @see \Phuture\Coherence\Arrays::intersectKeys()
      */
@@ -2110,6 +2110,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are found in all arrays
+     * @throws InvalidArgumentException When less than 1 comparison array is provided
      * @see \Phuture\Coherence\Arrays::intersect()
      */
     public static function intersectKeys(array $array, ...$arrays): array
@@ -2279,7 +2280,7 @@ class Arrays extends StaticClass
      *
      * @param array|object $array The array or object to iterate over (passed by reference)
      * @param callable $callback The function to apply to each element
-     *  The callback has the signature `function (mixed $value, mixed $key): mixed`
+     *  The callback has the signature `function (mixed &$value, mixed $key): mixed`
      * @param bool $recursive Whether to recursively process nested arrays (default: false)
      * @param mixed $args Optional additional data to pass to the callback function
      * @return bool Returns true on success, false on failure
@@ -2327,6 +2328,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays Two or more arrays to join together
      * @return array Returns a single merged array
+     * @throws InvalidArgumentException When less than 2 arrays are provided
      * @see \Phuture\Coherence\Arrays::split()
      */
     public static function join(array ...$arrays): array
@@ -2718,10 +2720,10 @@ class Arrays extends StaticClass
     /**
      * Combines multiple arrays into one.
      *
-     * This method merges two or more arrays together into a single array. When merging,
-     * numeric keys are renumbered starting from 0, while string keys are preserved. If
-     * the same string key exists in multiple arrays, the later value overwrites the earlier one.
-     * The recursive option allows deep merging of nested arrays.
+     * This method merges two or more arrays together into a single array using array_merge_recursive().
+     * Numeric keys are renumbered starting from 0. When the same string key exists in multiple arrays,
+     * values are merged recursively: if both values are arrays, they are combined; otherwise, values for
+     * the same key are collected into an array.
      *
      * Example:
      * ```php
@@ -2743,6 +2745,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays One or more arrays to merge together
      * @return array Returns a new merged array
+     * @throws InvalidArgumentException When less than 2 arrays are provided
      * @see \Phuture\Coherence\Arrays::join()
      * @see \Phuture\Coherence\Arrays::collapse()
      */
@@ -3781,11 +3784,11 @@ class Arrays extends StaticClass
      * use Phuture\Coherence\Arrays;
      *
      * $numbers = [1, 3, 5, 8];
-     * $hasEven = Arrays::any($numbers, fn($n) => $n % 2 === 0);
+     * $hasEven = Arrays::some($numbers, fn($n) => $n % 2 === 0);
      * // Returns: true (8 is even)
      *
      * $ages = [16, 15, 14];
-     * $hasAdult = Arrays::any($ages, fn($age) => $age >= 18);
+     * $hasAdult = Arrays::some($ages, fn($age) => $age >= 18);
      * // Returns: false (none are 18 or older)
      * ```
      *
@@ -3856,7 +3859,6 @@ class Arrays extends StaticClass
      * @see \Phuture\Coherence\Arrays::sortKeys()
      * @see \Phuture\Coherence\Arrays::sortAssoc()
      * @see \Phuture\Coherence\Arrays::sortNatural()
-     * @see \Phuture\Coherence\Arrays::sortMultidimensional()
      */
     public static function sort(
         array &$array,

@@ -14,13 +14,12 @@ use Phuture\Coherence\Exception\ReflectionException;
 class Callables extends StaticClass
 {
     /**
-     * Default time-to-live for cached function results in milliseconds.
+     * Default time-to-live for cached function results in seconds.
      *
      * This constant defines the default cache duration for the memoize() method
-     * when no custom TTL is specified. The value is in milliseconds to provide
-     * precise timing control.
+     * when no custom TTL is specified. The value is in seconds.
      *
-     * Value: 60,000 milliseconds = 60 seconds = 1 minute
+     * Value: 60,000 seconds (~16.7 hours)
      */
     public const CACHE_TTL = 60 * 1000;
 
@@ -82,12 +81,12 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $logEnd = fn($result, $operation) => echo "Finished $operation. Result: " . json_encode($result) . "\n";
+     * $logEnd = function($result, $operation) { echo "Finished $operation. Result: " . json_encode($result) . "\n"; };
      * $processData = fn($data) => array_map(fn($item) => $item * 2, $data);
      *
      * $loggedProcess = Callables::after($processData, $logEnd);
      * $result = $loggedProcess([1, 2, 3]);
-     * // Outputs: Finished processing. Result: [2,4,6]
+     * // Outputs: Finished doubling. Result: [2,4,6]
      * // Returns [2, 4, 6]
      *
      * // Cleanup after operations
@@ -158,7 +157,7 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $logStart = fn($operation, $data) => echo "Starting $operation with " . json_encode($data) . "\n";
+     * $logStart = function($operation, $data) { echo "Starting $operation with " . json_encode($data) . "\n"; };
      * $processData = fn($operation, $data) => array_map(fn($item) => $item * 2, $data);
      *
      * $loggedProcess = Callables::before($logStart, $processData);
@@ -239,7 +238,7 @@ class Callables extends StaticClass
      *     public $age = 30;
      * }
      *
-     * $closure = fn() => return "Name: {$this->name}, Age: {$this->age}";
+     * $closure = fn() => "Name: {$this->name}, Age: {$this->age}";
      * $user = new User();
      *
      * $bound = Callables::bind($closure, $user);
@@ -359,7 +358,7 @@ class Callables extends StaticClass
      *     fn($x) => $x - 3
      * );
      * $result = $pipeline(10);
-     * // Returns 19 ((10 - 3) * 2 + 1)
+     * // Returns 15 ((10 - 3) * 2 + 1)
      * ```
      *
      * @param callable ...$callback The functions to compose, applied right-to-left
@@ -441,7 +440,7 @@ class Callables extends StaticClass
      * @param int|null $arity The number of arguments expected (null to auto-detect)
      * @return Closure A curried version of the function
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to determine function arity automatically
-     * @see Reflector::arity()
+     * @see \Phuture\Coherence\Reflector::arity()
      */
     public static function curry(callable $callback, ?int $arity = null): Closure
     {
@@ -531,7 +530,7 @@ class Callables extends StaticClass
      * // String formatting with reversed arguments
      * $format = fn($template, $value) => sprintf($template, $value);
      * $reverseFormat = Callables::flip($format);
-     * $result3 = $reverseFormat('Hello %s', 'World'); // "World Hello"
+     * $result3 = $reverseFormat('Hello %s', 'World'); // Returns "World" (args reversed: sprintf('World', 'Hello %s'))
      * ```
      *
      * @param callable $callback The function to call with reversed arguments
@@ -705,7 +704,7 @@ class Callables extends StaticClass
      * Callables::isInvokable($invoker); // true (has __invoke)
      * Callables::isInvokable(new DateTime()); // false (no __invoke)
      * Callables::isInvokable('strlen'); // false (string)
-     * Callables::isInvokable(fn($x) => $x); // false (closure)
+     * Callables::isInvokable(fn($x) => $x); // true (closure has __invoke)
      * ```
      *
      * @param mixed $value The value to check if it's an invokable object
@@ -873,7 +872,7 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $setupDatabase = fn() => echo "Setting up database\n";
+     * $setupDatabase = function() { echo "Setting up database\n"; };
      * $onceSetup = Callables::once($setupDatabase);
      *
      * $result1 = $onceSetup(); // Outputs "Setting up database", returns null
@@ -881,7 +880,7 @@ class Callables extends StaticClass
      * $result3 = $onceSetup(); // Still returns null (no execution)
      *
      * // Different callback, can execute once
-     * $anotherSetup = fn() => echo "Another setup\n";
+     * $anotherSetup = function() { echo "Another setup\n"; };
      * $onceAnother = Callables::once($anotherSetup);
      * $result4 = $onceAnother(); // Outputs "Another setup", returns null
      * $result5 = $onceAnother(); // Returns null (no execution)
@@ -1008,12 +1007,12 @@ class Callables extends StaticClass
      * $data = "Important information";
      *
      * // Save the data but keep using it
-     * $result = Callables::passthrough($data, $save);
+     * $result = Callables::passthrough($save, $data);
      * // $result is still "Important information" (data was saved)
      *
      * // Debugging without breaking the flow
-     * $debug = fn($value) => echo "Current value: $value\n";
-     * $name = Callables::passthrough("John", $debug);
+     * $debug = function($value) { echo "Current value: $value\n"; };
+     * $name = Callables::passthrough($debug, "John");
      * // Outputs: Current value: John
      * // $name is still "John"
      *
@@ -1087,7 +1086,7 @@ class Callables extends StaticClass
      * $apiCall = fn($endpoint) => json_decode(file_get_contents($endpoint));
      *
      * // Maximum 10 calls per minute
-     * $limitedApi = Callables::rateLimit($apiCall, 10, 60);
+     * $limitedApi = Callables::rateLimit($apiCall, 10, 60000);
      *
      * $result1 = $limitedApi('https://api.example.com/data'); // Executes
      * // After 10 calls within 60 seconds:
@@ -1105,7 +1104,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to rate-limit
      * @param int $maxAttempts Maximum number of allowed calls within the time period, defaults to MAX_ATTEMPTS
-     * @param int $milliseconds Delay between calls in milliseconds, defaults to EXECUTION_DELAY
+     * @param int $milliseconds Time window in milliseconds for counting calls, defaults to EXECUTION_DELAY
      * @return Closure A rate-limited version of the function
      * @throws \Phuture\Coherence\Exception\RuntimeException When the rate limit is exceeded
      * @see \Phuture\Coherence\Callables::MAX_ATTEMPTS
@@ -1170,6 +1169,7 @@ class Callables extends StaticClass
      * @param int $maxAttempts Maximum number of attempts, defaults to MAX_ATTEMPTS
      * @param int $milliseconds Delay between attempts in milliseconds, defaults to EXECUTION_DELAY
      * @return Closure A retry-enabled version of the function
+     * @throws Throwable When all retry attempts are exhausted
      * @see \Phuture\Coherence\Callables::MAX_ATTEMPTS
      * @see \Phuture\Coherence\Callables::EXECUTION_DELAY
      */
@@ -1291,7 +1291,7 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $logger = fn($message) => echo "Log: $message\n";
+     * $logger = function($message) { echo "Log: $message\n"; };
      * $tapLogger = Callables::tap($logger);
      *
      * $result = $tapLogger("Hello World");
@@ -1300,7 +1300,7 @@ class Callables extends StaticClass
      *
      * // Debugging in chains
      * $process = fn($data) => $data * 2;
-     * $debug = fn($value) => echo "Processing: $value\n";
+     * $debug = function($value) { echo "Processing: $value\n"; };
      *
      * $pipeline = Callables::pipe(
      *     $process,
@@ -1326,7 +1326,7 @@ class Callables extends StaticClass
      * Creates a function that limits execution frequency to a minimum interval.
      *
      * This method returns a closure that executes the original function only if
-     * enough time has passed since the last execution with the same arguments.
+     * enough time has passed since the last execution.
      *
      * The milliseconds parameter specifies the required minimum interval and
      * must always be provided.
@@ -1349,11 +1349,6 @@ class Callables extends StaticClass
      * $result2 = $throttled(['id' => 2]); // Returns null (only 500ms passed)
      * usleep(600000); // Wait 600ms (total 1100ms)
      * $result3 = $throttled(['id' => 3]); // Executes again, returns true
-     *
-     * // Different argument sets have separate timers
-     * $result4 = $throttled(['key' => 'A']); // Executes, separate 1s timer for 'A'
-     * $result5 = $throttled(['key' => 'A']); // Returns null (too soon for 'A')
-     * $result6 = $throttled(['key' => 'B']); // Executes, separate 1s timer for 'B'
      *
      * // Common throttle intervals:
      * $slowApi = Callables::throttle($apiCall, 5000); // 5 seconds
@@ -1398,7 +1393,7 @@ class Callables extends StaticClass
      *     return $n * 2;
      * };
      *
-     * $result = Callables::time($slowFunction);
+     * $result = Callables::time($slowFunction, 5);
      * // Returns ['result' => 10, 'time' => ~100.5]
      * ```
      *
@@ -1544,7 +1539,7 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $add = fn($a, $b) => $a + $b;
+     * $add = fn($a, $b = 0) => $a + $b;
      * $firstArg = Callables::unary($add);
      *
      * $result1 = $firstArg(5, 10, 15); // Returns 5 (ignores extra args)
@@ -1627,9 +1622,9 @@ class Callables extends StaticClass
      * ```php
      * use Phuture\Coherence\Callables;
      *
-     * $before = fn($data) => echo "Processing " . count($data) . " items\n";
+     * $before = function($data) { echo "Processing " . count($data) . " items\n"; };
      * $process = fn($data) => array_map(fn($x) => $x * 2, $data);
-     * $after = fn($result, $original) => echo "Processed " . count($result) . " results\n";
+     * $after = function($result, $original) { echo "Processed " . count($result) . " results\n"; };
      *
      * $wrapped = Callables::wrap($process, $before, $after);
      * $result = $wrapped([1, 2, 3, 4]);
