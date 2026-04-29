@@ -232,30 +232,6 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Returns the target of the symbolic link.
-     *
-     * @return string The target path that the link points to
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path is not a symbolic link
-     * @see \Phuture\Coherence\Files::getLink()
-     */
-    public function getLink(): string
-    {
-        return Transformer::getLink($this->data);
-    }
-
-    /**
-     * Determines whether the wrapped file has an exclusive lock.
-     *
-     * @return bool True when the file appears to be exclusively locked
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be opened
-     * @see \Phuture\Coherence\Files::isLocked()
-     */
-    public function isLocked(): bool
-    {
-        return Transformer::isLocked($this->data);
-    }
-
-    /**
      * Determines whether the wrapped path is a symbolic link.
      *
      * @return bool True when the path is a symbolic link
@@ -264,28 +240,6 @@ class Files extends FluentClass implements Fileable
     public function isLink(): bool
     {
         return Transformer::isLink($this->data);
-    }
-
-    /**
-     * Determines whether the wrapped file is readable.
-     *
-     * @return bool True when the file is readable
-     * @see \Phuture\Coherence\Files::isReadable()
-     */
-    public function isReadable(): bool
-    {
-        return Transformer::isReadable($this->data);
-    }
-
-    /**
-     * Determines whether the wrapped file is writable.
-     *
-     * @return bool True when the file is writable
-     * @see \Phuture\Coherence\Files::isWritable()
-     */
-    public function isWritable(): bool
-    {
-        return Transformer::isWritable($this->data);
     }
 
     /**
