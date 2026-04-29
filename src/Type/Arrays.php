@@ -804,6 +804,56 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     }
 
     /**
+     * Applies a callback when a condition is false, preserving the fluent chain regardless.
+     *
+     * This method evaluates the given condition and, if it is false, invokes the callback
+     * with the current instance. The callback may mutate the internal data directly.
+     * The chain continues unchanged when the condition is true.
+     *
+     * This is the logical inverse of `when()`.
+     *
+     * The condition can be a boolean value or a callable that returns a boolean.
+     * When a callable is provided, it receives the current array data as its argument.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Type\Arrays;
+     *
+     * $result = (new Arrays([1, 2, 3]))
+     *     ->unless(false, fn ($array) => $array->filter(fn ($n) => $n > 2))
+     *     ->toArray();
+     * // Returns: [2 => 3]
+     *
+     * $result = (new Arrays([1, 2, 3]))
+     *     ->unless(true, fn ($array) => $array->filter(fn ($n) => $n > 2))
+     *     ->toArray();
+     * // Returns: [1, 2, 3]
+     *
+     * $result = (new Arrays([1, 2, 3, 4, 5]))
+     *     ->unless(fn ($data) => count($data) >= 5, fn ($array) => $array->pad(5, 0))
+     *     ->toArray();
+     * // Returns: [1, 2, 3, 4, 5]
+     * ```
+     *
+     * @param bool|callable $condition A boolean value or a callback that receives the array data and returns a bool
+     *  The callback has the signature `function (array $data): bool`
+     * @param callable $callback The callback to execute when the condition is false
+     *  The callback has the signature `function (self $array): void`
+     * @return self The current instance for continued chaining
+     * @see \Phuture\Coherence\Type\Arrays::when()
+     */
+    public function unless(bool|callable $condition, callable $callback): self
+    {
+        $resolved = is_callable($condition) ? $condition($this->data) : $condition;
+
+        if (!$resolved) {
+            $callback($this);
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns all values from an array.
      *
      * This method extracts all values from an array and returns them as a new indexed array
@@ -816,6 +866,54 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     public function values(): self
     {
         $this->data = Transformer::values($this->data);
+
+        return $this;
+    }
+
+    /**
+     * Applies a callback when a condition is true, preserving the fluent chain regardless.
+     *
+     * This method evaluates the given condition and, if it is true, invokes the callback
+     * with the current instance. The callback may mutate the internal data directly.
+     * The chain continues unchanged when the condition is false.
+     *
+     * The condition can be a boolean value or a callable that returns a boolean.
+     * When a callable is provided, it receives the current array data as its argument.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Type\Arrays;
+     *
+     * $result = (new Arrays([1, 2, 3, 4, 5]))
+     *     ->when(true, fn ($array) => $array->filter(fn ($n) => $n > 2))
+     *     ->toArray();
+     * // Returns: [2 => 3, 3 => 4, 4 => 5]
+     *
+     * $result = (new Arrays([1, 2, 3]))
+     *     ->when(false, fn ($array) => $array->filter(fn ($n) => $n > 2))
+     *     ->toArray();
+     * // Returns: [1, 2, 3]
+     *
+     * $result = (new Arrays([1, 2, 3]))
+     *     ->when(fn ($data) => count($data) < 5, fn ($array) => $array->pad(5, 0))
+     *     ->toArray();
+     * // Returns: [1, 2, 3, 0, 0]
+     * ```
+     *
+     * @param bool|callable $condition A boolean value or a callback that receives the array data and returns a bool
+     *  The callback has the signature `function (array $data): bool`
+     * @param callable $callback The callback to execute when the condition is true
+     *  The callback has the signature `function (self $array): void`
+     * @return self The current instance for continued chaining
+     * @see \Phuture\Coherence\Type\Arrays::unless()
+     */
+    public function when(bool|callable $condition, callable $callback): self
+    {
+        $resolved = is_callable($condition) ? $condition($this->data) : $condition;
+
+        if ($resolved) {
+            $callback($this);
+        }
 
         return $this;
     }

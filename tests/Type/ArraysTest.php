@@ -991,6 +991,186 @@ class ArraysTest extends TestCase
         $result = $data->wrap()->toArray();
         Assert::same(['apple', 'banana', 'cherry'], $result);
     }
+
+    public function testWhenWithBooleanTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3, 4, 5]))
+            ->when(true, fn ($array) => $array->filter(fn ($n) => $n > 2))
+            ->toArray();
+        Assert::same([2 => 3, 3 => 4, 4 => 5], $result);
+    }
+
+    public function testWhenWithBooleanFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->when(false, fn ($array) => $array->filter(fn ($n) => $n > 2))
+            ->toArray();
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testWhenWithCallableConditionTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->when(fn ($data) => count($data) < 5, fn ($array) => $array->pad(5, 0))
+            ->toArray();
+        Assert::same([1, 2, 3, 0, 0], $result);
+    }
+
+    public function testWhenWithCallableConditionFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3, 4, 5]))
+            ->when(fn ($data) => count($data) < 5, fn ($array) => $array->pad(5, 0))
+            ->toArray();
+        Assert::same([1, 2, 3, 4, 5], $result);
+    }
+
+    public function testWhenChainingContinuesAfterFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->when(false, fn ($array) => $array->filter(fn ($n) => $n > 1))
+            ->map(fn ($n) => $n * 10)
+            ->toArray();
+        Assert::same([10, 20, 30], $result);
+    }
+
+    public function testWhenChainingContinuesAfterTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->when(true, fn ($array) => $array->filter(fn ($n) => $n > 1))
+            ->map(fn ($n) => $n * 10)
+            ->toArray();
+        Assert::same([1 => 20, 2 => 30], $result);
+    }
+
+    public function testWhenMultipleConditionsInChain(): void
+    {
+        $isProduction = false;
+        $applyTax = true;
+
+        $result = (new Arrays([100, 200, 300]))
+            ->when($isProduction, fn ($array) => $array->map(fn ($n) => (int) ($n * 1.2)))
+            ->when($applyTax, fn ($array) => $array->map(fn ($n) => (int) ($n * 1.1)))
+            ->toArray();
+        Assert::same([110, 220, 330], $result);
+    }
+
+    public function testUnlessWithBooleanTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->unless(true, fn ($array) => $array->filter(fn ($n) => $n > 2))
+            ->toArray();
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testUnlessWithBooleanFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->unless(false, fn ($array) => $array->filter(fn ($n) => $n > 2))
+            ->toArray();
+        Assert::same([2 => 3], $result);
+    }
+
+    public function testUnlessWithCallableConditionTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3, 4, 5]))
+            ->unless(fn ($data) => count($data) >= 5, fn ($array) => $array->pad(5, 0))
+            ->toArray();
+        Assert::same([1, 2, 3, 4, 5], $result);
+    }
+
+    public function testUnlessWithCallableConditionFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->unless(fn ($data) => count($data) >= 5, fn ($array) => $array->pad(5, 0))
+            ->toArray();
+        Assert::same([1, 2, 3, 0, 0], $result);
+    }
+
+    public function testUnlessChainingContinuesAfterTrue(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->unless(true, fn ($array) => $array->filter(fn ($n) => $n > 1))
+            ->map(fn ($n) => $n * 10)
+            ->toArray();
+        Assert::same([10, 20, 30], $result);
+    }
+
+    public function testUnlessChainingContinuesAfterFalse(): void
+    {
+        $result = (new Arrays([1, 2, 3]))
+            ->unless(false, fn ($array) => $array->filter(fn ($n) => $n > 1))
+            ->map(fn ($n) => $n * 10)
+            ->toArray();
+        Assert::same([1 => 20, 2 => 30], $result);
+    }
+
+    public function testUnlessMultipleConditionsInChain(): void
+    {
+        $skipFilter = true;
+        $skipSort = false;
+
+        $result = (new Arrays([3, 1, 2]))
+            ->unless($skipFilter, fn ($array) => $array->filter(fn ($n) => $n > 1))
+            ->unless($skipSort, fn ($array) => $array->sort())
+            ->toArray();
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testWhenAndUnlessCombinedInChain(): void
+    {
+        $isPremium = true;
+        $excludeInactive = false;
+
+        $users = new Arrays([
+            ['name' => 'John', 'active' => true, 'premium' => true],
+            ['name' => 'Jane', 'active' => false, 'premium' => true],
+            ['name' => 'Bob', 'active' => true, 'premium' => false],
+        ]);
+
+        $result = $users
+            ->when($isPremium, fn ($array) => $array->where(fn ($u) => $u['premium']))
+            ->unless($excludeInactive, fn ($array) => $array->where(fn ($u) => $u['active']))
+            ->map(fn ($u) => $u['name'])
+            ->values()
+            ->toArray();
+        Assert::same(['John', 'Jane'], $result);
+    }
+
+    public function testWhenReturnsSelf(): void
+    {
+        $arrays = new Arrays([1, 2, 3]);
+        $result = $arrays->when(true, fn ($array) => $array->filter(fn ($n) => $n > 0));
+        Assert::type(Arrays::class, $result);
+    }
+
+    public function testUnlessReturnsSelf(): void
+    {
+        $arrays = new Arrays([1, 2, 3]);
+        $result = $arrays->unless(false, fn ($array) => $array->filter(fn ($n) => $n > 0));
+        Assert::type(Arrays::class, $result);
+    }
+
+    public function testWhenCallbackReceivesArraysInstance(): void
+    {
+        $received = new Arrays([]);
+        (new Arrays([1, 2, 3]))
+            ->when(true, function ($array) use (&$received) {
+                $received = $array;
+            });
+        Assert::type(Arrays::class, $received);
+        Assert::same([1, 2, 3], $received->toArray());
+    }
+
+    public function testUnlessCallbackReceivesArraysInstance(): void
+    {
+        $received = new Arrays([]);
+        (new Arrays([1, 2, 3]))
+            ->unless(false, function ($array) use (&$received) {
+                $received = $array;
+            });
+        Assert::type(Arrays::class, $received);
+        Assert::same([1, 2, 3], $received->toArray());
+    }
 }
 
 (new ArraysTest())->run();
