@@ -545,13 +545,6 @@ class StringsTest extends TestCase
         Assert::same(Strings::trimRight('***hello***', '*'), FluentStrings::from('***hello***')->trimRight('*')->get());
     }
 
-    public function testTruncate(): void
-    {
-        Assert::same(Strings::truncate('Hello World', 5), FluentStrings::from('Hello World')->truncate(5)->get());
-        Assert::same(Strings::truncate('Hello World', 5, '…'), FluentStrings::from('Hello World')->truncate(5, '…')->get());
-        Assert::same(Strings::truncate('ñaño', 2), FluentStrings::from('ñaño')->truncate(2)->get());
-    }
-
     public function testUnwrap(): void
     {
         Assert::same(Strings::unwrap('"hello"', '"'), FluentStrings::from('"hello"')->unwrap('"')->get());

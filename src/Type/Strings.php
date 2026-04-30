@@ -362,7 +362,7 @@ class Strings extends FluentClass implements Stringable, \Stringable
      * @return self Returns the current instance for method chaining
      * @see Transformer::limit()
      */
-    public function limit(int $limit, string $end = '...'): self
+    public function limit(int $limit, string $end = ''): self
     {
         $this->data = Transformer::limit((string) $this->data, $limit, $end);
 
@@ -818,21 +818,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function trimRight(string $characters = " \t\n\r\0\x0B"): self
     {
         $this->data = Transformer::trimRight((string) $this->data, $characters);
-
-        return $this;
-    }
-
-    /**
-     * Truncates the string to an exact character length.
-     *
-     * @param int $length The maximum number of characters to keep
-     * @param string $end The string to append after truncation (default: '')
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::truncate()
-     */
-    public function truncate(int $length, string $end = ''): self
-    {
-        $this->data = Transformer::truncate((string) $this->data, $length, $end);
 
         return $this;
     }

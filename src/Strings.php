@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence;
 
 use Random\RandomException;
+use Phuture\Coherence\Enum\UuidVersion;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\InvalidArgumentException;
 
@@ -24,8 +25,7 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  * - **Case Conversion**: camel, snake, kebab, pascal, headline
  * - **Splitting & Joining**: Split strings into arrays by patterns or delimiters
  * - **Counting & Comparison**: Count occurrences, compare strings, check equality
- * - **Truncation & Wrapping**: Limit length, wrap text, and extract excerpts
- * - **Testing & Checking**: Validate URLs, emails, UUIDs, ASCII, JSON, and more
+ * - **Truncation & Wrapping**: Limit length, wrap text, and extract excerpts * - **Testing & Checking**: Validate URLs, emails, UUIDs, ASCII, JSON, and more
  * - **Encoding & Conversion**: Transliterate to ASCII, generate slugs
  * - **Miscellaneous**: Mask, random strings, UUIDs, chunking, and swapping
  *
@@ -501,7 +501,7 @@ class Strings extends StaticClass
         for ($i = 0; $i < $length; $i++) {
             $charA = mb_substr($string, $i, 1, 'UTF-8');
             $charB = mb_substr($other, $i, 1, 'UTF-8');
-            $cmp = strcmp($charA, $charB);
+            $cmp = $charA <=> $charB;
 
             if ($cmp !== 0) {
                 return $cmp;
@@ -660,7 +660,7 @@ class Strings extends StaticClass
      * @return string The contextual excerpt
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$radius` is negative
      * @see \Phuture\Coherence\Strings::limit()
-     * @see \Phuture\Coherence\Strings::truncate()
+     * @see \Phuture\Coherence\Strings::limitWords()
      */
     public static function excerpt(string $string, string $phrase, int $radius = 100, string $omission = '...'): string
     {
@@ -951,6 +951,7 @@ class Strings extends StaticClass
      * Strings::headline('hello_world'); // 'Hello World'
      * Strings::headline('foo-bar-baz'); // 'Foo Bar Baz'
      * Strings::headline('hello world'); // 'Hello World'
+     * Strings::headline('helloWorld'); // 'Hello World'
      * ```
      *
      * @param string $string The input string to convert
@@ -960,7 +961,7 @@ class Strings extends StaticClass
      */
     public static function headline(string $string): string
     {
-        $parts = preg_split('/[\s\-_]+/u', $string, -1, PREG_SPLIT_NO_EMPTY);
+        $parts = preg_split('/[\s\-_]+|(?<!^)(?=[A-Z])/u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
         if ($parts === false || $parts === []) {
             return '';
@@ -1402,7 +1403,7 @@ class Strings extends StaticClass
             return false;
         }
 
-        return preg_match('/^-?\d+\.?\d*$/', $string) === 1;
+        return preg_match('/^-?\d+(\.\d+)?$/', $string) === 1;
     }
 
     /**
@@ -1612,20 +1613,21 @@ class Strings extends StaticClass
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::limit('Hello World', 5); // 'Hello...'
+     * Strings::limit('Hello World', 5); // 'Hello'
+     * Strings::limit('Hello World', 5, '...'); // 'Hello...'
      * Strings::limit('Hello World', 5, ' [+]'); // 'Hello [+]'
      * Strings::limit('Hi', 5); // 'Hi'
      * ```
      *
      * @param string $string The input string to limit
      * @param int $limit The maximum number of characters before truncation; must be zero or greater
-     * @param string $end The string to append after truncation (default: '...')
+     * @param string $end The string to append after truncation (default: '')
      * @return string The limited string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$limit` is negative
-     * @see \Phuture\Coherence\Strings::truncate()
+     * @see \Phuture\Coherence\Strings::limitWords()
      * @see \Phuture\Coherence\Strings::excerpt()
      */
-    public static function limit(string $string, int $limit, string $end = '...'): string
+    public static function limit(string $string, int $limit, string $end = ''): string
     {
         if ($limit < 0) {
             throw new InvalidArgumentException(
@@ -1638,6 +1640,46 @@ class Strings extends StaticClass
         }
 
         return rtrim(mb_substr($string, 0, $limit, 'UTF-8')) . $end;
+    }
+
+    /**
+     * Limits the number of words in a string, appending an end marker when truncated.
+     *
+     * Splits the string into words, keeps only the first `$limit` words, and joins them
+     * back with spaces. Returns the string unchanged when the word count is within the limit.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::limitWords('The quick brown fox jumps', 3); // 'The quick brown'
+     * Strings::limitWords('The quick brown fox jumps', 3, '...'); // 'The quick brown...'
+     * Strings::limitWords('Hi there', 5); // 'Hi there'
+     * ```
+     *
+     * @param string $string The input string to limit
+     * @param int $limit The maximum number of words to keep; must be greater than zero
+     * @param string $end The string to append after truncation (default: '')
+     * @return string The word-limited string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$limit` is less than or equal to zero
+     * @see \Phuture\Coherence\Strings::limit()
+     * @see \Phuture\Coherence\Strings::words()
+     */
+    public static function limitWords(string $string, int $limit, string $end = ''): string
+    {
+        if ($limit <= 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Word limit must be greater than zero"
+            );
+        }
+
+        $words = self::words($string);
+
+        if (count($words) <= $limit) {
+            return implode(' ', $words);
+        }
+
+        return implode(' ', array_slice($words, 0, $limit)) . $end;
     }
 
     /**
@@ -2078,6 +2120,85 @@ class Strings extends StaticClass
     }
 
     /**
+     * Generates a cryptographically secure password with configurable character requirements.
+     *
+     * Produces a random password that is guaranteed to contain at least one character from
+     * each enabled character pool. The character pools are: uppercase letters, lowercase
+     * letters, digits, and special characters. Throws when `$length` is too short to
+     * satisfy all enabled requirements.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $pw = Strings::password(16);
+     * $pw = Strings::password(20, specialCharacters: '!@#$%^&*');
+     * ```
+     *
+     * @param int $length The total length of the password; must be greater than zero (default: 16)
+     * @param bool $requireUppercase Whether at least one uppercase letter is required (default: true)
+     * @param bool $requireLowercase Whether at least one lowercase letter is required (default: true)
+     * @param bool $requireDigits Whether at least one digit is required (default: true)
+     * @param string $specialCharacters The set of special characters to include (default: '!@#$%^&*()-_=+[]{}|;:,.<>?')
+     * @return string The generated password
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is too short for the enabled requirements
+     * @throws \Random\RandomException If the system entropy source is unavailable
+     * @see \Phuture\Coherence\Strings::random()
+     */
+    public static function password(
+        int $length = 16,
+        bool $requireUppercase = true,
+        bool $requireLowercase = true,
+        bool $requireDigits = true,
+        string $specialCharacters = '!@#$%^&*()-_=+[]{}|;:,.<>?'
+    ): string {
+        $requiredPools = [];
+        $allCharacters = '';
+
+        if ($requireLowercase) {
+            $requiredPools[] = 'abcdefghijklmnopqrstuvwxyz';
+            $allCharacters .= 'abcdefghijklmnopqrstuvwxyz';
+        }
+
+        if ($requireUppercase) {
+            $requiredPools[] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $allCharacters .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        }
+
+        if ($requireDigits) {
+            $requiredPools[] = '0123456789';
+            $allCharacters .= '0123456789';
+        }
+
+        if ($specialCharacters !== '') {
+            $requiredPools[] = $specialCharacters;
+            $allCharacters .= $specialCharacters;
+        }
+
+        $requiredCount = count($requiredPools);
+
+        if ($length < $requiredCount) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Password length must be at least {$requiredCount} to satisfy all enabled requirements"
+            );
+        }
+
+        $password = '';
+
+        foreach ($requiredPools as $pool) {
+            $password .= $pool[random_int(0, strlen($pool) - 1)];
+        }
+
+        $allLength = strlen($allCharacters);
+
+        for ($i = $requiredCount; $i < $length; $i++) {
+            $password .= $allCharacters[random_int(0, $allLength - 1)];
+        }
+
+        return str_shuffle($password);
+    }
+
+    /**
      * Removes all occurrences of a search value from a string.
      *
      * Delegates to `replace()` with an empty replacement string.
@@ -2198,13 +2319,15 @@ class Strings extends StaticClass
         }
 
         foreach ($replacements as $replacement) {
-            $position = strpos($string, $search);
+            $position = mb_strpos($string, $search, 0, 'UTF-8');
 
             if ($position === false) {
                 break;
             }
 
-            $string = substr_replace($string, (string) $replacement, $position, strlen($search));
+            $string = mb_substr($string, 0, $position, 'UTF-8')
+                . (string) $replacement
+                . mb_substr($string, $position + mb_strlen($search, 'UTF-8'), null, 'UTF-8');
         }
 
         return $string;
@@ -2442,6 +2565,7 @@ class Strings extends StaticClass
      * Strings::snake('helloWorld'); // 'hello_world'
      * Strings::snake('HelloWorld', '-'); // 'hello-world'
      * Strings::snake('hello world'); // 'hello_world'
+     * Strings::snake('XMLParser'); // 'xml_parser'
      * ```
      *
      * @param string $string The input string to convert
@@ -2452,7 +2576,8 @@ class Strings extends StaticClass
      */
     public static function snake(string $string, string $delimiter = '_'): string
     {
-        $string = preg_replace('/(?<!^)(?=[A-Z])/', ' ', $string);
+        $string = preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', ' ', $string);
+        $string = preg_replace('/(?<=[A-Z])(?=[A-Z][a-z])/', ' ', $string);
         $string = preg_replace('/[^a-zA-Z0-9]+/', ' ', $string);
         $string = self::lower(trim($string));
 
@@ -2806,43 +2931,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Truncates a string to an exact character length without appending any marker.
-     *
-     * Returns the string unchanged when its length is within the limit. Unlike `limit()`,
-     * no omission marker is added — the string is simply cut at `$length`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::truncate('Hello World', 5); // 'Hello'
-     * Strings::truncate('Hello World', 5, '…'); // 'Hello…'
-     * Strings::truncate('Hi', 5); // 'Hi'
-     * ```
-     *
-     * @param string $string The input string to truncate
-     * @param int $length The maximum number of characters to keep; must be zero or greater
-     * @param string $end The string to append after truncation (default: '')
-     * @return string The truncated string
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is negative
-     * @see \Phuture\Coherence\Strings::limit()
-     */
-    public static function truncate(string $string, int $length, string $end = ''): string
-    {
-        if ($length < 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Length must be zero or greater"
-            );
-        }
-
-        if (self::length($string) <= $length) {
-            return $string;
-        }
-
-        return mb_substr($string, 0, $length, 'UTF-8') . $end;
-    }
-
-    /**
      * Removes a surrounding wrapper string from both ends of a string.
      *
      * Only removes the wrapper when `$string` starts AND ends with `$wrapper`. Returns
@@ -2908,26 +2996,50 @@ class Strings extends StaticClass
     }
 
     /**
-     * Generates a version 4 UUID (random).
+     * Generates a UUID (Universally Unique Identifier).
      *
-     * Uses `random_bytes()` for cryptographically secure random data.
-     * Sets the version (4) and variant bits per RFC 4122.
-     * Throws `RandomException` if the system entropy source fails.
+     * Generates a UUID using cryptographically secure random data. Supports version 4
+     * (fully random, default) and version 7 (time-ordered). The version and variant
+     * bits are set according to RFC 4122.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
+     * use Phuture\Coherence\Enum\UuidVersion;
      *
-     * Strings::uuid(); // e.g. '550e8400-e29b-41d4-a716-446655440000'
+     * Strings::uuid(); // e.g. '550e8400-e29b-41d4-a716-446655440000' (v4)
+     * Strings::uuid(UuidVersion::V4); // random UUID
+     * Strings::uuid(UuidVersion::V7); // time-ordered UUID
      * ```
      *
-     * @return string A random UUID v4 string
+     * @param \Phuture\Coherence\Enum\UuidVersion $version The UUID version to generate (default: V4)
+     * @return string The generated UUID string
      * @throws \Random\RandomException If the system entropy source is unavailable
      * @see \Phuture\Coherence\Strings::random()
      * @see \Phuture\Coherence\Strings::isUuid()
+     * @see \Phuture\Coherence\Enum\UuidVersion
      */
-    public static function uuid(): string
+    public static function uuid(UuidVersion $version = UuidVersion::V4): string
     {
+        if ($version === UuidVersion::V7) {
+            $timestampMs = (int) (hrtime(true) / 1_000_000);
+            $timestampHex = str_pad(dechex($timestampMs), 12, '0', STR_PAD_LEFT);
+
+            $data = hex2bin($timestampHex) . random_bytes(10);
+
+            $data[6] = chr(ord($data[6]) & 0x0f | 0x70);
+            $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+            return sprintf(
+                '%s-%s-%s-%s-%s',
+                bin2hex(substr($data, 0, 4)),
+                bin2hex(substr($data, 4, 2)),
+                bin2hex(substr($data, 6, 2)),
+                bin2hex(substr($data, 8, 2)),
+                bin2hex(substr($data, 10, 6))
+            );
+        }
+
         $data = random_bytes(16);
 
         $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
@@ -2935,11 +3047,11 @@ class Strings extends StaticClass
 
         return sprintf(
             '%s-%s-%s-%s-%s',
-            bin2hex(mb_substr($data, 0, 4, '8bit')),
-            bin2hex(mb_substr($data, 4, 2, '8bit')),
-            bin2hex(mb_substr($data, 6, 2, '8bit')),
-            bin2hex(mb_substr($data, 8, 2, '8bit')),
-            bin2hex(mb_substr($data, 10, 6, '8bit'))
+            bin2hex(substr($data, 0, 4)),
+            bin2hex(substr($data, 4, 2)),
+            bin2hex(substr($data, 6, 2)),
+            bin2hex(substr($data, 8, 2)),
+            bin2hex(substr($data, 10, 6))
         );
     }
 
@@ -3031,8 +3143,8 @@ class Strings extends StaticClass
      * @param bool $cutLongWords Whether to cut words longer than `$width` (default: false)
      * @return string The word-wrapped string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$width` is less than or equal to zero
-     * @see \Phuture\Coherence\Strings::truncate()
      * @see \Phuture\Coherence\Strings::limit()
+     * @see \Phuture\Coherence\Strings::limitWords()
      */
     public static function wordWrap(
         string $string,
@@ -3054,7 +3166,7 @@ class Strings extends StaticClass
         $currentLine = '';
         $currentLength = 0;
 
-        foreach (explode(' ', $string) as $word) {
+        foreach (preg_split('/\s+/u', $string, -1, PREG_SPLIT_NO_EMPTY) as $word) {
             $wordLength = mb_strlen($word, 'UTF-8');
 
             if ($cutLongWords && $wordLength > $width) {
