@@ -3034,11 +3034,11 @@ class Strings extends StaticClass
 
             return sprintf(
                 '%s-%s-%s-%s-%s',
-                bin2hex(substr($data, 0, 4)),
-                bin2hex(substr($data, 4, 2)),
-                bin2hex(substr($data, 6, 2)),
-                bin2hex(substr($data, 8, 2)),
-                bin2hex(substr($data, 10, 6))
+                bin2hex(mb_substr($data, 0, 4, '8bit')),
+                bin2hex(mb_substr($data, 4, 2, '8bit')),
+                bin2hex(mb_substr($data, 6, 2, '8bit')),
+                bin2hex(mb_substr($data, 8, 2, '8bit')),
+                bin2hex(mb_substr($data, 10, 6, '8bit'))
             );
         }
 
@@ -3049,11 +3049,11 @@ class Strings extends StaticClass
 
         return sprintf(
             '%s-%s-%s-%s-%s',
-            bin2hex(substr($data, 0, 4)),
-            bin2hex(substr($data, 4, 2)),
-            bin2hex(substr($data, 6, 2)),
-            bin2hex(substr($data, 8, 2)),
-            bin2hex(substr($data, 10, 6))
+            bin2hex(mb_substr($data, 0, 4, '8bit')),
+            bin2hex(mb_substr($data, 4, 2, '8bit')),
+            bin2hex(mb_substr($data, 6, 2, '8bit')),
+            bin2hex(mb_substr($data, 8, 2, '8bit')),
+            bin2hex(mb_substr($data, 10, 6, '8bit'))
         );
     }
 
