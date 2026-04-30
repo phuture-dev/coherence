@@ -4272,7 +4272,9 @@ class Arrays extends StaticClass
      *
      * It supports various data types to arrays using smart conversion rules.
      * It handles objects with toArray() or toJson() methods, JsonSerializable objects,
-     * existing arrays, scalar values, and JSON strings.
+     * existing arrays, scalar values, and JSON strings. User-defined classes that are
+     * not anonymous are serialized using DeepClone, which preserves private and protected
+     * properties, nested objects, and object references.
      *
      * Example:
      * ```php
@@ -4399,6 +4401,11 @@ class Arrays extends StaticClass
      * into stdClass objects. List arrays (indexed arrays without string keys) are preserved
      * as arrays and not converted to objects. This is the opposite of the normalize() method,
      * which converts objects to arrays.
+     *
+     * When the given array contains DeepClone serialization data (as produced by toArray()
+     * for user-defined classes), this method will rebuild the original object with all its
+     * private and protected properties, nested objects, and references intact. If the array
+     * is not valid DeepClone data, it falls back to converting the array to a stdClass object.
      *
      * This is useful when you need to work with object notation for accessing
      * nested data structures, especially when dealing with JSON data or configuration
