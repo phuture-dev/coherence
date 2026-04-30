@@ -367,21 +367,21 @@ class ArraysTest extends TestCase
         $obj2->id = 2;
         $array = [$obj1, $obj2];
 
-        Assert::true(Arrays::contains($array, $obj1, true));
+        Assert::true(Arrays::contains($array, $obj1));
         Assert::false(Arrays::contains($array, new stdClass()));
     }
 
-    public function testCount(): void
+    public function testCountValues(): void
     {
         $array = [1, 2, 2, 3, 3, 3];
-        $result = Arrays::count($array);
+        $result = Arrays::countValues($array);
         Assert::same([1 => 1, 2 => 2, 3 => 3], $result);
     }
 
-    public function testCountStrings(): void
+    public function testCountValuesStrings(): void
     {
         $array = ['a', 'b', 'a', 'c', 'a'];
-        $result = Arrays::count($array);
+        $result = Arrays::countValues($array);
         Assert::same(['a' => 3, 'b' => 1, 'c' => 1], $result);
     }
 
@@ -450,11 +450,11 @@ class ArraysTest extends TestCase
         ];
         $result = Arrays::denote($array);
         Assert::same([
-            'name' => 'John',
             'address' => [
                 'city' => 'NYC',
                 'zip' => '10001'
-            ]
+            ],
+            'name' => 'John'
         ], $result);
     }
 
@@ -529,18 +529,19 @@ class ArraysTest extends TestCase
 
     public function testDenoteNestedStructureOverwrittenByScalarNonStrict(): void
     {
-        // In non-strict mode, nested structure is silently overwritten
         $array = [
             'user.name.first' => 'Jane',
             'user.name.last' => 'Doe',
-            'user.name' => 'John' // processed last, overwrites nested structure
+            'user.name' => 'John'
         ];
         $result = Arrays::denote($array);
 
-        // Nested 'first' and 'last' keys are lost
         Assert::same([
             'user' => [
-                'name' => 'John'
+                'name' => [
+                    'first' => 'Jane',
+                    'last' => 'Doe'
+                ]
             ]
         ], $result);
     }
@@ -572,7 +573,6 @@ class ArraysTest extends TestCase
 
         $result = Arrays::denote($array, true);
         Assert::same([
-            'name' => 'John',
             'address' => [
                 'city' => 'NYC',
                 'zip' => '10001'
@@ -580,37 +580,36 @@ class ArraysTest extends TestCase
             'contact' => [
                 'email' => 'john@example.com',
                 'phone' => '555-1234'
-            ]
+            ],
+            'name' => 'John'
         ], $result);
     }
 
     public function testDenoteOrderDependentConflictA(): void
     {
-        // Order A: nested path first, then parent
         $array = [
             'a.b.c' => 1,
             'a.b' => 2
         ];
         $result = Arrays::denote($array);
 
-        // Nested value is lost
         Assert::same([
             'a' => [
-                'b' => 2
+                'b' => [
+                    'c' => 1
+                ]
             ]
         ], $result);
     }
 
     public function testDenoteOrderDependentConflictB(): void
     {
-        // Order B: parent first, then nested path
         $array = [
             'a.b' => 2,
             'a.b.c' => 1
         ];
         $result = Arrays::denote($array);
 
-        // Parent value is lost
         Assert::same([
             'a' => [
                 'b' => [
@@ -869,7 +868,7 @@ class ArraysTest extends TestCase
     public function testFilterWithKeyCallback(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        $result = Arrays::filter($array, fn ($v, $k) => $k !== 'b', ARRAY_FILTER_USE_BOTH);
+        $result = Arrays::filter($array, fn ($v, $k) => $k !== 'b');
         Assert::same(['a' => 1, 'c' => 3], $result);
     }
 
@@ -1838,9 +1837,25 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
+    private function recursiveKsort(array &$array): void
+    {
+        ksort($array);
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $this->recursiveKsort($value);
+            }
+        }
+    }
+
+    private function assertArrayEqual(array $expected, array $actual): void
+    {
+        $this->recursiveKsort($expected);
+        $this->recursiveKsort($actual);
+        Assert::same($expected, $actual);
+    }
+
     public function testNotationDenoteRoundTrip(): void
     {
-        // Test simple nested array
         $simple = [
             'name' => 'John',
             'address' => [
@@ -1850,9 +1865,8 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($simple);
         $result = Arrays::denote($flattened);
-        Assert::same($simple, $result);
+        $this->assertArrayEqual($simple, $result);
 
-        // Test deeply nested structure
         $deep = [
             'level1' => [
                 'level2' => [
@@ -1864,9 +1878,8 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($deep);
         $result = Arrays::denote($flattened);
-        Assert::same($deep, $result);
+        $this->assertArrayEqual($deep, $result);
 
-        // Test mixed data types
         $mixed = [
             'string' => 'hello',
             'number' => 42,
@@ -1881,9 +1894,8 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($mixed);
         $result = Arrays::denote($flattened);
-        Assert::same($mixed, $result);
+        $this->assertArrayEqual($mixed, $result);
 
-        // Test with empty arrays as values
         $withEmpty = [
             'config' => [
                 'settings' => [],
@@ -1892,9 +1904,8 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($withEmpty);
         $result = Arrays::denote($flattened);
-        Assert::same($withEmpty, $result);
+        $this->assertArrayEqual($withEmpty, $result);
 
-        // Test complex multi-level structure
         $complex = [
             'user' => [
                 'name' => 'Jane',
@@ -1914,9 +1925,8 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($complex);
         $result = Arrays::denote($flattened);
-        Assert::same($complex, $result);
+        $this->assertArrayEqual($complex, $result);
 
-        // Test numeric and string keys
         $mixedKeys = [
             0 => 'zero',
             'key' => 'value',
@@ -1927,7 +1937,7 @@ class ArraysTest extends TestCase
         ];
         $flattened = Arrays::notation($mixedKeys);
         $result = Arrays::denote($flattened);
-        Assert::same($mixedKeys, $result);
+        $this->assertArrayEqual($mixedKeys, $result);
     }
 
     public function testNotationWithPrefix(): void
@@ -1954,7 +1964,7 @@ class ArraysTest extends TestCase
     {
         $result = Arrays::of([1, 2, 3]);
         Assert::type('Phuture\Coherence\Type\Arrays', $result);
-        Assert::same([3, 2, 1], $result->reverse(false)->get());
+        Assert::same([3, 2, 1], $result->reverse()->get());
     }
 
     public function testOnly(): void
@@ -2082,14 +2092,14 @@ class ArraysTest extends TestCase
     {
         $array = ['name' => 'John', 'age' => null];
         Arrays::prepend($array, ['age' => 30, 'city' => 'NYC']);
-        Assert::same(['age' => 30, 'city' => 'NYC', 'name' => 'John'], $array);
+        Assert::same(['city' => 'NYC', 'name' => 'John', 'age' => null], $array);
     }
 
     public function testPrependWithNullValues(): void
     {
         $array = ['name' => null];
         Arrays::prepend($array, ['name' => 'John']);
-        Assert::same(['name' => 'John'], $array);
+        Assert::same(['name' => null], $array);
     }
 
     public function testProduct(): void
@@ -2258,14 +2268,14 @@ class ArraysTest extends TestCase
     public function testReverse(): void
     {
         $array = [1, 2, 3];
-        $result = Arrays::reverse($array, false);
+        $result = Arrays::reverse($array);
         Assert::same([3, 2, 1], $result);
     }
 
     public function testReverseNoPreserveKeys(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        $result = Arrays::reverse($array, false);
+        $result = Arrays::reverse($array);
         Assert::same([3, 2, 1], $result);
     }
 

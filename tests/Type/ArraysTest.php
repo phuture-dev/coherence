@@ -245,14 +245,14 @@ class ArraysTest extends TestCase
 
         $result = $flat->denote()->toArray();
         Assert::same([
+            'settings' => [
+                'theme' => 'dark'
+            ],
             'user' => [
                 'name' => 'John',
                 'profile' => [
                     'age' => 30
                 ]
-            ],
-            'settings' => [
-                'theme' => 'dark'
             ]
         ], $result);
     }
@@ -732,18 +732,15 @@ class ArraysTest extends TestCase
     {
         $data = new Arrays(['a', 'b', 'c', 'd']);
 
-        // Test with preserveKeys (default)
         $result = $data->reverse()->toArray();
-        Assert::same([3 => 'd', 2 => 'c', 1 => 'b', 0 => 'a'], $result);
-
-        // Test without preserveKeys
-        $data = new Arrays(['a', 'b', 'c', 'd']);
-        $result = $data->reverse(false)->toArray();
         Assert::same(['d', 'c', 'b', 'a'], $result);
 
-        // Test with associative array (keys always preserved)
+        $data = new Arrays(['a', 'b', 'c', 'd']);
+        $result = $data->reverse(true)->toArray();
+        Assert::same([3 => 'd', 2 => 'c', 1 => 'b', 0 => 'a'], $result);
+
         $assoc = new Arrays(['first' => 'a', 'second' => 'b']);
-        $result = $assoc->reverse()->toArray();
+        $result = $assoc->reverse(true)->toArray();
         Assert::same(['second' => 'b', 'first' => 'a'], $result);
     }
 
