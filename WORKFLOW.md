@@ -4,15 +4,42 @@ This document establishes the workflow, coding standards, and architectural patt
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Argument Ordering Pattern](#argument-ordering-pattern)
-3. [Method Naming Conventions](#method-naming-conventions)
-4. [Pass-by-Reference Methods](#pass-by-reference-methods)
-5. [Documentation Standards](#documentation-standards)
-6. [Testing Requirements](#testing-requirements)
-7. [Code Quality Standards](#code-quality-standards)
-8. [Adding New Methods](#adding-new-methods)
-9. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+1. [Philosophy](#philosophy)
+2. [Project Overview](#project-overview)
+3. [Argument Ordering Pattern](#argument-ordering-pattern)
+4. [Method Naming Conventions](#method-naming-conventions)
+5. [Pass-by-Reference Methods](#pass-by-reference-methods)
+6. [Documentation Standards](#documentation-standards)
+7. [Testing Requirements](#testing-requirements)
+8. [Code Quality Standards](#code-quality-standards)
+9. [Adding New Methods](#adding-new-methods)
+10. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+
+---
+
+## Philosophy
+
+The architectural foundation of Phuture rests on a single conviction: **every line of code must be explicit, deterministic, and fully traceable in its behavior.** There is no place for magic, implicit conventions, or hidden functionality that the developer did not expressly define.
+
+### Explicitness Over Convention
+
+Code must declare its intent unambiguously. Behavior that relies on undocumented assumptions, implicit type coercion, global state mutation, or framework-managed lifecycle hooks is categorically rejected. A method must do exactly what its signature and documentation describe — nothing more, nothing less. Side effects must be documented; implicit side effects are defects.
+
+### Determinism as a Requirement
+
+Deterministic execution is non-negotiable. Given identical inputs, a method must produce identical outputs across every invocation, runtime environment, and execution context. Reliance on mutable global state, non-seeded randomness in business logic, or undefined ordering in data structures is prohibited unless the method's contract explicitly guarantees otherwise.
+
+### No Magic
+
+Magic — defined as any behavior that a developer cannot trace by reading the source code linearly — is an anti-pattern. This includes, but is not limited to: method missing interception, implicit method injection, automatic dependency resolution through naming conventions, runtime code generation that alters program behavior, and configuration-driven behavioral changes that are not statically analyzable. The execution path from invocation to resolution must be traceable through explicit, statically typed code.
+
+### Traceability
+
+Every operation must be traceable to its definition. When a developer encounters a method call, they must be able to navigate directly to its implementation without relying on IDE inference over dynamic dispatch, runtime proxies, or convention-based resolution. This principle extends to data flow: the origin and transformation of every value must be discernible through static analysis of the codebase.
+
+### Why This Matters
+
+You deserve to know precisely what every line of your code does. This is not merely a matter of readability — it is a prerequisite for true scalability. Systems that rely on implicit behavior accumulate hidden contracts that resist modification, impede onboarding, and produce defects that manifest only under specific conditions. By enforcing explicitness and determinism at every layer, Phuture ensures that growth in codebase size does not correspond to growth in uncertainty. There must be no surprises in the future.
 
 ---
 
@@ -581,5 +608,5 @@ When in doubt, refer to existing classes as examples of proper implementation.
 
 ---
 
-**Last Updated**: 2026-04-07
-**Version**: 1.1
+**Last Updated**: 2026-04-30
+**Version**: 1.2
