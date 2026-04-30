@@ -48,7 +48,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function abbreviate(int $precision = 1): string
     {
-        return Transformer::abbreviate($this->numericValue(), $precision);
+        return Transformer::abbreviate($this->toString(), $precision);
     }
     /**
      * Returns the absolute (non-negative) value of the wrapped number.
@@ -58,7 +58,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function absolute(): self
     {
-        $this->data = Transformer::absolute($this->numericValue());
+        $this->data = Transformer::absolute($this->toString());
 
         return $this;
     }
@@ -72,7 +72,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function add(int|float $b): self
     {
-        $this->data = Transformer::add($this->numericValue(), $b);
+        $this->data = Transformer::add($this->toString(), $b);
 
         return $this;
     }
@@ -85,7 +85,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function ceil(): self
     {
-        $this->data = Transformer::ceil($this->numericValue());
+        $this->data = Transformer::ceil($this->toString());
 
         return $this;
     }
@@ -100,7 +100,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function clamp(int|float $min, int|float $max): self
     {
-        $this->data = Transformer::clamp($this->numericValue(), $min, $max);
+        $this->data = Transformer::clamp($this->toString(), $min, $max);
 
         return $this;
     }
@@ -114,7 +114,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function compare(int|float $b): int
     {
-        return Transformer::compare($this->numericValue(), $b);
+        return Transformer::compare($this->toString(), $b);
     }
 
     /**
@@ -126,7 +126,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function divide(int|float $b): self
     {
-        $this->data = Transformer::divide($this->numericValue(), $b);
+        $this->data = Transformer::divide($this->toString(), $b);
 
         return $this;
     }
@@ -141,7 +141,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function fileSize(int $precision = 0, int $base = 1024): string
     {
-        return Transformer::fileSize($this->numericValue(), $precision, $base);
+        return Transformer::fileSize($this->toString(), $precision, $base);
     }
 
     /**
@@ -152,7 +152,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function floor(): self
     {
-        $this->data = Transformer::floor($this->numericValue());
+        $this->data = Transformer::floor($this->toString());
 
         return $this;
     }
@@ -166,7 +166,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function forHumans(int $precision = 1): string
     {
-        return Transformer::forHumans($this->numericValue(), $precision);
+        return Transformer::forHumans($this->toString(), $precision);
     }
 
     /**
@@ -178,7 +178,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function format(?int $precision = null): string
     {
-        return Transformer::format($this->numericValue(), $precision);
+        return Transformer::format($this->toString(), $precision);
     }
 
     /**
@@ -190,7 +190,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function max(int|float $b): self
     {
-        $this->data = Transformer::max($this->numericValue(), $b);
+        $this->data = Transformer::max($this->toString(), $b);
 
         return $this;
     }
@@ -204,7 +204,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function min(int|float $b): self
     {
-        $this->data = Transformer::min($this->numericValue(), $b);
+        $this->data = Transformer::min($this->toString(), $b);
 
         return $this;
     }
@@ -218,7 +218,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function modulus(int|float $b): self
     {
-        $this->data = Transformer::modulus($this->numericValue(), $b);
+        $this->data = Transformer::modulus($this->toString(), $b);
 
         return $this;
     }
@@ -232,7 +232,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function multiply(int|float $b): self
     {
-        $this->data = Transformer::multiply($this->numericValue(), $b);
+        $this->data = Transformer::multiply($this->toString(), $b);
 
         return $this;
     }
@@ -245,7 +245,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function opposite(): self
     {
-        $this->data = Transformer::opposite($this->numericValue());
+        $this->data = Transformer::opposite($this->toString());
 
         return $this;
     }
@@ -258,7 +258,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function ordinal(): string
     {
-        return Transformer::ordinal((int) $this->numericValue());
+        return Transformer::ordinal((int) $this->toString());
     }
 
     /**
@@ -271,7 +271,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function percentage(int $precision = 1, int $multiplicand = 100): string
     {
-        return Transformer::percentage($this->numericValue(), $precision, $multiplicand);
+        return Transformer::percentage($this->toString(), $precision, $multiplicand);
     }
 
     /**
@@ -284,20 +284,9 @@ class Numbers extends FluentClass implements Numberable
      */
     public function round(int $precision = 0, RoundingMode $mode = RoundingMode::HalfUp): self
     {
-        $this->data = Transformer::round($this->numericValue(), $precision, $mode);
+        $this->data = Transformer::round($this->toString(), $precision, $mode);
 
         return $this;
-    }
-
-    /**
-     * Spells out the wrapped number in English words.
-     *
-     * @return string The English word representation of the wrapped number
-     * @see Transformer::spell()
-     */
-    public function spell(): string
-    {
-        return Transformer::spell($this->numericValue());
     }
 
     /**
@@ -309,7 +298,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function squareRoot(int $scale = 10): self
     {
-        $this->data = Transformer::squareRoot($this->numericValue(), $scale);
+        $this->data = Transformer::squareRoot($this->toString(), $scale);
 
         return $this;
     }
@@ -323,7 +312,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function subtract(int|float $b): self
     {
-        $this->data = Transformer::subtract($this->numericValue(), $b);
+        $this->data = Transformer::subtract($this->toString(), $b);
 
         return $this;
     }
@@ -335,6 +324,10 @@ class Numbers extends FluentClass implements Numberable
      */
     public function toFloat(): float
     {
+        if (is_float($this->data)) {
+            return $this->data;
+        }
+
         return (float) $this->data;
     }
 
@@ -345,24 +338,38 @@ class Numbers extends FluentClass implements Numberable
      */
     public function toInt(): int
     {
+        if (is_integer($this->data)) {
+            return $this->data;
+        }
+
         return (int) $this->data;
     }
 
     /**
-     * Converts the wrapped value to either an integer or float.
+     * Normalizes the wrapped value to its most appropriate numeric type.
      *
-     * Returns the most appropriate numeric representation: if the stored data
-     * is a BCMath string, it is cast to float; otherwise the native type is returned.
-     *
-     * @return int|float The numeric representation of the wrapped value
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::toNumber()
      */
-    public function toNumber(): int|float
+    public function toNumber(): self
+    {
+        $this->data = Transformer::toNumber($this->toString());
+
+        return $this;
+    }
+
+    /**
+     * Converts the wrapped value to a string.
+     *
+     * @return string The string representation of the wrapped value
+     */
+    public function toString(): string
     {
         if (is_string($this->data)) {
-            return (float) $this->data;
+            return $this->data;
         }
 
-        return $this->data;
+        return (string) $this->data;
     }
 
     /**
@@ -374,22 +381,5 @@ class Numbers extends FluentClass implements Numberable
     public function trimTrailingZeros(): string
     {
         return Transformer::trimTrailingZeros($this->data);
-    }
-
-    /**
-     * Returns the stored value as an int|float for use with Transformer methods.
-     *
-     * When the stored data is a BCMath result string, it is cast to float.
-     * Otherwise the original int or float is preserved.
-     *
-     * @return int|float The numeric value of the stored data
-     */
-    private function numericValue(): int|float
-    {
-        if (is_string($this->data)) {
-            return (float) $this->data;
-        }
-
-        return $this->data;
     }
 }

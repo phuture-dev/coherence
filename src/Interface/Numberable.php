@@ -51,4 +51,21 @@ interface Numberable
      * @return int The integer representation of the object
      */
     public function toInt(): int;
+
+    /**
+     * Converts the object to a string.
+     *
+     * This method should convert the object to its string representation.
+     * Use this method when you need to display the number as text or
+     * concatenate it with other strings.
+     *
+     * Example:
+     * ```php
+     * $number = new SomeNumberableObject();
+     * $value = $number->toString(); // Returns: "42" or "42.5"
+     * ```
+     *
+     * @return string The string representation of the object
+     */
+    public function toString(): string;
 }

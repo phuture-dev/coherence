@@ -348,8 +348,8 @@ class NumbersTest extends TestCase
 
     public function testModulus(): void
     {
-        Assert::same('1', Numbers::modulus(10, 3));
-        Assert::same('0', Numbers::modulus(10, 2));
+        Assert::same('1.0000000000', Numbers::modulus(10, 3));
+        Assert::same('0.0000000000', Numbers::modulus(10, 2));
     }
 
     public function testModulusByZero(): void
@@ -372,9 +372,10 @@ class NumbersTest extends TestCase
         $result = Numbers::of(10)
             ->add(5)
             ->multiply(2)
-            ->toNumber();
+            ->toNumber()
+            ->get();
 
-        Assert::same(30.0, $result);
+        Assert::same('30.0000000000', $result);
     }
 
     public function testOfReturnsFluentNumbers(): void
@@ -388,9 +389,10 @@ class NumbersTest extends TestCase
     {
         $result = Numbers::of(3.14)
             ->floor()
-            ->toNumber();
+            ->toNumber()
+            ->get();
 
-        Assert::same(3.0, $result);
+        Assert::same('3.0000000000', $result);
     }
 
     public function testOpposite(): void
@@ -549,32 +551,31 @@ class NumbersTest extends TestCase
 
     public function testToNumber(): void
     {
-        // int and float pass through unchanged
-        Assert::same(42, Numbers::toNumber(42));
-        Assert::same(3.14, Numbers::toNumber(3.14));
-        Assert::same(0, Numbers::toNumber(0));
-        Assert::same(0.0, Numbers::toNumber(0.0));
+        Assert::same('42.0000000000', Numbers::toNumber(42));
+        Assert::same('3.1400000000', Numbers::toNumber(3.14));
+        Assert::same('0.0000000000', Numbers::toNumber(0));
+        Assert::same('0.0000000000', Numbers::toNumber(0.0));
     }
 
     public function testToNumberFromArray(): void
     {
-        Assert::same(3, Numbers::toNumber([1, 2, 3]));
-        Assert::same(0, Numbers::toNumber([]));
-        Assert::same(1, Numbers::toNumber(['only']));
+        Assert::same('3.0000000000', Numbers::toNumber([1, 2, 3]));
+        Assert::same('0.0000000000', Numbers::toNumber([]));
+        Assert::same('1.0000000000', Numbers::toNumber(['only']));
     }
 
     public function testToNumberFromBool(): void
     {
-        Assert::same(1, Numbers::toNumber(true));
-        Assert::same(0, Numbers::toNumber(false));
+        Assert::same('1.0000000000', Numbers::toNumber(true));
+        Assert::same('0.0000000000', Numbers::toNumber(false));
     }
 
     public function testToNumberFromString(): void
     {
-        Assert::same(3.14, Numbers::toNumber('3.14'));
-        Assert::same(0.0, Numbers::toNumber('0'));
-        Assert::same(42.0, Numbers::toNumber('42'));
-        Assert::same(-7.5, Numbers::toNumber('-7.5'));
+        Assert::same('3.1400000000', Numbers::toNumber('3.14'));
+        Assert::same('0.0000000000', Numbers::toNumber('0'));
+        Assert::same('42.0000000000', Numbers::toNumber('42'));
+        Assert::same('-7.5000000000', Numbers::toNumber('-7.5'));
     }
 
     public function testTrimTrailingZeros(): void

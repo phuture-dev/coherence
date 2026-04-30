@@ -17,7 +17,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
  *
  * Key features:
  *
- * - **Float Comparison**: Compare floats with epsilon tolerance to avoid precision errors
+ * - **BCMath Comparison**: Compare numbers with BCMath precision to avoid floating-point errors
  * - **Precise Arithmetic**: Add, subtract, multiply, divide, and compute modulus using BCMath strings
  * - **State & Validation**: Check if a number is zero, positive, negative, or an integer
  * - **Clamping & Limits**: Constrain numbers to a minimum, maximum, or both
@@ -34,14 +34,6 @@ class Numbers extends StaticClass
      * Number of decimal places used by default in BCMath arithmetic operations.
      */
     private const DEFAULT_SCALE = 10;
-    /**
-     * Epsilon used for float comparison to tolerate small precision errors.
-     *
-     * Mathematical operations with floating-point numbers can produce results
-     * that differ slightly from their expected mathematical value. This constant
-     * defines the tolerance threshold used by all comparison methods.
-     */
-    private const EPSILON = 1e-10;
 
     /**
      * Abbreviates a number using suffix letters (K, M, B, T).
@@ -59,14 +51,15 @@ class Numbers extends StaticClass
      * Numbers::abbreviate(1500, 2); // '1.50K'
      * ```
      *
-     * @param int|float $number The number to abbreviate
+     * @param int|float|string $number The number to abbreviate
      * @param int $precision The number of decimal places to keep (default: 1)
      * @return string The abbreviated number string
      * @see \Phuture\Coherence\Numbers::forHumans()
      */
-    public static function abbreviate(int|float $number, int $precision = 1): string
+    public static function abbreviate(int|float|string $number, int $precision = 1): string
     {
         $suffixes = ['', 'K', 'M', 'B', 'T'];
+        $number = (float) $number;
         $absolute = abs($number);
         $sign = $number < 0 ? '-' : '';
 
@@ -97,12 +90,18 @@ class Numbers extends StaticClass
      * Numbers::absolute(0); // 0
      * ```
      *
-     * @param int|float $number The number to convert
-     * @return int|float The non-negative value of the number
+     * @param int|float|string $number The number to convert
+     * @return int|float|string The non-negative value of the number
      * @see \Phuture\Coherence\Numbers::opposite()
      */
-    public static function absolute(int|float $number): int|float
+    public static function absolute(int|float|string $number): int|float|string
     {
+        if (is_string($number)) {
+            $result = abs((float) $number);
+
+            return floor($result) === $result ? (int) $result : $result;
+        }
+
         return abs($number);
     }
 
@@ -110,7 +109,7 @@ class Numbers extends StaticClass
      * Adds two numbers using BCMath for precision and returns the result as a string.
      *
      * Both values are converted to strings and added using BCMath to avoid
-     * floating-point precision loss. The result preserves up to 10 decimal places.
+     * floating-point precision loss.
      *
      * Example:
      * ```php
@@ -121,25 +120,20 @@ class Numbers extends StaticClass
      * Numbers::add(1.5, 2.5); // '4.0000000000'
      * ```
      *
-     * @param int|float $a The first addend
-     * @param int|float $b The second addend
-     * @return string The sum as a string with up to 10 decimal places
+     * @param int|float|string $a The first addend
+     * @param int|float|string $b The second addend
+     * @return string The sum as a string
      * @see \Phuture\Coherence\Numbers::subtract()
      */
-    public static function add(int|float $a, int|float $b): string
+    public static function add(int|float|string $a, int|float|string $b): string
     {
         return bcadd((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
-     * Determines whether two numbers are equal within epsilon tolerance.
+     * Determines whether two numbers are equal at BCMath precision.
      *
-     * Compares two numbers while accounting for small precision errors that are
-     * inherent in floating-point arithmetic. For example, `0.1 + 0.2` and `0.3`
-     * are considered equal even though they differ by a tiny amount.
-     *
-     * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`,
-     * because `NAN` is not comparable to any value (including itself).
+     * Compares two numbers using BCMath at the default scale.
      *
      * Example:
      * ```php
@@ -150,19 +144,19 @@ class Numbers extends StaticClass
      * Numbers::areEqual(1.0, 2.0); // false
      * ```
      *
-     * @param int|float $a The first value to compare
-     * @param int|float $b The second value to compare
-     * @return bool True when both values are equal within epsilon tolerance
+     * @param int|float|string $a The first value to compare
+     * @param int|float|string $b The second value to compare
+     * @return bool True when both values are equal at BCMath precision
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::compare()
      * @see \Phuture\Coherence\Numbers::isZero()
      */
-    public static function areEqual(int|float $a, int|float $b): bool
+    public static function areEqual(int|float|string $a, int|float|string $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
 
-        return abs($a - $b) < self::EPSILON;
+        return bccomp((string) $a, (string) $b, self::DEFAULT_SCALE) === 0;
     }
 
     /**
@@ -180,12 +174,12 @@ class Numbers extends StaticClass
      * Numbers::ceil(5.0); // 5.0
      * ```
      *
-     * @param int|float $number The number to round up
+     * @param int|float|string $number The number to round up
      * @return float The smallest integer greater than or equal to the number
      * @see \Phuture\Coherence\Numbers::floor()
      * @see \Phuture\Coherence\Numbers::round()
      */
-    public static function ceil(int|float $number): float
+    public static function ceil(int|float|string $number): float
     {
         return (float) ceil((float) $number);
     }
@@ -205,33 +199,41 @@ class Numbers extends StaticClass
      * Numbers::clamp(150, 0, 100); // 100
      * ```
      *
-     * @param int|float $number The number to restrict
-     * @param int|float $min The lower bound
-     * @param int|float $max The upper bound
-     * @return int|float The clamped value
+     * @param int|float|string $number The number to restrict
+     * @param int|float|string $min The lower bound
+     * @param int|float|string $max The upper bound
+     * @return int|float|string The clamped value
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When min is greater than max
      * @see \Phuture\Coherence\Numbers::max()
      * @see \Phuture\Coherence\Numbers::min()
      */
-    public static function clamp(int|float $number, int|float $min, int|float $max): int|float
-    {
-        if ($min > $max) {
+    public static function clamp(
+        int|float|string $number,
+        int|float|string $min,
+        int|float|string $max
+    ): int|float|string {
+        if (bccomp((string) $min, (string) $max, self::DEFAULT_SCALE) > 0) {
             throw new InvalidArgumentException(
                 'Invalid Argument: The minimum value cannot be greater than the maximum value'
             );
         }
 
-        return max($min, min($max, $number));
+        if (bccomp((string) $number, (string) $min, self::DEFAULT_SCALE) < 0) {
+            return $min;
+        }
+
+        if (bccomp((string) $number, (string) $max, self::DEFAULT_SCALE) > 0) {
+            return $max;
+        }
+
+        return $number;
     }
 
     /**
      * Compares two numbers and returns their relative order.
      *
-     * Returns -1 when `$a` is less than `$b`, 0 when they are equal within
-     * epsilon tolerance, and 1 when `$a` is greater than `$b`. Suitable for
-     * use with sorting functions like `usort()`.
-     *
-     * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`.
+     * Returns -1 when `$a` is less than `$b`, 0 when they are equal at BCMath precision, and 1
+     * when `$a` is greater than `$b`. Suitable for use with sorting functions like `usort()`.
      *
      * Example:
      * ```php
@@ -245,30 +247,25 @@ class Numbers extends StaticClass
      * usort($arr, [Numbers::class, 'compare']); // [1, 2, 3]
      * ```
      *
-     * @param int|float $a The first value to compare
-     * @param int|float $b The second value to compare
+     * @param int|float|string $a The first value to compare
+     * @param int|float|string $b The second value to compare
      * @return int -1 when $a < $b, 0 when equal, 1 when $a > $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::areEqual()
      */
-    public static function compare(int|float $a, int|float $b): int
+    public static function compare(int|float|string $a, int|float|string $b): int
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
 
-        if (self::areEqual($a, $b)) {
-            return 0;
-        }
-
-        return $a < $b ? -1 : 1;
+        return bccomp((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
      * Divides the first number by the second using BCMath for precision.
      *
      * Both values are converted to strings and divided using BCMath to avoid
-     * floating-point precision loss. Throws when dividing by zero. The result
-     * preserves up to 10 decimal places.
+     * floating-point precision loss. Throws when dividing by zero.
      *
      * Example:
      * ```php
@@ -279,13 +276,13 @@ class Numbers extends StaticClass
      * Numbers::divide(1, 3); // '0.3333333333'
      * ```
      *
-     * @param int|float $a The dividend
-     * @param int|float $b The divisor (must not be zero)
-     * @return string The quotient as a string with up to 10 decimal places
+     * @param int|float|string $a The dividend
+     * @param int|float|string $b The divisor (must not be zero)
+     * @return string The quotient as a string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the divisor is zero
      * @see \Phuture\Coherence\Numbers::multiply()
      */
-    public static function divide(int|float $a, int|float $b): string
+    public static function divide(int|float|string $a, int|float|string $b): string
     {
         if ((float) $b === 0.0) {
             throw new InvalidArgumentException(
@@ -313,13 +310,13 @@ class Numbers extends StaticClass
      * Numbers::fileSize(1500, 2); // '1.46 KB'
      * ```
      *
-     * @param int|float $bytes The file size in bytes
+     * @param int|float|string $bytes The file size in bytes
      * @param int $precision The number of decimal places to show (default: 0)
      * @param int $base The base for unit conversion: 1024 or 1000 (default: 1024)
      * @return string The human-readable file size string
      * @see \Phuture\Coherence\Numbers::forHumans()
      */
-    public static function fileSize(int|float $bytes, int $precision = 0, int $base = 1024): string
+    public static function fileSize(int|float|string $bytes, int $precision = 0, int $base = 1024): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
         $bytes = (float) $bytes;
@@ -351,12 +348,12 @@ class Numbers extends StaticClass
      * Numbers::floor(5.0); // 5.0
      * ```
      *
-     * @param int|float $number The number to round down
+     * @param int|float|string $number The number to round down
      * @return float The largest integer less than or equal to the number
      * @see \Phuture\Coherence\Numbers::ceil()
      * @see \Phuture\Coherence\Numbers::round()
      */
-    public static function floor(int|float $number): float
+    public static function floor(int|float|string $number): float
     {
         return (float) floor((float) $number);
     }
@@ -376,14 +373,15 @@ class Numbers extends StaticClass
      * Numbers::forHumans(1234, 2); // '1.23 thousand'
      * ```
      *
-     * @param int|float $number The number to format
+     * @param int|float|string $number The number to format
      * @param int $precision The number of decimal places to keep (default: 1)
      * @return string The human-readable number string
      * @see \Phuture\Coherence\Numbers::abbreviate()
      */
-    public static function forHumans(int|float $number, int $precision = 1): string
+    public static function forHumans(int|float|string $number, int $precision = 1): string
     {
         $units = ['', 'thousand', 'million', 'billion', 'trillion'];
+        $number = (float) $number;
         $absolute = abs($number);
         $sign = $number < 0 ? '-' : '';
 
@@ -415,13 +413,13 @@ class Numbers extends StaticClass
      * Numbers::format(1234.5678, 4); // '1,234.5678'
      * ```
      *
-     * @param int|float $number The number to format
+     * @param int|float|string $number The number to format
      * @param int|null $precision The number of decimal places (default: null — preserve original)
      * @return string The formatted number string
      * @see \Phuture\Coherence\Numbers::percentage()
      * @see \Phuture\Coherence\Numbers::abbreviate()
      */
-    public static function format(int|float $number, ?int $precision = null): string
+    public static function format(int|float|string $number, ?int $precision = null): string
     {
         if ($precision === null) {
             $precision = self::detectPrecision($number);
@@ -448,20 +446,19 @@ class Numbers extends StaticClass
      * Numbers::isFloat(INF); // false
      * ```
      *
-     * @param int|float $value The value to check
+     * @param int|float|string $value The value to check
      * @return bool True when the value is a float with a fractional part
      * @see \Phuture\Coherence\Numbers::isInteger()
      */
-    public static function isFloat(int|float $value): bool
+    public static function isFloat(int|float|string $value): bool
     {
         return is_finite((float) $value) && floor((float) $value) !== (float) $value;
     }
 
     /**
-     * Determines whether a number is greater than another within epsilon tolerance.
+     * Determines whether a number is greater than another at BCMath precision.
      *
-     * Returns true when `$a` is strictly greater than `$b`, accounting for
-     * floating-point precision errors.
+     * Returns true when `$a` is strictly greater than `$b`.
      *
      * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`.
      *
@@ -474,14 +471,14 @@ class Numbers extends StaticClass
      * Numbers::isGreaterThan(10.0, 10.0); // false
      * ```
      *
-     * @param int|float $a The value to test
-     * @param int|float $b The value to compare against
+     * @param int|float|string $a The value to test
+     * @param int|float|string $b The value to compare against
      * @return bool True when $a is strictly greater than $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isGreaterThanOrEqualTo()
      * @see \Phuture\Coherence\Numbers::isLessThan()
      */
-    public static function isGreaterThan(int|float $a, int|float $b): bool
+    public static function isGreaterThan(int|float|string $a, int|float|string $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -490,10 +487,9 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a number is greater than or equal to another.
+     * Determines whether a number is greater than or equal to another at BCMath precision.
      *
-     * Returns true when `$a` is greater than or equal to `$b`, accounting for
-     * floating-point precision errors.
+     * Returns true when `$a` is greater than or equal to `$b`.
      *
      * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`.
      *
@@ -506,14 +502,14 @@ class Numbers extends StaticClass
      * Numbers::isGreaterThanOrEqualTo(5.0, 10.0); // false
      * ```
      *
-     * @param int|float $a The value to test
-     * @param int|float $b The value to compare against
+     * @param int|float|string $a The value to test
+     * @param int|float|string $b The value to compare against
      * @return bool True when $a is greater than or equal to $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isGreaterThan()
      * @see \Phuture\Coherence\Numbers::isLessThanOrEqualTo()
      */
-    public static function isGreaterThanOrEqualTo(int|float $a, int|float $b): bool
+    public static function isGreaterThanOrEqualTo(int|float|string $a, int|float|string $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -538,20 +534,19 @@ class Numbers extends StaticClass
      * Numbers::isInteger(INF); // false
      * ```
      *
-     * @param int|float $value The value to check
+     * @param int|float|string $value The value to check
      * @return bool True when the value has no fractional part
      * @see \Phuture\Coherence\Numbers::isZero()
      */
-    public static function isInteger(int|float $value): bool
+    public static function isInteger(int|float|string $value): bool
     {
         return is_finite((float) $value) && floor((float) $value) === (float) $value;
     }
 
     /**
-     * Determines whether a number is less than another within epsilon tolerance.
+     * Determines whether a number is less than another at BCMath precision.
      *
-     * Returns true when `$a` is strictly less than `$b`, accounting for
-     * floating-point precision errors.
+     * Returns true when `$a` is strictly less than `$b`.
      *
      * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`.
      *
@@ -564,14 +559,14 @@ class Numbers extends StaticClass
      * Numbers::isLessThan(10.0, 10.0); // false
      * ```
      *
-     * @param int|float $a The value to test
-     * @param int|float $b The value to compare against
+     * @param int|float|string $a The value to test
+     * @param int|float|string $b The value to compare against
      * @return bool True when $a is strictly less than $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isLessThanOrEqualTo()
      * @see \Phuture\Coherence\Numbers::isGreaterThan()
      */
-    public static function isLessThan(int|float $a, int|float $b): bool
+    public static function isLessThan(int|float|string $a, int|float|string $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -580,10 +575,9 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Determines whether a number is less than or equal to another.
+     * Determines whether a number is less than or equal to another at BCMath precision.
      *
-     * Returns true when `$a` is less than or equal to `$b`, accounting for
-     * floating-point precision errors.
+     * Returns true when `$a` is less than or equal to `$b`.
      *
      * Throws a `\Phuture\Coherence\Exception\LogicException` when either value is `NAN`.
      *
@@ -596,14 +590,14 @@ class Numbers extends StaticClass
      * Numbers::isLessThanOrEqualTo(15.0, 10.0); // false
      * ```
      *
-     * @param int|float $a The value to test
-     * @param int|float $b The value to compare against
+     * @param int|float|string $a The value to test
+     * @param int|float|string $b The value to compare against
      * @return bool True when $a is less than or equal to $b
      * @throws \Phuture\Coherence\Exception\LogicException When either value is NAN
      * @see \Phuture\Coherence\Numbers::isLessThan()
      * @see \Phuture\Coherence\Numbers::isGreaterThanOrEqualTo()
      */
-    public static function isLessThanOrEqualTo(int|float $a, int|float $b): bool
+    public static function isLessThanOrEqualTo(int|float|string $a, int|float|string $b): bool
     {
         self::assertNotNan($a, 'a');
         self::assertNotNan($b, 'b');
@@ -624,14 +618,14 @@ class Numbers extends StaticClass
      * Numbers::isNegative(3); // false
      * ```
      *
-     * @param int|float $number The number to check
+     * @param int|float|string $number The number to check
      * @return bool True when the number is strictly less than zero
      * @see \Phuture\Coherence\Numbers::isPositive()
      * @see \Phuture\Coherence\Numbers::isZero()
      */
-    public static function isNegative(int|float $number): bool
+    public static function isNegative(int|float|string $number): bool
     {
-        return (float) $number < 0.0;
+        return bccomp((string) $number, '0', self::DEFAULT_SCALE) < 0;
     }
 
     /**
@@ -674,21 +668,21 @@ class Numbers extends StaticClass
      * Numbers::isPositive(-3); // false
      * ```
      *
-     * @param int|float $number The number to check
+     * @param int|float|string $number The number to check
      * @return bool True when the number is strictly greater than zero
      * @see \Phuture\Coherence\Numbers::isNegative()
      * @see \Phuture\Coherence\Numbers::isZero()
      */
-    public static function isPositive(int|float $number): bool
+    public static function isPositive(int|float|string $number): bool
     {
-        return (float) $number > 0.0;
+        return bccomp((string) $number, '0', self::DEFAULT_SCALE) > 0;
     }
 
     /**
-     * Determines whether a number is equal to zero within epsilon tolerance.
+     * Determines whether a number is equal to zero at BCMath precision.
      *
-     * Returns true for integer 0, float 0.0, and any float that is close
-     * enough to zero to be considered equal within the epsilon threshold.
+     * Compares the value against zero using BCMath at the default scale.
+     * Values smaller than the default scale are treated as zero.
      *
      * Example:
      * ```php
@@ -697,17 +691,17 @@ class Numbers extends StaticClass
      * Numbers::isZero(0); // true
      * Numbers::isZero(0.0); // true
      * Numbers::isZero(0.5); // false
-     * Numbers::isZero(-0.0); // true
+     * Numbers::isZero('0.0000000000'); // true
      * ```
      *
-     * @param int|float $number The number to check
-     * @return bool True when the number is zero within epsilon tolerance
+     * @param int|float|string $number The number to check
+     * @return bool True when the number is zero at BCMath precision
      * @see \Phuture\Coherence\Numbers::isPositive()
      * @see \Phuture\Coherence\Numbers::isNegative()
      */
-    public static function isZero(int|float $number): bool
+    public static function isZero(int|float|string $number): bool
     {
-        return abs((float) $number) < self::EPSILON;
+        return bccomp((string) $number, '0', self::DEFAULT_SCALE) === 0;
     }
 
     /**
@@ -724,15 +718,15 @@ class Numbers extends StaticClass
      * Numbers::max(3.14, 2.7); // 3.14
      * ```
      *
-     * @param int|float $a The first number
-     * @param int|float $b The second number
-     * @return int|float The higher of the two numbers
+     * @param int|float|string $a The first number
+     * @param int|float|string $b The second number
+     * @return int|float|string The higher of the two numbers
      * @see \Phuture\Coherence\Numbers::min()
      * @see \Phuture\Coherence\Numbers::clamp()
      */
-    public static function max(int|float $a, int|float $b): int|float
+    public static function max(int|float|string $a, int|float|string $b): int|float|string
     {
-        return max($a, $b);
+        return bccomp((string) $a, (string) $b, self::DEFAULT_SCALE) >= 0 ? $a : $b;
     }
 
     /**
@@ -749,15 +743,15 @@ class Numbers extends StaticClass
      * Numbers::min(3.14, 2.7); // 2.7
      * ```
      *
-     * @param int|float $a The first number
-     * @param int|float $b The second number
-     * @return int|float The lower of the two numbers
+     * @param int|float|string $a The first number
+     * @param int|float|string $b The second number
+     * @return int|float|string The lower of the two numbers
      * @see \Phuture\Coherence\Numbers::max()
      * @see \Phuture\Coherence\Numbers::clamp()
      */
-    public static function min(int|float $a, int|float $b): int|float
+    public static function min(int|float|string $a, int|float|string $b): int|float|string
     {
-        return min($a, $b);
+        return bccomp((string) $a, (string) $b, self::DEFAULT_SCALE) <= 0 ? $a : $b;
     }
 
     /**
@@ -769,18 +763,18 @@ class Numbers extends StaticClass
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::modulus(10, 3); // '1'
-     * Numbers::modulus(10, 2); // '0'
-     * Numbers::modulus(7.5, 2); // '1.5'
+     * Numbers::modulus(10, 3); // '1.0000000000'
+     * Numbers::modulus(10, 2); // '0.0000000000'
+     * Numbers::modulus(7.5, 2); // '1.5000000000'
      * ```
      *
-     * @param int|float $a The dividend
-     * @param int|float $b The divisor (must not be zero)
+     * @param int|float|string $a The dividend
+     * @param int|float|string $b The divisor (must not be zero)
      * @return string The remainder as a string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the divisor is zero
      * @see \Phuture\Coherence\Numbers::divide()
      */
-    public static function modulus(int|float $a, int|float $b): string
+    public static function modulus(int|float|string $a, int|float|string $b): string
     {
         if ((float) $b === 0.0) {
             throw new InvalidArgumentException(
@@ -788,14 +782,14 @@ class Numbers extends StaticClass
             );
         }
 
-        return bcmod((string) $a, (string) $b);
+        return bcmod((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
      * Multiplies two numbers using BCMath for precision and returns the result as a string.
      *
      * Both values are converted to strings and multiplied using BCMath to avoid
-     * floating-point precision loss. The result preserves up to 10 decimal places.
+     * floating-point precision loss.
      *
      * Example:
      * ```php
@@ -806,12 +800,12 @@ class Numbers extends StaticClass
      * Numbers::multiply(2.5, 4.0); // '10.0000000000'
      * ```
      *
-     * @param int|float $a The first factor
-     * @param int|float $b The second factor
-     * @return string The product as a string with up to 10 decimal places
+     * @param int|float|string $a The first factor
+     * @param int|float|string $b The second factor
+     * @return string The product as a BCMath string at BCMath precision
      * @see \Phuture\Coherence\Numbers::divide()
      */
-    public static function multiply(int|float $a, int|float $b): string
+    public static function multiply(int|float|string $a, int|float|string $b): string
     {
         return bcmul((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
@@ -832,14 +826,14 @@ class Numbers extends StaticClass
      *     ->multiply(2)
      *     ->get();
      *
-     * // Returns: '30'
+     * // Returns: '30.0000000000'
      * ```
      *
-     * @param int|float $number The starting number to wrap in the fluent interface
+     * @param int|float|string $number The starting number to wrap in the fluent interface
      * @return \Phuture\Coherence\Type\Numbers Returns a fluent Numbers instance for chaining
      * @see \Phuture\Coherence\Type\Numbers
      */
-    public static function of(int|float $number): Type\Numbers
+    public static function of(int|float|string $number): Type\Numbers
     {
         return new Type\Numbers($number);
     }
@@ -859,12 +853,18 @@ class Numbers extends StaticClass
      * Numbers::opposite(0); // 0
      * ```
      *
-     * @param int|float $number The number to negate
-     * @return int|float The negated value
+     * @param int|float|string $number The number to negate
+     * @return int|float|string The negated value
      * @see \Phuture\Coherence\Numbers::absolute()
      */
-    public static function opposite(int|float $number): int|float
+    public static function opposite(int|float|string $number): int|float|string
     {
+        if (is_string($number)) {
+            $result = -(float) $number;
+
+            return floor($result) === $result ? (int) $result : $result;
+        }
+
         return -$number;
     }
 
@@ -987,13 +987,13 @@ class Numbers extends StaticClass
      * Numbers::percentage(3, 0, 1); // '300%'
      * ```
      *
-     * @param int|float $number The number to convert to a percentage
+     * @param int|float|string $number The number to convert to a percentage
      * @param int $precision The number of decimal places (default: 1)
      * @param int $multiplicand The value to multiply by before formatting (default: 100)
      * @return string The formatted percentage string with a percent sign
      * @see \Phuture\Coherence\Numbers::format()
      */
-    public static function percentage(int|float $number, int $precision = 1, int $multiplicand = 100): string
+    public static function percentage(int|float|string $number, int $precision = 1, int $multiplicand = 100): string
     {
         return number_format((float) $number * $multiplicand, $precision) . '%';
     }
@@ -1014,7 +1014,7 @@ class Numbers extends StaticClass
      * Numbers::round(3.5, 0, RoundingMode::HalfDown); // 3.0
      * ```
      *
-     * @param int|float $number The number to round
+     * @param int|float|string $number The number to round
      * @param int $precision The number of decimal places (default: 0)
      * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
      * @return float The rounded value
@@ -1022,15 +1022,15 @@ class Numbers extends StaticClass
      * @see \Phuture\Coherence\Numbers::floor()
      */
     public static function round(
-        int|float $number,
+        int|float|string $number,
         int $precision = 0,
         RoundingMode $mode = RoundingMode::HalfUp
     ): float {
         return round((float) $number, $precision, match ($mode) {
-            RoundingMode::HalfUp   => PHP_ROUND_HALF_UP,
+            RoundingMode::HalfUp => PHP_ROUND_HALF_UP,
             RoundingMode::HalfDown => PHP_ROUND_HALF_DOWN,
             RoundingMode::HalfEven => PHP_ROUND_HALF_EVEN,
-            RoundingMode::HalfOdd  => PHP_ROUND_HALF_ODD,
+            RoundingMode::HalfOdd => PHP_ROUND_HALF_ODD,
         });
     }
 
@@ -1053,11 +1053,11 @@ class Numbers extends StaticClass
      * Numbers::spell(1000); // 'one thousand'
      * ```
      *
-     * @param int|float $number The number to spell out
+     * @param int $number The number to spell out
      * @return string The English word representation of the number
      * @see \Phuture\Coherence\Numbers::ordinal()
      */
-    public static function spell(int|float $number): string
+    public static function spell(int $number): string
     {
         $number = (int) $number;
 
@@ -1091,12 +1091,12 @@ class Numbers extends StaticClass
      * Numbers::squareRoot(0); // '0.0000000000'
      * ```
      *
-     * @param int|float $number The number to compute the square root of (must be non-negative)
+     * @param int|float|string $number The number to compute the square root of (must be non-negative)
      * @param int $scale The number of decimal places in the result (default: 10)
      * @return string The square root as a string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the number is negative
      */
-    public static function squareRoot(int|float $number, int $scale = self::DEFAULT_SCALE): string
+    public static function squareRoot(int|float|string $number, int $scale = self::DEFAULT_SCALE): string
     {
         if ((float) $number < 0) {
             throw new InvalidArgumentException(
@@ -1111,7 +1111,7 @@ class Numbers extends StaticClass
      * Subtracts the second number from the first using BCMath for precision.
      *
      * Both values are converted to strings and subtracted using BCMath to avoid
-     * floating-point precision loss. The result preserves up to 10 decimal places.
+     * floating-point precision loss.
      *
      * Example:
      * ```php
@@ -1122,53 +1122,60 @@ class Numbers extends StaticClass
      * Numbers::subtract(1, 1); // '0.0000000000'
      * ```
      *
-     * @param int|float $a The minuend
-     * @param int|float $b The subtrahend
-     * @return string The difference as a string with up to 10 decimal places
+     * @param int|float|string $a The minuend
+     * @param int|float|string $b The subtrahend
+     * @return string The difference as a string
      * @see \Phuture\Coherence\Numbers::add()
      */
-    public static function subtract(int|float $a, int|float $b): string
+    public static function subtract(int|float|string $a, int|float|string $b): string
     {
         return bcsub((string) $a, (string) $b, self::DEFAULT_SCALE);
     }
 
     /**
-     * Converts a value of any supported type into a numeric int or float.
+     * Normalizes any value into a BCMath-compatible numeric string.
      *
      * Each input type is handled differently:
-     * - **array**: returns the number of elements (equivalent to `count()`)
-     * - **bool**: returns `1` for `true`, `0` for `false`
-     * - **string**: casts to `float` (e.g. `'3.14'` becomes `3.14`)
-     * - **int / float**: returned as-is
+     * - **array**: returns the element count as a BCMath string (e.g. `[1,2,3]` → `'3.0000000000'`)
+     * - **bool**: returns `'1.0000000000'` for `true`, `'0.0000000000'` for `false`
+     * - **string**: passed directly into BCMath without a float round-trip, preserving all digits up to the scale
+     * - **int / float**: converted to a BCMath string (e.g. `42` → `'42.0000000000'`)
+     *
+     * The result is safe to pass directly into any other BCMath method without precision loss.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::toNumber(true); // 1
-     * Numbers::toNumber('3.14'); // 3.14
-     * Numbers::toNumber([1, 2, 3]); // 3
-     * Numbers::toNumber(42); // 42
+     * Numbers::toNumber(true); // '1.0000000000'
+     * Numbers::toNumber('3.14'); // '3.1400000000'
+     * Numbers::toNumber([1, 2, 3]); // '3.0000000000'
+     * Numbers::toNumber(42); // '42.0000000000'
+     * Numbers::toNumber('0.3333333333'); // '0.3333333333'
      * ```
      *
-     * @param int|float|string|bool|array $number The value to convert
-     * @return int|float The numeric representation of the given value
+     * @param int|float|string|bool|array $number The value to normalize
+     * @return string The BCMath string representation
      */
-    public static function toNumber(int|float|string|bool|array $number): int|float
+    public static function toNumber(int|float|string|bool|array $number): string
     {
         if (is_array($number)) {
-            return count($number);
+            return bcadd((string) count($number), '0', self::DEFAULT_SCALE);
         }
 
         if (is_bool($number)) {
-            return (int) $number;
+            return bcadd((string) ((int) $number), '0', self::DEFAULT_SCALE);
         }
 
         if (is_string($number)) {
-            return (float) $number;
+            if (is_numeric($number)) {
+                return bcadd($number, '0', self::DEFAULT_SCALE);
+            }
+
+            return bcadd((string) strlen($number), '0', self::DEFAULT_SCALE);
         }
 
-        return $number;
+        return bcadd((string) $number, '0', self::DEFAULT_SCALE);
     }
 
     /**
@@ -1215,9 +1222,9 @@ class Numbers extends StaticClass
      * @param string $label The parameter label for the error message
      * @throws \Phuture\Coherence\Exception\LogicException When the value is NAN
      */
-    private static function assertNotNan(float $value, string $label): void
+    private static function assertNotNan(int|float|string $value, string $label): void
     {
-        if (is_nan($value)) {
+        if (is_nan((float) $value)) {
             throw new LogicException(
                 "Logic Error: NAN is not a comparable value (parameter \${$label})"
             );
@@ -1289,10 +1296,10 @@ class Numbers extends StaticClass
      * Examines the string representation of the number to determine how many
      * digits follow the decimal point.
      *
-     * @param int|float $number The number to inspect
+     * @param int|float|string $number The number to inspect
      * @return int The number of decimal places found
      */
-    private static function detectPrecision(int|float $number): int
+    private static function detectPrecision(int|float|string $number): int
     {
         $string = (string) $number;
 
