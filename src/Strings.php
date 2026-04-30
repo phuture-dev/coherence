@@ -2077,9 +2077,11 @@ class Strings extends StaticClass
      * @param bool $includeUppercase Whether at least one uppercase letter is included (default: true)
      * @param bool $includeLowercase Whether at least one lowercase letter is included (default: true)
      * @param bool $includeDigits Whether at least one digit is included (default: true)
-     * @param string $includeSpecialCharacters The set of special characters to include (default: '!@#$%^&*()-_=+[]{}|;:,.<>?')
+     * @param string $includeSpecialCharacters The set of special characters to include
+     *  (default: '!@#$%^&*()-_=+[]{}|;:,.<>?')
      * @return string The generated password
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is too short for the enabled requirements
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is too short for
+     *  the enabled requirements
      * @throws \Random\RandomException If the system entropy source is unavailable
      * @see \Phuture\Coherence\Strings::random()
      */
@@ -2117,7 +2119,8 @@ class Strings extends StaticClass
 
         if ($length < $requiredCount) {
             throw new InvalidArgumentException(
-                "Invalid Argument: Password length must be at least {$requiredCount} to satisfy all enabled requirements"
+                "Invalid Argument: Password length must be at least {$requiredCount}"
+                . " to satisfy all enabled requirements"
             );
         }
 

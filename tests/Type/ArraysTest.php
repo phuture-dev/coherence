@@ -1031,22 +1031,27 @@ class ArraysTest extends TestCase
 
     public function testWhenAndUnlessCombinedInChain(): void
     {
-        $isPremium = true;
-        $excludeInactive = false;
-
-        $users = new Arrays([
-            ['name' => 'John', 'active' => true, 'premium' => true],
-            ['name' => 'Jane', 'active' => false, 'premium' => true],
-            ['name' => 'Bob', 'active' => true, 'premium' => false],
-        ]);
-
-        $result = $users
-            ->when($isPremium, fn ($array) => $array->where(fn ($u) => $u['premium']))
-            ->unless($excludeInactive, fn ($array) => $array->where(fn ($u) => $u['active']))
-            ->map(fn ($u) => $u['name'])
+        // when(true) applies filter: keep only even numbers -> [2, 4]
+        // unless(true) skips its callback (condition is true, so "unless" does nothing)
+        // Final result: [2, 4]
+        $result = (new Arrays([1, 2, 3, 4, 5]))
+            ->when(true, fn ($array) => $array->filter(fn ($n) => $n % 2 === 0))
+            ->unless(true, fn ($array) => $array->filter(fn ($n) => $n > 3))
             ->values()
             ->toArray();
-        Assert::same(['John', 'Jane'], $result);
+
+        Assert::same([2, 4], $result);
+
+        // when(true) applies filter: keep only even numbers -> [2, 4]
+        // unless(false) fires its callback (condition is false, so "unless" acts): keep > 3 -> [4]
+        // Final result: [4]
+        $result = (new Arrays([1, 2, 3, 4, 5]))
+            ->when(true, fn ($array) => $array->filter(fn ($n) => $n % 2 === 0))
+            ->unless(false, fn ($array) => $array->filter(fn ($n) => $n > 3))
+            ->values()
+            ->toArray();
+
+        Assert::same([4], $result);
     }
 
     public function testWhenCallbackReceivesArraysInstance(): void
