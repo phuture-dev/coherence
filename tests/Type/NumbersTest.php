@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Type;
 
+use RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
-use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Type\Numbers as FluentNumbers;
 use Phuture\Coherence\Exception\{InvalidArgumentException};
 
@@ -34,6 +34,133 @@ class NumbersTest extends TestCase
         Assert::same('4.0000000000', FluentNumbers::from(1.5)->add(2.5)->get());
     }
 
+    public function testBcmathPrecisionAfterAbsolute(): void
+    {
+        // absolute() on BCMath string coerces to int/float; BCMath re-entry still works
+        $result = FluentNumbers::from(-1)->add(-2)->absolute()->multiply(3)->get();
+        Assert::same('9.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterCeil(): void
+    {
+        $result = FluentNumbers::from(3)->divide(2)->ceil()->multiply(3)->get();
+        Assert::same('6.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterClamp(): void
+    {
+        // multiply gives "15.0000000000"; clamp(0,10) caps it to int 10; add(2) re-enters BCMath
+        $result = FluentNumbers::from(5)->multiply(3)->clamp(0, 10)->add(2)->get();
+        Assert::same('12.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterFloor(): void
+    {
+        $result = FluentNumbers::from(3)->divide(2)->floor()->multiply(3)->get();
+        Assert::same('3.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterMax(): void
+    {
+        // multiply gives "6.0000000000"; max(10) picks int 10; subtract(1) re-enters BCMath
+        $result = FluentNumbers::from(3)->multiply(2)->max(10)->subtract(1)->get();
+        Assert::same('9.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterMin(): void
+    {
+        // multiply gives "6.0000000000"; min(3) picks int 3; add(1) re-enters BCMath
+        $result = FluentNumbers::from(3)->multiply(2)->min(3)->add(1)->get();
+        Assert::same('4.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterOpposite(): void
+    {
+        $result = FluentNumbers::from(1)->add(2)->opposite()->subtract(1)->get();
+        Assert::same('-4.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterRound(): void
+    {
+        // round(4) gives float 0.3333; add(0) re-enters BCMath and pads to 10 decimals
+        $result = FluentNumbers::from(1)->divide(3)->round(4)->add(0)->get();
+        Assert::same('0.3333000000', $result);
+    }
+
+    public function testBcmathPrecisionAfterToNumber(): void
+    {
+        // toNumber() converts "0.2500000000" → float 0.25; BCMath re-entry multiplies precisely
+        $result = FluentNumbers::from(1)->divide(4)->toNumber()->multiply(4)->get();
+        Assert::same('1.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionDivideMultiplyRoundTrip(): void
+    {
+        Assert::same('0.9999999999', FluentNumbers::from(1)->divide(3)->multiply(3)->get());
+    }
+
+    public function testBcmathPrecisionLargeChain(): void
+    {
+        $expected = Numbers::divide(
+            Numbers::subtract(
+                Numbers::multiply(Numbers::add('1', '0.1'), '3'),
+                '0.3'
+            ),
+            '3'
+        );
+
+        Assert::same($expected, FluentNumbers::from(1)->add(0.1)->multiply(3)->subtract(0.3)->divide(3)->get());
+    }
+
+    // --- BCMath precision validation ---
+
+    public function testBcmathPrecisionMultiStep(): void
+    {
+        $result = FluentNumbers::from(1)
+            ->add(2)
+            ->multiply(4)
+            ->subtract(3)
+            ->divide(2)
+            ->get();
+
+        Assert::same('4.5000000000', $result);
+    }
+
+    public function testBcmathPrecisionNegativeChain(): void
+    {
+        $result = FluentNumbers::from(-5)->multiply(3)->add(1)->get();
+        Assert::same('-14.0000000000', $result);
+    }
+
+    public function testBcmathPrecisionSquareRootChained(): void
+    {
+        // sqrt result feeds into add(0) unchanged — BCMath string round-trip
+        Assert::same(Numbers::squareRoot(2), FluentNumbers::from(2)->squareRoot()->add(0)->get());
+    }
+
+    public function testBcmathPrecisionSubtractToZero(): void
+    {
+        Assert::same('0.0000000000', FluentNumbers::from(0.1)->add(0.2)->subtract(0.3)->get());
+    }
+
+    public function testBcmathPrecisionTinyFraction(): void
+    {
+        Assert::same('0.0000000010', FluentNumbers::from('0.0000000001')->multiply(10)->get());
+    }
+
+    public function testBcmathPrecisionUnchangedAfterToNumberWithRepeatingDecimal(): void
+    {
+        // toNumber() on "0.3333333333" → float; bcmul still gives same result as without toNumber
+        $withToNumber    = FluentNumbers::from(1)->divide(3)->toNumber()->multiply(3)->get();
+        $withoutToNumber = FluentNumbers::from(1)->divide(3)->multiply(3)->get();
+        Assert::same($withoutToNumber, $withToNumber);
+    }
+
+    public function testBcmathPrecisionZeroThroughChain(): void
+    {
+        Assert::same('0.0000000000', FluentNumbers::from(0)->add(0)->multiply(1000)->divide(5)->get());
+    }
+
     public function testBcmathStringPreserved(): void
     {
         $result = FluentNumbers::from(0.1)->add(0.2)->get();
@@ -42,9 +169,9 @@ class NumbersTest extends TestCase
 
     public function testCeil(): void
     {
-        Assert::same(4.0, FluentNumbers::from(3.2)->ceil()->get());
-        Assert::same(-1.0, FluentNumbers::from(-1.1)->ceil()->get());
-        Assert::same(5.0, FluentNumbers::from(5.0)->ceil()->get());
+        Assert::same('4', FluentNumbers::from(3.2)->ceil()->get());
+        Assert::same('-1', FluentNumbers::from(-1.1)->ceil()->get());
+        Assert::same('5', FluentNumbers::from(5.0)->ceil()->get());
     }
 
     public function testChaining(): void
@@ -56,7 +183,7 @@ class NumbersTest extends TestCase
             ->round(0)
             ->get();
 
-        Assert::same(27.0, $result);
+        Assert::same('27', $result);
     }
 
     public function testChainingAbsoluteAndOpposite(): void
@@ -68,8 +195,8 @@ class NumbersTest extends TestCase
 
     public function testChainingClampAndRound(): void
     {
-        Assert::same(100.0, FluentNumbers::from(150.7)->clamp(0, 100)->round(0)->get());
-        Assert::same(0.0, FluentNumbers::from(-5.3)->clamp(0, 100)->round(0)->get());
+        Assert::same('100', FluentNumbers::from(150.7)->clamp(0, 100)->round(0)->get());
+        Assert::same('0', FluentNumbers::from(-5.3)->clamp(0, 100)->round(0)->get());
     }
 
     public function testClamp(): void
@@ -117,9 +244,9 @@ class NumbersTest extends TestCase
 
     public function testFloor(): void
     {
-        Assert::same(3.0, FluentNumbers::from(3.8)->floor()->get());
-        Assert::same(-2.0, FluentNumbers::from(-1.1)->floor()->get());
-        Assert::same(5.0, FluentNumbers::from(5.0)->floor()->get());
+        Assert::same('3', FluentNumbers::from(3.8)->floor()->get());
+        Assert::same('-2', FluentNumbers::from(-1.1)->floor()->get());
+        Assert::same('5', FluentNumbers::from(5.0)->floor()->get());
     }
 
     public function testForHumans(): void
@@ -199,21 +326,38 @@ class NumbersTest extends TestCase
 
     public function testRound(): void
     {
-        Assert::same(3.46, FluentNumbers::from(3.456)->round(2)->get());
-        Assert::same(3.0, FluentNumbers::from(3.456)->round(0)->get());
-        Assert::same(4.0, FluentNumbers::from(3.5)->round(0)->get());
+        Assert::same('3.46', FluentNumbers::from(3.456)->round(2)->get());
+        Assert::same('3', FluentNumbers::from(3.456)->round(0)->get());
+        Assert::same('4', FluentNumbers::from(3.5)->round(0)->get());
     }
 
     public function testRoundWithMode(): void
     {
-        Assert::same(3.0, FluentNumbers::from(3.5)->round(0, RoundingMode::HalfDown)->get());
-        Assert::same(4.0, FluentNumbers::from(3.5)->round(0, RoundingMode::HalfUp)->get());
+        Assert::same('3', FluentNumbers::from(3.5)->round(0, RoundingMode::HalfTowardsZero)->get());
+        Assert::same('4', FluentNumbers::from(3.5)->round(0, RoundingMode::HalfAwayFromZero)->get());
+        Assert::same('4', FluentNumbers::from(3.5)->round(0, RoundingMode::HalfEven)->get());
+        Assert::same('2', FluentNumbers::from(2.5)->round(0, RoundingMode::HalfEven)->get());
+        Assert::same('3', FluentNumbers::from(3.5)->round(0, RoundingMode::HalfOdd)->get());
+        Assert::same('3', FluentNumbers::from(2.5)->round(0, RoundingMode::HalfOdd)->get());
     }
 
     public function testSquareRoot(): void
     {
         Assert::same('3.0000000000', FluentNumbers::from(9)->squareRoot()->get());
         Assert::same('1.4142', FluentNumbers::from(2)->squareRoot(4)->get());
+    }
+
+    public function testSquareRootCustomScaleChained(): void
+    {
+        // scale=2 gives "1.41"; bcmul feeds it back as string → full 10-decimal result
+        $result = FluentNumbers::from(2)->squareRoot(2)->multiply(2)->get();
+        Assert::same('2.8200000000', $result);
+    }
+
+    public function testSquareRootFullPrecisionMultiply(): void
+    {
+        $result = FluentNumbers::from(9)->squareRoot()->multiply(2)->get();
+        Assert::same('6.0000000000', $result);
     }
 
     public function testSquareRootNegative(): void
@@ -264,146 +408,6 @@ class NumbersTest extends TestCase
     {
         Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
         Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
-    }
-
-    // --- BCMath precision validation ---
-
-    public function testBcmathPrecisionMultiStep(): void
-    {
-        $result = FluentNumbers::from(1)
-            ->add(2)
-            ->multiply(4)
-            ->subtract(3)
-            ->divide(2)
-            ->get();
-
-        Assert::same('4.5000000000', $result);
-    }
-
-    public function testBcmathPrecisionDivideMultiplyRoundTrip(): void
-    {
-        Assert::same('0.9999999999', FluentNumbers::from(1)->divide(3)->multiply(3)->get());
-    }
-
-    public function testBcmathPrecisionSquareRootChained(): void
-    {
-        // sqrt result feeds into add(0) unchanged — BCMath string round-trip
-        Assert::same(Numbers::squareRoot(2), FluentNumbers::from(2)->squareRoot()->add(0)->get());
-    }
-
-    public function testBcmathPrecisionSubtractToZero(): void
-    {
-        Assert::same('0.0000000000', FluentNumbers::from(0.1)->add(0.2)->subtract(0.3)->get());
-    }
-
-    public function testBcmathPrecisionLargeChain(): void
-    {
-        $expected = Numbers::divide(
-            Numbers::subtract(
-                Numbers::multiply(Numbers::add('1', '0.1'), '3'),
-                '0.3'
-            ),
-            '3'
-        );
-
-        Assert::same($expected, FluentNumbers::from(1)->add(0.1)->multiply(3)->subtract(0.3)->divide(3)->get());
-    }
-
-    public function testBcmathPrecisionAfterToNumber(): void
-    {
-        // toNumber() converts "0.2500000000" → float 0.25; BCMath re-entry multiplies precisely
-        $result = FluentNumbers::from(1)->divide(4)->toNumber()->multiply(4)->get();
-        Assert::same('1.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionUnchangedAfterToNumberWithRepeatingDecimal(): void
-    {
-        // toNumber() on "0.3333333333" → float; bcmul still gives same result as without toNumber
-        $withToNumber    = FluentNumbers::from(1)->divide(3)->toNumber()->multiply(3)->get();
-        $withoutToNumber = FluentNumbers::from(1)->divide(3)->multiply(3)->get();
-        Assert::same($withoutToNumber, $withToNumber);
-    }
-
-    public function testBcmathPrecisionAfterAbsolute(): void
-    {
-        // absolute() on BCMath string coerces to int/float; BCMath re-entry still works
-        $result = FluentNumbers::from(-1)->add(-2)->absolute()->multiply(3)->get();
-        Assert::same('9.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterOpposite(): void
-    {
-        $result = FluentNumbers::from(1)->add(2)->opposite()->subtract(1)->get();
-        Assert::same('-4.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterCeil(): void
-    {
-        $result = FluentNumbers::from(3)->divide(2)->ceil()->multiply(3)->get();
-        Assert::same('6.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterFloor(): void
-    {
-        $result = FluentNumbers::from(3)->divide(2)->floor()->multiply(3)->get();
-        Assert::same('3.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterRound(): void
-    {
-        // round(4) gives float 0.3333; add(0) re-enters BCMath and pads to 10 decimals
-        $result = FluentNumbers::from(1)->divide(3)->round(4)->add(0)->get();
-        Assert::same('0.3333000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterClamp(): void
-    {
-        // multiply gives "15.0000000000"; clamp(0,10) caps it to int 10; add(2) re-enters BCMath
-        $result = FluentNumbers::from(5)->multiply(3)->clamp(0, 10)->add(2)->get();
-        Assert::same('12.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterMax(): void
-    {
-        // multiply gives "6.0000000000"; max(10) picks int 10; subtract(1) re-enters BCMath
-        $result = FluentNumbers::from(3)->multiply(2)->max(10)->subtract(1)->get();
-        Assert::same('9.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionAfterMin(): void
-    {
-        // multiply gives "6.0000000000"; min(3) picks int 3; add(1) re-enters BCMath
-        $result = FluentNumbers::from(3)->multiply(2)->min(3)->add(1)->get();
-        Assert::same('4.0000000000', $result);
-    }
-
-    public function testSquareRootCustomScaleChained(): void
-    {
-        // scale=2 gives "1.41"; bcmul feeds it back as string → full 10-decimal result
-        $result = FluentNumbers::from(2)->squareRoot(2)->multiply(2)->get();
-        Assert::same('2.8200000000', $result);
-    }
-
-    public function testSquareRootFullPrecisionMultiply(): void
-    {
-        $result = FluentNumbers::from(9)->squareRoot()->multiply(2)->get();
-        Assert::same('6.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionZeroThroughChain(): void
-    {
-        Assert::same('0.0000000000', FluentNumbers::from(0)->add(0)->multiply(1000)->divide(5)->get());
-    }
-
-    public function testBcmathPrecisionNegativeChain(): void
-    {
-        $result = FluentNumbers::from(-5)->multiply(3)->add(1)->get();
-        Assert::same('-14.0000000000', $result);
-    }
-
-    public function testBcmathPrecisionTinyFraction(): void
-    {
-        Assert::same('0.0000000010', FluentNumbers::from('0.0000000001')->multiply(10)->get());
     }
 }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Type;
 
-use Phuture\Coherence\Enum\RoundingMode;
+use RoundingMode;
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Interface\Numberable;
 use Phuture\Coherence\Numbers as Transformer;
@@ -80,7 +80,7 @@ class Numbers extends FluentClass implements Numberable
     /**
      * Returns the smallest integer value greater than or equal to the wrapped number.
      *
-     * @return self Returns the current instance for method chaining
+     * @return self Returns the current instance for method chaining (stores result as a BCMath string)
      * @see Transformer::ceil()
      */
     public function ceil(): self
@@ -147,7 +147,7 @@ class Numbers extends FluentClass implements Numberable
     /**
      * Returns the largest integer value less than or equal to the wrapped number.
      *
-     * @return self Returns the current instance for method chaining
+     * @return self Returns the current instance for method chaining (stores result as a BCMath string)
      * @see Transformer::floor()
      */
     public function floor(): self
@@ -278,12 +278,15 @@ class Numbers extends FluentClass implements Numberable
      * Rounds the wrapped number to the specified precision using the given rounding mode.
      *
      * @param int $precision The number of decimal places (default: 0)
-     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
-     * @return self Returns the current instance for method chaining
+     * @param RoundingMode $mode The rounding mode (default: \RoundingMode::HalfAwayFromZero)
+     * @return self Returns the current instance for method chaining (stores result as a BCMath string)
      * @see Transformer::round()
      */
-    public function round(int $precision = 0, RoundingMode $mode = RoundingMode::HalfUp): self
-    {
+    public function round(
+        int $precision = 0,
+        // @phpstan-ignore-next-line
+        RoundingMode $mode = RoundingMode::HalfAwayFromZero
+    ): self {
         $this->data = Transformer::round($this->toString(), $precision, $mode);
 
         return $this;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use Phuture\Coherence\Enum\RoundingMode;
+use RoundingMode;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
@@ -162,26 +162,30 @@ class Numbers extends StaticClass
     /**
      * Returns the smallest integer value greater than or equal to the given number.
      *
-     * Rounds up to the nearest integer. For example, 3.2 becomes 4.0 and
-     * -3.2 becomes -3.0.
+     * Rounds up to the nearest integer using BCMath for precision. For example,
+     * 3.2 becomes "4" and -3.2 becomes "-3".
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::ceil(3.2); // 4.0
-     * Numbers::ceil(-1.1); // -1.0
-     * Numbers::ceil(5.0); // 5.0
+     * Numbers::ceil(3.2); // '4'
+     * Numbers::ceil(-1.1); // '-1'
+     * Numbers::ceil(5.0); // '5'
      * ```
      *
      * @param int|float|string $number The number to round up
-     * @return float The smallest integer greater than or equal to the number
+     * @return string The smallest integer greater than or equal to the number as a BCMath string
      * @see \Phuture\Coherence\Numbers::floor()
      * @see \Phuture\Coherence\Numbers::round()
      */
-    public static function ceil(int|float|string $number): float
+    public static function ceil(int|float|string $number): string
     {
-        return (float) ceil((float) $number);
+        if (function_exists('bcceil')) {
+            return bcceil((string) $number);
+        }
+
+        return \Symfony\Polyfill\Php84\Php84::bcceil((string) $number);
     }
 
     /**
@@ -336,26 +340,30 @@ class Numbers extends StaticClass
     /**
      * Returns the largest integer value less than or equal to the given number.
      *
-     * Rounds down to the nearest integer. For example, 3.8 becomes 3.0 and
-     * -3.8 becomes -4.0.
+     * Rounds down to the nearest integer using BCMath for precision. For example,
+     * 3.8 becomes "3" and -3.8 becomes "-4".
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::floor(3.8); // 3.0
-     * Numbers::floor(-1.1); // -2.0
-     * Numbers::floor(5.0); // 5.0
+     * Numbers::floor(3.8); // '3'
+     * Numbers::floor(-1.1); // '-2'
+     * Numbers::floor(5.0); // '5'
      * ```
      *
      * @param int|float|string $number The number to round down
-     * @return float The largest integer less than or equal to the number
+     * @return string The largest integer less than or equal to the number as a BCMath string
      * @see \Phuture\Coherence\Numbers::ceil()
      * @see \Phuture\Coherence\Numbers::round()
      */
-    public static function floor(int|float|string $number): float
+    public static function floor(int|float|string $number): string
     {
-        return (float) floor((float) $number);
+        if (function_exists('bcfloor')) {
+            return bcfloor((string) $number);
+        }
+
+        return \Symfony\Polyfill\Php84\Php84::bcfloor((string) $number);
     }
 
     /**
@@ -1001,37 +1009,36 @@ class Numbers extends StaticClass
     /**
      * Rounds a number to the specified precision using the given rounding mode.
      *
-     * Wraps PHP's native `round()` function with all its supported modes.
-     * Precision specifies the number of digits after the decimal point.
+     * Delegates to the polyfilled/native `bcround()` for full BCMath precision.
+     * The result has exactly `$precision` decimal places.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
-     * use Phuture\Coherence\Enum\RoundingMode;
      *
-     * Numbers::round(3.456, 2); // 3.46
-     * Numbers::round(3.456, 0); // 3.0
-     * Numbers::round(3.5, 0, RoundingMode::HalfDown); // 3.0
+     * Numbers::round(3.456, 2); // '3.46'
+     * Numbers::round(3.456, 0); // '3'
+     * Numbers::round(3.5, 0, RoundingMode::HalfTowardsZero); // '3'
      * ```
      *
      * @param int|float|string $number The number to round
      * @param int $precision The number of decimal places (default: 0)
-     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
-     * @return float The rounded value
+     * @param RoundingMode $mode The rounding mode (default: \RoundingMode::HalfAwayFromZero)
+     * @return string The rounded value as a BCMath string with exactly `$precision` decimal places
      * @see \Phuture\Coherence\Numbers::ceil()
      * @see \Phuture\Coherence\Numbers::floor()
      */
     public static function round(
         int|float|string $number,
         int $precision = 0,
-        RoundingMode $mode = RoundingMode::HalfUp
-    ): float {
-        return round((float) $number, $precision, match ($mode) {
-            RoundingMode::HalfUp => PHP_ROUND_HALF_UP,
-            RoundingMode::HalfDown => PHP_ROUND_HALF_DOWN,
-            RoundingMode::HalfEven => PHP_ROUND_HALF_EVEN,
-            RoundingMode::HalfOdd => PHP_ROUND_HALF_ODD,
-        });
+        // @phpstan-ignore-next-line
+        RoundingMode $mode = RoundingMode::HalfAwayFromZero
+    ): string {
+        if (function_exists('bcround')) {
+            return bcround((string) $number, $precision, $mode);
+        }
+
+        return \Symfony\Polyfill\Php84\Php84::bcround((string) $number, $precision, $mode);
     }
 
     /**

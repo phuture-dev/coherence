@@ -22,12 +22,13 @@
         "league/html-to-markdown": "^5.1",
         "nette/php-generator": "~4.2.0",
         "phpseclib/bcmath_compat": "~v2.0.0",
-        "symfony/polyfill-mbstring": "~v1.33.0",
-        "symfony/polyfill-php82": "~v1.33.0",
-        "symfony/polyfill-php83": "~v1.33.0",
-        "symfony/polyfill-php84": "~v1.33.0",
-        "symfony/polyfill-php85": "~v1.33.0",
-        "symfony/polyfill-uuid": "~v1.33.0"
+        "symfony/polyfill-deepclone": "~v1.34.0",
+        "symfony/polyfill-mbstring": "~v1.34.0",
+        "symfony/polyfill-php82": "~v1.34.0",
+        "symfony/polyfill-php83": "~v1.34.0",
+        "symfony/polyfill-php84": "~v1.34.0",
+        "symfony/polyfill-php85": "~v1.34.0",
+        "symfony/polyfill-uuid": "~v1.34.0"
     },
     "require-dev": {
         "nette/tester": "^2.5",

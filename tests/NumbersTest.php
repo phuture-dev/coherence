@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests;
 
+use RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
-use Phuture\Coherence\Enum\RoundingMode;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
 require __DIR__ . '/bootstrap.php';
@@ -90,10 +90,10 @@ class NumbersTest extends TestCase
 
     public function testCeil(): void
     {
-        Assert::same(4.0, Numbers::ceil(3.2));
-        Assert::same(-1.0, Numbers::ceil(-1.1));
-        Assert::same(5.0, Numbers::ceil(5.0));
-        Assert::same(1.0, Numbers::ceil(0.001));
+        Assert::same('4', Numbers::ceil(3.2));
+        Assert::same('-1', Numbers::ceil(-1.1));
+        Assert::same('5', Numbers::ceil(5.0));
+        Assert::same('1', Numbers::ceil(0.001));
     }
 
     public function testClamp(): void
@@ -189,10 +189,10 @@ class NumbersTest extends TestCase
 
     public function testFloor(): void
     {
-        Assert::same(3.0, Numbers::floor(3.8));
-        Assert::same(-2.0, Numbers::floor(-1.1));
-        Assert::same(5.0, Numbers::floor(5.0));
-        Assert::same(0.0, Numbers::floor(0.9));
+        Assert::same('3', Numbers::floor(3.8));
+        Assert::same('-2', Numbers::floor(-1.1));
+        Assert::same('5', Numbers::floor(5.0));
+        Assert::same('0', Numbers::floor(0.9));
     }
 
     public function testForHumans(): void
@@ -484,20 +484,33 @@ class NumbersTest extends TestCase
 
     public function testRound(): void
     {
-        Assert::same(3.46, Numbers::round(3.456, 2));
-        Assert::same(3.0, Numbers::round(3.456, 0));
-        Assert::same(4.0, Numbers::round(3.5, 0));
+        Assert::same('3.46', Numbers::round(3.456, 2));
+        Assert::same('3', Numbers::round(3.456, 0));
+        Assert::same('4', Numbers::round(3.5, 0));
     }
 
-    public function testRoundHalfDown(): void
+    public function testRoundHalfEven(): void
     {
-        Assert::same(3.0, Numbers::round(3.5, 0, RoundingMode::HalfDown));
+        Assert::same('4', Numbers::round(3.5, 0, RoundingMode::HalfEven));
+        Assert::same('2', Numbers::round(2.5, 0, RoundingMode::HalfEven));
+    }
+
+    public function testRoundHalfOdd(): void
+    {
+        Assert::same('3', Numbers::round(3.5, 0, RoundingMode::HalfOdd));
+        Assert::same('3', Numbers::round(2.5, 0, RoundingMode::HalfOdd));
+    }
+
+    public function testRoundHalfTowardsZero(): void
+    {
+        Assert::same('3', Numbers::round(3.5, 0, RoundingMode::HalfTowardsZero));
+        Assert::same('-3', Numbers::round(-3.5, 0, RoundingMode::HalfTowardsZero));
     }
 
     public function testRoundNegative(): void
     {
-        Assert::same(-3.46, Numbers::round(-3.456, 2));
-        Assert::same(-3.0, Numbers::round(-3.456, 0));
+        Assert::same('-3.46', Numbers::round(-3.456, 2));
+        Assert::same('-3', Numbers::round(-3.456, 0));
     }
 
     public function testSpell(): void
