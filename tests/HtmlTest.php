@@ -256,6 +256,109 @@ class HtmlTest extends TestCase
         $html = Html::toHtml($original);
         Assert::same($original, Html::toText($html));
     }
+
+    public function testBuildSingleElement(): void
+    {
+        $result = Html::build([
+            ['tag' => 'p', 'content' => 'Hello'],
+        ]);
+
+        Assert::same('<p>Hello</p>', $result);
+    }
+
+    public function testBuildMultipleElements(): void
+    {
+        $result = Html::build([
+            ['tag' => 'h1', 'content' => 'Title'],
+            ['tag' => 'p', 'content' => 'Paragraph'],
+        ]);
+
+        Assert::same('<h1>Title</h1><p>Paragraph</p>', $result);
+    }
+
+    public function testBuildWithAttributes(): void
+    {
+        $result = Html::build([
+            ['tag' => 'a', 'attributes' => ['href' => 'https://example.com'], 'content' => 'Link'],
+        ]);
+
+        Assert::same('<a href="https://example.com">Link</a>', $result);
+    }
+
+    public function testBuildNestedContent(): void
+    {
+        $result = Html::build([
+            ['tag' => 'div', 'content' => [
+                ['tag' => 'span', 'content' => 'Inner'],
+            ]],
+        ]);
+
+        Assert::same('<div><span>Inner</span></div>', $result);
+    }
+
+    public function testBuildEmptyArray(): void
+    {
+        Assert::same('', Html::build([]));
+    }
+
+    public function testLinkWithHref(): void
+    {
+        $result = Html::link('styles.css');
+
+        Assert::contains('href="styles.css"', $result);
+        Assert::contains('rel="stylesheet"', $result);
+        Assert::contains('type="text/css"', $result);
+    }
+
+    public function testLinkWithAllAttributes(): void
+    {
+        $result = Html::link('print.css', 'stylesheet', 'text/css', 'Print', 'print', 'en');
+
+        Assert::contains('href="print.css"', $result);
+        Assert::contains('title="Print"', $result);
+        Assert::contains('media="print"', $result);
+        Assert::contains('hreflang="en"', $result);
+    }
+
+    public function testLinkWithArrayAttributes(): void
+    {
+        $result = Html::link(['href' => 'custom.css', 'rel' => 'prefetch']);
+
+        Assert::contains('href="custom.css"', $result);
+        Assert::contains('rel="prefetch"', $result);
+    }
+
+    public function testScriptWithSrc(): void
+    {
+        $result = Html::script('app.js');
+
+        Assert::contains('src="app.js"', $result);
+        Assert::contains('<script', $result);
+        Assert::contains('</script>', $result);
+    }
+
+    public function testScriptWithContent(): void
+    {
+        $result = Html::script(content: 'alert("hi");');
+
+        Assert::same('<script>alert("hi");</script>', $result);
+    }
+
+    public function testScriptWithExtraAttributes(): void
+    {
+        $result = Html::script('app.js', '', ['defer' => true, 'async' => true]);
+
+        Assert::contains('defer', $result);
+        Assert::contains('async', $result);
+        Assert::contains('src="app.js"', $result);
+    }
+
+    public function testScriptWithNoSrc(): void
+    {
+        $result = Html::script();
+
+        Assert::same('<script></script>', $result);
+    }
 }
 
 (new HtmlTest())->run();

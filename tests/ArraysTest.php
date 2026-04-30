@@ -2999,6 +2999,93 @@ class ArraysTest extends TestCase
         // Zip uses numeric indices, ignoring keys
         Assert::same([[1, 'a'], [2, 'b']], $result);
     }
+
+    public function testSortByStringCriteria(): void
+    {
+        $array = [
+            ['name' => 'Charlie', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ];
+
+        Arrays::sortBy($array, 'name');
+
+        Assert::same('Alice', $array[0]['name']);
+        Assert::same('Bob', $array[1]['name']);
+        Assert::same('Charlie', $array[2]['name']);
+    }
+
+    public function testSortByCallableCriteria(): void
+    {
+        $array = [
+            ['name' => 'Charlie', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ];
+
+        Arrays::sortBy($array, fn($item) => $item['age']);
+
+        Assert::same(25, $array[0]['age']);
+        Assert::same(30, $array[1]['age']);
+        Assert::same(35, $array[2]['age']);
+    }
+
+    public function testSortByReverse(): void
+    {
+        $array = [
+            ['name' => 'Alice', 'score' => 80],
+            ['name' => 'Bob', 'score' => 95],
+            ['name' => 'Charlie', 'score' => 70],
+        ];
+
+        Arrays::sortBy($array, 'score', true);
+
+        Assert::same(95, $array[0]['score']);
+        Assert::same(80, $array[1]['score']);
+        Assert::same(70, $array[2]['score']);
+    }
+
+    public function testSortByMultipleCriteria(): void
+    {
+        $array = [
+            ['name' => 'Alice', 'age' => 30],
+            ['name' => 'Bob', 'age' => 25],
+            ['name' => 'Alice', 'age' => 25],
+        ];
+
+        Arrays::sortBy($array, ['name', 'age']);
+
+        Assert::same('Alice', $array[0]['name']);
+        Assert::same(25, $array[0]['age']);
+        Assert::same('Alice', $array[1]['name']);
+        Assert::same(30, $array[1]['age']);
+        Assert::same('Bob', $array[2]['name']);
+    }
+
+    public function testSortByNaturalFlag(): void
+    {
+        $array = [
+            ['version' => 'v2'],
+            ['version' => 'v10'],
+            ['version' => 'v1'],
+        ];
+
+        Arrays::sortBy($array, 'version', false, SORT_NATURAL);
+
+        Assert::same('v1', $array[0]['version']);
+        Assert::same('v2', $array[1]['version']);
+        Assert::same('v10', $array[2]['version']);
+    }
+
+    public function testSortByEmptyArray(): void
+    {
+        $array = [];
+
+        $result = Arrays::sortBy($array, 'name');
+
+        Assert::true($result);
+        Assert::same([], $array);
+    }
 }
 
 (new ArraysTest())->run();

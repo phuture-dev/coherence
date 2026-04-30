@@ -1999,6 +1999,31 @@ class StringsTest extends TestCase
         $original = 'hello';
         Assert::same($original, Strings::unwrap(Strings::wrap($original, '"'), '"'));
     }
+
+    public function testOfReturnsFluentStrings(): void
+    {
+        $result = Strings::of('hello');
+
+        Assert::type(FluentStrings::class, $result);
+    }
+
+    public function testOfChaining(): void
+    {
+        $result = Strings::of('  hello world  ')
+            ->trim()
+            ->upper()
+            ->get();
+
+        Assert::same('HELLO WORLD', $result);
+    }
+
+    public function testOfEmptyString(): void
+    {
+        $result = Strings::of('');
+
+        Assert::type(FluentStrings::class, $result);
+        Assert::same('', $result->get());
+    }
 }
 
 // Run the tests

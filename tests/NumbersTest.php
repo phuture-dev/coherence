@@ -568,6 +568,32 @@ class NumbersTest extends TestCase
         Assert::same('42', Numbers::trimTrailingZeros('42'));
         Assert::same('100', Numbers::trimTrailingZeros(100));
     }
+
+    public function testOfReturnsFluentNumbers(): void
+    {
+        $result = Numbers::of(10);
+
+        Assert::type(\Phuture\Coherence\Type\Numbers::class, $result);
+    }
+
+    public function testOfChaining(): void
+    {
+        $result = Numbers::of(10)
+            ->add(5)
+            ->multiply(2)
+            ->toNumber();
+
+        Assert::same(30.0, $result);
+    }
+
+    public function testOfWithFloat(): void
+    {
+        $result = Numbers::of(3.14)
+            ->floor()
+            ->toNumber();
+
+        Assert::same(3.0, $result);
+    }
 }
 
 (new NumbersTest())->run();

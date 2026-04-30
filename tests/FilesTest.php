@@ -1105,6 +1105,44 @@ class FilesTest extends TestCase
         Assert::same('locked content', file_get_contents($file));
     }
 
+    public function testOfReturnsFluentFiles(): void
+    {
+        $file = $this->tempDir . '/fluent_test.txt';
+        file_put_contents($file, 'test content');
+
+        $result = Files::of($file);
+
+        Assert::type(\Phuture\Coherence\Type\Files::class, $result);
+    }
+
+    public function testOfChaining(): void
+    {
+        $file = $this->tempDir . '/fluent_chain.txt';
+        file_put_contents($file, 'original');
+
+        $content = Files::of($file)
+            ->write('updated')
+            ->read();
+
+        Assert::same('updated', $content);
+    }
+
+    public function testOfThrowsForNonExistentFile(): void
+    {
+        Assert::exception(
+            fn () => Files::of('/nonexistent/path/file.txt'),
+            RuntimeException::class,
+        );
+    }
+
+    public function testOfThrowsForDirectory(): void
+    {
+        Assert::exception(
+            fn () => Files::of($this->tempDir),
+            RuntimeException::class,
+        );
+    }
+
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/coherence_files_test_' . uniqid();

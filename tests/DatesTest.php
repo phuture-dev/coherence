@@ -1528,6 +1528,31 @@ class DatesTest extends TestCase
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         Assert::same(Dates::toIso8601($date), Dates::toW3c($date));
     }
+
+    public function testOfReturnsFluentDates(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC');
+
+        Assert::type(\Phuture\Coherence\Type\Dates::class, $result);
+    }
+
+    public function testOfWithDateTimeImmutable(): void
+    {
+        $dt = new DateTimeImmutable('2026-04-21 14:30:00', new DateTimeZone('UTC'));
+        $result = Dates::of($dt);
+
+        Assert::type(\Phuture\Coherence\Type\Dates::class, $result);
+    }
+
+    public function testOfChaining(): void
+    {
+        $result = Dates::of('2026-04-21 14:30:00', 'UTC')
+            ->addDays(10)
+            ->startOfDay()
+            ->get();
+
+        Assert::same('2026-05-01 00:00:00', $result->format('Y-m-d H:i:s'));
+    }
 }
 
 (new DatesTest())->run();

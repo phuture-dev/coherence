@@ -1058,6 +1058,53 @@ class HashTest extends TestCase
         // Verify the salted hash
         Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
     }
+
+    public function testHmacCheckWithSaltValid(): void
+    {
+        $data = 'important message';
+        $key = 'secret-key';
+        $salt = 'random-salt-value';
+
+        $hash = Hash::hmacWithSalt($data, $key, $salt);
+
+        Assert::true(Hash::hmacCheckWithSalt($data, $key, $hash['hash'], $salt, $hash['algo']));
+    }
+
+    public function testHmacCheckWithSaltInvalid(): void
+    {
+        $data = 'important message';
+        $key = 'secret-key';
+        $salt = 'random-salt-value';
+
+        Assert::false(Hash::hmacCheckWithSalt($data, $key, 'wrong-hash', $salt));
+    }
+
+    public function testHmacCheckWithSaltEmptyHash(): void
+    {
+        Assert::false(Hash::hmacCheckWithSalt('data', 'key', '', 'salt'));
+    }
+
+    public function testHmacCheckWithSaltWrongData(): void
+    {
+        $data = 'original data';
+        $key = 'secret-key';
+        $salt = 'random-salt';
+
+        $hash = Hash::hmacWithSalt($data, $key, $salt);
+
+        Assert::false(Hash::hmacCheckWithSalt('tampered data', $key, $hash['hash'], $salt, $hash['algo']));
+    }
+
+    public function testHmacCheckWithSaltWrongKey(): void
+    {
+        $data = 'important message';
+        $key = 'secret-key';
+        $salt = 'random-salt-value';
+
+        $hash = Hash::hmacWithSalt($data, $key, $salt);
+
+        Assert::false(Hash::hmacCheckWithSalt($data, 'wrong-key', $hash['hash'], $salt, $hash['algo']));
+    }
 }
 
 // Run the tests

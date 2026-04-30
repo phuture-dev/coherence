@@ -6,7 +6,7 @@ namespace Phuture\Coherence\Tests\Type;
 
 use Phuture\Coherence\Files;
 use RecursiveIteratorIterator;
-use Tester\{Assert, TestCase};
+use Tester\{Assert, Environment, TestCase};
 use RecursiveDirectoryIterator;
 use Phuture\Coherence\Type\Files as FluentFiles;
 use Phuture\Coherence\Exception\RuntimeException;
@@ -291,6 +291,104 @@ class FilesTest extends TestCase
             ->read();
 
         Assert::same('Hello, fluent!', $content);
+    }
+
+    public function testChmodChangesPermissions(): void
+    {
+        $file = $this->tempDir . '/chmod_test.txt';
+        file_put_contents($file, 'test');
+
+        $result = Files::of($file)->chmod(0644);
+
+        Assert::type(FluentFiles::class, $result);
+        clearstatcache(true, $file);
+        Assert::same(0644, fileperms($file) & 0777);
+    }
+
+    public function testPrependAddsContentToStart(): void
+    {
+        $file = $this->tempDir . '/prepend_test.txt';
+        file_put_contents($file, 'world');
+
+        $content = Files::of($file)
+            ->prepend('hello ')
+            ->read();
+
+        Assert::same('hello world', $content);
+    }
+
+    public function testPrependToEmptyFile(): void
+    {
+        $file = $this->tempDir . '/prepend_empty.txt';
+        file_put_contents($file, '');
+
+        $content = Files::of($file)
+            ->prepend('first')
+            ->read();
+
+        Assert::same('first', $content);
+    }
+
+    public function testReplaceInFileWithString(): void
+    {
+        $file = $this->tempDir . '/replace_test.txt';
+        file_put_contents($file, 'Hello world');
+
+        $content = Files::of($file)
+            ->replaceInFile('world', 'universe')
+            ->read();
+
+        Assert::same('Hello universe', $content);
+    }
+
+    public function testReplaceInFileWithArrays(): void
+    {
+        $file = $this->tempDir . '/replace_array_test.txt';
+        file_put_contents($file, 'foo bar baz');
+
+        $content = Files::of($file)
+            ->replaceInFile(['foo', 'bar'], ['one', 'two'])
+            ->read();
+
+        Assert::same('one two baz', $content);
+    }
+
+    public function testChgrpReturnsSelf(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            Environment::skip('chgrp is not available on Windows');
+        }
+
+        $file = $this->tempDir . '/chgrp_test.txt';
+        file_put_contents($file, 'test');
+        $currentGroup = posix_getgrgid(filegroup($file))['name'] ?? '';
+
+        if ($currentGroup === '') {
+            Environment::skip('Cannot determine current group');
+        }
+
+        $result = Files::of($file)->chgrp($currentGroup);
+
+        Assert::type(FluentFiles::class, $result);
+    }
+
+    public function testChownReturnsSelf(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            Environment::skip('chown is not available on Windows');
+        }
+
+        $file = $this->tempDir . '/chown_test.txt';
+        file_put_contents($file, 'test');
+        $currentOwner = posix_getpwuid(fileowner($file))['name'] ?? '';
+
+        if ($currentOwner === '') {
+            Environment::skip('Cannot determine current owner');
+        }
+
+        $result = Files::of($file)->chown($currentOwner);
+
+        Assert::type(FluentFiles::class, $result);
     }
 
     protected function setUp(): void
