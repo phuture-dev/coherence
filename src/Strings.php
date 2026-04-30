@@ -1655,7 +1655,8 @@ class Strings extends StaticClass
      *
      * Strings::limitWords('The quick brown fox jumps', 3); // 'The quick brown'
      * Strings::limitWords('The quick brown fox jumps', 3, '...'); // 'The quick brown...'
-     * Strings::limitWords('Hi there', 5); // 'Hi there'
+     * Strings::limitWords('Hi there', 5); // 'Hi there' (no truncation, original string returned unchanged)
+     * Strings::limitWords('Hi there', 5, '...'); // 'Hi there' (no truncation, end marker not appended)
      * ```
      *
      * @param string $string The input string to limit
@@ -1677,7 +1678,7 @@ class Strings extends StaticClass
         $words = self::words($string);
 
         if (count($words) <= $limit) {
-            return implode(' ', $words);
+            return $string;
         }
 
         return implode(' ', array_slice($words, 0, $limit)) . $end;
@@ -2133,14 +2134,14 @@ class Strings extends StaticClass
      * use Phuture\Coherence\Strings;
      *
      * $pw = Strings::password(16);
-     * $pw = Strings::password(20, specialCharacters: '!@#$%^&*');
+     * $pw = Strings::password(20, includeSpecialCharacters: '!@#$%^&*');
      * ```
      *
      * @param int $length The total length of the password; must be greater than zero (default: 16)
-     * @param bool $requireUppercase Whether at least one uppercase letter is required (default: true)
-     * @param bool $requireLowercase Whether at least one lowercase letter is required (default: true)
-     * @param bool $requireDigits Whether at least one digit is required (default: true)
-     * @param string $specialCharacters The set of special characters to include (default: '!@#$%^&*()-_=+[]{}|;:,.<>?')
+     * @param bool $includeUppercase Whether at least one uppercase letter is included (default: true)
+     * @param bool $includeLowercase Whether at least one lowercase letter is included (default: true)
+     * @param bool $includeDigits Whether at least one digit is included (default: true)
+     * @param string $includeSpecialCharacters The set of special characters to include (default: '!@#$%^&*()-_=+[]{}|;:,.<>?')
      * @return string The generated password
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is too short for the enabled requirements
      * @throws \Random\RandomException If the system entropy source is unavailable
@@ -2148,32 +2149,32 @@ class Strings extends StaticClass
      */
     public static function password(
         int $length = 16,
-        bool $requireUppercase = true,
-        bool $requireLowercase = true,
-        bool $requireDigits = true,
-        string $specialCharacters = '!@#$%^&*()-_=+[]{}|;:,.<>?'
+        bool $includeUppercase = true,
+        bool $includeLowercase = true,
+        bool $includeDigits = true,
+        string $includeSpecialCharacters = '!@#$%^&*()-_=+[]{}|;:,.<>?'
     ): string {
         $requiredPools = [];
         $allCharacters = '';
 
-        if ($requireLowercase) {
+        if ($includeLowercase) {
             $requiredPools[] = 'abcdefghijklmnopqrstuvwxyz';
             $allCharacters .= 'abcdefghijklmnopqrstuvwxyz';
         }
 
-        if ($requireUppercase) {
+        if ($includeUppercase) {
             $requiredPools[] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $allCharacters .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         }
 
-        if ($requireDigits) {
+        if ($includeDigits) {
             $requiredPools[] = '0123456789';
             $allCharacters .= '0123456789';
         }
 
-        if ($specialCharacters !== '') {
-            $requiredPools[] = $specialCharacters;
-            $allCharacters .= $specialCharacters;
+        if ($includeSpecialCharacters !== '') {
+            $requiredPools[] = $includeSpecialCharacters;
+            $allCharacters .= $includeSpecialCharacters;
         }
 
         $requiredCount = count($requiredPools);
@@ -3008,9 +3009,9 @@ class Strings extends StaticClass
      * use Phuture\Coherence\Strings;
      * use Phuture\Coherence\Enum\UuidVersion;
      *
-     * Strings::uuid(); // e.g. '550e8400-e29b-41d4-a716-446655440000' (v4)
-     * Strings::uuid(UuidVersion::V4); // random UUID
-     * Strings::uuid(UuidVersion::V7); // time-ordered UUID
+     * Strings::uuid(); // e.g. 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'
+     * Strings::uuid(UuidVersion::V4); // e.g. 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+     * Strings::uuid(UuidVersion::V7); // e.g. '019f3e7a-9b2c-7d4e-a5f6-7890123456ab'
      * ```
      *
      * @param \Phuture\Coherence\Enum\UuidVersion $version The UUID version to generate (default: V4)

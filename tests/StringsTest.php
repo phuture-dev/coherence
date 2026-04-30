@@ -2093,7 +2093,7 @@ class StringsTest extends TestCase
 
     public function testPasswordWithoutSpecialCharacters(): void
     {
-        $pw = Strings::password(16, specialCharacters: '');
+        $pw = Strings::password(16, includeSpecialCharacters: '');
         Assert::same(16, strlen($pw));
         Assert::true((bool) preg_match('/[a-z]/', $pw));
         Assert::true((bool) preg_match('/[A-Z]/', $pw));
