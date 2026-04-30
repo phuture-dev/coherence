@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
+use Throwable;
 use WeakMap;
 use stdClass;
 use TypeError;
@@ -4355,6 +4356,20 @@ class Arrays extends StaticClass
             return (array) $value;
         }
 
+        // Handle classes with DeepClone
+        if (is_object($value)) {
+            try {
+                $reflection = new \ReflectionClass($value);
+                $isClass = $reflection->isUserDefined() && !$reflection->isAnonymous();
+
+                if ($isClass) {
+                    return deepclone_to_array($value);
+                }
+            } catch (\ReflectionException $e) {
+                // Nothing to do
+            }
+        }
+
         // Handle JSON strings
         if (is_string($value)) {
             $decoded = json_decode($value, true, self::RECURSION_LIMIT);
@@ -4434,6 +4449,18 @@ class Arrays extends StaticClass
      */
     public static function toObject(array $array): object
     {
+        // Validate if the given array is a DeepClone object
+        try {
+            $object = deepclone_from_array($array);
+
+            if (!empty($object) && is_object($object)) {
+                return $object;
+            }
+        } catch (Throwable $e) {
+            // Nothing to do
+        }
+
+        // Fallback to a stdClass object
         $result = new stdClass();
         self::toObjectRecursive($array, $result, 0);
 
