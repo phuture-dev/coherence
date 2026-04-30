@@ -412,6 +412,23 @@ class DatesTest extends TestCase
         Assert::same('Tuesday, 21-Apr-26 14:30:00 UTC', $result);
     }
 
+    public function testToTimestampForEpoch(): void
+    {
+        $result = $this->date('1970-01-01 00:00:00', 'UTC')
+            ->toTimestamp();
+
+        Assert::same(0, $result);
+    }
+
+    public function testToTimestampReturnsInt(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00', 'UTC')
+            ->toTimestamp();
+
+        Assert::type('int', $result);
+        Assert::same((int) (new DateTimeImmutable('2026-04-21 14:30:00', new DateTimeZone('UTC')))->format('U'), $result);
+    }
+
     public function testToTimeStringReturnsString(): void
     {
         $result = $this->date('2026-04-21 14:30:45')
@@ -445,23 +462,6 @@ class DatesTest extends TestCase
             ->toW3c();
 
         Assert::same('2026-04-21T14:30:00+00:00', $result);
-    }
-
-    public function testToTimestampReturnsInt(): void
-    {
-        $result = $this->date('2026-04-21 14:30:00', 'UTC')
-            ->toTimestamp();
-
-        Assert::type('int', $result);
-        Assert::same((int) (new DateTimeImmutable('2026-04-21 14:30:00', new DateTimeZone('UTC')))->format('U'), $result);
-    }
-
-    public function testToTimestampForEpoch(): void
-    {
-        $result = $this->date('1970-01-01 00:00:00', 'UTC')
-            ->toTimestamp();
-
-        Assert::same(0, $result);
     }
     private function date(string $dateString, string $timezone = 'UTC'): FluentDates
     {

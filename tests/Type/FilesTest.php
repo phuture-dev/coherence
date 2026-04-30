@@ -6,8 +6,8 @@ namespace Phuture\Coherence\Tests\Type;
 
 use Phuture\Coherence\Files;
 use RecursiveIteratorIterator;
-use Tester\{Assert, Environment, TestCase};
 use RecursiveDirectoryIterator;
+use Tester\{Assert, Environment, TestCase};
 use Phuture\Coherence\Type\Files as FluentFiles;
 use Phuture\Coherence\Exception\RuntimeException;
 
@@ -16,6 +16,56 @@ require __DIR__ . '/../bootstrap.php';
 class FilesTest extends TestCase
 {
     private string $tempDir;
+
+    public function testChgrpReturnsSelf(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            Environment::skip('chgrp is not available on Windows');
+        }
+
+        $file = $this->tempDir . '/chgrp_test.txt';
+        file_put_contents($file, 'test');
+        $currentGroup = posix_getgrgid(filegroup($file))['name'] ?? '';
+
+        if ($currentGroup === '') {
+            Environment::skip('Cannot determine current group');
+        }
+
+        $result = Files::of($file)->chgrp($currentGroup);
+
+        Assert::type(FluentFiles::class, $result);
+    }
+
+    public function testChmodChangesPermissions(): void
+    {
+        $file = $this->tempDir . '/chmod_test.txt';
+        file_put_contents($file, 'test');
+
+        $result = Files::of($file)->chmod(0644);
+
+        Assert::type(FluentFiles::class, $result);
+        clearstatcache(true, $file);
+        Assert::same(0644, fileperms($file) & 0777);
+    }
+
+    public function testChownReturnsSelf(): void
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            Environment::skip('chown is not available on Windows');
+        }
+
+        $file = $this->tempDir . '/chown_test.txt';
+        file_put_contents($file, 'test');
+        $currentOwner = posix_getpwuid(fileowner($file))['name'] ?? '';
+
+        if ($currentOwner === '') {
+            Environment::skip('Cannot determine current owner');
+        }
+
+        $result = Files::of($file)->chown($currentOwner);
+
+        Assert::type(FluentFiles::class, $result);
+    }
 
     public function testCopyKeepsOriginalPath(): void
     {
@@ -259,52 +309,6 @@ class FilesTest extends TestCase
         Assert::same(realpath($file), Files::of($file)->path());
     }
 
-    public function testRenameUpdatesPath(): void
-    {
-        $file = $this->tempDir . '/old.txt';
-        file_put_contents($file, 'content');
-
-        $path = Files::of($file)
-            ->rename('new.txt')
-            ->get();
-
-        Assert::same($this->tempDir . '/new.txt', $path);
-        Assert::false(file_exists($file));
-        Assert::true(file_exists($this->tempDir . '/new.txt'));
-    }
-
-    public function testSizeReturnsBytes(): void
-    {
-        $file = $this->tempDir . '/sized.txt';
-        file_put_contents($file, str_repeat('x', 100));
-
-        Assert::same(100, Files::of($file)->size());
-    }
-
-    public function testWriteAndRead(): void
-    {
-        $file = $this->tempDir . '/write.txt';
-        file_put_contents($file, 'initial');
-
-        $content = Files::of($file)
-            ->write('Hello, fluent!')
-            ->read();
-
-        Assert::same('Hello, fluent!', $content);
-    }
-
-    public function testChmodChangesPermissions(): void
-    {
-        $file = $this->tempDir . '/chmod_test.txt';
-        file_put_contents($file, 'test');
-
-        $result = Files::of($file)->chmod(0644);
-
-        Assert::type(FluentFiles::class, $result);
-        clearstatcache(true, $file);
-        Assert::same(0644, fileperms($file) & 0777);
-    }
-
     public function testPrependAddsContentToStart(): void
     {
         $file = $this->tempDir . '/prepend_test.txt';
@@ -329,16 +333,18 @@ class FilesTest extends TestCase
         Assert::same('first', $content);
     }
 
-    public function testReplaceInFileWithString(): void
+    public function testRenameUpdatesPath(): void
     {
-        $file = $this->tempDir . '/replace_test.txt';
-        file_put_contents($file, 'Hello world');
+        $file = $this->tempDir . '/old.txt';
+        file_put_contents($file, 'content');
 
-        $content = Files::of($file)
-            ->replaceInFile('world', 'universe')
-            ->read();
+        $path = Files::of($file)
+            ->rename('new.txt')
+            ->get();
 
-        Assert::same('Hello universe', $content);
+        Assert::same($this->tempDir . '/new.txt', $path);
+        Assert::false(file_exists($file));
+        Assert::true(file_exists($this->tempDir . '/new.txt'));
     }
 
     public function testReplaceInFileWithArrays(): void
@@ -353,42 +359,36 @@ class FilesTest extends TestCase
         Assert::same('one two baz', $content);
     }
 
-    public function testChgrpReturnsSelf(): void
+    public function testReplaceInFileWithString(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            Environment::skip('chgrp is not available on Windows');
-        }
+        $file = $this->tempDir . '/replace_test.txt';
+        file_put_contents($file, 'Hello world');
 
-        $file = $this->tempDir . '/chgrp_test.txt';
-        file_put_contents($file, 'test');
-        $currentGroup = posix_getgrgid(filegroup($file))['name'] ?? '';
+        $content = Files::of($file)
+            ->replaceInFile('world', 'universe')
+            ->read();
 
-        if ($currentGroup === '') {
-            Environment::skip('Cannot determine current group');
-        }
-
-        $result = Files::of($file)->chgrp($currentGroup);
-
-        Assert::type(FluentFiles::class, $result);
+        Assert::same('Hello universe', $content);
     }
 
-    public function testChownReturnsSelf(): void
+    public function testSizeReturnsBytes(): void
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            Environment::skip('chown is not available on Windows');
-        }
+        $file = $this->tempDir . '/sized.txt';
+        file_put_contents($file, str_repeat('x', 100));
 
-        $file = $this->tempDir . '/chown_test.txt';
-        file_put_contents($file, 'test');
-        $currentOwner = posix_getpwuid(fileowner($file))['name'] ?? '';
+        Assert::same(100, Files::of($file)->size());
+    }
 
-        if ($currentOwner === '') {
-            Environment::skip('Cannot determine current owner');
-        }
+    public function testWriteAndRead(): void
+    {
+        $file = $this->tempDir . '/write.txt';
+        file_put_contents($file, 'initial');
 
-        $result = Files::of($file)->chown($currentOwner);
+        $content = Files::of($file)
+            ->write('Hello, fluent!')
+            ->read();
 
-        Assert::type(FluentFiles::class, $result);
+        Assert::same('Hello, fluent!', $content);
     }
 
     protected function setUp(): void

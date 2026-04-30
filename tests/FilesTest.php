@@ -775,6 +775,44 @@ class FilesTest extends TestCase
         Assert::same($ds . 'a' . $ds . 'b' . $ds, Files::normalizePath('/a//b/'));
     }
 
+    public function testOfChaining(): void
+    {
+        $file = $this->tempDir . '/fluent_chain.txt';
+        file_put_contents($file, 'original');
+
+        $content = Files::of($file)
+            ->write('updated')
+            ->read();
+
+        Assert::same('updated', $content);
+    }
+
+    public function testOfReturnsFluentFiles(): void
+    {
+        $file = $this->tempDir . '/fluent_test.txt';
+        file_put_contents($file, 'test content');
+
+        $result = Files::of($file);
+
+        Assert::type(\Phuture\Coherence\Type\Files::class, $result);
+    }
+
+    public function testOfThrowsForDirectory(): void
+    {
+        Assert::exception(
+            fn () => Files::of($this->tempDir),
+            RuntimeException::class,
+        );
+    }
+
+    public function testOfThrowsForNonExistentFile(): void
+    {
+        Assert::exception(
+            fn () => Files::of('/nonexistent/path/file.txt'),
+            RuntimeException::class,
+        );
+    }
+
     public function testPlatformSlashes(): void
     {
         $expected = 'path' . DIRECTORY_SEPARATOR . 'to' . DIRECTORY_SEPARATOR . 'file.txt';
@@ -1103,44 +1141,6 @@ class FilesTest extends TestCase
         Files::write($file, 'locked content', 0666, true);
 
         Assert::same('locked content', file_get_contents($file));
-    }
-
-    public function testOfReturnsFluentFiles(): void
-    {
-        $file = $this->tempDir . '/fluent_test.txt';
-        file_put_contents($file, 'test content');
-
-        $result = Files::of($file);
-
-        Assert::type(\Phuture\Coherence\Type\Files::class, $result);
-    }
-
-    public function testOfChaining(): void
-    {
-        $file = $this->tempDir . '/fluent_chain.txt';
-        file_put_contents($file, 'original');
-
-        $content = Files::of($file)
-            ->write('updated')
-            ->read();
-
-        Assert::same('updated', $content);
-    }
-
-    public function testOfThrowsForNonExistentFile(): void
-    {
-        Assert::exception(
-            fn () => Files::of('/nonexistent/path/file.txt'),
-            RuntimeException::class,
-        );
-    }
-
-    public function testOfThrowsForDirectory(): void
-    {
-        Assert::exception(
-            fn () => Files::of($this->tempDir),
-            RuntimeException::class,
-        );
     }
 
     protected function setUp(): void

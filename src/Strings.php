@@ -2058,70 +2058,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Returns the position of the first occurrence of a search value.
-     *
-     * Returns false when the search value is not found.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::position('hello world', 'world'); // 6
-     * Strings::position('hello world', 'xyz'); // false
-     * Strings::position('hello hello', 'hello', 3); // 6
-     * ```
-     *
-     * @param string $string The input string to search within
-     * @param string $search The value to search for
-     * @param int $offset The offset from the start to begin searching (default: 0)
-     * @return int|false The position of the first occurrence, or false if not found
-     * @see \Phuture\Coherence\Strings::lastPosition()
-     */
-    public static function position(string $string, string $search, int $offset = 0): int|false
-    {
-        return mb_strpos($string, $search, $offset, 'UTF-8');
-    }
-
-    /**
-     * Generates a cryptographically random alphanumeric string.
-     *
-     * Uses `random_int()` for all character selection. Throws `RandomException`
-     * if the system entropy source fails. The character pool is `[0-9a-zA-Z]` (62 characters).
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::random(16); // e.g. 'aB3xK9mNpQ2rZ5wY'
-     * Strings::random(8); // e.g. 'a1B2c3D4'
-     * ```
-     *
-     * @param int $length The length of the random string to generate; must be greater than zero (default: 16)
-     * @return string The random alphanumeric string
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is less than or equal to zero
-     * @throws \Random\RandomException If the system entropy source is unavailable
-     * @see \Phuture\Coherence\Strings::uuid()
-     */
-    public static function random(int $length = 16): string
-    {
-        if ($length <= 0) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Length must be greater than zero"
-            );
-        }
-
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $characterLength = strlen($characters);
-        $result = '';
-
-        for ($i = 0; $i < $length; $i++) {
-            $result .= $characters[random_int(0, $characterLength - 1)];
-        }
-
-        return $result;
-    }
-
-    /**
      * Generates a cryptographically secure password with configurable character requirements.
      *
      * Produces a random password that is guaranteed to contain at least one character from
@@ -2198,6 +2134,70 @@ class Strings extends StaticClass
         }
 
         return str_shuffle($password);
+    }
+
+    /**
+     * Returns the position of the first occurrence of a search value.
+     *
+     * Returns false when the search value is not found.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::position('hello world', 'world'); // 6
+     * Strings::position('hello world', 'xyz'); // false
+     * Strings::position('hello hello', 'hello', 3); // 6
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param string $search The value to search for
+     * @param int $offset The offset from the start to begin searching (default: 0)
+     * @return int|false The position of the first occurrence, or false if not found
+     * @see \Phuture\Coherence\Strings::lastPosition()
+     */
+    public static function position(string $string, string $search, int $offset = 0): int|false
+    {
+        return mb_strpos($string, $search, $offset, 'UTF-8');
+    }
+
+    /**
+     * Generates a cryptographically random alphanumeric string.
+     *
+     * Uses `random_int()` for all character selection. Throws `RandomException`
+     * if the system entropy source fails. The character pool is `[0-9a-zA-Z]` (62 characters).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::random(16); // e.g. 'aB3xK9mNpQ2rZ5wY'
+     * Strings::random(8); // e.g. 'a1B2c3D4'
+     * ```
+     *
+     * @param int $length The length of the random string to generate; must be greater than zero (default: 16)
+     * @return string The random alphanumeric string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is less than or equal to zero
+     * @throws \Random\RandomException If the system entropy source is unavailable
+     * @see \Phuture\Coherence\Strings::uuid()
+     */
+    public static function random(int $length = 16): string
+    {
+        if ($length <= 0) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Length must be greater than zero"
+            );
+        }
+
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characterLength = strlen($characters);
+        $result = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $result .= $characters[random_int(0, $characterLength - 1)];
+        }
+
+        return $result;
     }
 
     /**

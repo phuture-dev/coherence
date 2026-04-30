@@ -367,6 +367,32 @@ class NumbersTest extends TestCase
         Assert::same('10.0000000000', Numbers::multiply(2.5, 4.0));
     }
 
+    public function testOfChaining(): void
+    {
+        $result = Numbers::of(10)
+            ->add(5)
+            ->multiply(2)
+            ->toNumber();
+
+        Assert::same(30.0, $result);
+    }
+
+    public function testOfReturnsFluentNumbers(): void
+    {
+        $result = Numbers::of(10);
+
+        Assert::type(\Phuture\Coherence\Type\Numbers::class, $result);
+    }
+
+    public function testOfWithFloat(): void
+    {
+        $result = Numbers::of(3.14)
+            ->floor()
+            ->toNumber();
+
+        Assert::same(3.0, $result);
+    }
+
     public function testOpposite(): void
     {
         Assert::same(-5, Numbers::opposite(5));
@@ -567,32 +593,6 @@ class NumbersTest extends TestCase
     {
         Assert::same('42', Numbers::trimTrailingZeros('42'));
         Assert::same('100', Numbers::trimTrailingZeros(100));
-    }
-
-    public function testOfReturnsFluentNumbers(): void
-    {
-        $result = Numbers::of(10);
-
-        Assert::type(\Phuture\Coherence\Type\Numbers::class, $result);
-    }
-
-    public function testOfChaining(): void
-    {
-        $result = Numbers::of(10)
-            ->add(5)
-            ->multiply(2)
-            ->toNumber();
-
-        Assert::same(30.0, $result);
-    }
-
-    public function testOfWithFloat(): void
-    {
-        $result = Numbers::of(3.14)
-            ->floor()
-            ->toNumber();
-
-        Assert::same(3.0, $result);
     }
 }
 

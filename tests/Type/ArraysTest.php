@@ -803,6 +803,65 @@ class ArraysTest extends TestCase
         Assert::same(['short' => 'a', 'medium' => 'bb', 'long' => 'ccc'], $result);
     }
 
+    public function testSortByCallableCriteria(): void
+    {
+        $data = new Arrays([
+            ['name' => 'Charlie', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ]);
+
+        $result = $data->sortBy(fn ($item) => $item['age'])->toArray();
+
+        Assert::same(25, $result[0]['age']);
+        Assert::same(30, $result[1]['age']);
+        Assert::same(35, $result[2]['age']);
+    }
+
+    public function testSortByChaining(): void
+    {
+        $data = new Arrays([
+            ['name' => 'Charlie', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ]);
+
+        $result = $data->sortBy('name')->values()->toArray();
+
+        Assert::count(3, $result);
+        Assert::same('Alice', $result[0]['name']);
+    }
+
+    public function testSortByReverse(): void
+    {
+        $data = new Arrays([
+            ['name' => 'Alice', 'score' => 80],
+            ['name' => 'Bob', 'score' => 95],
+            ['name' => 'Charlie', 'score' => 70],
+        ]);
+
+        $result = $data->sortBy('score', true)->toArray();
+
+        Assert::same(95, $result[0]['score']);
+        Assert::same(80, $result[1]['score']);
+        Assert::same(70, $result[2]['score']);
+    }
+
+    public function testSortByStringCriteria(): void
+    {
+        $data = new Arrays([
+            ['name' => 'Charlie', 'age' => 30],
+            ['name' => 'Alice', 'age' => 25],
+            ['name' => 'Bob', 'age' => 35],
+        ]);
+
+        $result = $data->sortBy('name')->toArray();
+
+        Assert::same('Alice', $result[0]['name']);
+        Assert::same('Bob', $result[1]['name']);
+        Assert::same('Charlie', $result[2]['name']);
+    }
+
     public function testSortKeys(): void
     {
         $data = new Arrays(['c' => 'cherry', 'a' => 'apple', 'b' => 'banana']);
@@ -1170,65 +1229,6 @@ class ArraysTest extends TestCase
         $data = new Arrays(['apple', 'banana', 'cherry']);
         $result = $data->wrap()->toArray();
         Assert::same(['apple', 'banana', 'cherry'], $result);
-    }
-
-    public function testSortByStringCriteria(): void
-    {
-        $data = new Arrays([
-            ['name' => 'Charlie', 'age' => 30],
-            ['name' => 'Alice', 'age' => 25],
-            ['name' => 'Bob', 'age' => 35],
-        ]);
-
-        $result = $data->sortBy('name')->toArray();
-
-        Assert::same('Alice', $result[0]['name']);
-        Assert::same('Bob', $result[1]['name']);
-        Assert::same('Charlie', $result[2]['name']);
-    }
-
-    public function testSortByCallableCriteria(): void
-    {
-        $data = new Arrays([
-            ['name' => 'Charlie', 'age' => 30],
-            ['name' => 'Alice', 'age' => 25],
-            ['name' => 'Bob', 'age' => 35],
-        ]);
-
-        $result = $data->sortBy(fn($item) => $item['age'])->toArray();
-
-        Assert::same(25, $result[0]['age']);
-        Assert::same(30, $result[1]['age']);
-        Assert::same(35, $result[2]['age']);
-    }
-
-    public function testSortByReverse(): void
-    {
-        $data = new Arrays([
-            ['name' => 'Alice', 'score' => 80],
-            ['name' => 'Bob', 'score' => 95],
-            ['name' => 'Charlie', 'score' => 70],
-        ]);
-
-        $result = $data->sortBy('score', true)->toArray();
-
-        Assert::same(95, $result[0]['score']);
-        Assert::same(80, $result[1]['score']);
-        Assert::same(70, $result[2]['score']);
-    }
-
-    public function testSortByChaining(): void
-    {
-        $data = new Arrays([
-            ['name' => 'Charlie', 'age' => 30],
-            ['name' => 'Alice', 'age' => 25],
-            ['name' => 'Bob', 'age' => 35],
-        ]);
-
-        $result = $data->sortBy('name')->values()->toArray();
-
-        Assert::count(3, $result);
-        Assert::same('Alice', $result[0]['name']);
     }
 }
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests;
 
 use Phuture\Coherence\Strings;
-use Phuture\Coherence\Enum\UuidVersion;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Enum\UuidVersion;
 use Phuture\Coherence\Type\Strings as FluentStrings;
 
 require __DIR__ . '/bootstrap.php';
@@ -304,6 +304,12 @@ class StringsTest extends TestCase
         Assert::same(0, Strings::compare('', ''));
         Assert::true(Strings::compare('', 'a') < 0);
         Assert::true(Strings::compare('a', '') > 0);
+    }
+
+    public function testCompareMultibyte(): void
+    {
+        Assert::same(0, Strings::compare('ñaño', 'ñaño'));
+        Assert::true(Strings::compare('hello', 'ñoño') !== 0);
     }
 
     public function testCountOccurrences(): void
@@ -660,6 +666,12 @@ class StringsTest extends TestCase
         Assert::same('User Profile Data', Strings::headline('user_profile_data'));
     }
 
+    public function testHeadlineCamelCase(): void
+    {
+        Assert::same('Hello World', Strings::headline('helloWorld'));
+        Assert::same('User Profile Data', Strings::headline('userProfileData'));
+    }
+
     public function testHeadlineEmpty(): void
     {
         Assert::same('', Strings::headline(''));
@@ -990,6 +1002,13 @@ class StringsTest extends TestCase
         Assert::false(Strings::isUuid(''));
     }
 
+    public function testIsWithEmptyStrings(): void
+    {
+        Assert::true(Strings::is('', ''));
+        Assert::true(Strings::is('hello', '*'));
+        Assert::false(Strings::is('hello', ''));
+    }
+
     public function testKebab(): void
     {
         Assert::same('hello-world', Strings::kebab('helloWorld'));
@@ -1077,6 +1096,40 @@ class StringsTest extends TestCase
         );
     }
 
+    public function testLimitWords(): void
+    {
+        Assert::same('The quick brown', Strings::limitWords('The quick brown fox jumps', 3));
+        Assert::same('The quick brown...', Strings::limitWords('The quick brown fox jumps', 3, '...'));
+        Assert::same('Hi there', Strings::limitWords('Hi there', 5));
+        Assert::same('hello', Strings::limitWords('hello', 1));
+    }
+
+    public function testLimitWordsEmpty(): void
+    {
+        Assert::same('', Strings::limitWords('', 3));
+    }
+
+    public function testLimitWordsNegativeThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::limitWords('hello', -1),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testLimitWordsZeroThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::limitWords('hello', 0),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testLimitZero(): void
+    {
+        Assert::same('', Strings::limit('Hello World', 0));
+    }
+
     public function testLower(): void
     {
         Assert::same('hello world', Strings::lower('HELLO WORLD'));
@@ -1152,6 +1205,11 @@ class StringsTest extends TestCase
         Assert::same('123456***0', Strings::mask('1234567890', '*', -4, 3));
     }
 
+    public function testMaskOffsetBeyondLength(): void
+    {
+        Assert::same('hello', Strings::mask('hello', '*', 100));
+    }
+
     public function testMatches(): void
     {
         Assert::true(Strings::matches('user_123', '/^user_\d+$/'));
@@ -1183,6 +1241,31 @@ class StringsTest extends TestCase
     public function testNormalizeNewLinesNoLineEndings(): void
     {
         Assert::same('hello world', Strings::normalizeNewLines('hello world'));
+    }
+
+    public function testOfChaining(): void
+    {
+        $result = Strings::of('  hello world  ')
+            ->trim()
+            ->upper()
+            ->get();
+
+        Assert::same('HELLO WORLD', $result);
+    }
+
+    public function testOfEmptyString(): void
+    {
+        $result = Strings::of('');
+
+        Assert::type(FluentStrings::class, $result);
+        Assert::same('', $result->get());
+    }
+
+    public function testOfReturnsFluentStrings(): void
+    {
+        $result = Strings::of('hello');
+
+        Assert::type(FluentStrings::class, $result);
     }
 
     public function testPad(): void
@@ -1266,6 +1349,49 @@ class StringsTest extends TestCase
     public function testPascalEmpty(): void
     {
         Assert::same('', Strings::pascal(''));
+    }
+
+    public function testPassword(): void
+    {
+        $pw = Strings::password(16);
+        Assert::same(16, strlen($pw));
+    }
+
+    public function testPasswordCustomLength(): void
+    {
+        Assert::same(8, strlen(Strings::password(8)));
+        Assert::same(32, strlen(Strings::password(32)));
+    }
+
+    public function testPasswordDefaultRequirements(): void
+    {
+        $pw = Strings::password(20);
+        Assert::true((bool) preg_match('/[a-z]/', $pw));
+        Assert::true((bool) preg_match('/[A-Z]/', $pw));
+        Assert::true((bool) preg_match('/[0-9]/', $pw));
+        Assert::true((bool) preg_match('/[^a-zA-Z0-9]/', $pw));
+    }
+
+    public function testPasswordProducesUniqueValues(): void
+    {
+        Assert::notSame(Strings::password(32), Strings::password(32));
+    }
+
+    public function testPasswordTooShortThrows(): void
+    {
+        Assert::throws(
+            static fn () => Strings::password(2),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testPasswordWithoutSpecialCharacters(): void
+    {
+        $pw = Strings::password(16, includeSpecialCharacters: '');
+        Assert::same(16, strlen($pw));
+        Assert::true((bool) preg_match('/[a-z]/', $pw));
+        Assert::true((bool) preg_match('/[A-Z]/', $pw));
+        Assert::true((bool) preg_match('/[0-9]/', $pw));
     }
 
     public function testPosition(): void
@@ -1403,6 +1529,12 @@ class StringsTest extends TestCase
     public function testReplaceArrayFewerReplacementsThanOccurrences(): void
     {
         Assert::same('Year: 2026, Month: ?', Strings::replaceArray('?', ['2026'], 'Year: ?, Month: ?'));
+    }
+
+    public function testReplaceArrayMultibyte(): void
+    {
+        Assert::same('ñoño X', Strings::replaceArray('?', ['X'], 'ñoño ?'));
+        Assert::same('Xñoño', Strings::replaceArray('hello', ['X'], 'helloñoño'));
     }
 
     public function testReplaceAt(): void
@@ -1575,6 +1707,13 @@ class StringsTest extends TestCase
         Assert::same($original, Strings::snake(Strings::camel($original)));
     }
 
+    public function testSnakeConsecutiveUppercase(): void
+    {
+        Assert::same('xml_parser', Strings::snake('XMLParser'));
+        Assert::same('http_response', Strings::snake('HTTPResponse'));
+        Assert::same('pdf_parser', Strings::snake('PDFParser'));
+    }
+
     public function testSnakeCustomDelimiter(): void
     {
         Assert::same('hello-world', Strings::snake('helloWorld', '-'));
@@ -1680,6 +1819,11 @@ class StringsTest extends TestCase
     {
         Assert::same('hi earth', Strings::swap('hello world', ['hello' => 'hi', 'world' => 'earth']));
         Assert::same('hello world', Strings::swap('foo bar', ['foo' => 'hello', 'bar' => 'world']));
+    }
+
+    public function testSwapAtomic(): void
+    {
+        Assert::same('world', Strings::swap('hello', ['hello' => 'world', 'world' => 'foo']));
     }
 
     public function testSwapChainedReplacementDoesNotCorrupt(): void
@@ -1859,12 +2003,50 @@ class StringsTest extends TestCase
         Assert::true(Strings::isUuid($uuid));
     }
 
+    public function testUuidDefault(): void
+    {
+        $uuid = Strings::uuid();
+        Assert::same(36, Strings::length($uuid));
+        Assert::true(Strings::isUuid($uuid));
+    }
+
     public function testUuidIsValidV4(): void
     {
         // Version 4 UUID has '4' at position 14 and [89ab] at position 19
         $uuid = Strings::uuid();
         Assert::same('4', Strings::charAt($uuid, 14));
         Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+    }
+
+    public function testUuidProducesUniqueValues(): void
+    {
+        Assert::notSame(Strings::uuid(), Strings::uuid());
+    }
+
+    public function testUuidV4(): void
+    {
+        $uuid = Strings::uuid(UuidVersion::V4);
+        Assert::true(Strings::isUuid($uuid));
+        Assert::same('4', Strings::charAt($uuid, 14));
+        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+    }
+
+    public function testUuidV7(): void
+    {
+        $uuid = Strings::uuid(UuidVersion::V7);
+        Assert::true(Strings::isUuid($uuid));
+        Assert::same('7', Strings::charAt($uuid, 14));
+        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+    }
+
+    public function testUuidV7IsTimeOrdered(): void
+    {
+        $uuid1 = Strings::uuid(UuidVersion::V7);
+        usleep(1000);
+        $uuid2 = Strings::uuid(UuidVersion::V7);
+        $prefix1 = Strings::before($uuid1, '-');
+        $prefix2 = Strings::before($uuid2, '-');
+        Assert::true($prefix2 >= $prefix1);
     }
 
     public function testWordCount(): void
@@ -1944,6 +2126,11 @@ class StringsTest extends TestCase
         Assert::same('Hi', Strings::wordWrap('Hi', 75));
     }
 
+    public function testWordWrapWhitespace(): void
+    {
+        Assert::same("hello\nworld", Strings::wordWrap("hello\tworld", 10));
+    }
+
     public function testWordWrapZeroWidthThrows(): void
     {
         Assert::throws(
@@ -1967,193 +2154,6 @@ class StringsTest extends TestCase
     {
         $original = 'hello';
         Assert::same($original, Strings::unwrap(Strings::wrap($original, '"'), '"'));
-    }
-
-    public function testOfReturnsFluentStrings(): void
-    {
-        $result = Strings::of('hello');
-
-        Assert::type(FluentStrings::class, $result);
-    }
-
-    public function testOfChaining(): void
-    {
-        $result = Strings::of('  hello world  ')
-            ->trim()
-            ->upper()
-            ->get();
-
-        Assert::same('HELLO WORLD', $result);
-    }
-
-    public function testOfEmptyString(): void
-    {
-        $result = Strings::of('');
-
-        Assert::type(FluentStrings::class, $result);
-        Assert::same('', $result->get());
-    }
-
-    public function testHeadlineCamelCase(): void
-    {
-        Assert::same('Hello World', Strings::headline('helloWorld'));
-        Assert::same('User Profile Data', Strings::headline('userProfileData'));
-    }
-
-    public function testSnakeConsecutiveUppercase(): void
-    {
-        Assert::same('xml_parser', Strings::snake('XMLParser'));
-        Assert::same('http_response', Strings::snake('HTTPResponse'));
-        Assert::same('pdf_parser', Strings::snake('PDFParser'));
-    }
-
-    public function testReplaceArrayMultibyte(): void
-    {
-        Assert::same('ñoño X', Strings::replaceArray('?', ['X'], 'ñoño ?'));
-        Assert::same('Xñoño', Strings::replaceArray('hello', ['X'], 'helloñoño'));
-    }
-
-    public function testSwapAtomic(): void
-    {
-        Assert::same('world', Strings::swap('hello', ['hello' => 'world', 'world' => 'foo']));
-    }
-
-    public function testWordWrapWhitespace(): void
-    {
-        Assert::same("hello\nworld", Strings::wordWrap("hello\tworld", 10));
-    }
-
-    public function testLimitZero(): void
-    {
-        Assert::same('', Strings::limit('Hello World', 0));
-    }
-
-    public function testLimitWords(): void
-    {
-        Assert::same('The quick brown', Strings::limitWords('The quick brown fox jumps', 3));
-        Assert::same('The quick brown...', Strings::limitWords('The quick brown fox jumps', 3, '...'));
-        Assert::same('Hi there', Strings::limitWords('Hi there', 5));
-        Assert::same('hello', Strings::limitWords('hello', 1));
-    }
-
-    public function testLimitWordsNegativeThrows(): void
-    {
-        Assert::throws(
-            static fn () => Strings::limitWords('hello', -1),
-            \Phuture\Coherence\Exception\InvalidArgumentException::class
-        );
-    }
-
-    public function testLimitWordsZeroThrows(): void
-    {
-        Assert::throws(
-            static fn () => Strings::limitWords('hello', 0),
-            \Phuture\Coherence\Exception\InvalidArgumentException::class
-        );
-    }
-
-    public function testLimitWordsEmpty(): void
-    {
-        Assert::same('', Strings::limitWords('', 3));
-    }
-
-    public function testPassword(): void
-    {
-        $pw = Strings::password(16);
-        Assert::same(16, strlen($pw));
-    }
-
-    public function testPasswordDefaultRequirements(): void
-    {
-        $pw = Strings::password(20);
-        Assert::true((bool) preg_match('/[a-z]/', $pw));
-        Assert::true((bool) preg_match('/[A-Z]/', $pw));
-        Assert::true((bool) preg_match('/[0-9]/', $pw));
-        Assert::true((bool) preg_match('/[^a-zA-Z0-9]/', $pw));
-    }
-
-    public function testPasswordCustomLength(): void
-    {
-        Assert::same(8, strlen(Strings::password(8)));
-        Assert::same(32, strlen(Strings::password(32)));
-    }
-
-    public function testPasswordTooShortThrows(): void
-    {
-        Assert::throws(
-            static fn () => Strings::password(2),
-            \Phuture\Coherence\Exception\InvalidArgumentException::class
-        );
-    }
-
-    public function testPasswordProducesUniqueValues(): void
-    {
-        Assert::notSame(Strings::password(32), Strings::password(32));
-    }
-
-    public function testPasswordWithoutSpecialCharacters(): void
-    {
-        $pw = Strings::password(16, includeSpecialCharacters: '');
-        Assert::same(16, strlen($pw));
-        Assert::true((bool) preg_match('/[a-z]/', $pw));
-        Assert::true((bool) preg_match('/[A-Z]/', $pw));
-        Assert::true((bool) preg_match('/[0-9]/', $pw));
-    }
-
-    public function testUuidDefault(): void
-    {
-        $uuid = Strings::uuid();
-        Assert::same(36, Strings::length($uuid));
-        Assert::true(Strings::isUuid($uuid));
-    }
-
-    public function testUuidV4(): void
-    {
-        $uuid = Strings::uuid(UuidVersion::V4);
-        Assert::true(Strings::isUuid($uuid));
-        Assert::same('4', Strings::charAt($uuid, 14));
-        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
-    }
-
-    public function testUuidV7(): void
-    {
-        $uuid = Strings::uuid(UuidVersion::V7);
-        Assert::true(Strings::isUuid($uuid));
-        Assert::same('7', Strings::charAt($uuid, 14));
-        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
-    }
-
-    public function testUuidV7IsTimeOrdered(): void
-    {
-        $uuid1 = Strings::uuid(UuidVersion::V7);
-        usleep(1000);
-        $uuid2 = Strings::uuid(UuidVersion::V7);
-        $prefix1 = Strings::before($uuid1, '-');
-        $prefix2 = Strings::before($uuid2, '-');
-        Assert::true($prefix2 >= $prefix1);
-    }
-
-    public function testUuidProducesUniqueValues(): void
-    {
-        Assert::notSame(Strings::uuid(), Strings::uuid());
-    }
-
-    public function testIsWithEmptyStrings(): void
-    {
-        Assert::true(Strings::is('', ''));
-        Assert::true(Strings::is('hello', '*'));
-        Assert::false(Strings::is('hello', ''));
-    }
-
-    public function testMaskOffsetBeyondLength(): void
-    {
-        Assert::same('hello', Strings::mask('hello', '*', 100));
-    }
-
-    public function testCompareMultibyte(): void
-    {
-        Assert::same(0, Strings::compare('ñaño', 'ñaño'));
-        Assert::true(Strings::compare('hello', 'ñoño') !== 0);
     }
 }
 
