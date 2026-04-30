@@ -25,7 +25,8 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  * - **Case Conversion**: camel, snake, kebab, pascal, headline
  * - **Splitting & Joining**: Split strings into arrays by patterns or delimiters
  * - **Counting & Comparison**: Count occurrences, compare strings, check equality
- * - **Truncation & Wrapping**: Limit length, wrap text, and extract excerpts * - **Testing & Checking**: Validate URLs, emails, UUIDs, ASCII, JSON, and more
+ * - **Truncation & Wrapping**: Limit length, wrap text, and extract excerpts
+ * - **Testing & Checking**: Validate URLs, emails, UUIDs, ASCII, JSON, and more
  * - **Encoding & Conversion**: Transliterate to ASCII, generate slugs
  * - **Miscellaneous**: Mask, random strings, UUIDs, chunking, and swapping
  *
