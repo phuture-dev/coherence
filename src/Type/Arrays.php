@@ -651,11 +651,11 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      * while string keys are always preserved. Set the preserveKeys parameter to true to maintain the
      * original numeric key associations.
      *
-     * @param bool $preserveKeys Whether to preserve numeric keys (default: true)
+     * @param bool $preserveKeys Whether to preserve numeric keys (default: false)
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::reverse()
      */
-    public function reverse(bool $preserveKeys = true): self
+    public function reverse(bool $preserveKeys = false): self
     {
         $this->data = Transformer::reverse($this->data, $preserveKeys);
 

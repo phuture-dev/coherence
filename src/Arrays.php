@@ -242,7 +242,7 @@ class Arrays extends StaticClass
             // Support both array and object access
             $keyValue = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
 
-            if ($keyValue === null) {
+            if (!is_string($keyValue) && !is_int($keyValue)) {
                 continue;
             }
 
@@ -265,7 +265,7 @@ class Arrays extends StaticClass
      * value in a set of numbers.
      *
      * If the array is empty, this method returns null. Non-numeric values are
-     * treated as zero in the calculation.
+     * filtered out before the calculation.
      *
      * Example:
      * ```php
@@ -295,6 +295,7 @@ class Arrays extends StaticClass
      */
     public static function average(array $array): ?float
     {
+        $array = array_filter($array, 'is_numeric');
         $count = count($array);
 
         if ($count === 0) {
@@ -565,11 +566,11 @@ class Arrays extends StaticClass
      * use Phuture\Coherence\Arrays;
      *
      * $votes = ['apple', 'banana', 'apple', 'orange', 'banana', 'apple'];
-     * $tally = Arrays::count($votes);
+     * $tally = Arrays::countValues($votes);
      * // Returns: ['apple' => 3, 'banana' => 2, 'orange' => 1]
      *
      * $numbers = [1, 2, 2, 3, 3, 3];
-     * $frequency = Arrays::count($numbers);
+     * $frequency = Arrays::countValues($numbers);
      * // Returns: [1 => 1, 2 => 2, 3 => 3]
      * ```
      *
@@ -577,7 +578,7 @@ class Arrays extends StaticClass
      * @return array Returns an associative array with values as keys and occurrence counts as values
      * @see \Phuture\Coherence\Arrays::length()
      */
-    public static function count(array $array): array
+    public static function countValues(array $array): array
     {
         return array_count_values($array);
     }
@@ -662,7 +663,8 @@ class Arrays extends StaticClass
      * reconstruct complex nested structures from simple key-value pairs.
      *
      * When $strict is false (default), conflicting keys will result in later values overwriting
-     * earlier ones. When $strict is true, a LogicException will be thrown if conflicts are detected.
+     * earlier ones. Keys are processed in natural sort order for deterministic output regardless
+     * of input order. When $strict is true, a LogicException will be thrown if conflicts are detected.
      *
      * Example:
      * ```php
@@ -687,37 +689,37 @@ class Arrays extends StaticClass
     public static function denote(array $array, bool $strict = false): array
     {
         $result = [];
+        $keys = array_keys($array);
+        natsort($keys);
 
-        foreach ($array as $key => $value) {
-            $keys = explode('.', (string) $key);
+        foreach ($keys as $key) {
+            $value = $array[$key];
+            $parts = explode('.', (string) $key);
 
-            // Add recursion limit protection
-            if (count($keys) >= self::RECURSION_LIMIT) {
+            if (count($parts) >= self::RECURSION_LIMIT) {
                 throw new LogicException(
                     "Limit Exceeded: Key depth exceeds limit of " . self::RECURSION_LIMIT
                 );
             }
 
-            $lastIndex = count($keys) - 1;
+            $lastIndex = count($parts) - 1;
             $temp = &$result;
 
-            foreach ($keys as $index => $k) {
+            foreach ($parts as $index => $k) {
                 if ($index === $lastIndex) {
-                    // Final key: set the value
                     if ($strict && isset($temp[$k]) && is_array($temp[$k]) && !empty($temp[$k])) {
-                        $path = implode('.', array_slice($keys, 0, $index + 1));
+                        $path = implode('.', array_slice($parts, 0, $index + 1));
                         throw new LogicException(
                             "Data conflict at path '{$path}': Cannot overwrite nested structure with scalar value"
                         );
                     }
                     $temp[$k] = $value;
                 } else {
-                    // Intermediate key: ensure array exists
                     if (!isset($temp[$k])) {
                         $temp[$k] = [];
                     } elseif (!is_array($temp[$k])) {
                         if ($strict) {
-                            $path = implode('.', array_slice($keys, 0, $index + 1));
+                            $path = implode('.', array_slice($parts, 0, $index + 1));
                             throw new LogicException(
                                 "Data conflict at path '{$path}': Cannot convert scalar value to array"
                             );
@@ -3085,12 +3087,16 @@ class Arrays extends StaticClass
             return;
         }
 
-        // Check if we have string keys that need to be preserved
+        $items = array_filter($items, fn($key) => !array_key_exists($key, $array), ARRAY_FILTER_USE_KEY);
+
+        if (empty($items)) {
+            return;
+        }
+
         $hasStringKeys = count(array_filter(array_keys($array), 'is_string')) > 0 ||
             count(array_filter(array_keys($items), 'is_string')) > 0;
 
         if (!$hasStringKeys) {
-            // Fast path for numeric-only arrays: use array_unshift in reverse
             foreach (array_reverse($items, true) as $value) {
                 array_unshift($array, $value);
             }
@@ -3098,8 +3104,6 @@ class Arrays extends StaticClass
             return;
         }
 
-        // For string keys: clear and rebuild the array in-place
-        // This ensures the reference is properly updated
         $merged = $items + $array;
         $array = [];
         foreach ($merged as $key => $value) {
@@ -3554,32 +3558,32 @@ class Arrays extends StaticClass
      * ```php
      * use Phuture\Coherence\Arrays;
      *
-     * // Preserves numeric keys (default behavior)
+     * // Numeric keys are renumbered (default behavior)
      * $array = ['first', 'second', 'third'];
      * $result = Arrays::reverse($array);
-     * // Returns: [2 => 'third', 1 => 'second', 0 => 'first']
+     * // Returns: ['third', 'second', 'first']
      *
      * // Preserves string keys (default behavior)
      * $array = ['a' => 'apple', 'b' => 'banana', 'c' => 'cherry'];
      * $result = Arrays::reverse($array);
      * // Returns: ['c' => 'cherry', 'b' => 'banana', 'a' => 'apple']
      *
-     * // Without key preservation (reindexes all keys)
+     * // With key preservation (maintains numeric keys)
      * $array = ['first', 'second', 'third'];
-     * $result = Arrays::reverse($array, false);
-     * // Returns: ['third', 'second', 'first']
+     * $result = Arrays::reverse($array, true);
+     * // Returns: [2 => 'third', 1 => 'second', 0 => 'first']
      *
-     * // Without key preservation (mixed keys)
+     * // With key preservation (mixed keys)
      * $array = [0 => 'zero', 'name' => 'John', 1 => 'one'];
-     * $result = Arrays::reverse($array, false);
-     * // Returns: ['one', 'John', 'zero']
+     * $result = Arrays::reverse($array, true);
+     * // Returns: [1 => 'one', 'name' => 'John', 0 => 'zero']
      * ```
      *
      * @param array $array The array to reverse
-     * @param bool $preserveKeys Whether to preserve numeric keys (default: true)
+     * @param bool $preserveKeys Whether to preserve numeric keys (default: false)
      * @return array Returns a new array with elements in reverse order
      */
-    public static function reverse(array $array, bool $preserveKeys = true): array
+    public static function reverse(array $array, bool $preserveKeys = false): array
     {
         if (!$preserveKeys) {
             $array = array_values($array);
