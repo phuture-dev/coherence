@@ -11,6 +11,7 @@ use Phuture\Coherence\Arrays;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException, OutOfBoundsException};
+use Phuture\Coherence\Tests\Fixtures\{SampleEntity, SampleEntityWithNested, SampleProtectedEntity};
 
 require __DIR__ . '/bootstrap.php';
 
@@ -1837,23 +1838,6 @@ class ArraysTest extends TestCase
         ], $result);
     }
 
-    private function recursiveKsort(array &$array): void
-    {
-        ksort($array);
-        foreach ($array as &$value) {
-            if (is_array($value)) {
-                $this->recursiveKsort($value);
-            }
-        }
-    }
-
-    private function assertArrayEqual(array $expected, array $actual): void
-    {
-        $this->recursiveKsort($expected);
-        $this->recursiveKsort($actual);
-        Assert::same($expected, $actual);
-    }
-
     public function testNotationDenoteRoundTrip(): void
     {
         $simple = [
@@ -2582,6 +2566,78 @@ class ArraysTest extends TestCase
         Assert::same(['method' => 'toArray'], $result);
     }
 
+    public function testToArrayWithAnonymousClassSkipsDeepClone(): void
+    {
+        $object = new class () {
+            public string $name = 'anonymous';
+            public int $value = 42;
+        };
+
+        $result = Arrays::toArray($object);
+
+        // Anonymous classes should NOT use DeepClone; they should fall through to
+        // stdClass or another branch. The result should NOT have DeepClone keys.
+        Assert::false(
+            array_key_exists('classes', $result)
+            && array_key_exists('objectMeta', $result)
+            && array_key_exists('prepared', $result)
+        );
+    }
+
+    public function testToArrayWithArrayObjectSkipsDeepClone(): void
+    {
+        // ArrayObject is Traversable, so it should be handled by iterator_to_array
+        $object = new ArrayObject(['a' => 1, 'b' => 2]);
+        $result = Arrays::toArray($object);
+
+        Assert::same(['a' => 1, 'b' => 2], $result);
+    }
+
+    public function testToArrayWithClassContainingNestedObject(): void
+    {
+        $child = new SampleEntityWithNested('child');
+        $parent = new SampleEntityWithNested('parent', $child);
+
+        $result = Arrays::toArray($parent);
+
+        Assert::true(is_array($result));
+        Assert::true(array_key_exists('classes', $result));
+        Assert::true(array_key_exists('prepared', $result));
+    }
+
+    public function testToArrayWithClassContainingPrivateProperties(): void
+    {
+        $object = new SampleEntity('Jane', 25);
+        $result = Arrays::toArray($object);
+
+        Assert::true(is_array($result));
+        Assert::true(array_key_exists('classes', $result));
+        Assert::true(array_key_exists('prepared', $result));
+
+        // Verify round-trip preserves private property values
+        $restored = deepclone_from_array($result);
+        Assert::type(SampleEntity::class, $restored);
+        Assert::same('Jane', $restored->getName());
+        Assert::same(25, $restored->getAge());
+    }
+
+    public function testToArrayWithClassContainingProtectedProperties(): void
+    {
+        $object = new SampleProtectedEntity('test@example.com');
+        $result = Arrays::toArray($object);
+
+        Assert::true(is_array($result));
+        Assert::true(array_key_exists('classes', $result));
+        Assert::true(array_key_exists('objectMeta', $result));
+        Assert::true(array_key_exists('prepared', $result));
+
+        // Verify round-trip preserves protected property values
+        $restored = deepclone_from_array($result);
+        Assert::type(SampleProtectedEntity::class, $restored);
+        Assert::same('test@example.com', $restored->getEmail());
+        Assert::same('user', $restored->role);
+    }
+
     public function testToArrayWithEmptyValues(): void
     {
         Assert::same([], Arrays::toArray(null));
@@ -2684,6 +2740,20 @@ class ArraysTest extends TestCase
         Assert::same([false], $result);
     }
 
+    // --- toArray with DeepClone tests ---
+
+    public function testToArrayWithSimpleClass(): void
+    {
+        $object = new SampleEntity('John', 30);
+        $result = Arrays::toArray($object);
+
+        Assert::true(is_array($result));
+        Assert::true(array_key_exists('classes', $result));
+        Assert::true(array_key_exists('objectMeta', $result));
+        Assert::true(array_key_exists('prepared', $result));
+        Assert::same(SampleEntity::class, $result['classes']);
+    }
+
     public function testToArrayWithStdClass(): void
     {
         $object = new stdClass();
@@ -2748,6 +2818,27 @@ class ArraysTest extends TestCase
 
         Assert::type(stdClass::class, $result);
         Assert::same([], (array) $result);
+    }
+
+    public function testToObjectFallsBackToStdClassWhenNotDeepClone(): void
+    {
+        // A regular associative array should produce a stdClass, not attempt DeepClone reconstruction
+        $array = ['name' => 'John', 'age' => 30];
+        $result = Arrays::toObject($array);
+
+        Assert::type(stdClass::class, $result);
+        Assert::same('John', $result->name);
+        Assert::same(30, $result->age);
+    }
+
+    public function testToObjectFallsBackToStdClassWithInvalidDeepCloneData(): void
+    {
+        // Array with partial DeepClone keys but missing required ones
+        $array = ['classes' => 'SomeClass'];
+        $result = Arrays::toObject($array);
+
+        // Should fall back to stdClass
+        Assert::type(stdClass::class, $result);
     }
 
     public function testToObjectIsOppositeOfNormalize(): void
@@ -2834,6 +2925,87 @@ class ArraysTest extends TestCase
         Assert::same(false, $result->bool_false);
         Assert::same(null, $result->null);
         Assert::same('test', $result->string);
+    }
+
+    public function testToObjectRoundTripWithClass(): void
+    {
+        $object = new SampleEntity('Bob', 35);
+
+        // toArray -> toObject round-trip
+        $serialized = Arrays::toArray($object);
+        $restored = Arrays::toObject($serialized);
+
+        Assert::type(SampleEntity::class, $restored);
+        Assert::same($object->getName(), $restored->getName());
+        Assert::same($object->getAge(), $restored->getAge());
+    }
+
+    public function testToObjectRoundTripWithDeeplyNestedObject(): void
+    {
+        $grandchild = new SampleEntityWithNested('grandchild');
+        $child = new SampleEntityWithNested('child', $grandchild);
+        $parent = new SampleEntityWithNested('parent', $child);
+
+        $serialized = Arrays::toArray($parent);
+        $restored = Arrays::toObject($serialized);
+
+        Assert::same('parent', $restored->label);
+        Assert::same('child', $restored->child->label);
+        Assert::same('grandchild', $restored->child->child->label);
+        Assert::null($restored->child->child->child);
+    }
+
+    public function testToObjectRoundTripWithNestedObject(): void
+    {
+        $child = new SampleEntityWithNested('child');
+        $parent = new SampleEntityWithNested('parent', $child);
+
+        $serialized = Arrays::toArray($parent);
+        $restored = Arrays::toObject($serialized);
+
+        Assert::type(SampleEntityWithNested::class, $restored);
+        Assert::same('parent', $restored->label);
+        Assert::type(SampleEntityWithNested::class, $restored->child);
+        Assert::same('child', $restored->child->label);
+        Assert::null($restored->child->child);
+    }
+
+    public function testToObjectRoundTripWithProtectedProperties(): void
+    {
+        $object = new SampleProtectedEntity('user@example.com');
+
+        $serialized = Arrays::toArray($object);
+        $restored = Arrays::toObject($serialized);
+
+        Assert::type(SampleProtectedEntity::class, $restored);
+        Assert::same($object->getEmail(), $restored->getEmail());
+        Assert::same($object->role, $restored->role);
+    }
+
+    // --- toObject with DeepClone tests ---
+
+    public function testToObjectWithDeepCloneArray(): void
+    {
+        $original = new SampleEntity('Alice', 28);
+
+        // Serialize with DeepClone directly
+        $serialized = deepclone_to_array($original);
+        Assert::true(is_array($serialized));
+        Assert::true(array_key_exists('classes', $serialized));
+
+        // toObject should reconstruct the object
+        $result = Arrays::toObject($serialized);
+
+        Assert::type(SampleEntity::class, $result);
+        Assert::same('Alice', $result->getName());
+        Assert::same(28, $result->getAge());
+    }
+
+    public function testToObjectWithEmptyArrayFallsBackToStdClass(): void
+    {
+        $result = Arrays::toObject([]);
+        Assert::type(stdClass::class, $result);
+        Assert::same([], (array) $result);
     }
 
     public function testToObjectWithMixedTypes(): void
@@ -3095,6 +3267,23 @@ class ArraysTest extends TestCase
         $result = Arrays::zip($a, $b);
         // Zip uses numeric indices, ignoring keys
         Assert::same([[1, 'a'], [2, 'b']], $result);
+    }
+
+    private function assertArrayEqual(array $expected, array $actual): void
+    {
+        $this->recursiveKsort($expected);
+        $this->recursiveKsort($actual);
+        Assert::same($expected, $actual);
+    }
+
+    private function recursiveKsort(array &$array): void
+    {
+        ksort($array);
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $this->recursiveKsort($value);
+            }
+        }
     }
 }
 

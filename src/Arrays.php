@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use Throwable;
 use WeakMap;
 use stdClass;
+use Throwable;
 use TypeError;
 use ArrayAccess;
 use Traversable;
+use ReflectionClass;
 use JsonSerializable;
+use ReflectionException;
 use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
@@ -3087,7 +3089,7 @@ class Arrays extends StaticClass
             return;
         }
 
-        $items = array_filter($items, fn($key) => !array_key_exists($key, $array), ARRAY_FILTER_USE_KEY);
+        $items = array_filter($items, fn ($key) => !array_key_exists($key, $array), ARRAY_FILTER_USE_KEY);
 
         if (empty($items)) {
             return;
@@ -4363,13 +4365,13 @@ class Arrays extends StaticClass
         // Handle classes with DeepClone
         if (is_object($value)) {
             try {
-                $reflection = new \ReflectionClass($value);
+                $reflection = new ReflectionClass($value);
                 $isClass = $reflection->isUserDefined() && !$reflection->isAnonymous();
 
                 if ($isClass) {
                     return deepclone_to_array($value);
                 }
-            } catch (\ReflectionException $e) {
+            } catch (ReflectionException $e) {
                 // Nothing to do
             }
         }
