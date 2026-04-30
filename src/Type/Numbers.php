@@ -39,6 +39,8 @@ use Phuture\Coherence\Numbers as Transformer;
  */
 class Numbers extends FluentClass implements Numberable
 {
+    private const DEFAULT_SCALE = 10;
+
     /**
      * Abbreviates the wrapped number using suffix letters (K, M, B, T).
      *
@@ -72,7 +74,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function add(int|float $b): self
     {
-        $this->data = Transformer::add($this->numericValue(), $b);
+        $this->data = bcadd($this->stringValue(), (string) $b, self::DEFAULT_SCALE);
 
         return $this;
     }
@@ -126,7 +128,13 @@ class Numbers extends FluentClass implements Numberable
      */
     public function divide(int|float $b): self
     {
-        $this->data = Transformer::divide($this->numericValue(), $b);
+        if ((float) $b === 0.0) {
+            throw new \Phuture\Coherence\Exception\InvalidArgumentException(
+                'Invalid Argument: Division by zero is not allowed'
+            );
+        }
+
+        $this->data = bcdiv($this->stringValue(), (string) $b, self::DEFAULT_SCALE);
 
         return $this;
     }
@@ -218,7 +226,13 @@ class Numbers extends FluentClass implements Numberable
      */
     public function modulus(int|float $b): self
     {
-        $this->data = Transformer::modulus($this->numericValue(), $b);
+        if ((float) $b === 0.0) {
+            throw new \Phuture\Coherence\Exception\InvalidArgumentException(
+                'Invalid Argument: Modulus by zero is not allowed'
+            );
+        }
+
+        $this->data = bcmod($this->stringValue(), (string) $b);
 
         return $this;
     }
@@ -232,7 +246,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function multiply(int|float $b): self
     {
-        $this->data = Transformer::multiply($this->numericValue(), $b);
+        $this->data = bcmul($this->stringValue(), (string) $b, self::DEFAULT_SCALE);
 
         return $this;
     }
@@ -278,11 +292,11 @@ class Numbers extends FluentClass implements Numberable
      * Rounds the wrapped number to the specified precision using the given rounding mode.
      *
      * @param int $precision The number of decimal places (default: 0)
-     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
+     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfAwayFromZero)
      * @return self Returns the current instance for method chaining
      * @see Transformer::round()
      */
-    public function round(int $precision = 0, RoundingMode $mode = RoundingMode::HalfUp): self
+    public function round(int $precision = 0, RoundingMode $mode = RoundingMode::HalfAwayFromZero): self
     {
         $this->data = Transformer::round($this->numericValue(), $precision, $mode);
 
@@ -309,7 +323,13 @@ class Numbers extends FluentClass implements Numberable
      */
     public function squareRoot(int $scale = 10): self
     {
-        $this->data = Transformer::squareRoot($this->numericValue(), $scale);
+        if ((float) $this->data < 0) {
+            throw new \Phuture\Coherence\Exception\InvalidArgumentException(
+                'Invalid Argument: Square root of a negative number is not supported'
+            );
+        }
+
+        $this->data = bcsqrt($this->stringValue(), $scale);
 
         return $this;
     }
@@ -323,7 +343,7 @@ class Numbers extends FluentClass implements Numberable
      */
     public function subtract(int|float $b): self
     {
-        $this->data = Transformer::subtract($this->numericValue(), $b);
+        $this->data = bcsub($this->stringValue(), (string) $b, self::DEFAULT_SCALE);
 
         return $this;
     }
@@ -391,5 +411,23 @@ class Numbers extends FluentClass implements Numberable
         }
 
         return $this->data;
+    }
+
+    /**
+     * Returns the stored value as a string suitable for BCMath operations.
+     *
+     * When the stored data is already a BCMath result string, it is preserved
+     * as-is to avoid precision loss from float conversion. Otherwise the value
+     * is cast to string.
+     *
+     * @return string The string representation of the stored data
+     */
+    private function stringValue(): string
+    {
+        if (is_string($this->data)) {
+            return $this->data;
+        }
+
+        return (string) $this->data;
     }
 }

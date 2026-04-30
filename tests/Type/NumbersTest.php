@@ -40,6 +40,16 @@ class NumbersTest extends TestCase
         Assert::same('0.3000000000', $result);
     }
 
+    public function testBcmathPrecisionPreservedAcrossChainedOperations(): void
+    {
+        $result = FluentNumbers::from(0.1)
+            ->add(0.2)
+            ->multiply(3)
+            ->get();
+
+        Assert::same('0.9000000000', $result);
+    }
+
     public function testCeil(): void
     {
         Assert::same(4.0, FluentNumbers::from(3.2)->ceil()->get());
@@ -207,7 +217,7 @@ class NumbersTest extends TestCase
     public function testRoundWithMode(): void
     {
         Assert::same(3.0, FluentNumbers::from(3.5)->round(0, RoundingMode::HalfDown)->get());
-        Assert::same(4.0, FluentNumbers::from(3.5)->round(0, RoundingMode::HalfUp)->get());
+        Assert::same(4.0, FluentNumbers::from(3.5)->round(0, RoundingMode::HalfAwayFromZero)->get());
     }
 
     public function testSpell(): void

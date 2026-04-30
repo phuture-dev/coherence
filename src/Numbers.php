@@ -313,14 +313,21 @@ class Numbers extends StaticClass
      * Numbers::fileSize(1500, 2); // '1.46 KB'
      * ```
      *
-     * @param int|float $bytes The file size in bytes
+     * @param int|float $bytes The file size in bytes (must be zero or positive)
      * @param int $precision The number of decimal places to show (default: 0)
      * @param int $base The base for unit conversion: 1024 or 1000 (default: 1024)
      * @return string The human-readable file size string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the byte count is negative
      * @see \Phuture\Coherence\Numbers::forHumans()
      */
     public static function fileSize(int|float $bytes, int $precision = 0, int $base = 1024): string
     {
+        if ((float) $bytes < 0) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: File size cannot be negative'
+            );
+        }
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
         $bytes = (float) $bytes;
 
@@ -1016,7 +1023,7 @@ class Numbers extends StaticClass
      *
      * @param int|float $number The number to round
      * @param int $precision The number of decimal places (default: 0)
-     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfUp)
+     * @param RoundingMode $mode The rounding mode (default: RoundingMode::HalfAwayFromZero)
      * @return float The rounded value
      * @see \Phuture\Coherence\Numbers::ceil()
      * @see \Phuture\Coherence\Numbers::floor()
@@ -1024,10 +1031,10 @@ class Numbers extends StaticClass
     public static function round(
         int|float $number,
         int $precision = 0,
-        RoundingMode $mode = RoundingMode::HalfUp
+        RoundingMode $mode = RoundingMode::HalfAwayFromZero
     ): float {
         return round((float) $number, $precision, match ($mode) {
-            RoundingMode::HalfUp   => PHP_ROUND_HALF_UP,
+            RoundingMode::HalfAwayFromZero   => PHP_ROUND_HALF_UP,
             RoundingMode::HalfDown => PHP_ROUND_HALF_DOWN,
             RoundingMode::HalfEven => PHP_ROUND_HALF_EVEN,
             RoundingMode::HalfOdd  => PHP_ROUND_HALF_ODD,
@@ -1053,14 +1060,12 @@ class Numbers extends StaticClass
      * Numbers::spell(1000); // 'one thousand'
      * ```
      *
-     * @param int|float $number The number to spell out
+     * @param int $number The number to spell out
      * @return string The English word representation of the number
      * @see \Phuture\Coherence\Numbers::ordinal()
      */
-    public static function spell(int|float $number): string
+    public static function spell(int $number): string
     {
-        $number = (int) $number;
-
         if ($number === 0) {
             return 'zero';
         }

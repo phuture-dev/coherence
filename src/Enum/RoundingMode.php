@@ -41,10 +41,11 @@ enum RoundingMode
     case HalfOdd;
 
     /**
-     * Round halves up (away from zero).
+     * Round halves away from zero.
      *
-     * When the discarded fraction is exactly 0.5, the value is rounded up
-     * to the next higher absolute value. This is the most common rounding mode.
+     * When the discarded fraction is exactly 0.5, the value is rounded away
+     * from zero to the next higher absolute value. For example, 2.5 rounds
+     * to 3 and -2.5 rounds to -3. This is the most common rounding mode.
      */
-    case HalfUp;
+    case HalfAwayFromZero;
 }

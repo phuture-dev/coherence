@@ -170,6 +170,14 @@ class NumbersTest extends TestCase
         Assert::same('1.50 MB', Numbers::fileSize(1572864, 2));
     }
 
+    public function testFileSizeNegative(): void
+    {
+        Assert::exception(
+            fn () => Numbers::fileSize(-500),
+            InvalidArgumentException::class
+        );
+    }
+
     public function testFileSizeZeroBytes(): void
     {
         Assert::same('0 B', Numbers::fileSize(0));
