@@ -45,6 +45,33 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Escapes specific characters using C-style backslash notation.
+     *
+     * @param string $characters The list of characters to escape
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::addCSlashes()
+     */
+    public function addCSlashes(string $characters): self
+    {
+        $this->data = Transformer::addCSlashes((string) $this->data, $characters);
+
+        return $this;
+    }
+
+    /**
+     * Escapes single quotes, double quotes, backslashes, and NUL bytes.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::addSlashes()
+     */
+    public function addSlashes(): self
+    {
+        $this->data = Transformer::addSlashes((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Returns the portion of the string after the first occurrence of a search value.
      *
      * @param string $search The value to search for
@@ -143,19 +170,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
-     * Converts every word in the string to Title Case.
-     *
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::capitalize()
-     */
-    public function capitalize(): self
-    {
-        $this->data = Transformer::capitalize((string) $this->data);
-
-        return $this;
-    }
-
-    /**
      * Censors all occurrences of banned words by replacing them with a substitution.
      *
      * @param array $bannedWords List of word strings to replace; each element must be a string
@@ -194,6 +208,50 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function dedupe(string $character = ' '): self
     {
         $this->data = Transformer::dedupe((string) $this->data, $character);
+
+        return $this;
+    }
+
+    /**
+     * Calculates the Levenshtein edit distance between the string and another string.
+     *
+     * @param string $other The string to compare against
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::distance()
+     */
+    public function distance(string $other): self
+    {
+        $this->data = Transformer::distance((string) $this->data, $other);
+
+        return $this;
+    }
+
+    /**
+     * Converts HTML entities back to their corresponding characters.
+     *
+     * @param int $flags Bitmask of ENT_* constants (default: ENT_QUOTES | ENT_SUBSTITUTE)
+     * @param string|null $encoding The encoding to use (default: null = UTF-8)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::entityDecode()
+     */
+    public function entityDecode(int $flags = ENT_QUOTES | ENT_SUBSTITUTE, ?string $encoding = null): self
+    {
+        $this->data = Transformer::entityDecode((string) $this->data, $flags, $encoding);
+
+        return $this;
+    }
+
+    /**
+     * Converts all applicable characters to HTML entities.
+     *
+     * @param int $flags Bitmask of ENT_* constants (default: ENT_QUOTES | ENT_SUBSTITUTE)
+     * @param string|null $encoding The encoding to use (default: null = UTF-8)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::entityEncode()
+     */
+    public function entityEncode(int $flags = ENT_QUOTES | ENT_SUBSTITUTE, ?string $encoding = null): self
+    {
+        $this->data = Transformer::entityEncode((string) $this->data, $flags, $encoding);
 
         return $this;
     }
@@ -269,6 +327,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Decodes a hex-encoded binary string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::fromHex()
+     */
+    public function fromHex(): self
+    {
+        $this->data = Transformer::fromHex((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Converts the string to a human-readable headline format.
      *
      * @return self Returns the current instance for method chaining
@@ -293,6 +364,20 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function highlight(string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): self
     {
         $this->data = Transformer::highlight((string) $this->data, $phrase, $tagOpen, $tagClose);
+
+        return $this;
+    }
+
+    /**
+     * Calculates the Hamming distance between the string and another string.
+     *
+     * @param string $other The string to compare against; must have the same character length
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::hamming()
+     */
+    public function hamming(string $other): self
+    {
+        $this->data = Transformer::hamming((string) $this->data, $other);
 
         return $this;
     }
@@ -323,6 +408,35 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function insert(string $substring, int $index): self
     {
         $this->data = Transformer::insert((string) $this->data, $substring, $index);
+
+        return $this;
+    }
+
+    /**
+     * Calculates the Jaro similarity between the string and another string.
+     *
+     * @param string $other The string to compare against
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::jaro()
+     */
+    public function jaro(string $other): self
+    {
+        $this->data = Transformer::jaro((string) $this->data, $other);
+
+        return $this;
+    }
+
+    /**
+     * Calculates the Jaro-Winkler similarity between the string and another string.
+     *
+     * @param string $other The string to compare against
+     * @param float $prefixScale How much weight to give the common prefix; must not exceed 0.25 (default: 0.1)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::jaroWinkler()
+     */
+    public function jaroWinkler(string $other, float $prefixScale = 0.1): self
+    {
+        $this->data = Transformer::jaroWinkler((string) $this->data, $other, $prefixScale);
 
         return $this;
     }
@@ -412,6 +526,34 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Calculates the metaphone phonetic key of the string.
+     *
+     * @param int $maxPhonemes The maximum number of phonemes to return; 0 means no limit (default: 0)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::metaphone()
+     */
+    public function metaphone(int $maxPhonemes = 0): self
+    {
+        $this->data = Transformer::metaphone((string) $this->data, $maxPhonemes);
+
+        return $this;
+    }
+
+    /**
+     * Inserts HTML line breaks before all newlines.
+     *
+     * @param bool $useXhtml Whether to use XHTML-compatible tags (default: true)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::nl2br()
+     */
+    public function nl2br(bool $useXhtml = true): self
+    {
+        $this->data = Transformer::nl2br((string) $this->data, $useXhtml);
+
+        return $this;
+    }
+
+    /**
      * Normalizes line endings to Unix-style `\n`.
      *
      * @return self Returns the current instance for method chaining
@@ -494,6 +636,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function pascal(): self
     {
         $this->data = Transformer::pascal((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Escapes regular expression meta-characters.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::quoteMeta()
+     */
+    public function quoteMeta(): self
+    {
+        $this->data = Transformer::quoteMeta((string) $this->data);
 
         return $this;
     }
@@ -618,6 +773,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Applies the ROT13 encoding to the string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::rot13()
+     */
+    public function rot13(): self
+    {
+        $this->data = Transformer::rot13((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Removes dangerous control characters from the string.
      *
      * @return self Returns the current instance for method chaining
@@ -626,6 +794,50 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function scrub(): self
     {
         $this->data = Transformer::scrub((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Returns the portion of the string from the first occurrence of a search value.
+     *
+     * @param string $search The value to search for
+     * @param bool $beforeNeedle Return the part before the search value (default: false)
+     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::search()
+     */
+    public function search(string $search, bool $beforeNeedle = false, bool $caseSensitive = true): self
+    {
+        $result = Transformer::search((string) $this->data, $search, $beforeNeedle, $caseSensitive);
+        $this->data = $result === false ? '' : $result;
+
+        return $this;
+    }
+
+    /**
+     * Randomly shuffles the characters in the string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::shuffle()
+     */
+    public function shuffle(): self
+    {
+        $this->data = Transformer::shuffle((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Calculates the similarity percentage between the string and another string.
+     *
+     * @param string $other The string to compare against
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::similar()
+     */
+    public function similar(string $other): self
+    {
+        $this->data = Transformer::similar((string) $this->data, $other);
 
         return $this;
     }
@@ -675,6 +887,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Calculates the soundex phonetic key of the string.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::soundex()
+     */
+    public function soundex(): self
+    {
+        $this->data = Transformer::soundex((string) $this->data);
+
+        return $this;
+    }
+
+    /**
      * Collapses all whitespace sequences into a single space and trims the result.
      *
      * @return self Returns the current instance for method chaining
@@ -711,6 +936,32 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function strip(string $allowedTags = ''): self
     {
         $this->data = Transformer::strip((string) $this->data, $allowedTags);
+
+        return $this;
+    }
+
+    /**
+     * Removes C-style backslash escapes.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::stripCSlashes()
+     */
+    public function stripCSlashes(): self
+    {
+        $this->data = Transformer::stripCSlashes((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Removes backslash escapes added by addSlashes.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::stripSlashes()
+     */
+    public function stripSlashes(): self
+    {
+        $this->data = Transformer::stripSlashes((string) $this->data);
 
         return $this;
     }
@@ -766,6 +1017,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function toBase64(): self
     {
         $this->data = Transformer::toBase64((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Converts the string to its hexadecimal representation.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::toHex()
+     */
+    public function toHex(): self
+    {
+        $this->data = Transformer::toHex((string) $this->data);
 
         return $this;
     }
@@ -845,6 +1109,19 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function upper(): self
     {
         $this->data = Transformer::upper((string) $this->data);
+
+        return $this;
+    }
+
+    /**
+     * Converts only the first character of the string to uppercase.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::upperFirst()
+     */
+    public function upperFirst(): self
+    {
+        $this->data = Transformer::upperFirst((string) $this->data);
 
         return $this;
     }

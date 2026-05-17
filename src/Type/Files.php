@@ -92,6 +92,7 @@ class Files extends FluentClass implements Fileable
 
         return $this;
     }
+
     /**
      * Copies the wrapped file to a new location and updates the internal path.
      *

@@ -50,6 +50,7 @@ class Numbers extends FluentClass implements Numberable
     {
         return Transformer::abbreviate($this->toString(), $precision);
     }
+
     /**
      * Returns the absolute (non-negative) value of the wrapped number.
      *

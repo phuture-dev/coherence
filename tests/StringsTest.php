@@ -19,6 +19,31 @@ require __DIR__ . '/bootstrap.php';
  */
 class StringsTest extends TestCase
 {
+    public function testAddCSlashes(): void
+    {
+        Assert::same('h\\ell\\o', Strings::addCSlashes('hello', 'eo'));
+        Assert::same('\\h\\e\\l\\l\\o', Strings::addCSlashes('hello', 'helo'));
+    }
+
+    public function testAddCSlashesEmptyCharsThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::addCSlashes('hello', '');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testAddSlashes(): void
+    {
+        Assert::same("hello \\'world\\'", Strings::addSlashes("hello 'world'"));
+        Assert::same('path\\\\to\\\\file', Strings::addSlashes('path\\to\\file'));
+        Assert::same('hello', Strings::addSlashes('hello'));
+    }
+
+    public function testAddStripSlashesRoundTrip(): void
+    {
+        $original = "hello 'world' and \"test\"";
+        Assert::same($original, Strings::stripSlashes(Strings::addSlashes($original)));
+    }
     public function testAfter(): void
     {
         Assert::same('world', Strings::after('hello world', ' '));
@@ -187,21 +212,21 @@ class StringsTest extends TestCase
 
     public function testCapitalize(): void
     {
-        Assert::same('Hello World', Strings::capitalize('hello world'));
-        Assert::same('Hello World', Strings::capitalize('HELLO WORLD'));
-        Assert::same('Hello World', Strings::capitalize('hELLO wORLD'));
-        Assert::same('Ñaño Ñoño', Strings::capitalize('ñaño ñoño'));
-        Assert::same('A B C', Strings::capitalize('a b c'));
+        Assert::same('Hello World', Strings::title('hello world'));
+        Assert::same('Hello World', Strings::title('HELLO WORLD'));
+        Assert::same('Hello World', Strings::title('hELLO wORLD'));
+        Assert::same('Ñaño Ñoño', Strings::title('ñaño ñoño'));
+        Assert::same('A B C', Strings::title('a b c'));
     }
 
     public function testCapitalizeEmpty(): void
     {
-        Assert::same('', Strings::capitalize(''));
+        Assert::same('', Strings::title(''));
     }
 
     public function testCapitalizeSingleWord(): void
     {
-        Assert::same('Hello', Strings::capitalize('hello'));
+        Assert::same('Hello', Strings::title('hello'));
     }
 
     public function testCensor(): void
@@ -254,6 +279,25 @@ class StringsTest extends TestCase
     {
         Assert::same('', Strings::charAt('hello', 10));
         Assert::same('', Strings::charAt('hello', -10));
+    }
+
+    public function testCharCounts(): void
+    {
+        // Mode 1: only bytes with count > 0
+        $counts = Strings::charCounts('hello', 1);
+        Assert::same(1, $counts[104]); // 'h'
+        Assert::same(2, $counts[108]); // 'l'
+
+        // Mode 3: string of unique bytes
+        $unique = Strings::charCounts('hello', 3);
+        Assert::true(strlen($unique) === 4); // e, h, l, o
+    }
+
+    public function testCharCountsInvalidModeThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::charCounts('hello', 5);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testChunk(): void
@@ -312,6 +356,81 @@ class StringsTest extends TestCase
         Assert::true(Strings::compare('hello', 'ñoño') !== 0);
     }
 
+    public function testCompareNatural(): void
+    {
+        Assert::true(Strings::compareNatural('img2', 'img10') < 0);
+        Assert::true(Strings::compareNatural('img10', 'img2') > 0);
+        Assert::same(0, Strings::compareNatural('hello', 'hello'));
+        Assert::same(0, Strings::compareNatural('Hello', 'hello', false));
+    }
+
+    public function testContains(): void
+    {
+        Assert::true(Strings::contains('hello world', 'world'));
+        Assert::true(Strings::contains('hello world', 'hello'));
+        Assert::true(Strings::contains('hello world', 'o w'));
+        Assert::false(Strings::contains('hello world', 'xyz'));
+        Assert::false(Strings::contains('hello world', 'World'));
+    }
+
+    public function testContainsAll(): void
+    {
+        Assert::true(Strings::containsAll('hello world', ['hello', 'world']));
+        Assert::true(Strings::containsAll('hello world foo', ['hello', 'world', 'foo']));
+        Assert::false(Strings::containsAll('hello world', ['hello', 'xyz']));
+        Assert::false(Strings::containsAll('hello', ['hello', 'world']));
+    }
+
+    public function testContainsAllCaseInsensitive(): void
+    {
+        Assert::true(Strings::containsAll('Hello World', ['hello', 'world'], caseSensitive: false));
+        Assert::false(Strings::containsAll('Hello World', ['hello', 'world'], caseSensitive: true));
+    }
+
+    public function testContainsAllEmptyArray(): void
+    {
+        Assert::true(Strings::containsAll('hello world', []));
+    }
+
+    public function testContainsCaseInsensitive(): void
+    {
+        Assert::true(Strings::contains('hello world', 'World', caseSensitive: false));
+        Assert::true(Strings::contains('HELLO', 'hello', caseSensitive: false));
+        Assert::true(Strings::contains('hello', 'HELLO', caseSensitive: false));
+    }
+
+    public function testContainsContainsNoneOpposites(): void
+    {
+        $search = ['hello', 'world'];
+        $string = 'hello world';
+        Assert::true(Strings::containsAll($string, $search));
+        Assert::false(Strings::containsNone($string, $search));
+    }
+
+    public function testContainsEmptySearch(): void
+    {
+        Assert::true(Strings::contains('hello', ''));
+        Assert::true(Strings::contains('', ''));
+    }
+
+    public function testContainsNone(): void
+    {
+        Assert::true(Strings::containsNone('hello world', ['foo', 'bar', 'baz']));
+        Assert::false(Strings::containsNone('hello world', ['hello', 'bar']));
+        Assert::false(Strings::containsNone('hello world', ['foo', 'world']));
+    }
+
+    public function testContainsNoneCaseInsensitive(): void
+    {
+        Assert::false(Strings::containsNone('Hello World', ['HELLO'], caseSensitive: false));
+        Assert::true(Strings::containsNone('Hello World', ['HELLO'], caseSensitive: true));
+    }
+
+    public function testContainsNoneEmptyArray(): void
+    {
+        Assert::true(Strings::containsNone('hello world', []));
+    }
+
     public function testCountOccurrences(): void
     {
         Assert::same(2, Strings::countOccurrences('hello world hello', 'hello'));
@@ -344,6 +463,14 @@ class StringsTest extends TestCase
         Assert::same('', Strings::dedupe(''));
     }
 
+    public function testDistance(): void
+    {
+        Assert::same(0, Strings::distance('hello', 'hello'));
+        Assert::same(1, Strings::distance('hello', 'hallo'));
+        Assert::same(3, Strings::distance('kitten', 'sitting'));
+        Assert::same(1, Strings::distance('hello', 'helo'));
+    }
+
     public function testEmojiCharacters(): void
     {
         Assert::same(7, Strings::length('hello 😀')); // 5 letters + 1 space + 1 emoji
@@ -354,7 +481,7 @@ class StringsTest extends TestCase
     {
         Assert::same('', Strings::lower(''));
         Assert::same('', Strings::upper(''));
-        Assert::same('', Strings::capitalize(''));
+        Assert::same('', Strings::title(''));
         Assert::same('', Strings::camel(''));
         Assert::same('', Strings::snake(''));
         Assert::same('', Strings::kebab(''));
@@ -381,6 +508,26 @@ class StringsTest extends TestCase
     {
         Assert::true(Strings::endsWith('hello', ''));
         Assert::true(Strings::endsWith('', ''));
+    }
+
+    public function testEntityDecode(): void
+    {
+        Assert::same('hello & "world"', Strings::entityDecode('hello &amp; &quot;world&quot;'));
+        Assert::same('café', Strings::entityDecode('caf&eacute;'));
+        Assert::same('<tag>', Strings::entityDecode('&lt;tag&gt;'));
+    }
+
+    public function testEntityEncode(): void
+    {
+        Assert::same('hello &amp; &quot;world&quot;', Strings::entityEncode('hello & "world"'));
+        Assert::same('caf&eacute;', Strings::entityEncode('café'));
+        Assert::same('&lt;tag&gt;', Strings::entityEncode('<tag>'));
+    }
+
+    public function testEntityEncodeDecodeRoundTrip(): void
+    {
+        $original = 'Hello & "World" <test> Café';
+        Assert::same($original, Strings::entityDecode(Strings::entityEncode($original)));
     }
 
     public function testEquals(): void
@@ -520,7 +667,7 @@ class StringsTest extends TestCase
 
     public function testFluentCapitalize(): void
     {
-        Assert::same('Hello World', FluentStrings::from('hello world')->capitalize()->get());
+        Assert::same('Hello World', FluentStrings::from('hello world')->title()->get());
     }
 
     public function testFluentChaining(): void
@@ -580,6 +727,13 @@ class StringsTest extends TestCase
         Assert::same('HELLO', FluentStrings::from('hello')->upper()->get());
     }
 
+    public function testFormat(): void
+    {
+        Assert::same('Hello, World!', Strings::format('Hello, %s!', 'World'));
+        Assert::same('2026-05-01', Strings::format('%04d-%02d-%02d', 2026, 5, 1));
+        Assert::same('3.14', Strings::format('%.2f', 3.14159));
+    }
+
     public function testFromBase64(): void
     {
         Assert::same('hello', Strings::fromBase64('aGVsbG8='));
@@ -591,71 +745,24 @@ class StringsTest extends TestCase
         Assert::same('', Strings::fromBase64('not-base64!!!'));
     }
 
-    public function testHas(): void
+    public function testFromHex(): void
     {
-        Assert::true(Strings::has('hello world', 'world'));
-        Assert::true(Strings::has('hello world', 'hello'));
-        Assert::true(Strings::has('hello world', 'o w'));
-        Assert::false(Strings::has('hello world', 'xyz'));
-        Assert::false(Strings::has('hello world', 'World'));
+        Assert::same('hello', Strings::fromHex('68656c6c6f'));
+        Assert::same('', Strings::fromHex(''));
     }
 
-    public function testHasAll(): void
+    public function testFromHexInvalidThrows(): void
     {
-        Assert::true(Strings::hasAll('hello world', ['hello', 'world']));
-        Assert::true(Strings::hasAll('hello world foo', ['hello', 'world', 'foo']));
-        Assert::false(Strings::hasAll('hello world', ['hello', 'xyz']));
-        Assert::false(Strings::hasAll('hello', ['hello', 'world']));
+        Assert::exception(function (): void {
+            Strings::fromHex('xyz');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
-    public function testHasAllCaseInsensitive(): void
+    public function testFromHexOddLengthThrows(): void
     {
-        Assert::true(Strings::hasAll('Hello World', ['hello', 'world'], caseSensitive: false));
-        Assert::false(Strings::hasAll('Hello World', ['hello', 'world'], caseSensitive: true));
-    }
-
-    public function testHasAllEmptyArray(): void
-    {
-        Assert::true(Strings::hasAll('hello world', []));
-    }
-
-    public function testHasCaseInsensitive(): void
-    {
-        Assert::true(Strings::has('hello world', 'World', caseSensitive: false));
-        Assert::true(Strings::has('HELLO', 'hello', caseSensitive: false));
-        Assert::true(Strings::has('hello', 'HELLO', caseSensitive: false));
-    }
-
-    public function testHasEmptySearch(): void
-    {
-        Assert::true(Strings::has('hello', ''));
-        Assert::true(Strings::has('', ''));
-    }
-
-    public function testHasHasNoneOpposites(): void
-    {
-        $search = ['hello', 'world'];
-        $string = 'hello world';
-        Assert::true(Strings::hasAll($string, $search));
-        Assert::false(Strings::hasNone($string, $search));
-    }
-
-    public function testHasNone(): void
-    {
-        Assert::true(Strings::hasNone('hello world', ['foo', 'bar', 'baz']));
-        Assert::false(Strings::hasNone('hello world', ['hello', 'bar']));
-        Assert::false(Strings::hasNone('hello world', ['foo', 'world']));
-    }
-
-    public function testHasNoneCaseInsensitive(): void
-    {
-        Assert::false(Strings::hasNone('Hello World', ['HELLO'], caseSensitive: false));
-        Assert::true(Strings::hasNone('Hello World', ['HELLO'], caseSensitive: true));
-    }
-
-    public function testHasNoneEmptyArray(): void
-    {
-        Assert::true(Strings::hasNone('hello world', []));
+        Assert::exception(function (): void {
+            Strings::fromHex('abc');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testHeadline(): void
@@ -701,6 +808,36 @@ class StringsTest extends TestCase
     public function testHighlightMultipleOccurrences(): void
     {
         Assert::same('<mark>fox</mark> and <mark>fox</mark>', Strings::highlight('fox and fox', 'fox'));
+    }
+
+    public function testHamming(): void
+    {
+        Assert::same(3, Strings::hamming('karolin', 'kathrin'));
+        Assert::same(3, Strings::hamming('karolin', 'kerstin'));
+        Assert::same(2, Strings::hamming('1011101', '1001001'));
+        Assert::same(0, Strings::hamming('hello', 'hello'));
+        Assert::same(0, Strings::hamming('', ''));
+    }
+
+    public function testHammingMultibyte(): void
+    {
+        Assert::same(1, Strings::hamming('héllo', 'hëllo'));
+        Assert::same(2, Strings::hamming('café', 'case'));
+    }
+
+    public function testHammingUnequalLengthThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::hamming('hello', 'hi');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::hamming('a', '');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::hamming('', 'a');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testIndent(): void
@@ -1009,6 +1146,59 @@ class StringsTest extends TestCase
         Assert::false(Strings::is('hello', ''));
     }
 
+    public function testJaro(): void
+    {
+        Assert::same(1.0, Strings::jaro('hello', 'hello'));
+        Assert::same(1.0, Strings::jaro('', ''));
+        Assert::same(0.0, Strings::jaro('hello', ''));
+        Assert::same(0.0, Strings::jaro('', 'hello'));
+        Assert::same(0.0, Strings::jaro('abc', 'xyz'));
+        Assert::true(abs(Strings::jaro('martha', 'marhta') - 0.9444) < 0.001);
+        Assert::true(abs(Strings::jaro('dwayne', 'duane') - 0.8222) < 0.001);
+        Assert::true(abs(Strings::jaro('dixon', 'dicksonx') - 0.7667) < 0.001);
+    }
+
+    public function testJaroSymmetry(): void
+    {
+        Assert::same(Strings::jaro('martha', 'marhta'), Strings::jaro('marhta', 'martha'));
+        Assert::same(Strings::jaro('abc', 'xyz'), Strings::jaro('xyz', 'abc'));
+    }
+
+    public function testJaroWinkler(): void
+    {
+        Assert::same(1.0, Strings::jaroWinkler('hello', 'hello'));
+        Assert::same(1.0, Strings::jaroWinkler('', ''));
+        Assert::same(0.0, Strings::jaroWinkler('hello', ''));
+        Assert::same(0.0, Strings::jaroWinkler('abc', 'xyz'));
+        Assert::true(abs(Strings::jaroWinkler('martha', 'marhta') - 0.9611) < 0.001);
+        Assert::true(abs(Strings::jaroWinkler('dwayne', 'duane') - 0.8400) < 0.001);
+        Assert::true(Strings::jaroWinkler('hello', 'helo') > Strings::jaro('hello', 'helo'));
+        Assert::same(Strings::jaro('hello', 'helo'), Strings::jaroWinkler('hello', 'helo', 0.0));
+    }
+
+    public function testJaroWinklerSymmetry(): void
+    {
+        Assert::same(Strings::jaroWinkler('martha', 'marhta'), Strings::jaroWinkler('marhta', 'martha'));
+    }
+
+    public function testJaroWinklerPrefixScaleThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::jaroWinkler('hello', 'world', 0.26);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::jaroWinkler('hello', 'world', 0.251);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
+    public function testJaroWinklerPrefixScaleAtBoundaryDoesNotThrow(): void
+    {
+        Assert::noError(function (): void {
+            Strings::jaroWinkler('hello', 'world', 0.25);
+        });
+    }
+
     public function testKebab(): void
     {
         Assert::same('hello-world', Strings::kebab('helloWorld'));
@@ -1048,6 +1238,13 @@ class StringsTest extends TestCase
         Assert::same(12, Strings::lastPosition('hello world hello', 'hello'));
         Assert::same(0, Strings::lastPosition('hello', 'hello'));
         Assert::false(Strings::lastPosition('hello', 'xyz'));
+    }
+
+    public function testLastPositionCaseInsensitive(): void
+    {
+        Assert::same(12, Strings::lastPosition('hello World hello', 'HELLO', 0, false));
+        Assert::same(6, Strings::lastPosition('Hello World', 'world', 0, false));
+        Assert::false(Strings::lastPosition('hello', 'xyz', 0, false));
     }
 
     public function testLastPositionMultibyte(): void
@@ -1155,11 +1352,11 @@ class StringsTest extends TestCase
 
     public function testLowerFirstCapitalizeOpposites(): void
     {
-        // capitalize() capitalizes all words (first letter uppercase, rest lowercase)
+        // title() capitalizes all words (first letter uppercase, rest lowercase)
         // lowerFirst() only lowercases the first character
         $test = 'HELLO WORLD';
-        Assert::same('Hello World', Strings::capitalize($test));
-        Assert::same('hello World', Strings::lowerFirst(Strings::capitalize($test)));
+        Assert::same('Hello World', Strings::title($test));
+        Assert::same('hello World', Strings::lowerFirst(Strings::title($test)));
         Assert::same('hELLO WORLD', Strings::lowerFirst($test)); // Only first char changes
     }
 
@@ -1218,12 +1415,44 @@ class StringsTest extends TestCase
         Assert::false(Strings::matches('invalid email', '/^[a-z]+@[a-z]+\.[a-z]+$/'));
     }
 
+    public function testMetaphone(): void
+    {
+        Assert::same('WRLT', Strings::metaphone('World'));
+        Assert::same('0MPSN', Strings::metaphone('Thompson'));
+        Assert::same(Strings::metaphone('Smith'), Strings::metaphone('Smythe'));
+    }
+
+    public function testMetaphoneMultibyte(): void
+    {
+        Assert::same(Strings::metaphone('hello'), Strings::metaphone('héllo'));
+        Assert::same(Strings::metaphone('cafe'), Strings::metaphone('café'));
+    }
+
+    public function testMetaphoneMaxPhonemes(): void
+    {
+        Assert::same(3, strlen(Strings::metaphone('Thompson', 3)));
+    }
+
+    public function testMetaphoneEmptyThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::metaphone('');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
     public function testMultibyteCharacters(): void
     {
         Assert::same('ñaño', Strings::lower('ÑAÑO'));
         Assert::same('ÑAÑO', Strings::upper('ñaño'));
         Assert::same(4, Strings::length('ñaño'));
         Assert::same('ña', Strings::take('ñaño', 2));
+    }
+
+    public function testNl2br(): void
+    {
+        Assert::same("hello<br />\nworld", Strings::nl2br("hello\nworld"));
+        Assert::same("hello<br>\nworld", Strings::nl2br("hello\nworld", false));
+        Assert::same('hello world', Strings::nl2br('hello world'));
     }
 
     public function testNormalizeNewLines(): void
@@ -1241,6 +1470,14 @@ class StringsTest extends TestCase
     public function testNormalizeNewLinesNoLineEndings(): void
     {
         Assert::same('hello world', Strings::normalizeNewLines('hello world'));
+    }
+
+    public function testNumberFormat(): void
+    {
+        Assert::same('1,234.57', Strings::numberFormat(1234.5678, 2));
+        Assert::same('1.234,57', Strings::numberFormat(1234.5678, 2, ',', '.'));
+        Assert::same('1,000,000', Strings::numberFormat(1000000));
+        Assert::same('0', Strings::numberFormat(0));
     }
 
     public function testOfChaining(): void
@@ -1401,6 +1638,14 @@ class StringsTest extends TestCase
         Assert::false(Strings::position('hello world', 'xyz'));
     }
 
+    public function testPositionCaseInsensitive(): void
+    {
+        Assert::same(0, Strings::position('Hello World', 'hello', 0, false));
+        Assert::same(6, Strings::position('Hello World', 'world', 0, false));
+        Assert::same(6, Strings::position('hello HELLO', 'hello', 3, false));
+        Assert::false(Strings::position('Hello', 'xyz', 0, false));
+    }
+
     public function testPositionLastPositionOpposites(): void
     {
         $string = 'hello world hello';
@@ -1417,6 +1662,13 @@ class StringsTest extends TestCase
     public function testPositionWithOffset(): void
     {
         Assert::same(6, Strings::position('hello hello', 'hello', 3));
+    }
+
+    public function testQuoteMeta(): void
+    {
+        Assert::same('hello \(world\)', Strings::quoteMeta('hello (world)'));
+        Assert::same('price: \$10\.00', Strings::quoteMeta('price: $10.00'));
+        Assert::same('hello', Strings::quoteMeta('hello'));
     }
 
     public function testRandom(): void
@@ -1639,6 +1891,21 @@ class StringsTest extends TestCase
         Assert::same($original, Strings::reverse(Strings::reverse($original)));
     }
 
+    public function testRot13(): void
+    {
+        Assert::same('uryyb', Strings::rot13('hello'));
+        Assert::same('hello', Strings::rot13('uryyb'));
+        Assert::same('Uryyb Jbeyq!', Strings::rot13('Hello World!'));
+        Assert::same('', Strings::rot13(''));
+        Assert::same('12345', Strings::rot13('12345'));
+    }
+
+    public function testRot13RoundTrip(): void
+    {
+        $original = 'The quick brown fox jumps over the lazy dog';
+        Assert::same($original, Strings::rot13(Strings::rot13($original)));
+    }
+
     public function testScrub(): void
     {
         Assert::same('helloworld', Strings::scrub("hello\x00world"));
@@ -1649,6 +1916,56 @@ class StringsTest extends TestCase
     public function testScrubEmpty(): void
     {
         Assert::same('', Strings::scrub(''));
+    }
+
+    public function testSearch(): void
+    {
+        Assert::same('@example.com', Strings::search('user@example.com', '@'));
+        Assert::same('user', Strings::search('user@example.com', '@', true));
+        Assert::same('World', Strings::search('Hello World', 'world', false, false));
+        Assert::false(Strings::search('hello', 'xyz'));
+        Assert::same('hello', Strings::search('hello', ''));
+    }
+
+    public function testSearchMultibyte(): void
+    {
+        Assert::same('ñoño', Strings::search('hello ñoño', 'ño'));
+        Assert::same('hello ', Strings::search('hello ñoño', 'ño', true));
+    }
+
+    public function testShuffle(): void
+    {
+        $original = 'hello';
+        $shuffled = Strings::shuffle($original);
+        Assert::same(5, Strings::length($shuffled));
+
+        // Check that the same characters are present
+        $origChars = Strings::toArray(Strings::lower($original));
+        $shufChars = Strings::toArray(Strings::lower($shuffled));
+        sort($origChars);
+        sort($shufChars);
+        Assert::same($origChars, $shufChars);
+    }
+
+    public function testShuffleEmpty(): void
+    {
+        Assert::same('', Strings::shuffle(''));
+    }
+
+    public function testShuffleMultibyte(): void
+    {
+        $original = 'ñaño';
+        $shuffled = Strings::shuffle($original);
+        Assert::same(4, Strings::length($shuffled));
+    }
+
+    public function testSimilar(): void
+    {
+        Assert::same(100.0, Strings::similar('hello', 'hello'));
+        Assert::same(0.0, Strings::similar('hello', ''));
+        Assert::same(0.0, Strings::similar('', 'hello'));
+        Assert::true(Strings::similar('hello', 'hallo') > 70.0);
+        Assert::true(Strings::similar('hello', 'hallo') < 100.0);
     }
 
     public function testSlice(): void
@@ -1723,6 +2040,21 @@ class StringsTest extends TestCase
     public function testSnakeEmpty(): void
     {
         Assert::same('', Strings::snake(''));
+    }
+
+    public function testSoundex(): void
+    {
+        Assert::same('E460', Strings::soundex('Euler'));
+        Assert::same('E460', Strings::soundex('Ellery'));
+        Assert::same('K530', Strings::soundex('Knuth'));
+        Assert::same('K530', Strings::soundex('Kant'));
+    }
+
+    public function testSoundexEmptyThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::soundex('');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testSplit(): void
@@ -1810,9 +2142,20 @@ class StringsTest extends TestCase
         Assert::same('<p>Hello there</p>', Strings::strip('<p>Hello <span class="red">there</span></p>', '<p>'));
     }
 
+    public function testStripCSlashes(): void
+    {
+        Assert::same('hello', Strings::stripCSlashes('h\\ell\\o'));
+    }
+
     public function testStripEmpty(): void
     {
         Assert::same('', Strings::strip(''));
+    }
+
+    public function testStripSlashes(): void
+    {
+        Assert::same("hello 'world'", Strings::stripSlashes("hello \\'world\\'"));
+        Assert::same('hello', Strings::stripSlashes('hello'));
     }
 
     public function testSwap(): void
@@ -1906,6 +2249,18 @@ class StringsTest extends TestCase
         Assert::same($original, Strings::fromBase64(Strings::toBase64($original)));
     }
 
+    public function testToHex(): void
+    {
+        Assert::same('68656c6c6f', Strings::toHex('hello'));
+        Assert::same('', Strings::toHex(''));
+    }
+
+    public function testToHexFromHexRoundTrip(): void
+    {
+        $original = 'Hello World!';
+        Assert::same($original, Strings::fromHex(Strings::toHex($original)));
+    }
+
     public function testTrim(): void
     {
         Assert::same('hello world', Strings::trim('  hello world  '));
@@ -1996,6 +2351,15 @@ class StringsTest extends TestCase
         Assert::same('', Strings::upper(''));
     }
 
+    public function testUpperFirst(): void
+    {
+        Assert::same('Hello World', Strings::upperFirst('hello World'));
+        Assert::same('HELLO', Strings::upperFirst('HELLO'));
+        Assert::same('Ñoño', Strings::upperFirst('ñoño'));
+        Assert::same('', Strings::upperFirst(''));
+        Assert::same('A', Strings::upperFirst('a'));
+    }
+
     public function testUuid(): void
     {
         $uuid = Strings::uuid();
@@ -2015,7 +2379,7 @@ class StringsTest extends TestCase
         // Version 4 UUID has '4' at position 14 and [89ab] at position 19
         $uuid = Strings::uuid();
         Assert::same('4', Strings::charAt($uuid, 14));
-        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+        Assert::true(Strings::contains('89ab', Strings::charAt($uuid, 19)));
     }
 
     public function testUuidProducesUniqueValues(): void
@@ -2028,7 +2392,7 @@ class StringsTest extends TestCase
         $uuid = Strings::uuid(UuidVersion::V4);
         Assert::true(Strings::isUuid($uuid));
         Assert::same('4', Strings::charAt($uuid, 14));
-        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+        Assert::true(Strings::contains('89ab', Strings::charAt($uuid, 19)));
     }
 
     public function testUuidV7(): void
@@ -2036,7 +2400,7 @@ class StringsTest extends TestCase
         $uuid = Strings::uuid(UuidVersion::V7);
         Assert::true(Strings::isUuid($uuid));
         Assert::same('7', Strings::charAt($uuid, 14));
-        Assert::true(Strings::has('89ab', Strings::charAt($uuid, 19)));
+        Assert::true(Strings::contains('89ab', Strings::charAt($uuid, 19)));
     }
 
     public function testUuidV7IsTimeOrdered(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence;
 
 use HashContext;
+use SensitiveParameter;
 use Random\RandomException;
 use Phuture\Coherence\Support\StaticClass;
 use Phuture\Coherence\Enum\PasswordAlgorithm;
@@ -280,8 +281,12 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::withSalt() For generating a salted hash
      * @see \Phuture\Coherence\Hash::check() For verifying data against an unsalted hash
      */
-    public static function checkWithSalt(string $data, string $hash, string $salt, string $algo = 'sha256'): bool
-    {
+    public static function checkWithSalt(
+        #[SensitiveParameter] string $data,
+        string $hash,
+        string $salt,
+        string $algo = 'sha256'
+    ): bool {
         if ($hash === '') {
             return false;
         }
@@ -517,6 +522,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD2 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::md2() For hashing string data with MD2
      * @see \Phuture\Coherence\Hash::hmacMd2() For generating HMAC with MD2
      */
@@ -542,6 +549,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD4 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::md4() For hashing string data with MD4
      * @see \Phuture\Coherence\Hash::hmacMd4() For generating HMAC with MD4
      */
@@ -567,6 +576,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD5 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::md5() For hashing string data with MD5
      * @see \Phuture\Coherence\Hash::hmacMd5() For generating HMAC with MD5
      */
@@ -592,6 +603,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA1 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::sha1() For hashing string data with SHA1
      * @see \Phuture\Coherence\Hash::hmacSha1() For generating HMAC with SHA1
      */
@@ -617,6 +630,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA256 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::sha256() For hashing string data with SHA256
      * @see \Phuture\Coherence\Hash::hmacSha256() For generating HMAC with SHA256
      */
@@ -642,6 +657,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA384 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::sha384() For hashing string data with SHA384
      * @see \Phuture\Coherence\Hash::hmacSha384() For generating HMAC with SHA384
      */
@@ -667,6 +684,8 @@ class Hash extends StaticClass
      * @param string $file The path to the file to hash
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA512 file hash as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be read
      * @see \Phuture\Coherence\Hash::sha512() For hashing string data with SHA512
      * @see \Phuture\Coherence\Hash::hmacSha512() For generating HMAC with SHA512
      */
@@ -792,8 +811,12 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::hmacCheck() For verifying an HMAC
      * @see \Phuture\Coherence\Hash::hmacFile() For generating HMAC of file contents
      */
-    public static function hmac(string $data, string $key, bool $binary = false, string $algo = 'sha256'): string
-    {
+    public static function hmac(
+        string $data,
+        #[SensitiveParameter] string $key,
+        bool $binary = false,
+        string $algo = 'sha256'
+    ): string {
         if (!in_array($algo, hash_hmac_algos())) {
             throw new InvalidArgumentException(
                 "Invalid Argument: {$algo} is not a valid HMAC hash algorithm"
@@ -852,7 +875,7 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::blake2b() For hashing string data with Blake2b
      * @see \Phuture\Coherence\Hash::fileBlake2b() For hashing file contents with Blake2b
      */
-    public static function hmacBlake2b(string $data, string $key, bool $binary = false): string
+    public static function hmacBlake2b(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'blake2b512');
     }
@@ -881,7 +904,7 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::blake2s() For hashing string data with Blake2s
      * @see \Phuture\Coherence\Hash::fileBlake2s() For hashing file contents with Blake2s
      */
-    public static function hmacBlake2s(string $data, string $key, bool $binary = false): string
+    public static function hmacBlake2s(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'blake2s256');
     }
@@ -912,8 +935,12 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::hmac() For generating an HMAC
      * @see \Phuture\Coherence\Hash::hmacCheckWithSalt() For verifying salted HMACs
      */
-    public static function hmacCheck(string $data, string $key, string $hash, string $algo = 'sha256'): bool
-    {
+    public static function hmacCheck(
+        string $data,
+        #[SensitiveParameter] string $key,
+        string $hash,
+        string $algo = 'sha256'
+    ): bool {
         if ($hash === '') {
             return false;
         }
@@ -950,7 +977,7 @@ class Hash extends StaticClass
      */
     public static function hmacCheckWithSalt(
         string $data,
-        string $key,
+        #[SensitiveParameter] string $key,
         string $hash,
         string $salt,
         string $algo = 'sha256'
@@ -989,8 +1016,12 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::file() For hashing file contents without authentication
      * @see \Phuture\Coherence\Hash::hmac() For generating HMAC of string data
      */
-    public static function hmacFile(string $file, string $key, bool $binary = false, string $algo = 'sha256'): string
-    {
+    public static function hmacFile(
+        string $file,
+        #[SensitiveParameter] string $key,
+        bool $binary = false,
+        string $algo = 'sha256'
+    ): string {
         if (!in_array($algo, hash_hmac_algos())) {
             throw new InvalidArgumentException(
                 "Invalid Argument: {$algo} is not a valid HMAC hash algorithm"
@@ -1070,7 +1101,7 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::hmacFinal() For completing the HMAC calculation
      * @see \Phuture\Coherence\Hash::init() For non-authenticated incremental hashing
      */
-    public static function hmacInit(string $key, string $algo = 'sha256'): HashContext
+    public static function hmacInit(#[SensitiveParameter] string $key, string $algo = 'sha256'): HashContext
     {
         if (!in_array($algo, hash_hmac_algos())) {
             throw new InvalidArgumentException(
@@ -1101,10 +1132,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD2 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::md2() For hashing string data with MD2
      * @see \Phuture\Coherence\Hash::fileMd2() For hashing file contents with MD2
      */
-    public static function hmacMd2(string $data, string $key, bool $binary = false): string
+    public static function hmacMd2(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'md2');
     }
@@ -1129,10 +1161,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD4 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::md4() For hashing string data with MD4
      * @see \Phuture\Coherence\Hash::fileMd4() For hashing file contents with MD4
      */
-    public static function hmacMd4(string $data, string $key, bool $binary = false): string
+    public static function hmacMd4(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'md4');
     }
@@ -1157,10 +1190,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the MD5 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::md5() For hashing string data with MD5
      * @see \Phuture\Coherence\Hash::fileMd5() For hashing file contents with MD5
      */
-    public static function hmacMd5(string $data, string $key, bool $binary = false): string
+    public static function hmacMd5(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'md5');
     }
@@ -1185,10 +1219,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA1 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::sha1() For hashing string data with SHA1
      * @see \Phuture\Coherence\Hash::fileSha1() For hashing file contents with SHA1
      */
-    public static function hmacSha1(string $data, string $key, bool $binary = false): string
+    public static function hmacSha1(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'sha1');
     }
@@ -1213,10 +1248,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA256 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::sha256() For hashing string data with SHA256
      * @see \Phuture\Coherence\Hash::fileSha256() For hashing file contents with SHA256
      */
-    public static function hmacSha256(string $data, string $key, bool $binary = false): string
+    public static function hmacSha256(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'sha256');
     }
@@ -1241,10 +1277,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA384 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::sha384() For hashing string data with SHA384
      * @see \Phuture\Coherence\Hash::fileSha384() For hashing file contents with SHA384
      */
-    public static function hmacSha384(string $data, string $key, bool $binary = false): string
+    public static function hmacSha384(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'sha384');
     }
@@ -1269,10 +1306,11 @@ class Hash extends StaticClass
      * @param string $key The secret key for authentication
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @return string Returns the SHA512 HMAC as a hex string or raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported for HMAC
      * @see \Phuture\Coherence\Hash::sha512() For hashing string data with SHA512
      * @see \Phuture\Coherence\Hash::fileSha512() For hashing file contents with SHA512
      */
-    public static function hmacSha512(string $data, string $key, bool $binary = false): string
+    public static function hmacSha512(string $data, #[SensitiveParameter] string $key, bool $binary = false): string
     {
         return self::hmac($data, $key, $binary, 'sha512');
     }
@@ -1303,7 +1341,7 @@ class Hash extends StaticClass
     }
 
     /**
-     * Compare two HMAC values using timing-safe comparison
+     * Compare two HMAC values using timing-safe comparison.
      *
      * This method provides timing-safe comparison of two pieces of data by generating
      * HMACs for both and comparing them using hash_equals(). This prevents timing attacks
@@ -1329,7 +1367,7 @@ class Hash extends StaticClass
      * @return bool True if both HMACs are equal, false otherwise
      * @see \Phuture\Coherence\Hash::equals() For direct timing-safe hash comparison
      */
-    public static function hmacTimingSafe(string $data1, string $data2, string $key): bool
+    public static function hmacTimingSafe(string $data1, string $data2, #[SensitiveParameter] string $key): bool
     {
         return hash_equals(
             self::hmac($data1, $key),
@@ -1395,12 +1433,13 @@ class Hash extends StaticClass
      * @param string $algo The HMAC algorithm to use (default: 'sha256')
      * @return array Returns an array with 'hmac' and 'salt' keys
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the specified algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When random bytes generation fails
      * @see \Phuture\Coherence\Hash::hmacCheckWithSalt() For verifying a salted HMAC
      * @see \Phuture\Coherence\Hash::withSalt() For generating a salted hash
      */
     public static function hmacWithSalt(
         string $data,
-        string $key,
+        #[SensitiveParameter] string $key,
         ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'
@@ -1595,7 +1634,7 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::passwordNeedsRehash() For checking if a hash needs updating
      */
     public static function password(
-        string $password,
+        #[SensitiveParameter] string $password,
         PasswordAlgorithm $algo = PasswordAlgorithm::Default,
         array $options = []
     ): string {
@@ -1636,7 +1675,7 @@ class Hash extends StaticClass
      * @see \Phuture\Coherence\Hash::password() For creating a password hash
      * @see \Phuture\Coherence\Hash::passwordNeedsRehash() For checking if a hash needs updating
      */
-    public static function passwordCheck(string $password, string $hash): bool
+    public static function passwordCheck(#[SensitiveParameter] string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }
@@ -1741,11 +1780,12 @@ class Hash extends StaticClass
      * @param int $length Desired length of derived key in bytes (default: 32)
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return string Returns the derived key as raw binary data
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When iterations, length, or algorithm are invalid
      * @see \Phuture\Coherence\Hash::pbkdf2Algorithms() For listing supported PBKDF2 algorithms
      * @see \Phuture\Coherence\Hash::pbkdf2Supports() For checking if an algorithm is supported for PBKDF2
      */
     public static function pbkdf2(
-        string $password,
+        #[SensitiveParameter] string $password,
         ?string $salt = null,
         int $iterations = self::DEFAULT_PBKDF2_ITERATIONS,
         int $length = 32,
@@ -2193,11 +2233,13 @@ class Hash extends StaticClass
      * @param bool $binary Whether to output raw binary data (default: false for hex string)
      * @param string $algo The hash algorithm to use (default: 'sha256')
      * @return array Returns an array with 'hash' and 'salt' keys
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When random bytes generation fails
      * @see \Phuture\Coherence\Hash::checkWithSalt() For verifying a salted hash
      * @see \Phuture\Coherence\Hash::hmacWithSalt() For generating a salted HMAC
      */
     public static function withSalt(
-        string $data,
+        #[SensitiveParameter] string $data,
         ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'

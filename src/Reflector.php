@@ -107,6 +107,7 @@ class Reflector extends StaticClass
      * @return bool Returns true if the alias was created successfully
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the alias already exists
      *     or the function does not exist
+     * @see \Phuture\Coherence\Reflector::alias()
      */
     public static function aliasFunction(string $function, string $alias): bool
     {
@@ -551,6 +552,7 @@ class Reflector extends StaticClass
      * @throws \Phuture\Coherence\Exception\ReflectionException When the class cannot be reflected
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the given class is anonymous
      * @see \Phuture\Coherence\Reflector::hasMethod() For checking if a specific method exists
+     * @see \Phuture\Coherence\Reflector::methodVisibility() For getting the visibility of a method
      */
     public static function methods(object|string $class): array
     {

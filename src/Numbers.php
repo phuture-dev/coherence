@@ -181,11 +181,7 @@ class Numbers extends StaticClass
      */
     public static function ceil(int|float|string $number): string
     {
-        if (function_exists('bcceil')) {
-            return bcceil((string) $number);
-        }
-
-        return \Symfony\Polyfill\Php84\Php84::bcceil((string) $number);
+        return bcceil((string) $number);
     }
 
     /**
@@ -359,11 +355,7 @@ class Numbers extends StaticClass
      */
     public static function floor(int|float|string $number): string
     {
-        if (function_exists('bcfloor')) {
-            return bcfloor((string) $number);
-        }
-
-        return \Symfony\Polyfill\Php84\Php84::bcfloor((string) $number);
+        return bcfloor((string) $number);
     }
 
     /**
@@ -1034,11 +1026,7 @@ class Numbers extends StaticClass
         // @phpstan-ignore-next-line
         RoundingMode $mode = RoundingMode::HalfAwayFromZero
     ): string {
-        if (function_exists('bcround')) {
-            return bcround((string) $number, $precision, $mode);
-        }
-
-        return \Symfony\Polyfill\Php84\Php84::bcround((string) $number, $precision, $mode);
+        return bcround((string) $number, $precision, $mode);
     }
 
     /**
@@ -1102,6 +1090,8 @@ class Numbers extends StaticClass
      * @param int $scale The number of decimal places in the result (default: 10)
      * @return string The square root as a string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the number is negative
+     * @see \Phuture\Coherence\Numbers::multiply()
+     * @see \Phuture\Coherence\Numbers::round()
      */
     public static function squareRoot(int|float|string $number, int $scale = self::DEFAULT_SCALE): string
     {
@@ -1163,6 +1153,9 @@ class Numbers extends StaticClass
      *
      * @param int|float|string|bool|array $number The value to normalize
      * @return string The BCMath string representation
+     * @see \Phuture\Coherence\Numbers::parseInt()
+     * @see \Phuture\Coherence\Numbers::parseFloat()
+     * @see \Phuture\Coherence\Numbers::isNumber()
      */
     public static function toNumber(int|float|string|bool|array $number): string
     {
@@ -1204,6 +1197,8 @@ class Numbers extends StaticClass
      *
      * @param int|float|string $number The number or numeric string to trim
      * @return string The trimmed number string
+     * @see \Phuture\Coherence\Numbers::format()
+     * @see \Phuture\Coherence\Numbers::abbreviate()
      */
     public static function trimTrailingZeros(int|float|string $number): string
     {

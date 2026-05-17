@@ -358,6 +358,88 @@ class HtmlTest extends TestCase
         $html = Html::toHtml($original);
         Assert::same($original, Html::toText($html));
     }
+
+    public function testTruncate(): void
+    {
+        // No truncation when text fits or exactly equals limit
+        Assert::same('<p>Hi</p>', Html::truncate('<p>Hi</p>', 10));
+        Assert::same('<p>Hello</p>', Html::truncate('<p>Hello</p>', 5));
+        Assert::same('', Html::truncate('', 5));
+
+        // Plain text truncation
+        Assert::same('Hello...', Html::truncate('Hello World', 5));
+
+        // Custom end marker
+        Assert::same('<p>Hel</p> [more]', Html::truncate('<p>Hello</p>', 3, ' [more]'));
+        Assert::same('<p>Hel</p>', Html::truncate('<p>Hello</p>', 3, ''));
+
+        // Open tags are closed after truncation
+        Assert::same('<div><p>Hel</p></div>...', Html::truncate('<div><p>Hello</p></div>', 3));
+    }
+
+    public function testTruncateNestedTags(): void
+    {
+        $result = Html::truncate('<p>Hello <b>World</b></p>', 7);
+        Assert::contains('<b>', $result);
+        Assert::contains('</b>', $result);
+        Assert::contains('</p>', $result);
+        Assert::contains('...', $result);
+    }
+
+    public function testTruncateVoidElement(): void
+    {
+        $result = Html::truncate('<p>Hello<br>World</p>', 6);
+        Assert::notContains('</br>', $result);
+        Assert::contains('<br>', $result);
+    }
+
+    public function testTruncateEntity(): void
+    {
+        // Entity counts as 1 visible character
+        Assert::same('<p>Tom &amp;</p>...', Html::truncate('<p>Tom &amp; Jerry</p>', 5));
+    }
+
+    public function testTruncateMultibyte(): void
+    {
+        Assert::same('<p>hél</p>...', Html::truncate('<p>héllo</p>', 3));
+    }
+
+    public function testTruncateWords(): void
+    {
+        // No truncation when word count fits
+        Assert::same('<p>Hello World</p>', Html::truncateWords('<p>Hello World</p>', 5));
+        Assert::same('', Html::truncateWords('', 5));
+
+        // Plain text word truncation
+        Assert::same('One Two...', Html::truncateWords('One Two Three', 2));
+
+        // HTML with word truncation — open tags closed
+        Assert::same('<p>One Two</p>...', Html::truncateWords('<p>One Two Three Four</p>', 2));
+
+        // Multiple spaces preserved up to truncation point
+        Assert::same('<p>One   Two</p>...', Html::truncateWords('<p>One   Two  Three</p>', 2));
+
+        // Custom end marker
+        Assert::same('<p>One</p> [...]', Html::truncateWords('<p>One Two Three</p>', 1, ' [...]'));
+    }
+
+    public function testTruncateWordsNestedTags(): void
+    {
+        $result = Html::truncateWords('<p>Hello <b>World</b> Foo</p>', 2);
+        Assert::contains('...', $result);
+        Assert::notContains('Foo', $result);
+    }
+
+    public function testTruncateWordsVoidElement(): void
+    {
+        $result = Html::truncateWords('<p>Hello<br>World Foo</p>', 1);
+        Assert::notContains('</br>', $result);
+    }
+
+    public function testTruncateWordsEntity(): void
+    {
+        Assert::same('<p>Tom &amp;</p>...', Html::truncateWords('<p>Tom &amp; Jerry</p>', 2));
+    }
 }
 
 (new HtmlTest())->run();

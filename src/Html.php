@@ -438,6 +438,227 @@ class Html extends StaticClass
     }
 
     /**
+     * Truncates an HTML string to a given number of visible characters.
+     *
+     * Counts only the characters that a reader can see — HTML tags and their
+     * angle brackets do not count toward the limit. HTML entities like `&amp;`
+     * or `&eacute;` each count as one visible character, because they display
+     * as a single character in the browser.
+     *
+     * When the text is cut short, any HTML tags that were left open are
+     * automatically closed so the returned string is always valid HTML. The
+     * suffix is appended after all closing tags.
+     *
+     * Returns the original string unchanged when the visible text is already
+     * within the limit. The suffix is only appended when truncation actually occurs.
+     *
+     * Note: HTML comments containing a `>` character inside them may not be
+     * handled correctly.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::truncate('<p>Hello <b>world</b></p>', 7);
+     * // Returns: '<p>Hello <b>w</b></p>...'
+     *
+     * Html::truncate('<p>Hello</p>', 10);
+     * // Returns: '<p>Hello</p>'
+     *
+     * Html::truncate('<p>Tom &amp; Jerry</p>', 5);
+     * // Returns: '<p>Tom &amp;</p>...'
+     * ```
+     *
+     * @param string $html The HTML string to truncate
+     * @param int $limit The maximum number of visible characters to keep
+     * @param string $end The string to append when truncation occurs (default: '...')
+     * @return string The truncated HTML string with all open tags properly closed
+     * @see \Phuture\Coherence\Html::truncateWords()
+     * @see \Phuture\Coherence\Html::toText()
+     */
+    public static function truncate(string $html, int $limit, string $end = '...'): string
+    {
+        if ($html === '') {
+            return $html;
+        }
+
+        $visibleText = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        if (mb_strlen($visibleText, 'UTF-8') <= $limit) {
+            return $html;
+        }
+
+        $openTags = [];
+        $result = '';
+        $count = 0;
+
+        preg_match_all(
+            '/(<[^>]+>)|(&(?:[a-zA-Z][a-zA-Z0-9]*|#(?:x[0-9a-fA-F]+|[0-9]+));)|(.)/su',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        foreach ($matches as $token) {
+            $segment = $token[0];
+
+            if (str_starts_with($segment, '<')) {
+                $result .= $segment;
+                self::updateOpenTagStack($segment, $openTags);
+            } else {
+                $result .= $segment;
+                $count++;
+
+                if ($count >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        if ($count >= $limit) {
+            return $result . self::closeOpenTags($openTags) . $end;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Truncates an HTML string to a given number of visible words.
+     *
+     * Counts only the words that a reader can see — HTML tags do not count
+     * toward the limit. A word is any sequence of non-whitespace characters.
+     * HTML entities like `&amp;` are treated as word characters.
+     *
+     * When the text is cut short, any HTML tags that were left open are
+     * automatically closed so the returned string is always valid HTML. The
+     * suffix is appended after all closing tags.
+     *
+     * Returns the original string unchanged when the visible word count is
+     * already within the limit. The suffix is only appended when truncation
+     * actually occurs.
+     *
+     * Note: HTML comments containing a `>` character inside them may not be
+     * handled correctly.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::truncateWords('<p>One Two Three Four</p>', 2);
+     * // Returns: '<p>One Two</p>...'
+     *
+     * Html::truncateWords('<p>Hello World</p>', 5);
+     * // Returns: '<p>Hello World</p>'
+     * ```
+     *
+     * @param string $html The HTML string to truncate
+     * @param int $limit The maximum number of visible words to keep
+     * @param string $end The string to append when truncation occurs (default: '...')
+     * @return string The truncated HTML string with all open tags properly closed
+     * @see \Phuture\Coherence\Html::truncate()
+     * @see \Phuture\Coherence\Html::toText()
+     */
+    public static function truncateWords(string $html, int $limit, string $end = '...'): string
+    {
+        if ($html === '') {
+            return $html;
+        }
+
+        if (str_word_count(strip_tags($html)) <= $limit) {
+            return $html;
+        }
+
+        $openTags = [];
+        $result = '';
+        $count = 0;
+        $inWord = false;
+
+        preg_match_all(
+            '/(<[^>]+>)|(&(?:[a-zA-Z][a-zA-Z0-9]*|#(?:x[0-9a-fA-F]+|[0-9]+));)|(.)/su',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        foreach ($matches as $token) {
+            $segment = $token[0];
+
+            if (str_starts_with($segment, '<')) {
+                $result .= $segment;
+                self::updateOpenTagStack($segment, $openTags);
+            } else {
+                $isSpace = trim($segment) === '';
+
+                if ($inWord && $isSpace) {
+                    $inWord = false;
+                    $count++;
+
+                    if ($count >= $limit) {
+                        break;
+                    }
+                } elseif (!$inWord && !$isSpace) {
+                    $inWord = true;
+                }
+
+                $result .= $segment;
+            }
+        }
+
+        if ($count >= $limit) {
+            return $result . self::closeOpenTags($openTags) . $end;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Updates the open-tag stack based on a parsed HTML tag token.
+     *
+     * @param string $tag The raw HTML tag string (e.g. '<p>', '</p>', '<br />')
+     * @param array &$openTags The open-tag stack, passed by reference
+     */
+    private static function updateOpenTagStack(string $tag, array &$openTags): void
+    {
+        preg_match('/<\/?([a-zA-Z][a-zA-Z0-9]*)/i', $tag, $nameMatch);
+        $tagName = strtolower($nameMatch[1] ?? '');
+
+        if ($tagName === '') {
+            return;
+        }
+
+        $isClosing = str_starts_with(ltrim($tag), '</');
+        $isSelfClosing = str_ends_with(rtrim($tag), '/>') || in_array($tagName, self::VOID_ELEMENTS, true);
+
+        if ($isClosing) {
+            for ($i = count($openTags) - 1; $i >= 0; $i--) {
+                if ($openTags[$i] === $tagName) {
+                    array_splice($openTags, $i, 1);
+                    break;
+                }
+            }
+        } elseif (!$isSelfClosing) {
+            $openTags[] = $tagName;
+        }
+    }
+
+    /**
+     * Serialises the open-tag stack as a sequence of closing tags.
+     *
+     * @param array $openTags The stack of unclosed tag names (innermost last)
+     * @return string A string of closing tags in reverse order, or empty string when none
+     */
+    private static function closeOpenTags(array $openTags): string
+    {
+        $closing = '';
+
+        foreach (array_reverse($openTags) as $tag) {
+            $closing .= '</' . $tag . '>';
+        }
+
+        return $closing;
+    }
+
+    /**
      * Builds the HTML attribute string from an associative array.
      *
      * Converts an associative array of attribute names and values into a

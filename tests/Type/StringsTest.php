@@ -74,10 +74,10 @@ class StringsTest extends TestCase
 
     public function testCapitalize(): void
     {
-        Assert::same(Strings::capitalize('hello world'), FluentStrings::from('hello world')->capitalize()->get());
-        Assert::same(Strings::capitalize('HELLO WORLD'), FluentStrings::from('HELLO WORLD')->capitalize()->get());
-        Assert::same(Strings::capitalize('ñaño ñoño'), FluentStrings::from('ñaño ñoño')->capitalize()->get());
-        Assert::same('', FluentStrings::from('')->capitalize()->get());
+        Assert::same(Strings::title('hello world'), FluentStrings::from('hello world')->title()->get());
+        Assert::same(Strings::title('HELLO WORLD'), FluentStrings::from('HELLO WORLD')->title()->get());
+        Assert::same(Strings::title('ñaño ñoño'), FluentStrings::from('ñaño ñoño')->title()->get());
+        Assert::same('', FluentStrings::from('')->title()->get());
     }
 
     public function testChaining(): void
@@ -124,7 +124,7 @@ class StringsTest extends TestCase
     {
         $result = FluentStrings::from("  hello   world  ")
             ->squish()
-            ->capitalize()
+            ->title()
             ->get();
         Assert::same('Hello World', $result);
     }
@@ -195,12 +195,33 @@ class StringsTest extends TestCase
         );
     }
 
+    public function testDistance(): void
+    {
+        Assert::same(Strings::distance('hello', 'hallo'), FluentStrings::from('hello')->distance('hallo')->get());
+        Assert::same(0, FluentStrings::from('hello')->distance('hello')->get());
+        Assert::same(3, FluentStrings::from('kitten')->distance('sitting')->get());
+    }
+
     public function testFluentHighlight(): void
     {
         Assert::same(
             Strings::highlight('The quick brown fox', 'quick'),
             FluentStrings::from('The quick brown fox')->highlight('quick')->get()
         );
+    }
+
+    public function testHamming(): void
+    {
+        Assert::same(Strings::hamming('karolin', 'kathrin'), FluentStrings::from('karolin')->hamming('kathrin')->get());
+        Assert::same(0, FluentStrings::from('hello')->hamming('hello')->get());
+        Assert::same(0, FluentStrings::from('')->hamming('')->get());
+    }
+
+    public function testHammingThrows(): void
+    {
+        Assert::exception(function (): void {
+            FluentStrings::from('hello')->hamming('hi')->get();
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testFluentIndent(): void
@@ -269,6 +290,32 @@ class StringsTest extends TestCase
         Assert::same(Strings::insert('ñaño', '!', 2), FluentStrings::from('ñaño')->insert('!', 2)->get());
     }
 
+    public function testJaro(): void
+    {
+        Assert::same(Strings::jaro('martha', 'marhta'), FluentStrings::from('martha')->jaro('marhta')->get());
+        Assert::same(1.0, FluentStrings::from('hello')->jaro('hello')->get());
+        Assert::same(0.0, FluentStrings::from('')->jaro('hello')->get());
+        Assert::same(1.0, FluentStrings::from('')->jaro('')->get());
+    }
+
+    public function testJaroWinkler(): void
+    {
+        Assert::same(Strings::jaroWinkler('martha', 'marhta'), FluentStrings::from('martha')->jaroWinkler('marhta')->get());
+        Assert::same(
+            Strings::jaroWinkler('martha', 'marhta', 0.2),
+            FluentStrings::from('martha')->jaroWinkler('marhta', 0.2)->get()
+        );
+        Assert::same(1.0, FluentStrings::from('hello')->jaroWinkler('hello')->get());
+        Assert::same(0.0, FluentStrings::from('abc')->jaroWinkler('xyz')->get());
+    }
+
+    public function testJaroWinklerThrows(): void
+    {
+        Assert::exception(function (): void {
+            FluentStrings::from('hello')->jaroWinkler('world', 0.26)->get();
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
     public function testInvoke(): void
     {
         $fluent = FluentStrings::from('hello')->upper();
@@ -320,6 +367,20 @@ class StringsTest extends TestCase
         Assert::same(Strings::mask('1234567890', '*', 3), FluentStrings::from('1234567890')->mask('*', 3)->get());
         Assert::same(Strings::mask('1234567890', '*', 3, 4), FluentStrings::from('1234567890')->mask('*', 3, 4)->get());
         Assert::same(Strings::mask('john@example.com', '*', 0, 4), FluentStrings::from('john@example.com')->mask('*', 0, 4)->get());
+    }
+
+    public function testMetaphone(): void
+    {
+        Assert::same(Strings::metaphone('World'), FluentStrings::from('World')->metaphone()->get());
+        Assert::same(Strings::metaphone('Thompson', 3), FluentStrings::from('Thompson')->metaphone(3)->get());
+        Assert::same(Strings::metaphone('héllo'), FluentStrings::from('héllo')->metaphone()->get());
+    }
+
+    public function testMetaphoneThrows(): void
+    {
+        Assert::exception(function (): void {
+            FluentStrings::from('')->metaphone()->get();
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testOf(): void
@@ -427,6 +488,13 @@ class StringsTest extends TestCase
         Assert::same('', FluentStrings::from('')->scrub()->get());
     }
 
+    public function testSimilar(): void
+    {
+        Assert::same(Strings::similar('hello', 'hello'), FluentStrings::from('hello')->similar('hello')->get());
+        Assert::same(100.0, FluentStrings::from('hello')->similar('hello')->get());
+        Assert::same(0.0, FluentStrings::from('hello')->similar('')->get());
+    }
+
     public function testSlice(): void
     {
         Assert::same(Strings::slice('hello world', 0, 5), FluentStrings::from('hello world')->slice(0, 5)->get());
@@ -448,6 +516,20 @@ class StringsTest extends TestCase
         Assert::same(Strings::snake('HelloWorld'), FluentStrings::from('HelloWorld')->snake()->get());
         Assert::same(Strings::snake('helloWorld', '-'), FluentStrings::from('helloWorld')->snake('-')->get());
         Assert::same('', FluentStrings::from('')->snake()->get());
+    }
+
+    public function testSoundex(): void
+    {
+        Assert::same(Strings::soundex('Euler'), FluentStrings::from('Euler')->soundex()->get());
+        Assert::same('E460', FluentStrings::from('Euler')->soundex()->get());
+        Assert::same('E460', FluentStrings::from('Ellery')->soundex()->get());
+    }
+
+    public function testSoundexThrows(): void
+    {
+        Assert::exception(function (): void {
+            FluentStrings::from('')->soundex()->get();
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testSquish(): void

@@ -2025,6 +2025,7 @@ class Dates extends StaticClass
     }
 
     /**
+     * Converts a date to a Unix timestamp.
      *
      * The Unix timestamp is the number of seconds elapsed since
      * 1 January 1970 00:00:00 UTC, regardless of timezone.

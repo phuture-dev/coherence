@@ -85,6 +85,7 @@ interface Fileable
      * @return string The complete contents of the file
      */
     public function read(): string;
+
     /**
      * Returns the size of the file in bytes.
      *

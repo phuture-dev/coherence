@@ -37,6 +37,59 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
 class Strings extends StaticClass
 {
     /**
+     * Escapes specific characters in a string using C-style backslash notation.
+     *
+     * Wraps PHP's native `addcslashes()`. Characters listed in `$characters` are
+     * escaped with backslashes. Supports ranges like `\n..\r` and `\0..\31`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::addCSlashes('hello world', 'aeiou'); // 'h\\ell\\o w\\orld'
+     * Strings::addCSlashes("hello\x00world", "\x00"); // 'hello\0world'
+     * ```
+     *
+     * @param string $string The input string to escape
+     * @param string $characters The list of characters to escape
+     * @return string The C-style escaped string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$characters` is empty
+     * @see \Phuture\Coherence\Strings::stripCSlashes()
+     */
+    public static function addCSlashes(string $string, string $characters): string
+    {
+        if ($characters === '') {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Characters to escape must not be empty"
+            );
+        }
+
+        return addcslashes($string, $characters);
+    }
+
+    /**
+     * Escapes single quotes, double quotes, backslashes, and NUL bytes in a string.
+     *
+     * Wraps PHP's native `addslashes()`. Useful for preparing strings for database
+     * queries or other contexts that require backslash escaping.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::addSlashes("hello 'world'"); // "hello \\'world\\'"
+     * Strings::addSlashes('path\\to\\file'); // 'path\\\\to\\\\file'
+     * ```
+     *
+     * @param string $string The input string to escape
+     * @return string The escaped string
+     * @see \Phuture\Coherence\Strings::stripSlashes()
+     */
+    public static function addSlashes(string $string): string
+    {
+        return addslashes($string);
+    }
+    /**
      * Returns the portion of the string after the first occurrence of a search value.
      *
      * Searches for the first occurrence of `$search` in `$string` and returns everything
@@ -160,6 +213,7 @@ class Strings extends StaticClass
      * @param string $text The text to render as ASCII art
      * @param string $font The font name to use — currently only 'block' is supported
      * @return string The multi-line ASCII art string
+     * @see \Phuture\Coherence\Strings::ascii()
      */
     public static function asciiArt(string $text, string $font = 'block'): string
     {
@@ -334,31 +388,6 @@ class Strings extends StaticClass
     }
 
     /**
-     * Converts a string to Title Case (every word capitalised).
-     *
-     * Each word in the string has its first letter converted to uppercase and the
-     * remaining letters converted to lowercase. Multibyte-safe.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::capitalize('hello world'); // 'Hello World'
-     * Strings::capitalize('HELLO WORLD'); // 'Hello World'
-     * Strings::capitalize('ñaño ñoño'); // 'Ñaño Ñoño'
-     * ```
-     *
-     * @param string $string The input string to capitalize
-     * @return string The title-cased version of the string
-     * @see \Phuture\Coherence\Strings::lower()
-     * @see \Phuture\Coherence\Strings::upper()
-     */
-    public static function capitalize(string $string): string
-    {
-        return self::title($string);
-    }
-
-    /**
      * Censors all occurrences of banned words in a string by replacing them with a substitution.
      *
      * Matching is case-insensitive. Each matched word is replaced with `$replacement` in full,
@@ -426,6 +455,41 @@ class Strings extends StaticClass
         }
 
         return mb_substr($string, $index, 1, 'UTF-8');
+    }
+
+    /**
+     * Returns information about the byte values used in a string.
+     *
+     * Mode 0 returns an array with all 256 possible byte values as keys and their
+     * frequency as values. Mode 1 returns only byte values with a count greater than
+     * zero. Mode 2 returns only byte values with a count of zero. Mode 3 returns a
+     * string containing all unique byte values found.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $counts = Strings::charCounts('hello', 1);
+     * // $counts[104] is 1 (one 'h'), $counts[108] is 2 (two 'l's)
+     *
+     * $unique = Strings::charCounts('hello', 3);
+     * // 'ehlo' — unique bytes sorted
+     * ```
+     *
+     * @param string $string The input string to analyze
+     * @param int $mode The return mode: 0 (all), 1 (present), 2 (absent), 3 (unique string) (default: 0)
+     * @return array|int|string The result depends on `$mode`
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$mode` is not 0, 1, 2, or 3
+     */
+    public static function charCounts(string $string, int $mode = 0): array|int|string
+    {
+        if ($mode < 0 || $mode > 3) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Mode must be 0, 1, 2, or 3"
+            );
+        }
+
+        return count_chars($string, $mode);
     }
 
     /**
@@ -513,6 +577,139 @@ class Strings extends StaticClass
     }
 
     /**
+     * Compares two strings using a "natural order" algorithm.
+     *
+     * Natural order comparison arranges strings the way a human would. For example,
+     * "img2" comes before "img10" in natural order (unlike lexicographic order).
+     * Returns a negative integer, zero, or a positive integer depending on whether
+     * the first string is less than, equal to, or greater than the second string.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::compareNatural('img2', 'img10'); // negative (img2 < img10)
+     * Strings::compareNatural('img10', 'img2'); // positive (img10 > img2)
+     * Strings::compareNatural('hello', 'hello'); // 0
+     * Strings::compareNatural('Hello', 'hello', false); // 0
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @param bool $caseSensitive Whether the comparison is case-sensitive (default: true)
+     * @return int Negative if less than, 0 if equal, positive if greater than
+     * @see \Phuture\Coherence\Strings::compare()
+     */
+    public static function compareNatural(string $string, string $other, bool $caseSensitive = true): int
+    {
+        if ($caseSensitive) {
+            return strnatcmp($string, $other);
+        }
+
+        return strnatcasecmp($string, $other);
+    }
+
+    /**
+     * Determines whether a string contains a given search value.
+     *
+     * An empty `$search` always returns true. Supports optional case-insensitive matching.
+     * This method wraps PHP's native `str_contains()` with multibyte-safe handling
+     * and additional case-insensitive support.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::contains('hello world', 'world'); // true
+     * Strings::contains('hello world', 'World', false); // true (case-insensitive)
+     * Strings::contains('hello world', 'xyz'); // false
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param string $search The value to look for
+     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
+     * @return bool True when the string contains the search value
+     * @see \Phuture\Coherence\Strings::containsAll()
+     * @see \Phuture\Coherence\Strings::containsNone()
+     */
+    public static function contains(string $string, string $search, bool $caseSensitive = true): bool
+    {
+        if ($search === '') {
+            return true;
+        }
+
+        if ($caseSensitive) {
+            return mb_strpos($string, $search, 0, 'UTF-8') !== false;
+        }
+
+        return mb_stripos($string, $search, 0, 'UTF-8') !== false;
+    }
+
+    /**
+     * Determines whether a string contains all of the given search values.
+     *
+     * Returns true only when every value in `$searches` is found within `$string`.
+     * An empty `$searches` array always returns true.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::containsAll('hello world', ['hello', 'world']); // true
+     * Strings::containsAll('hello world', ['hello', 'xyz']); // false
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param array $searches The values to look for; each element must be a string
+     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
+     * @return bool True when all search values are found
+     * @see \Phuture\Coherence\Strings::contains()
+     * @see \Phuture\Coherence\Strings::containsNone()
+     */
+    public static function containsAll(string $string, array $searches, bool $caseSensitive = true): bool
+    {
+        foreach ($searches as $search) {
+            if (!self::contains($string, $search, $caseSensitive)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines whether a string contains none of the given search values.
+     *
+     * Returns true only when every value in `$searches` is absent from `$string`.
+     * An empty `$searches` array always returns true.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::containsNone('hello world', ['foo', 'bar']); // true
+     * Strings::containsNone('hello world', ['hello', 'bar']); // false
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param array $searches The values to check for absence; each element must be a string
+     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
+     * @return bool True when none of the search values are found
+     * @see \Phuture\Coherence\Strings::contains()
+     * @see \Phuture\Coherence\Strings::containsAll()
+     */
+    public static function containsNone(string $string, array $searches, bool $caseSensitive = true): bool
+    {
+        foreach ($searches as $search) {
+            if (self::contains($string, $search, $caseSensitive)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Counts the number of non-overlapping times a given text appears in a string.
      *
      * Returns zero when `$search` is an empty string or is not found in `$string`.
@@ -529,7 +726,7 @@ class Strings extends StaticClass
      * @param string $string The input string to search within
      * @param string $search The text to count
      * @return int The number of non-overlapping times the text appears
-     * @see \Phuture\Coherence\Strings::has()
+     * @see \Phuture\Coherence\Strings::contains()
      */
     public static function countOccurrences(string $string, string $search): int
     {
@@ -581,6 +778,38 @@ class Strings extends StaticClass
     }
 
     /**
+     * Calculates the Levenshtein edit distance between two strings.
+     *
+     * The edit distance is the minimum number of single-character edits (insertions,
+     * replacements, or deletions) required to transform one string into the other.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::distance('hello', 'hello'); // 0
+     * Strings::distance('hello', 'hallo'); // 1
+     * Strings::distance('kitten', 'sitting'); // 3
+     * ```
+     *
+     * @param string $string The first string
+     * @param string $other The second string
+     * @return int The minimum number of edits needed to transform one string into the other
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When either string exceeds 255 bytes
+     * @see \Phuture\Coherence\Strings::similar()
+     */
+    public static function distance(string $string, string $other): int
+    {
+        if (strlen($string) > 255 || strlen($other) > 255) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Strings must not exceed 255 bytes for Levenshtein distance"
+            );
+        }
+
+        return levenshtein($string, $other);
+    }
+
+    /**
      * Determines whether a string ends with a given search value.
      *
      * Returns true when `$string` ends with exactly `$search`. An empty `$search`
@@ -607,6 +836,61 @@ class Strings extends StaticClass
         }
 
         return mb_substr($string, -mb_strlen($search, 'UTF-8'), null, 'UTF-8') === $search;
+    }
+
+    /**
+     * Converts HTML entities back to their corresponding characters.
+     *
+     * Reverses the encoding performed by `entityEncode()`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::entityDecode('hello &amp; &quot;world&quot;'); // 'hello & "world"'
+     * Strings::entityDecode('caf&eacute;'); // 'café'
+     * ```
+     *
+     * @param string $string The HTML-entity-encoded string to decode
+     * @param int $flags Bitmask of ENT_* constants (default: ENT_QUOTES | ENT_SUBSTITUTE)
+     * @param string|null $encoding The encoding to use (default: 'UTF-8')
+     * @return string The decoded string
+     * @see \Phuture\Coherence\Strings::entityEncode()
+     */
+    public static function entityDecode(
+        string $string,
+        int $flags = ENT_QUOTES | ENT_SUBSTITUTE,
+        ?string $encoding = null
+    ): string {
+        return html_entity_decode($string, $flags, $encoding ?? 'UTF-8');
+    }
+
+    /**
+     * Converts all applicable characters to HTML entities.
+     *
+     * Translates characters that have HTML entity equivalents (like `&`, `<`, `>`,
+     * accented characters, etc.) into their entity representations.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::entityEncode('hello & "world"'); // 'hello &amp; &quot;world&quot;'
+     * Strings::entityEncode('café'); // 'caf&eacute;'
+     * ```
+     *
+     * @param string $string The input string to encode
+     * @param int $flags Bitmask of ENT_* constants (default: ENT_QUOTES | ENT_SUBSTITUTE)
+     * @param string|null $encoding The encoding to use (default: 'UTF-8')
+     * @return string The HTML-entity-encoded string
+     * @see \Phuture\Coherence\Strings::entityDecode()
+     */
+    public static function entityEncode(
+        string $string,
+        int $flags = ENT_QUOTES | ENT_SUBSTITUTE,
+        ?string $encoding = null
+    ): string {
+        return htmlentities($string, $flags, $encoding ?? 'UTF-8');
     }
 
     /**
@@ -811,10 +1095,34 @@ class Strings extends StaticClass
      *
      * @param string $string The input string that may contain invalid UTF-8 sequences
      * @return string A valid UTF-8 string with invalid byte sequences removed
+     * @see \Phuture\Coherence\Strings::scrub()
      */
     public static function fixEncoding(string $string): string
     {
         return mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+    }
+
+    /**
+     * Returns a formatted string using sprintf semantics.
+     *
+     * Replaces placeholders in `$format` with the provided arguments. Supports
+     * all standard sprintf format specifiers (`%s`, `%d`, `%f`, `%02d`, etc.).
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::format('Hello, %s!', 'World'); // 'Hello, World!'
+     * Strings::format('%04d-%02d-%02d', 2026, 5, 1); // '2026-05-01'
+     * ```
+     *
+     * @param string $format The format string containing placeholders
+     * @param mixed ...$args The values to substitute into the placeholders
+     * @return string The formatted string
+     */
+    public static function format(string $format, mixed ...$args): string
+    {
+        return sprintf($format, ...$args);
     }
 
     /**
@@ -842,101 +1150,36 @@ class Strings extends StaticClass
     }
 
     /**
-     * Determines whether a string contains a given search value.
+     * Decodes a hex-encoded binary string.
      *
-     * An empty `$search` always returns true. Supports optional case-insensitive matching.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::has('hello world', 'world'); // true
-     * Strings::has('hello world', 'World', false); // true (case-insensitive)
-     * Strings::has('hello world', 'xyz'); // false
-     * ```
-     *
-     * @param string $string The input string to search within
-     * @param string $search The value to look for
-     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
-     * @return bool True when the string contains the search value
-     * @see \Phuture\Coherence\Strings::hasAll()
-     * @see \Phuture\Coherence\Strings::hasNone()
-     */
-    public static function has(string $string, string $search, bool $caseSensitive = true): bool
-    {
-        if ($search === '') {
-            return true;
-        }
-
-        if ($caseSensitive) {
-            return mb_strpos($string, $search, 0, 'UTF-8') !== false;
-        }
-
-        return mb_stripos($string, $search, 0, 'UTF-8') !== false;
-    }
-
-    /**
-     * Determines whether a string contains all of the given search values.
-     *
-     * Returns true only when every value in `$searches` is found within `$string`.
-     * An empty `$searches` array always returns true.
+     * Reverses the encoding performed by `toHex()`. The input must contain only
+     * valid hexadecimal characters (0-9, a-f, A-F) and must have an even length.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
      *
-     * Strings::hasAll('hello world', ['hello', 'world']); // true
-     * Strings::hasAll('hello world', ['hello', 'xyz']); // false
+     * Strings::fromHex('68656c6c6f'); // 'hello'
      * ```
      *
-     * @param string $string The input string to search within
-     * @param array $searches The values to look for; each element must be a string
-     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
-     * @return bool True when all search values are found
-     * @see \Phuture\Coherence\Strings::has()
-     * @see \Phuture\Coherence\Strings::hasNone()
+     * @param string $string The hexadecimal string to decode
+     * @return string The decoded binary string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$string` is not valid hexadecimal
+     * @see \Phuture\Coherence\Strings::toHex()
      */
-    public static function hasAll(string $string, array $searches, bool $caseSensitive = true): bool
+    public static function fromHex(string $string): string
     {
-        foreach ($searches as $search) {
-            if (!self::has($string, $search, $caseSensitive)) {
-                return false;
-            }
+        if ($string === '') {
+            return '';
         }
 
-        return true;
-    }
-
-    /**
-     * Determines whether a string contains none of the given search values.
-     *
-     * Returns true only when every value in `$searches` is absent from `$string`.
-     * An empty `$searches` array always returns true.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::hasNone('hello world', ['foo', 'bar']); // true
-     * Strings::hasNone('hello world', ['hello', 'bar']); // false
-     * ```
-     *
-     * @param string $string The input string to search within
-     * @param array $searches The values to check for absence; each element must be a string
-     * @param bool $caseSensitive Whether the searches are case-sensitive (default: true)
-     * @return bool True when none of the search values are found
-     * @see \Phuture\Coherence\Strings::has()
-     * @see \Phuture\Coherence\Strings::hasAll()
-     */
-    public static function hasNone(string $string, array $searches, bool $caseSensitive = true): bool
-    {
-        foreach ($searches as $search) {
-            if (self::has($string, $search, $caseSensitive)) {
-                return false;
-            }
+        if (strlen($string) % 2 !== 0 || !preg_match('/^[0-9a-fA-F]+$/', $string)) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Input must be a valid hexadecimal string with even length"
+            );
         }
 
-        return true;
+        return hex2bin($string);
     }
 
     /**
@@ -958,7 +1201,7 @@ class Strings extends StaticClass
      * @param string $string The input string to convert
      * @return string The headline-formatted string
      * @see \Phuture\Coherence\Strings::pascal()
-     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::title()
      */
     public static function headline(string $string): string
     {
@@ -1007,6 +1250,56 @@ class Strings extends StaticClass
         $pattern = '/' . preg_quote($phrase, '/') . '/iu';
 
         return preg_replace($pattern, $tagOpen . '$0' . $tagClose, $string) ?? $string;
+    }
+
+    /**
+     * Calculates the Hamming distance between two strings.
+     *
+     * The Hamming distance is the number of positions at which the corresponding
+     * characters are different. Think of it as counting the minimum number of
+     * character substitutions needed to turn one string into the other.
+     *
+     * Both strings must have the same number of characters. This method is
+     * multibyte-safe and works correctly with accented characters and other
+     * Unicode text — each Unicode character counts as one unit regardless of
+     * how many bytes it uses.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::hamming('karolin', 'kathrin'); // 3
+     * Strings::hamming('hello', 'hello');     // 0
+     * Strings::hamming('', '');               // 0
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @return int The number of positions where the characters differ
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the strings have different character lengths
+     * @see \Phuture\Coherence\Strings::distance()
+     * @see \Phuture\Coherence\Strings::jaro()
+     */
+    public static function hamming(string $string, string $other): int
+    {
+        $s1 = mb_str_split($string, 1, 'UTF-8');
+        $s2 = mb_str_split($other, 1, 'UTF-8');
+
+        if (count($s1) !== count($s2)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Strings must be equal length for Hamming distance'
+            );
+        }
+
+        $distance = 0;
+
+        foreach ($s1 as $i => $char) {
+            if ($char !== $s2[$i]) {
+                $distance++;
+            }
+        }
+
+        return $distance;
     }
 
     /**
@@ -1302,8 +1595,9 @@ class Strings extends StaticClass
     /**
      * Determines whether a string is valid JSON.
      *
-     * Returns false for empty strings and any string that cannot be decoded with
-     * `json_decode()`.
+     * Returns false for empty strings and any string that is not valid JSON.
+     * Uses PHP 8.3's `json_validate()` when available, falling back to
+     * `json_decode()` on older versions.
      *
      * Example:
      * ```php
@@ -1322,6 +1616,10 @@ class Strings extends StaticClass
     {
         if ($string === '') {
             return false;
+        }
+
+        if (function_exists('json_validate')) {
+            return json_validate($string);
         }
 
         json_decode($string);
@@ -1504,6 +1802,161 @@ class Strings extends StaticClass
     }
 
     /**
+     * Calculates the Jaro similarity between two strings.
+     *
+     * The Jaro similarity is a measure of how alike two strings are. It returns
+     * a number between 0.0 (completely different) and 1.0 (identical). The
+     * algorithm considers two characters to be a "match" when they appear within
+     * a certain distance of each other in both strings.
+     *
+     * This method is multibyte-safe and works correctly with accented characters,
+     * emoji, and other Unicode text — each Unicode character counts as one unit.
+     *
+     * Returns 1.0 when both strings are empty (they are identical). Returns 0.0
+     * when one string is empty and the other is not.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::jaro('martha', 'marhta'); // ~0.9444
+     * Strings::jaro('hello', 'hello');   // 1.0
+     * Strings::jaro('foo', 'bar');       // 0.0
+     * Strings::jaro('', '');             // 1.0
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @return float The Jaro similarity score from 0.0 (different) to 1.0 (identical)
+     * @see \Phuture\Coherence\Strings::jaroWinkler()
+     * @see \Phuture\Coherence\Strings::distance()
+     * @see \Phuture\Coherence\Strings::similar()
+     */
+    public static function jaro(string $string, string $other): float
+    {
+        if ($string === $other) {
+            return 1.0;
+        }
+
+        if ($string === '' || $other === '') {
+            return 0.0;
+        }
+
+        $s1 = mb_str_split($string, 1, 'UTF-8');
+        $s2 = mb_str_split($other, 1, 'UTF-8');
+        $len1 = count($s1);
+        $len2 = count($s2);
+
+        $matchWindow = max(0, (int) floor(max($len1, $len2) / 2) - 1);
+
+        $s1Matched = array_fill(0, $len1, false);
+        $s2Matched = array_fill(0, $len2, false);
+        $matches = 0;
+
+        for ($i = 0; $i < $len1; $i++) {
+            $start = max(0, $i - $matchWindow);
+            $end = min($i + $matchWindow + 1, $len2);
+
+            for ($j = $start; $j < $end; $j++) {
+                if ($s2Matched[$j] || $s1[$i] !== $s2[$j]) {
+                    continue;
+                }
+
+                $s1Matched[$i] = true;
+                $s2Matched[$j] = true;
+                $matches++;
+                break;
+            }
+        }
+
+        if ($matches === 0) {
+            return 0.0;
+        }
+
+        $transpositions = 0;
+        $k = 0;
+
+        for ($i = 0; $i < $len1; $i++) {
+            if (!$s1Matched[$i]) {
+                continue;
+            }
+
+            while (!$s2Matched[$k]) {
+                $k++;
+            }
+
+            if ($s1[$i] !== $s2[$k]) {
+                $transpositions++;
+            }
+
+            $k++;
+        }
+
+        return (($matches / $len1) + ($matches / $len2) + (($matches - $transpositions / 2) / $matches)) / 3.0;
+    }
+
+    /**
+     * Calculates the Jaro-Winkler similarity between two strings.
+     *
+     * Jaro-Winkler is an extension of the Jaro similarity that gives extra weight
+     * to strings sharing a common prefix. A longer shared prefix results in a
+     * higher similarity score. This makes it particularly useful for comparing
+     * names or words where the beginning matters most.
+     *
+     * The prefix scale controls how much the shared prefix boosts the score. The
+     * standard value is 0.1 and it must not exceed 0.25, otherwise the result
+     * could fall outside the valid 0.0 to 1.0 range.
+     *
+     * This method is multibyte-safe and works correctly with accented characters,
+     * emoji, and other Unicode text.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::jaroWinkler('martha', 'marhta');        // ~0.9611
+     * Strings::jaroWinkler('hello', 'hello');           // 1.0
+     * Strings::jaroWinkler('hello', 'helo', 0.0);      // same as jaro()
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @param float $prefixScale How much weight to give the common prefix; must not exceed 0.25 (default: 0.1)
+     * @return float The Jaro-Winkler similarity score from 0.0 (different) to 1.0 (identical)
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$prefixScale` exceeds 0.25
+     * @see \Phuture\Coherence\Strings::jaro()
+     */
+    public static function jaroWinkler(string $string, string $other, float $prefixScale = 0.1): float
+    {
+        if ($prefixScale > 0.25) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Prefix scale must not exceed 0.25 for Jaro-Winkler'
+            );
+        }
+
+        $jaroScore = self::jaro($string, $other);
+
+        if ($jaroScore === 0.0) {
+            return 0.0;
+        }
+
+        $s1 = mb_str_split($string, 1, 'UTF-8');
+        $s2 = mb_str_split($other, 1, 'UTF-8');
+        $maxPrefix = min(4, count($s1), count($s2));
+        $prefixLength = 0;
+
+        for ($i = 0; $i < $maxPrefix; $i++) {
+            if ($s1[$i] !== $s2[$i]) {
+                break;
+            }
+
+            $prefixLength++;
+        }
+
+        return $jaroScore + ($prefixLength * $prefixScale * (1.0 - $jaroScore));
+    }
+
+    /**
      * Converts a string to kebab-case.
      *
      * Words are lowercased and joined with hyphens. Delegates to `snake()` with a
@@ -1559,7 +2012,8 @@ class Strings extends StaticClass
     /**
      * Returns the position of the last occurrence of a search value.
      *
-     * Returns false when the search value is not found.
+     * Returns false when the search value is not found. Supports optional
+     * case-insensitive matching.
      *
      * Example:
      * ```php
@@ -1567,17 +2021,27 @@ class Strings extends StaticClass
      *
      * Strings::lastPosition('hello world hello', 'hello'); // 12
      * Strings::lastPosition('hello', 'xyz'); // false
+     * Strings::lastPosition('Hello World', 'world', 0, false); // 6
      * ```
      *
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @param int $offset The offset from the start to begin searching (default: 0)
+     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
      * @return int|false The position of the last occurrence, or false if not found
      * @see \Phuture\Coherence\Strings::position()
      */
-    public static function lastPosition(string $string, string $search, int $offset = 0): int|false
-    {
-        return mb_strrpos($string, $search, $offset, 'UTF-8');
+    public static function lastPosition(
+        string $string,
+        string $search,
+        int $offset = 0,
+        bool $caseSensitive = true
+    ): int|false {
+        if ($caseSensitive) {
+            return mb_strrpos($string, $search, $offset, 'UTF-8');
+        }
+
+        return mb_strripos($string, $search, $offset, 'UTF-8');
     }
 
     /**
@@ -1701,7 +2165,7 @@ class Strings extends StaticClass
      * @param string $string The input string to lowercase
      * @return string The lowercased string
      * @see \Phuture\Coherence\Strings::upper()
-     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::title()
      */
     public static function lower(string $string): string
     {
@@ -1725,7 +2189,7 @@ class Strings extends StaticClass
      * @param string $string The input string
      * @return string The string with its first character lowercased
      * @see \Phuture\Coherence\Strings::lower()
-     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::title()
      */
     public static function lowerFirst(string $string): string
     {
@@ -1758,6 +2222,7 @@ class Strings extends StaticClass
      * @param int|null $length The number of characters to mask; must be zero or greater (null masks to the end)
      * @return string The masked string
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$length` is negative
+     * @see \Phuture\Coherence\Strings::limit()
      */
     public static function mask(string $string, string $mask = '*', int $offset = 0, ?int $length = null): string
     {
@@ -1819,6 +2284,70 @@ class Strings extends StaticClass
     }
 
     /**
+     * Calculates the metaphone key of a string.
+     *
+     * Metaphone is a phonetic algorithm that encodes words based on how they
+     * sound in English. Unlike soundex, metaphone produces keys of variable
+     * length and is generally more accurate for English pronunciation. Two
+     * words that sound the same will produce the same key.
+     *
+     * The string is transliterated to ASCII before processing, making this
+     * method safe to use with accented or non-Latin characters — for example,
+     * "héllo" is treated the same as "hello".
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::metaphone('World');    // 'WRLT'
+     * Strings::metaphone('Thompson'); // 'TMPSN'
+     * Strings::metaphone('Smith');    // 'SM0'
+     * Strings::metaphone('Smythe');   // 'SM0'
+     * Strings::metaphone('héllo');    // 'HL'
+     * ```
+     *
+     * @param string $string The input string to compute the metaphone key for
+     * @param int $maxPhonemes The maximum number of phonemes to return; 0 means no limit (default: 0)
+     * @return string The metaphone phonetic key
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$string` is empty
+     * @see \Phuture\Coherence\Strings::soundex()
+     * @see \Phuture\Coherence\Strings::ascii()
+     */
+    public static function metaphone(string $string, int $maxPhonemes = 0): string
+    {
+        if ($string === '') {
+            throw new InvalidArgumentException(
+                'Invalid Argument: String must not be empty for metaphone'
+            );
+        }
+
+        return \metaphone(self::ascii($string), $maxPhonemes);
+    }
+
+    /**
+     * Inserts HTML line breaks before all newlines in a string.
+     *
+     * Converts newline characters (`\n`) to `<br>` tags. When `$useXhtml` is true,
+     * produces `<br />` instead of `<br>`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::nl2br("hello\nworld"); // 'hello<br />\nworld'
+     * Strings::nl2br("hello\nworld", false); // 'hello<br>\nworld'
+     * ```
+     *
+     * @param string $string The input string containing newlines
+     * @param bool $useXhtml Whether to use XHTML-compatible `<br />` tags (default: true)
+     * @return string The string with HTML line breaks inserted before newlines
+     */
+    public static function nl2br(string $string, bool $useXhtml = true): string
+    {
+        return nl2br($string, $useXhtml);
+    }
+
+    /**
      * Normalizes line endings to Unix-style `\n`.
      *
      * Converts Windows-style `\r\n` and old Mac-style `\r` to `\n`. The string is
@@ -1833,10 +2362,41 @@ class Strings extends StaticClass
      *
      * @param string $string The input string whose line endings are to be normalized
      * @return string The string with all line endings replaced by `\n`
+     * @see \Phuture\Coherence\Strings::strip()
      */
     public static function normalizeNewLines(string $string): string
     {
         return str_replace(["\r\n", "\r"], "\n", $string);
+    }
+
+    /**
+     * Formats a number with grouped thousands and configurable separators.
+     *
+     * Rounds the number to `$decimals` decimal places and inserts `$thousandsSeparator`
+     * between every group of three digits.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::numberFormat(1234.5678, 2); // '1,234.57'
+     * Strings::numberFormat(1234.5678, 2, ',', '.'); // '1.234,57'
+     * Strings::numberFormat(1000000); // '1,000,000'
+     * ```
+     *
+     * @param float|int $number The number to format
+     * @param int $decimals The number of decimal places (default: 0)
+     * @param string $decimalSeparator The character for the decimal point (default: '.')
+     * @param string $thousandsSeparator The character for thousands grouping (default: ',')
+     * @return string The formatted number string
+     */
+    public static function numberFormat(
+        float|int $number,
+        int $decimals = 0,
+        string $decimalSeparator = '.',
+        string $thousandsSeparator = ','
+    ): string {
+        return number_format($number, $decimals, $decimalSeparator, $thousandsSeparator);
     }
 
     /**
@@ -1924,6 +2484,10 @@ class Strings extends StaticClass
      */
     public static function padBoth(string $string, int $length, string $padString = ' '): string
     {
+        if (function_exists('mb_str_pad')) {
+            return mb_str_pad($string, $length, $padString, STR_PAD_BOTH, 'UTF-8');
+        }
+
         $paddingNeeded = $length - self::length($string);
 
         if ($paddingNeeded <= 0) {
@@ -1968,6 +2532,10 @@ class Strings extends StaticClass
      */
     public static function padLeft(string $string, int $length, string $padString = ' '): string
     {
+        if (function_exists('mb_str_pad')) {
+            return mb_str_pad($string, $length, $padString, STR_PAD_LEFT, 'UTF-8');
+        }
+
         $paddingNeeded = $length - self::length($string);
 
         if ($paddingNeeded <= 0) {
@@ -2008,6 +2576,10 @@ class Strings extends StaticClass
      */
     public static function padRight(string $string, int $length, string $padString = ' '): string
     {
+        if (function_exists('mb_str_pad')) {
+            return mb_str_pad($string, $length, $padString, STR_PAD_RIGHT, 'UTF-8');
+        }
+
         $paddingNeeded = $length - self::length($string);
 
         if ($paddingNeeded <= 0) {
@@ -2142,7 +2714,8 @@ class Strings extends StaticClass
     /**
      * Returns the position of the first occurrence of a search value.
      *
-     * Returns false when the search value is not found.
+     * Returns false when the search value is not found. Supports optional
+     * case-insensitive matching.
      *
      * Example:
      * ```php
@@ -2151,17 +2724,49 @@ class Strings extends StaticClass
      * Strings::position('hello world', 'world'); // 6
      * Strings::position('hello world', 'xyz'); // false
      * Strings::position('hello hello', 'hello', 3); // 6
+     * Strings::position('Hello World', 'world', 0, false); // 6
      * ```
      *
      * @param string $string The input string to search within
      * @param string $search The value to search for
      * @param int $offset The offset from the start to begin searching (default: 0)
+     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
      * @return int|false The position of the first occurrence, or false if not found
      * @see \Phuture\Coherence\Strings::lastPosition()
      */
-    public static function position(string $string, string $search, int $offset = 0): int|false
+    public static function position(
+        string $string,
+        string $search,
+        int $offset = 0,
+        bool $caseSensitive = true
+    ): int|false {
+        if ($caseSensitive) {
+            return mb_strpos($string, $search, $offset, 'UTF-8');
+        }
+
+        return mb_stripos($string, $search, $offset, 'UTF-8');
+    }
+
+    /**
+     * Escapes regular expression meta-characters in a string.
+     *
+     * Adds a backslash before each of the characters: `. \ + * ? [ ^ ] ( $ )`.
+     * Useful for preparing a literal string for use in a regular expression pattern.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::quoteMeta('hello (world)'); // 'hello \(world\)'
+     * Strings::quoteMeta('price: $10.00'); // 'price: \$10\.00'
+     * ```
+     *
+     * @param string $string The input string to escape
+     * @return string The string with meta-characters escaped
+     */
+    public static function quoteMeta(string $string): string
     {
-        return mb_strpos($string, $search, $offset, 'UTF-8');
+        return quotemeta($string);
     }
 
     /**
@@ -2469,12 +3074,37 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to reverse
      * @return string The reversed string
+     * @see \Phuture\Coherence\Strings::swap()
      */
     public static function reverse(string $string): string
     {
         $characters = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
         return implode('', array_reverse($characters));
+    }
+
+    /**
+     * Applies the ROT13 encoding to a string.
+     *
+     * ROT13 shifts every ASCII letter by 13 positions, wrapping around the alphabet.
+     * Applying it twice returns the original string. Non-alphabetic characters are
+     * left unchanged.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::rot13('hello'); // 'uryyb'
+     * Strings::rot13('uryyb'); // 'hello'
+     * Strings::rot13('Hello World!'); // 'Uryyb Jbeyq!'
+     * ```
+     *
+     * @param string $string The input string to encode
+     * @return string The ROT13-encoded string
+     */
+    public static function rot13(string $string): string
+    {
+        return str_rot13($string);
     }
 
     /**
@@ -2493,10 +3123,118 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to clean
      * @return string The string with control characters removed
+     * @see \Phuture\Coherence\Strings::fixEncoding()
      */
     public static function scrub(string $string): string
     {
         return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string);
+    }
+
+    /**
+     * Returns the portion of the string from the first occurrence of a search value.
+     *
+     * Searches for the first occurrence of `$search` in `$string` and returns the
+     * portion from that position to the end (or everything before it if `$beforeNeedle`
+     * is true). Returns `false` when `$search` is not found.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::search('user@example.com', '@'); // '@example.com'
+     * Strings::search('user@example.com', '@', true); // 'user'
+     * Strings::search('Hello World', 'world', false, false); // 'World'
+     * Strings::search('hello', 'xyz'); // false
+     * ```
+     *
+     * @param string $string The input string to search within
+     * @param string $search The value to search for
+     * @param bool $beforeNeedle Return the part before the search value instead of after (default: false)
+     * @param bool $caseSensitive Whether the search is case-sensitive (default: true)
+     * @return string|false The portion from the first occurrence, or false if not found
+     * @see \Phuture\Coherence\Strings::position()
+     */
+    public static function search(
+        string $string,
+        string $search,
+        bool $beforeNeedle = false,
+        bool $caseSensitive = true
+    ): string|false {
+        if ($search === '') {
+            return $string;
+        }
+
+        if ($caseSensitive) {
+            return mb_strstr($string, $search, $beforeNeedle, 'UTF-8');
+        }
+
+        return mb_stristr($string, $search, $beforeNeedle, 'UTF-8');
+    }
+
+    /**
+     * Randomly shuffles the characters in a string.
+     *
+     * Multibyte-safe: splits on Unicode code points before shuffling.
+     * Returns an empty string when the input is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * $shuffled = Strings::shuffle('hello'); // e.g. 'lleoh'
+     * $shuffled = Strings::shuffle('ñaño'); // multibyte-safe shuffle
+     * ```
+     *
+     * @param string $string The input string to shuffle
+     * @return string The shuffled string
+     */
+    public static function shuffle(string $string): string
+    {
+        if ($string === '') {
+            return '';
+        }
+
+        $characters = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
+
+        if ($characters === false) {
+            return '';
+        }
+
+        shuffle($characters);
+
+        return implode('', $characters);
+    }
+
+    /**
+     * Calculates the similarity between two strings as a percentage.
+     *
+     * Returns a value between 0.0 and 100.0 indicating how similar the two strings are.
+     * A value of 100.0 means the strings are identical. Returns 0.0 when either string
+     * is empty.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::similar('hello', 'hello'); // 100.0
+     * Strings::similar('hello', 'hallo'); // ~80.0
+     * Strings::similar('hello', ''); // 0.0
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @return float The similarity percentage from 0.0 to 100.0
+     * @see \Phuture\Coherence\Strings::distance()
+     */
+    public static function similar(string $string, string $other): float
+    {
+        if ($string === '' || $other === '') {
+            return 0.0;
+        }
+
+        similar_text($string, $other, $percent);
+
+        return $percent;
     }
 
     /**
@@ -2587,6 +3325,36 @@ class Strings extends StaticClass
         $string = self::lower(trim($string));
 
         return preg_replace('/\s+/', $delimiter, $string);
+    }
+
+    /**
+     * Calculates the soundex key of a string.
+     *
+     * Soundex is a phonetic algorithm that indexes names by their English pronunciation.
+     * The result is a 4-character string starting with a letter followed by three digits.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::soundex('Euler'); // 'E460'
+     * Strings::soundex('Ellery'); // 'E460'
+     * Strings::soundex('Knuth'); // 'K530'
+     * ```
+     *
+     * @param string $string The input string to compute the soundex key for
+     * @return string The 4-character soundex key
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$string` is empty
+     */
+    public static function soundex(string $string): string
+    {
+        if ($string === '') {
+            throw new InvalidArgumentException(
+                "Invalid Argument: String must not be empty for soundex"
+            );
+        }
+
+        return \soundex($string);
     }
 
     /**
@@ -2724,10 +3492,56 @@ class Strings extends StaticClass
      * @param string $string The input string to strip
      * @param string $allowedTags HTML tags to preserve (default: '' = strip all)
      * @return string The string with HTML/PHP tags removed
+     * @see \Phuture\Coherence\Strings::normalizeNewLines()
+     * @see \Phuture\Coherence\Strings::trim()
      */
     public static function strip(string $string, string $allowedTags = ''): string
     {
         return strip_tags($string, $allowedTags);
+    }
+
+    /**
+     * Removes C-style backslash escapes from a string.
+     *
+     * Reverses the escaping performed by `addCSlashes()`, recognizing C-style
+     * escape sequences like `\n`, `\r`, `\t`, `\0`, and octal/hex notations.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::stripCSlashes('h\\ell\\o'); // 'hello'
+     * ```
+     *
+     * @param string $string The C-style escaped string to unescape
+     * @return string The unescaped string
+     * @see \Phuture\Coherence\Strings::addCSlashes()
+     */
+    public static function stripCSlashes(string $string): string
+    {
+        return stripcslashes($string);
+    }
+
+    /**
+     * Removes backslash escapes added by `addSlashes()`.
+     *
+     * Reverses the escaping performed by `addSlashes()`, removing backslashes
+     * before single quotes, double quotes, backslashes, and NUL bytes.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::stripSlashes("hello \\'world\\'"); // "hello 'world'"
+     * ```
+     *
+     * @param string $string The escaped string to unescape
+     * @return string The unescaped string
+     * @see \Phuture\Coherence\Strings::addSlashes()
+     */
+    public static function stripSlashes(string $string): string
+    {
+        return stripslashes($string);
     }
 
     /**
@@ -2803,7 +3617,7 @@ class Strings extends StaticClass
      *
      * @param string $string The input string to convert
      * @return string The title-cased string
-     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::title()
      * @see \Phuture\Coherence\Strings::upper()
      */
     public static function title(string $string): string
@@ -2859,6 +3673,29 @@ class Strings extends StaticClass
     public static function toBase64(string $string): string
     {
         return base64_encode($string);
+    }
+
+    /**
+     * Converts binary data into its hexadecimal representation.
+     *
+     * Generates a hex string (lowercase) where each byte of the input is represented
+     * by two hexadecimal digits.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::toHex('hello'); // '68656c6c6f'
+     * Strings::toHex("\x00\xFF"); // '00ff'
+     * ```
+     *
+     * @param string $string The input string to convert
+     * @return string The hexadecimal representation
+     * @see \Phuture\Coherence\Strings::fromHex()
+     */
+    public static function toHex(string $string): string
+    {
+        return bin2hex($string);
     }
 
     /**
@@ -2993,11 +3830,43 @@ class Strings extends StaticClass
      * @param string $string The input string to uppercase
      * @return string The uppercased string
      * @see \Phuture\Coherence\Strings::lower()
-     * @see \Phuture\Coherence\Strings::capitalize()
+     * @see \Phuture\Coherence\Strings::title()
      */
     public static function upper(string $string): string
     {
         return mb_strtoupper($string, 'UTF-8');
+    }
+
+    /**
+     * Converts only the first character of a string to uppercase.
+     *
+     * The remainder of the string is left unchanged. Multibyte-safe.
+     * This is the counterpart to `lowerFirst()`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::upperFirst('hello World'); // 'Hello World'
+     * Strings::upperFirst('HELLO'); // 'HELLO'
+     * Strings::upperFirst('ñoño'); // 'Ñoño'
+     * ```
+     *
+     * @param string $string The input string
+     * @return string The string with its first character uppercased
+     * @see \Phuture\Coherence\Strings::lowerFirst()
+     * @see \Phuture\Coherence\Strings::upper()
+     */
+    public static function upperFirst(string $string): string
+    {
+        if ($string === '') {
+            return '';
+        }
+
+        $firstChar = mb_substr($string, 0, 1, 'UTF-8');
+        $rest = mb_substr($string, 1, null, 'UTF-8');
+
+        return self::upper($firstChar) . $rest;
     }
 
     /**

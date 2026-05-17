@@ -104,6 +104,8 @@ class Callables extends StaticClass
      * @param callable $callback The main function to execute
      * @param callable $after The function to execute after the main function (receives result, then args)
      * @return Closure A function that executes the main function, then the after hook
+     * @see \Phuture\Coherence\Callables::before()
+     * @see \Phuture\Coherence\Callables::wrap()
      */
     public static function after(callable $callback, callable $after): Closure
     {
@@ -140,6 +142,8 @@ class Callables extends StaticClass
      * @param callable $callback The function to call
      * @param array $args The array of arguments to spread into the function
      * @return mixed The return value of the called function
+     * @see \Phuture\Coherence\Callables::call()
+     * @see \Phuture\Coherence\Callables::spread()
      */
     public static function apply(callable $callback, array $args): mixed
     {
@@ -181,6 +185,8 @@ class Callables extends StaticClass
      * @param callable $before The function to execute before the main function
      * @param callable $callback The main function to execute
      * @return Closure A function that executes the before hook, then the main function
+     * @see \Phuture\Coherence\Callables::after()
+     * @see \Phuture\Coherence\Callables::wrap()
      */
     public static function before(callable $before, callable $callback): Closure
     {
@@ -217,6 +223,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to call with only the first two arguments
      * @return Closure A function that uses only the first two arguments
+     * @see \Phuture\Coherence\Callables::unary()
      */
     public static function binary(callable $callback): Closure
     {
@@ -284,6 +291,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to call
      * @param mixed ...$args The arguments to pass to the function
      * @return mixed The return value of the called function
+     * @see \Phuture\Coherence\Callables::apply()
      */
     public static function call(callable $callback, mixed ...$args): mixed
     {
@@ -322,6 +330,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to execute with error handling
      * @param callable $handler The function to call on exception (receives exception, then args)
      * @return Closure A function that catches exceptions and handles them
+     * @see \Phuture\Coherence\Callables::safe()
      */
     public static function catch(callable $callback, callable $handler): Closure
     {
@@ -364,6 +373,7 @@ class Callables extends StaticClass
      *
      * @param callable ...$callback The functions to compose, applied right-to-left
      * @return Closure A new closure that applies all functions in composition
+     * @see \Phuture\Coherence\Callables::pipe()
      */
     public static function compose(callable ...$callback): Closure
     {
@@ -404,6 +414,7 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to always return
      * @return Closure A function that always returns the specified value
+     * @see \Phuture\Coherence\Callables::identity()
      */
     public static function constant(mixed $value): Closure
     {
@@ -567,6 +578,7 @@ class Callables extends StaticClass
      * ```
      *
      * @return Closure A function that returns its input unchanged
+     * @see \Phuture\Coherence\Callables::constant()
      */
     public static function identity(): Closure
     {
@@ -597,6 +609,8 @@ class Callables extends StaticClass
      * @param callable $then The function to execute when the condition is true
      * @param callable|null $else The function to execute when the condition is false (optional)
      * @return Closure A function that chooses between two callbacks based on a condition
+     * @see \Phuture\Coherence\Callables::when()
+     * @see \Phuture\Coherence\Callables::unless()
      */
     public static function if(
         callable $condition,
@@ -627,6 +641,8 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to check if it's callable
      * @return bool True if the value is callable, false otherwise
+     * @see \Phuture\Coherence\Callables::isClosure()
+     * @see \Phuture\Coherence\Callables::isFunction()
      */
     public static function isCallable(mixed $value): bool
     {
@@ -652,6 +668,7 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to check if it's a closure
      * @return bool True if the value is a closure, false otherwise
+     * @see \Phuture\Coherence\Callables::isCallable()
      */
     public static function isClosure(mixed $value): bool
     {
@@ -678,6 +695,8 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to check if it's a function name
      * @return bool True if the value is a valid function name, false otherwise
+     * @see \Phuture\Coherence\Callables::isMethod()
+     * @see \Phuture\Coherence\Callables::isCallable()
      */
     public static function isFunction(mixed $value): bool
     {
@@ -710,6 +729,7 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to check if it's an invokable object
      * @return bool True if the value is an object with __invoke method, false otherwise
+     * @see \Phuture\Coherence\Callables::isCallable()
      */
     public static function isInvokable(mixed $value): bool
     {
@@ -737,6 +757,8 @@ class Callables extends StaticClass
      *
      * @param mixed $value The value to check if it's a method callable
      * @return bool True if the value is a valid method callable, false otherwise
+     * @see \Phuture\Coherence\Callables::isFunction()
+     * @see \Phuture\Coherence\Callables::isCallable()
      */
     public static function isMethod(mixed $value): bool
     {
@@ -937,6 +959,8 @@ class Callables extends StaticClass
      * @param callable $callback The function to partially apply
      * @param mixed ...$args The arguments to pre-fill from the left
      * @return Closure A new function with left arguments pre-filled
+     * @see \Phuture\Coherence\Callables::partialRight()
+     * @see \Phuture\Coherence\Callables::curry()
      */
     public static function partial(callable $callback, mixed ...$args): Closure
     {
@@ -981,6 +1005,8 @@ class Callables extends StaticClass
      * @param callable $callback The function to partially apply
      * @param mixed ...$args The arguments to pre-fill from the right
      * @return Closure A new function with right arguments pre-filled
+     * @see \Phuture\Coherence\Callables::partial()
+     * @see \Phuture\Coherence\Callables::curry()
      */
     public static function partialRight(callable $callback, mixed ...$args): Closure
     {
@@ -1024,6 +1050,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to execute with the value
      * @param mixed $value The value to pass to the function
      * @return mixed The original value unchanged
+     * @see \Phuture\Coherence\Callables::tap()
      */
     public static function passthrough(callable $callback, mixed $value): mixed
     {
@@ -1062,6 +1089,7 @@ class Callables extends StaticClass
      *
      * @param callable ...$callback The functions to pipe, applied left-to-right
      * @return Closure A new closure that applies all functions in sequence
+     * @see \Phuture\Coherence\Callables::compose()
      */
     public static function pipe(callable ...$callback): Closure
     {
@@ -1234,6 +1262,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to make exception-safe
      * @return Closure A function that returns [exception, result] instead of throwing
+     * @see \Phuture\Coherence\Callables::catch()
      */
     public static function safe(callable $callback): Closure
     {
@@ -1273,6 +1302,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to call with spread arguments
      * @return Closure A function that accepts an array and spreads it
+     * @see \Phuture\Coherence\Callables::apply()
      */
     public static function spread(callable $callback): Closure
     {
@@ -1312,6 +1342,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to execute with the value
      * @return Closure A function that executes the function but returns the original value
+     * @see \Phuture\Coherence\Callables::passthrough()
      */
     public static function tap(callable $callback): Closure
     {
@@ -1443,6 +1474,7 @@ class Callables extends StaticClass
      *
      * @param Closure $callback The closure to convert to callable
      * @return callable|array The underlying callable, either as callable or array
+     * @see \Phuture\Coherence\Callables::toClosure()
      */
     public static function toCallable(Closure $callback): callable|array
     {
@@ -1486,6 +1518,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The callable to convert to a closure
      * @return Closure The closure version of the callable
+     * @see \Phuture\Coherence\Callables::toCallable()
      */
     public static function toClosure(callable $callback): Closure
     {
@@ -1558,6 +1591,7 @@ class Callables extends StaticClass
      *
      * @param callable $callback The function to call with only the first argument
      * @return Closure A function that uses only the first argument
+     * @see \Phuture\Coherence\Callables::binary()
      */
     public static function unary(callable $callback): Closure
     {
@@ -1607,6 +1641,7 @@ class Callables extends StaticClass
      * @param callable $callback The function to execute when condition is true
      * @param bool $condition The condition to check before executing the callback
      * @return Closure Returns a new function that conditionally executes the callback
+     * @see \Phuture\Coherence\Callables::unless()
      */
     public static function when(callable $callback, bool $condition): Closure
     {
@@ -1655,6 +1690,8 @@ class Callables extends StaticClass
      * @param callable|null $before Optional function to execute before the main function
      * @param callable|null $after Optional function to execute after the main function (receives result, then args)
      * @return Closure A function that wraps the main function with optional hooks
+     * @see \Phuture\Coherence\Callables::before()
+     * @see \Phuture\Coherence\Callables::after()
      */
     public static function wrap(
         callable $callback,

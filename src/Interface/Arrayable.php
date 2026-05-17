@@ -26,4 +26,24 @@ interface Arrayable
      * @return array The array representation of the object
      */
     public function toArray(): array;
+
+    /**
+     * Convert the object to a JSON string representation.
+     *
+     * This method should return a JSON-encoded string that represents
+     * the object's data in a format suitable for storage or transmission.
+     *
+     * @return string The JSON representation of the object
+     */
+    public function toJson(): string;
+
+    /**
+     * Convert the object to a generic object representation.
+     *
+     * This method should return a plain PHP object (stdClass) that represents
+     * the object's data, making it easier to access properties dynamically.
+     *
+     * @return object The object representation of the object
+     */
+    public function toObject(): object;
 }

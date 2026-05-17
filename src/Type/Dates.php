@@ -482,6 +482,7 @@ class Dates extends FluentClass implements Dateable
     {
         return Transformer::toTimestamp($this->data);
     }
+
     /**
      * Converts the wrapped date/time to a different timezone.
      *

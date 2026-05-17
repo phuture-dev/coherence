@@ -973,6 +973,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function for keys that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are not found in other arrays
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison array is provided
      * @see \Phuture\Coherence\Arrays::difference()
      * @see \Phuture\Coherence\Arrays::differenceAssoc()
      */
@@ -1374,7 +1375,9 @@ class Arrays extends StaticClass
      * ```
      *
      * @param array $array A potentially multidimensional array to flatten
+     * @param int $depth Internal recursion depth tracker (default: 0)
      * @return array Returns a single-dimensional array containing all scalar values from the nested structure
+     * @throws \Phuture\Coherence\Exception\LogicException When recursion depth exceeds the limit
      * @see \Phuture\Coherence\Arrays::collapse()
      */
     public static function flatten(array $array, int $depth = 0): array
@@ -1445,6 +1448,39 @@ class Arrays extends StaticClass
         }
 
         return array_flip($array);
+    }
+
+    /**
+     * Parses a CSV-formatted string into an array.
+     *
+     * Wraps PHP's native `str_getcsv()` to parse a single line of CSV text into
+     * an indexed array of fields. Supports configurable field separator, field
+     * enclosure, and escape characters.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * Arrays::fromCsv('a,b,c'); // ['a', 'b', 'c']
+     * Arrays::fromCsv('"a","b","c"'); // ['a', 'b', 'c']
+     * Arrays::fromCsv('a|b|c', '|'); // ['a', 'b', 'c']
+     * Arrays::fromCsv('a;b;c', ';'); // ['a', 'b', 'c']
+     * ```
+     *
+     * @param string $string The CSV-formatted string to parse
+     * @param string $separator The field separator character (default: ',')
+     * @param string $enclosure The field enclosure character (default: '"')
+     * @param string $escape The escape character (default: '\\')
+     * @return array The parsed array of CSV fields
+     * @see \Phuture\Coherence\Arrays::fromString()
+     */
+    public static function fromCsv(
+        string $string,
+        string $separator = ',',
+        string $enclosure = '"',
+        string $escape = '\\'
+    ): array {
+        return str_getcsv($string, $separator, $enclosure, $escape);
     }
 
     /**
@@ -1729,7 +1765,7 @@ class Arrays extends StaticClass
      * // Returns: false
      * ```
      *
-     * @param array $array The array to check. for key existence
+     * @param array $array The array to check for key existence
      * @param string|int|array $key The key to check (string/int for simple key, array for nested path).
      * @return bool Returns true if the key exists, false otherwise
      */
@@ -1926,6 +1962,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values present in all arrays with keys preserved from the first array
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison array is provided
      * @see \Phuture\Coherence\Arrays::intersectAssoc()
      * @see \Phuture\Coherence\Arrays::intersectKeys()
      */
@@ -2115,6 +2152,7 @@ class Arrays extends StaticClass
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns key-value pairs whose keys are found in all arrays
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison array is provided
      * @see \Phuture\Coherence\Arrays::intersect()
      */
     public static function intersectKeys(array $array, ...$arrays): array
@@ -2332,6 +2370,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays Two or more arrays to join together
      * @return array Returns a single merged array
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When fewer than 2 arrays are provided
      * @see \Phuture\Coherence\Arrays::split()
      */
     public static function join(array ...$arrays): array
@@ -2748,6 +2787,7 @@ class Arrays extends StaticClass
      *
      * @param array ...$arrays One or more arrays to merge together
      * @return array Returns a new merged array
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When fewer than 2 arrays are provided
      * @see \Phuture\Coherence\Arrays::join()
      * @see \Phuture\Coherence\Arrays::collapse()
      */
@@ -3863,7 +3903,7 @@ class Arrays extends StaticClass
      * @see \Phuture\Coherence\Arrays::sortKeys()
      * @see \Phuture\Coherence\Arrays::sortAssoc()
      * @see \Phuture\Coherence\Arrays::sortNatural()
-     * @see \Phuture\Coherence\Arrays::sortMultidimensional()
+     * @see \Phuture\Coherence\Arrays::sortBy()
      */
     public static function sort(
         array &$array,
@@ -4392,6 +4432,31 @@ class Arrays extends StaticClass
         }
 
         return [];
+    }
+
+    /**
+     * Converts an array to a JSON string.
+     *
+     * This method encodes an array into its JSON string representation, which can be
+     * used for storage, transmission, or interoperability with other systems and APIs.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Arrays;
+     *
+     * $array = ['name' => 'John', 'age' => 30];
+     * $json = Arrays::toJson($array);
+     *
+     * // Returns: '{"name":"John","age":30}'
+     * ```
+     *
+     * @param array $array The array to encode as JSON
+     * @return string The JSON-encoded string representation of the array
+     * @see \Phuture\Coherence\Arrays::toObject()
+     */
+    public static function toJson(array $array): string
+    {
+        return json_encode($array);
     }
 
     /**

@@ -1232,6 +1232,53 @@ class ArraysTest extends TestCase
         $result = $data->wrap()->toArray();
         Assert::same(['apple', 'banana', 'cherry'], $result);
     }
+
+    public function testToJson(): void
+    {
+        // Simple associative array
+        $arrays = new Arrays(['name' => 'John', 'age' => 30]);
+        Assert::same('{"name":"John","age":30}', $arrays->toJson());
+
+        // Indexed array
+        $arrays = new Arrays([1, 2, 3]);
+        Assert::same('[1,2,3]', $arrays->toJson());
+
+        // Empty array
+        $arrays = new Arrays([]);
+        Assert::same('[]', $arrays->toJson());
+
+        // Nested array
+        $arrays = new Arrays(['user' => ['name' => 'Jane', 'scores' => [10, 20]]]);
+        Assert::same('{"user":{"name":"Jane","scores":[10,20]}}', $arrays->toJson());
+
+        // Array with boolean and null values
+        $arrays = new Arrays(['active' => true, 'deleted' => false, 'ref' => null]);
+        Assert::same('{"active":true,"deleted":false,"ref":null}', $arrays->toJson());
+    }
+
+    public function testToObject(): void
+    {
+        // Simple associative array becomes stdClass
+        $arrays = new Arrays(['name' => 'John', 'age' => 30]);
+        $result = $arrays->toObject();
+        Assert::type(stdClass::class, $result);
+        Assert::same('John', $result->name);
+        Assert::same(30, $result->age);
+
+        // Empty array becomes empty stdClass
+        $arrays = new Arrays([]);
+        $result = $arrays->toObject();
+        Assert::type(stdClass::class, $result);
+        Assert::same([], (array) $result);
+
+        // Nested associative array — nested arrays are recursively converted to stdClass
+        $arrays = new Arrays(['user' => ['name' => 'Jane', 'age' => 25]]);
+        $result = $arrays->toObject();
+        Assert::type(stdClass::class, $result);
+        Assert::type(stdClass::class, $result->user);
+        Assert::same('Jane', $result->user->name);
+        Assert::same(25, $result->user->age);
+    }
 }
 
 (new ArraysTest())->run();

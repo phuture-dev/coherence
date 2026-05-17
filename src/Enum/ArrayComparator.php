@@ -9,7 +9,9 @@ namespace Phuture\Coherence\Enum;
  *
  * This enum defines different ways to compare arrays when performing operations
  * like checking equality, differences, or intersections. Each case represents
- * a specific comparison focus.
+ * a specific comparison focus. Use this enum with \Phuture\Coherence\Arrays::difference()
+ * and \Phuture\Coherence\Arrays::intersection() to control whether comparisons are
+ * performed on keys, values, or both.
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License

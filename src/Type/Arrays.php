@@ -773,6 +773,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
 
         return $this;
     }
+
     /**
      * Converts the object to a native PHP array.
      *
@@ -784,6 +785,32 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     public function toArray(): array
     {
         return (array) $this->data;
+    }
+
+    /**
+     * Converts the object to a JSON string.
+     *
+     * This method returns the internal data encoded as a JSON string, which can be
+     * used for storage, transmission, or interoperability with other systems and APIs.
+     *
+     * @return string The internal data as a JSON-encoded string
+     */
+    public function toJson(): string
+    {
+        return Transformer::toJson($this->data);
+    }
+
+    /**
+     * Converts the object to a generic PHP object.
+     *
+     * This method returns the internal data as a plain PHP object (stdClass), allowing
+     * you to access array keys as object properties using arrow notation.
+     *
+     * @return object The internal data as a plain PHP object
+     */
+    public function toObject(): object
+    {
+        return Transformer::toObject($this->data);
     }
 
     /**
