@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Type;
 
+use Phuture\Coherence\Enum\CompressionFormat;
 use Phuture\Coherence\Interface\Fileable;
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Files as Transformer;
@@ -94,6 +95,27 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
+     * Compresses the wrapped file or directory into an archive and switches the internal path to it.
+     *
+     * After compression, the internal path is updated to point to the newly created
+     * archive file, so subsequent operations act on the compressed archive.
+     *
+     * @param string $destination The path where the archive will be saved
+     * @param \Phuture\Coherence\Enum\CompressionFormat $format The archive format to use (default: Zip)
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the source does not exist
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created
+     * @see \Phuture\Coherence\Files::compress()
+     */
+    public function compress(string $destination, CompressionFormat $format = CompressionFormat::Zip): self
+    {
+        Transformer::compress($this->data, $destination, $format);
+        $this->data = $destination;
+
+        return $this;
+    }
+
+    /**
      * Copies the wrapped file to a new location and updates the internal path.
      *
      * After copying, the internal path remains unchanged (it still points to
@@ -153,6 +175,23 @@ class Files extends FluentClass implements Fileable
     {
         Transformer::delete($this->data);
         $this->data = '';
+    }
+
+    /**
+     * Extracts or decompresses the wrapped archive to a destination path.
+     *
+     * @param string $destination The directory where the archive contents will be placed
+     * @param \Phuture\Coherence\Enum\CompressionFormat $format The archive format to use (default: Zip)
+     * @return self Returns the current instance for method chaining
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the archive does not exist
+     * @throws \Phuture\Coherence\Exception\RuntimeException If extraction fails
+     * @see \Phuture\Coherence\Files::decompress()
+     */
+    public function decompress(string $destination, CompressionFormat $format = CompressionFormat::Zip): self
+    {
+        Transformer::decompress($this->data, $destination, $format);
+
+        return $this;
     }
 
     /**

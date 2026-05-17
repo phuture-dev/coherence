@@ -202,10 +202,10 @@ Every method MUST include complete PHPDoc with the following structure:
 1. **Brief Description**: One-line summary in simple language
 2. **Extended Description**: Detailed explanation using everyday words (required)
 3. **Example**: Always include a short usage example wrapped in ```php code blocks
-4. **Other Classes**: When referring to other classes, always use a Fully Qualified Class Name
+4. **Other Classes**: When referring to other classes, always use FQCNs
 5. **@param Tags**: For EVERY parameter with clear, simple descriptions
 6. **@return Tag**: Clear description of what is returned and what it represents, omit when void
-7. **Callback Documentation**: When a parameter requires a callback function, the @param description MUST include the callback signature in the format: `The callback has the signature \`function (mixed $value): mixed\``
+7. **Callback Documentation**: When a parameter requires a callback function, the @param description MUST include the callback signature in the format: ```The callback has the signature `function (mixed $value): mixed` ```
 8. **Additional Tags** (when applicable):
    - `@see` - For methods that have other related methods, like first() being related to last(), or flatten() to unflatten(), always use FQCNs
    - `@throws` - For methods that throw exceptions, always use FQCNs
@@ -595,7 +595,7 @@ This workflow guide establishes the standards for maintaining consistency, predi
 
 Remember the key principles:
 
-1. **Static methods only** in `./src/` utility classes
+1. **Classes only** in `./src/`
 2. **Argument ordering**: `([required], [optional], [variadics])`
 3. **Descriptive names** for every method, variable, constant, and property — clear intent, no abbreviations
 4. **Self-explanatory code** — if a comment explains *what* the code does, rewrite the code instead
@@ -604,8 +604,3 @@ Remember the key principles:
 7. **PSR-12 compliance** enforced through tooling
 
 When in doubt, refer to existing classes as examples of proper implementation.
-
----
-
-**Last Updated**: 2026-04-30
-**Version**: 1.2

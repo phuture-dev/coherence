@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests\Type;
 
 use Phuture\Coherence\Files;
+use Phuture\Coherence\Enum\CompressionFormat;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Tester\{Assert, Environment, TestCase};
@@ -369,6 +370,76 @@ class FilesTest extends TestCase
             ->read();
 
         Assert::same('Hello universe', $content);
+    }
+
+    public function testCompressReturnsSelfAndSwitchesPath(): void
+    {
+        $file = $this->tempDir . '/data.txt';
+        file_put_contents($file, 'hello fluent compress');
+
+        $archive = $this->tempDir . '/data.zip';
+        $result = Files::of($file)->compress($archive);
+
+        Assert::type(FluentFiles::class, $result);
+        Assert::true(file_exists($archive));
+        Assert::same($archive, $result->path());
+    }
+
+    public function testCompressWithExplicitFormat(): void
+    {
+        $file = $this->tempDir . '/data.txt';
+        file_put_contents($file, 'hello tar');
+
+        $archive = $this->tempDir . '/data.tar';
+        Files::of($file)->compress($archive, CompressionFormat::Tar);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressChainingPathIsArchive(): void
+    {
+        $file = $this->tempDir . '/chain.txt';
+        file_put_contents($file, 'chaining test');
+
+        $archive = $this->tempDir . '/chain.zip';
+        $path = Files::of($file)
+            ->compress($archive)
+            ->path();
+
+        Assert::same($archive, $path);
+    }
+
+    public function testDecompressReturnsSelf(): void
+    {
+        $source = $this->tempDir . '/src.txt';
+        file_put_contents($source, 'decompress me');
+
+        $archive = $this->tempDir . '/src.zip';
+        Files::compress($source, $archive);
+
+        $outDir = $this->tempDir . '/out';
+        $result = Files::of($archive)->decompress($outDir);
+
+        Assert::type(FluentFiles::class, $result);
+        Assert::true(is_dir($outDir));
+        Assert::same('decompress me', file_get_contents($outDir . '/src.txt'));
+    }
+
+    public function testDecompressGzipFluent(): void
+    {
+        $srcDir = $this->tempDir . '/gz_src';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/msg.txt', 'gz fluent round-trip');
+
+        $gz = $this->tempDir . '/gz_src.tar.gz';
+        Files::compress($srcDir, $gz, CompressionFormat::Gzip);
+
+        $outDir = $this->tempDir . '/gz_out';
+        Files::of($gz)->decompress($outDir, CompressionFormat::Gzip);
+
+        Assert::true(is_dir($outDir));
+        Assert::same('gz fluent round-trip', file_get_contents($outDir . '/msg.txt'));
     }
 
     public function testSizeReturnsBytes(): void
