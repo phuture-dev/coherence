@@ -1334,11 +1334,13 @@ class Files extends StaticClass
         $parts = $path === '' ? [] : preg_split('~[/\\\\]+~', $path);
         $resolved = [];
 
-        foreach ($parts as $part) {
-            if ($part === '..' && $resolved && end($resolved) !== '..' && end($resolved) !== '') {
-                array_pop($resolved);
-            } elseif ($part !== '.') {
-                $resolved[] = $part;
+        if ($parts !== false) {
+            foreach ($parts as $part) {
+                if ($part === '..' && $resolved && end($resolved) !== '..' && end($resolved) !== '') {
+                    array_pop($resolved);
+                } elseif ($part !== '.') {
+                    $resolved[] = $part;
+                }
             }
         }
 

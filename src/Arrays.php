@@ -4456,7 +4456,9 @@ class Arrays extends StaticClass
      */
     public static function toJson(array $array): string
     {
-        return json_encode($array);
+        $json = json_encode($array);
+
+        return $json === false ? '[]' : $json;
     }
 
     /**

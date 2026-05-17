@@ -655,18 +655,17 @@ class Reflector extends StaticClass
      * // Throws InvalidArgumentException (Reflector extends StaticClass and cannot be instantiated)
      * ```
      *
-     * @param object $class The object instance to get the class name from
+     * @param object|string $class The class to get the name for, either as a class name string or an instance
      * @return string The fully qualified class name of the object
      * @throws \Phuture\Coherence\Exception\ReflectionException When the class cannot be reflected
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the given class is anonymous
      * @see \Phuture\Coherence\Reflector::basename() For getting only the short class name
      * @see \Phuture\Coherence\Reflector::namespace() For getting only the namespace portion
      */
-    public static function name(object $class): string
+    public static function name(object|string $class): string
     {
         try {
             $reflection = new ReflectionClass($class);
-            // @phpstan-ignore-next-line
         } catch (\ReflectionException $e) {
             throw new ReflectionException(
                 "Reflection Error: " . $e->getMessage()
@@ -679,7 +678,7 @@ class Reflector extends StaticClass
             );
         }
 
-        return get_class($class);
+        return $reflection->getName();
     }
 
     /**
@@ -813,6 +812,10 @@ class Reflector extends StaticClass
         $parent = get_parent_class($class);
 
         if ($parent === false) {
+            if (is_object($class)) {
+                $class = get_class($class);
+            }
+
             throw new InvalidArgumentException(
                 "Invalid Argument: {$class} does not have a parent or is not a valid class"
             );
@@ -1182,6 +1185,8 @@ class Reflector extends StaticClass
             );
         }
 
-        return class_uses($class);
+        $traits = class_uses($class);
+
+        return $traits === false ? [] : $traits;
     }
 }

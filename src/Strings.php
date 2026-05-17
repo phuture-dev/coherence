@@ -188,7 +188,7 @@ class Strings extends StaticClass
     {
         $string = self::transliterateToAscii($string, $language);
 
-        return preg_replace('/[^\x20-\x7E]/', '', $string);
+        return preg_replace('/[^\x20-\x7E]/', '', $string) ?? '';
     }
 
     /**
@@ -774,7 +774,7 @@ class Strings extends StaticClass
 
         $escaped = preg_quote($character, '/');
 
-        return preg_replace('/' . $escaped . '+/u', $character, $string);
+        return preg_replace('/' . $escaped . '+/u', $character, $string) ?? '';
     }
 
     /**
@@ -1163,11 +1163,10 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The hexadecimal string to decode
-     * @return string The decoded binary string
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$string` is not valid hexadecimal
+     * @return string|false The decoded binary string, or false when decoding fails
      * @see \Phuture\Coherence\Strings::toHex()
      */
-    public static function fromHex(string $string): string
+    public static function fromHex(string $string): string|false
     {
         if ($string === '') {
             return '';
@@ -2898,7 +2897,7 @@ class Strings extends StaticClass
             '/' . preg_quote($search, '/') . '/iu',
             static fn () => $replace,
             $string
-        );
+        ) ?? '';
     }
 
     /**
@@ -3127,7 +3126,7 @@ class Strings extends StaticClass
      */
     public static function scrub(string $string): string
     {
-        return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string);
+        return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string) ?? '';
     }
 
     /**
@@ -3324,7 +3323,7 @@ class Strings extends StaticClass
         $string = preg_replace('/[^a-zA-Z0-9]+/', ' ', $string);
         $string = self::lower(trim($string));
 
-        return preg_replace('/\s+/', $delimiter, $string);
+        return preg_replace('/\s+/', $delimiter, $string) ?? '';
     }
 
     /**
@@ -4040,39 +4039,42 @@ class Strings extends StaticClass
         $currentLine = '';
         $currentLength = 0;
 
-        foreach (preg_split('/\s+/u', $string, -1, PREG_SPLIT_NO_EMPTY) as $word) {
-            $wordLength = mb_strlen($word, 'UTF-8');
+        $words = preg_split('/\s+/u', $string, -1, PREG_SPLIT_NO_EMPTY);
+        if ($words !== false) {
+            foreach ($words as $word) {
+                $wordLength = mb_strlen($word, 'UTF-8');
 
-            if ($cutLongWords && $wordLength > $width) {
-                if ($currentLength > 0) {
-                    $lines[] = $currentLine;
-                    $currentLine = '';
-                    $currentLength = 0;
-                }
-
-                while (mb_strlen($word, 'UTF-8') > 0) {
-                    $available = $width - $currentLength;
-                    $chunk = mb_substr($word, 0, $available, 'UTF-8');
-                    $currentLine .= $chunk;
-                    $currentLength += mb_strlen($chunk, 'UTF-8');
-                    $word = mb_substr($word, $available, null, 'UTF-8');
-
-                    if (mb_strlen($word, 'UTF-8') > 0) {
+                if ($cutLongWords && $wordLength > $width) {
+                    if ($currentLength > 0) {
                         $lines[] = $currentLine;
                         $currentLine = '';
                         $currentLength = 0;
                     }
+
+                    while (mb_strlen($word, 'UTF-8') > 0) {
+                        $available = $width - $currentLength;
+                        $chunk = mb_substr($word, 0, $available, 'UTF-8');
+                        $currentLine .= $chunk;
+                        $currentLength += mb_strlen($chunk, 'UTF-8');
+                        $word = mb_substr($word, $available, null, 'UTF-8');
+
+                        if (mb_strlen($word, 'UTF-8') > 0) {
+                            $lines[] = $currentLine;
+                            $currentLine = '';
+                            $currentLength = 0;
+                        }
+                    }
+                } elseif ($currentLength === 0) {
+                    $currentLine = $word;
+                    $currentLength = $wordLength;
+                } elseif ($currentLength + 1 + $wordLength <= $width) {
+                    $currentLine .= ' ' . $word;
+                    $currentLength += 1 + $wordLength;
+                } else {
+                    $lines[] = $currentLine;
+                    $currentLine = $word;
+                    $currentLength = $wordLength;
                 }
-            } elseif ($currentLength === 0) {
-                $currentLine = $word;
-                $currentLength = $wordLength;
-            } elseif ($currentLength + 1 + $wordLength <= $width) {
-                $currentLine .= ' ' . $word;
-                $currentLength += 1 + $wordLength;
-            } else {
-                $lines[] = $currentLine;
-                $currentLine = $word;
-                $currentLength = $wordLength;
             }
         }
 

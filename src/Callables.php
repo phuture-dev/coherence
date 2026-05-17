@@ -1223,7 +1223,9 @@ class Callables extends StaticClass
                 }
             }
 
-            throw $exception;
+            if ($exception !== null) {
+                throw $exception;
+            }
         };
     }
 
@@ -1473,10 +1475,10 @@ class Callables extends StaticClass
      * ```
      *
      * @param Closure $callback The closure to convert to callable
-     * @return callable|array The underlying callable, either as callable or array
+     * @return callable|array|string The underlying callable, either as callable or array
      * @see \Phuture\Coherence\Callables::toClosure()
      */
-    public static function toCallable(Closure $callback): callable|array
+    public static function toCallable(Closure $callback): callable|array|string
     {
         $reflection = new ReflectionFunction($callback);
         $scopeClass = $reflection->getClosureScopeClass()?->name;

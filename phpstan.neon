@@ -9,4 +9,4 @@ parameters:
         - identifier: argument.type
 
     # Set rules level
-    level: 6
+    level: 8
