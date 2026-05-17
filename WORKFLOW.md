@@ -89,7 +89,6 @@ Flags, modes, offsets, encoding, and other optional modifiers:
 ```php
 Arrays::search(array $array, mixed $needle, bool $strict = false)
 Strings::position(string $subject, string $search, int $offset = 0)
-MultibyteStrings::position(string $subject, string $search, int $offset = 0, ?string $encoding = null)
 Hash::md5(string $data, bool $binary = false)
 ```
 
