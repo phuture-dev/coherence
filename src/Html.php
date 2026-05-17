@@ -629,53 +629,6 @@ class Html extends StaticClass
     }
 
     /**
-     * Updates the open-tag stack based on a parsed HTML tag token.
-     *
-     * @param string $tag The raw HTML tag string (e.g. '<p>', '</p>', '<br />')
-     * @param array &$openTags The open-tag stack, passed by reference
-     */
-    private static function updateOpenTagStack(string $tag, array &$openTags): void
-    {
-        preg_match('/<\/?([a-zA-Z][a-zA-Z0-9]*)/i', $tag, $nameMatch);
-        $tagName = strtolower($nameMatch[1] ?? '');
-
-        if ($tagName === '') {
-            return;
-        }
-
-        $isClosing = str_starts_with(ltrim($tag), '</');
-        $isSelfClosing = str_ends_with(rtrim($tag), '/>') || in_array($tagName, self::VOID_ELEMENTS, true);
-
-        if ($isClosing) {
-            for ($i = count($openTags) - 1; $i >= 0; $i--) {
-                if ($openTags[$i] === $tagName) {
-                    array_splice($openTags, $i, 1);
-                    break;
-                }
-            }
-        } elseif (!$isSelfClosing) {
-            $openTags[] = $tagName;
-        }
-    }
-
-    /**
-     * Serialises the open-tag stack as a sequence of closing tags.
-     *
-     * @param array $openTags The stack of unclosed tag names (innermost last)
-     * @return string A string of closing tags in reverse order, or empty string when none
-     */
-    private static function closeOpenTags(array $openTags): string
-    {
-        $closing = '';
-
-        foreach (array_reverse($openTags) as $tag) {
-            $closing .= '</' . $tag . '>';
-        }
-
-        return $closing;
-    }
-
-    /**
      * Builds the HTML attribute string from an associative array.
      *
      * Converts an associative array of attribute names and values into a
@@ -703,6 +656,23 @@ class Html extends StaticClass
         }
 
         return $html;
+    }
+
+    /**
+     * Serialises the open-tag stack as a sequence of closing tags.
+     *
+     * @param array $openTags The stack of unclosed tag names (innermost last)
+     * @return string A string of closing tags in reverse order, or empty string when none
+     */
+    private static function closeOpenTags(array $openTags): string
+    {
+        $closing = '';
+
+        foreach (array_reverse($openTags) as $tag) {
+            $closing .= '</' . $tag . '>';
+        }
+
+        return $closing;
     }
 
     /**
@@ -750,5 +720,35 @@ class Html extends StaticClass
         }
 
         return false;
+    }
+
+    /**
+     * Updates the open-tag stack based on a parsed HTML tag token.
+     *
+     * @param string $tag The raw HTML tag string (e.g. '<p>', '</p>', '<br />')
+     * @param array &$openTags The open-tag stack, passed by reference
+     */
+    private static function updateOpenTagStack(string $tag, array &$openTags): void
+    {
+        preg_match('/<\/?([a-zA-Z][a-zA-Z0-9]*)/i', $tag, $nameMatch);
+        $tagName = strtolower($nameMatch[1] ?? '');
+
+        if ($tagName === '') {
+            return;
+        }
+
+        $isClosing = str_starts_with(ltrim($tag), '</');
+        $isSelfClosing = str_ends_with(rtrim($tag), '/>') || in_array($tagName, self::VOID_ELEMENTS, true);
+
+        if ($isClosing) {
+            for ($i = count($openTags) - 1; $i >= 0; $i--) {
+                if ($openTags[$i] === $tagName) {
+                    array_splice($openTags, $i, 1);
+                    break;
+                }
+            }
+        } elseif (!$isSelfClosing) {
+            $openTags[] = $tagName;
+        }
     }
 }

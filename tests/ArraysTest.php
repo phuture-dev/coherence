@@ -2787,6 +2787,26 @@ class ArraysTest extends TestCase
         Assert::same(['id' => 1, 'title' => 'Test Article'], $result);
     }
 
+    public function testToJson(): void
+    {
+        // Simple associative array
+        Assert::same('{"name":"John","age":30}', Arrays::toJson(['name' => 'John', 'age' => 30]));
+
+        // Indexed array
+        Assert::same('[1,2,3]', Arrays::toJson([1, 2, 3]));
+
+        // Empty array
+        Assert::same('[]', Arrays::toJson([]));
+
+        // Nested array
+        $nested = ['user' => ['name' => 'Jane', 'scores' => [10, 20]]];
+        Assert::same('{"user":{"name":"Jane","scores":[10,20]}}', Arrays::toJson($nested));
+
+        // Array with boolean and null values
+        $mixed = ['active' => true, 'deleted' => false, 'ref' => null];
+        Assert::same('{"active":true,"deleted":false,"ref":null}', Arrays::toJson($mixed));
+    }
+
     public function testToObject(): void
     {
         $array = ['name' => 'John', 'age' => 30];
@@ -3276,26 +3296,6 @@ class ArraysTest extends TestCase
         $result = Arrays::zip($a, $b);
         // Zip uses numeric indices, ignoring keys
         Assert::same([[1, 'a'], [2, 'b']], $result);
-    }
-
-    public function testToJson(): void
-    {
-        // Simple associative array
-        Assert::same('{"name":"John","age":30}', Arrays::toJson(['name' => 'John', 'age' => 30]));
-
-        // Indexed array
-        Assert::same('[1,2,3]', Arrays::toJson([1, 2, 3]));
-
-        // Empty array
-        Assert::same('[]', Arrays::toJson([]));
-
-        // Nested array
-        $nested = ['user' => ['name' => 'Jane', 'scores' => [10, 20]]];
-        Assert::same('{"user":{"name":"Jane","scores":[10,20]}}', Arrays::toJson($nested));
-
-        // Array with boolean and null values
-        $mixed = ['active' => true, 'deleted' => false, 'ref' => null];
-        Assert::same('{"active":true,"deleted":false,"ref":null}', Arrays::toJson($mixed));
     }
 
     private function assertArrayEqual(array $expected, array $actual): void

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
-use Generator;
 use PharData;
+use Generator;
+use Throwable;
+use PhpZip\ZipFile;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use PhpZip\ZipFile;
-use Phuture\Coherence\Enum\CompressionFormat;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Enum\CompressionFormat;
 use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 /**
@@ -365,6 +366,57 @@ class Files extends StaticClass
     }
 
     /**
+     * Extracts an archive into a destination directory.
+     *
+     * All three formats — `Zip`, `Tar`, and `Gzip` — extract their contents into
+     * the directory given by `$destination`. `Gzip` archives are treated as
+     * `.tar.gz` files and behave identically to `Tar`. When no format is given,
+     * `Zip` is used by default.
+     *
+     * The destination directory is created automatically when it does not already
+     * exist. All extracted files are placed directly inside `$destination`.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     * use Phuture\Coherence\Enum\CompressionFormat;
+     *
+     * // ZIP (default) — extract into a directory
+     * Files::decompress('/var/backups/uploads.zip', '/var/app/uploads');
+     *
+     * // TAR — extract an uncompressed archive
+     * Files::decompress('/var/backups/uploads.tar', '/var/app/uploads', CompressionFormat::Tar);
+     *
+     * // GZIP — extract a .tar.gz archive
+     * Files::decompress('/var/backups/uploads.tar.gz', '/var/app/uploads', CompressionFormat::Gzip);
+     * ```
+     *
+     * @param string $archive The path to the archive file to extract
+     * @param string $destination The directory where the archive contents will be placed
+     * @param \Phuture\Coherence\Enum\CompressionFormat $format The archive format to use (default: Zip)
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the archive file does not exist
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be extracted
+     * @see \Phuture\Coherence\Files::compress()
+     */
+    public static function decompress(
+        string $archive,
+        string $destination,
+        CompressionFormat $format = CompressionFormat::Zip
+    ): void {
+        if (!file_exists($archive)) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: Archive {$archive} does not exist"
+            );
+        }
+
+        match ($format) {
+            CompressionFormat::Zip => self::decompressZip($archive, $destination),
+            CompressionFormat::Tar => self::decompressTar($archive, $destination),
+            CompressionFormat::Gzip => self::decompressGzip($archive, $destination),
+        };
+    }
+
+    /**
      * Deletes a file or an entire directory at the given path.
      *
      * When the path points to a directory, all of its contents (files and subdirectories)
@@ -433,57 +485,6 @@ class Files extends StaticClass
                 "Runtime Error: Unable to delete file {$path}"
             );
         }
-    }
-
-    /**
-     * Extracts an archive into a destination directory.
-     *
-     * All three formats — `Zip`, `Tar`, and `Gzip` — extract their contents into
-     * the directory given by `$destination`. `Gzip` archives are treated as
-     * `.tar.gz` files and behave identically to `Tar`. When no format is given,
-     * `Zip` is used by default.
-     *
-     * The destination directory is created automatically when it does not already
-     * exist. All extracted files are placed directly inside `$destination`.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Files;
-     * use Phuture\Coherence\Enum\CompressionFormat;
-     *
-     * // ZIP (default) — extract into a directory
-     * Files::decompress('/var/backups/uploads.zip', '/var/app/uploads');
-     *
-     * // TAR — extract an uncompressed archive
-     * Files::decompress('/var/backups/uploads.tar', '/var/app/uploads', CompressionFormat::Tar);
-     *
-     * // GZIP — extract a .tar.gz archive
-     * Files::decompress('/var/backups/uploads.tar.gz', '/var/app/uploads', CompressionFormat::Gzip);
-     * ```
-     *
-     * @param string $archive The path to the archive file to extract
-     * @param string $destination The directory where the archive contents will be placed
-     * @param \Phuture\Coherence\Enum\CompressionFormat $format The archive format to use (default: Zip)
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException If the archive file does not exist
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be extracted
-     * @see \Phuture\Coherence\Files::compress()
-     */
-    public static function decompress(
-        string $archive,
-        string $destination,
-        CompressionFormat $format = CompressionFormat::Zip
-    ): void {
-        if (!file_exists($archive)) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Archive {$archive} does not exist"
-            );
-        }
-
-        match ($format) {
-            CompressionFormat::Zip => self::decompressZip($archive, $destination),
-            CompressionFormat::Tar => self::decompressTar($archive, $destination),
-            CompressionFormat::Gzip => self::decompressGzip($archive, $destination),
-        };
     }
 
     /**
@@ -1849,6 +1850,122 @@ class Files extends StaticClass
     }
 
     /**
+     * Compresses a file or directory into a GZIP-compressed TAR archive (.tar.gz).
+     *
+     * First builds a temporary TAR archive using `PharData`, then compresses it
+     * with `gzencode()` and writes the result to the destination path. The temporary
+     * TAR file is always removed, even if an error occurs.
+     *
+     * @param string $source The file or directory to compress
+     * @param string $destination The path where the .tar.gz archive will be saved
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created or written
+     */
+    private static function compressGzip(string $source, string $destination): void
+    {
+        $tempTar = sys_get_temp_dir() . '/coherence_' . uniqid() . '.tar';
+
+        try {
+            try {
+                $phar = new PharData($tempTar);
+
+                if (is_dir($source)) {
+                    $phar->buildFromDirectory($source);
+                } else {
+                    $phar->addFile($source, basename($source));
+                }
+            } catch (Throwable $e) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to create GZIP archive at {$destination}: {$e->getMessage()}"
+                );
+            }
+
+            $tarContent = file_get_contents($tempTar);
+
+            if ($tarContent === false) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to read temporary archive"
+                );
+            }
+
+            $compressed = gzencode($tarContent);
+
+            if ($compressed === false) {
+                throw new RuntimeException(
+                    "Runtime Error: GZIP compression failed for {$source}"
+                );
+            }
+
+            if (file_put_contents($destination, $compressed) === false) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to write GZIP archive to {$destination}"
+                );
+            }
+        } finally {
+            if (file_exists($tempTar)) {
+                @unlink($tempTar);
+            }
+        }
+    }
+
+    /**
+     * Compresses a file or directory into a TAR archive using PHP's built-in PharData.
+     *
+     * When the source is a directory, all its contents are added using
+     * `PharData::buildFromDirectory()`. When the source is a single file,
+     * it is added under its base name.
+     *
+     * @param string $source The file or directory path to archive
+     * @param string $destination The path where the TAR archive will be saved
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created
+     */
+    private static function compressTar(string $source, string $destination): void
+    {
+        try {
+            $phar = new PharData($destination);
+
+            if (is_dir($source)) {
+                $phar->buildFromDirectory($source);
+            } else {
+                $phar->addFile($source, basename($source));
+            }
+        } catch (Throwable $e) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create TAR archive at {$destination}: {$e->getMessage()}"
+            );
+        }
+    }
+
+    /**
+     * Compresses a file or directory into a ZIP archive using nelexa/zip.
+     *
+     * When the source is a directory, all its contents are added recursively.
+     * When the source is a single file, it is added under its base name.
+     *
+     * @param string $source The file or directory path to compress
+     * @param string $destination The path where the ZIP archive will be saved
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created or saved
+     */
+    private static function compressZip(string $source, string $destination): void
+    {
+        try {
+            $zip = new ZipFile();
+
+            if (is_dir($source)) {
+                $zip->addDirRecursive($source);
+            } else {
+                $zip->addFile($source, basename($source));
+            }
+
+            $zip->saveAsFile($destination);
+            $zip->close();
+        } catch (Throwable $e) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create ZIP archive at {$destination}: {$e->getMessage()}"
+            );
+        }
+    }
+
+    /**
      * Copies a directory recursively to a new location.
      *
      * @param string $source The source directory to copy
@@ -1908,6 +2025,117 @@ class Files extends StaticClass
         if (!mkdir($path, $mode, true) && !is_dir($path)) {
             throw new RuntimeException(
                 "Runtime Error: Unable to create directory {$path}"
+            );
+        }
+    }
+
+    /**
+     * Extracts a GZIP-compressed TAR archive (.tar.gz) to a destination directory.
+     *
+     * Decompresses the archive with `gzdecode()` into a temporary TAR file, then
+     * uses `PharData` to extract its contents to the destination directory. The
+     * temporary TAR file is always removed, even if an error occurs.
+     *
+     * @param string $archive The path to the .tar.gz archive to extract
+     * @param string $destination The directory where the archive contents will be extracted
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be read, decompressed, or extracted
+     */
+    private static function decompressGzip(string $archive, string $destination): void
+    {
+        if (!is_dir($destination)) {
+            self::createDirectory($destination);
+        }
+
+        $compressed = file_get_contents($archive);
+
+        if ($compressed === false) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to read archive {$archive}"
+            );
+        }
+
+        $tarContent = gzdecode($compressed);
+
+        if ($tarContent === false) {
+            throw new RuntimeException(
+                "Runtime Error: GZIP decompression failed for {$archive}"
+            );
+        }
+
+        $tempTar = sys_get_temp_dir() . '/coherence_' . uniqid() . '.tar';
+
+        try {
+            if (file_put_contents($tempTar, $tarContent) === false) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to write temporary archive"
+                );
+            }
+
+            try {
+                $phar = new PharData($tempTar);
+                $phar->extractTo($destination);
+            } catch (Throwable $e) {
+                throw new RuntimeException(
+                    "Runtime Error: Unable to extract GZIP archive {$archive}: {$e->getMessage()}"
+                );
+            }
+        } finally {
+            if (file_exists($tempTar)) {
+                @unlink($tempTar);
+            }
+        }
+    }
+
+    /**
+     * Extracts a TAR archive to a destination directory using PHP's built-in PharData.
+     *
+     * Creates the destination directory if it does not already exist,
+     * then extracts all entries from the archive into it.
+     *
+     * @param string $archive The path to the TAR archive to extract
+     * @param string $destination The directory where the archive contents will be extracted
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be opened or extracted
+     */
+    private static function decompressTar(string $archive, string $destination): void
+    {
+        if (!is_dir($destination)) {
+            self::createDirectory($destination);
+        }
+
+        try {
+            $phar = new PharData($archive);
+            $phar->extractTo($destination);
+        } catch (Throwable $e) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to extract TAR archive {$archive}: {$e->getMessage()}"
+            );
+        }
+    }
+
+    /**
+     * Extracts a ZIP archive to a destination directory using nelexa/zip.
+     *
+     * Creates the destination directory if it does not already exist,
+     * then extracts all entries from the archive into it.
+     *
+     * @param string $archive The path to the ZIP archive to extract
+     * @param string $destination The directory where the archive contents will be extracted
+     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be opened or extracted
+     */
+    private static function decompressZip(string $archive, string $destination): void
+    {
+        if (!is_dir($destination)) {
+            self::createDirectory($destination);
+        }
+
+        try {
+            $zip = new ZipFile();
+            $zip->openFile($archive);
+            $zip->extractTo($destination);
+            $zip->close();
+        } catch (Throwable $e) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to extract ZIP archive {$archive}: {$e->getMessage()}"
             );
         }
     }
@@ -2126,232 +2354,5 @@ class Files extends StaticClass
         }
 
         return false;
-    }
-
-    /**
-     * Compresses a file or directory into a ZIP archive using nelexa/zip.
-     *
-     * When the source is a directory, all its contents are added recursively.
-     * When the source is a single file, it is added under its base name.
-     *
-     * @param string $source The file or directory path to compress
-     * @param string $destination The path where the ZIP archive will be saved
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created or saved
-     */
-    private static function compressZip(string $source, string $destination): void
-    {
-        try {
-            $zip = new ZipFile();
-
-            if (is_dir($source)) {
-                $zip->addDirRecursive($source);
-            } else {
-                $zip->addFile($source, basename($source));
-            }
-
-            $zip->saveAsFile($destination);
-            $zip->close();
-        } catch (\Throwable $e) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create ZIP archive at {$destination}: {$e->getMessage()}"
-            );
-        }
-    }
-
-    /**
-     * Compresses a file or directory into a TAR archive using PHP's built-in PharData.
-     *
-     * When the source is a directory, all its contents are added using
-     * `PharData::buildFromDirectory()`. When the source is a single file,
-     * it is added under its base name.
-     *
-     * @param string $source The file or directory path to archive
-     * @param string $destination The path where the TAR archive will be saved
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created
-     */
-    private static function compressTar(string $source, string $destination): void
-    {
-        try {
-            $phar = new PharData($destination);
-
-            if (is_dir($source)) {
-                $phar->buildFromDirectory($source);
-            } else {
-                $phar->addFile($source, basename($source));
-            }
-        } catch (\Throwable $e) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create TAR archive at {$destination}: {$e->getMessage()}"
-            );
-        }
-    }
-
-    /**
-     * Compresses a file or directory into a GZIP-compressed TAR archive (.tar.gz).
-     *
-     * First builds a temporary TAR archive using `PharData`, then compresses it
-     * with `gzencode()` and writes the result to the destination path. The temporary
-     * TAR file is always removed, even if an error occurs.
-     *
-     * @param string $source The file or directory to compress
-     * @param string $destination The path where the .tar.gz archive will be saved
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be created or written
-     */
-    private static function compressGzip(string $source, string $destination): void
-    {
-        $tempTar = sys_get_temp_dir() . '/coherence_' . uniqid() . '.tar';
-
-        try {
-            try {
-                $phar = new PharData($tempTar);
-
-                if (is_dir($source)) {
-                    $phar->buildFromDirectory($source);
-                } else {
-                    $phar->addFile($source, basename($source));
-                }
-            } catch (\Throwable $e) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to create GZIP archive at {$destination}: {$e->getMessage()}"
-                );
-            }
-
-            $tarContent = file_get_contents($tempTar);
-
-            if ($tarContent === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to read temporary archive"
-                );
-            }
-
-            $compressed = gzencode($tarContent);
-
-            if ($compressed === false) {
-                throw new RuntimeException(
-                    "Runtime Error: GZIP compression failed for {$source}"
-                );
-            }
-
-            if (file_put_contents($destination, $compressed) === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to write GZIP archive to {$destination}"
-                );
-            }
-        } finally {
-            if (file_exists($tempTar)) {
-                @unlink($tempTar);
-            }
-        }
-    }
-
-    /**
-     * Extracts a ZIP archive to a destination directory using nelexa/zip.
-     *
-     * Creates the destination directory if it does not already exist,
-     * then extracts all entries from the archive into it.
-     *
-     * @param string $archive The path to the ZIP archive to extract
-     * @param string $destination The directory where the archive contents will be extracted
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be opened or extracted
-     */
-    private static function decompressZip(string $archive, string $destination): void
-    {
-        if (!is_dir($destination)) {
-            self::createDirectory($destination);
-        }
-
-        try {
-            $zip = new ZipFile();
-            $zip->openFile($archive);
-            $zip->extractTo($destination);
-            $zip->close();
-        } catch (\Throwable $e) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to extract ZIP archive {$archive}: {$e->getMessage()}"
-            );
-        }
-    }
-
-    /**
-     * Extracts a TAR archive to a destination directory using PHP's built-in PharData.
-     *
-     * Creates the destination directory if it does not already exist,
-     * then extracts all entries from the archive into it.
-     *
-     * @param string $archive The path to the TAR archive to extract
-     * @param string $destination The directory where the archive contents will be extracted
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be opened or extracted
-     */
-    private static function decompressTar(string $archive, string $destination): void
-    {
-        if (!is_dir($destination)) {
-            self::createDirectory($destination);
-        }
-
-        try {
-            $phar = new PharData($archive);
-            $phar->extractTo($destination);
-        } catch (\Throwable $e) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to extract TAR archive {$archive}: {$e->getMessage()}"
-            );
-        }
-    }
-
-    /**
-     * Extracts a GZIP-compressed TAR archive (.tar.gz) to a destination directory.
-     *
-     * Decompresses the archive with `gzdecode()` into a temporary TAR file, then
-     * uses `PharData` to extract its contents to the destination directory. The
-     * temporary TAR file is always removed, even if an error occurs.
-     *
-     * @param string $archive The path to the .tar.gz archive to extract
-     * @param string $destination The directory where the archive contents will be extracted
-     * @throws \Phuture\Coherence\Exception\RuntimeException If the archive cannot be read, decompressed, or extracted
-     */
-    private static function decompressGzip(string $archive, string $destination): void
-    {
-        if (!is_dir($destination)) {
-            self::createDirectory($destination);
-        }
-
-        $compressed = file_get_contents($archive);
-
-        if ($compressed === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to read archive {$archive}"
-            );
-        }
-
-        $tarContent = gzdecode($compressed);
-
-        if ($tarContent === false) {
-            throw new RuntimeException(
-                "Runtime Error: GZIP decompression failed for {$archive}"
-            );
-        }
-
-        $tempTar = sys_get_temp_dir() . '/coherence_' . uniqid() . '.tar';
-
-        try {
-            if (file_put_contents($tempTar, $tarContent) === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to write temporary archive"
-                );
-            }
-
-            try {
-                $phar = new PharData($tempTar);
-                $phar->extractTo($destination);
-            } catch (\Throwable $e) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to extract GZIP archive {$archive}: {$e->getMessage()}"
-                );
-            }
-        } finally {
-            if (file_exists($tempTar)) {
-                @unlink($tempTar);
-            }
-        }
     }
 }

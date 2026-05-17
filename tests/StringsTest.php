@@ -765,6 +765,36 @@ class StringsTest extends TestCase
         }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
+    public function testHamming(): void
+    {
+        Assert::same(3, Strings::hamming('karolin', 'kathrin'));
+        Assert::same(3, Strings::hamming('karolin', 'kerstin'));
+        Assert::same(2, Strings::hamming('1011101', '1001001'));
+        Assert::same(0, Strings::hamming('hello', 'hello'));
+        Assert::same(0, Strings::hamming('', ''));
+    }
+
+    public function testHammingMultibyte(): void
+    {
+        Assert::same(1, Strings::hamming('héllo', 'hëllo'));
+        Assert::same(2, Strings::hamming('café', 'case'));
+    }
+
+    public function testHammingUnequalLengthThrows(): void
+    {
+        Assert::exception(function (): void {
+            Strings::hamming('hello', 'hi');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::hamming('a', '');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::hamming('', 'a');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
     public function testHeadline(): void
     {
         Assert::same('Hello World', Strings::headline('hello_world'));
@@ -808,36 +838,6 @@ class StringsTest extends TestCase
     public function testHighlightMultipleOccurrences(): void
     {
         Assert::same('<mark>fox</mark> and <mark>fox</mark>', Strings::highlight('fox and fox', 'fox'));
-    }
-
-    public function testHamming(): void
-    {
-        Assert::same(3, Strings::hamming('karolin', 'kathrin'));
-        Assert::same(3, Strings::hamming('karolin', 'kerstin'));
-        Assert::same(2, Strings::hamming('1011101', '1001001'));
-        Assert::same(0, Strings::hamming('hello', 'hello'));
-        Assert::same(0, Strings::hamming('', ''));
-    }
-
-    public function testHammingMultibyte(): void
-    {
-        Assert::same(1, Strings::hamming('héllo', 'hëllo'));
-        Assert::same(2, Strings::hamming('café', 'case'));
-    }
-
-    public function testHammingUnequalLengthThrows(): void
-    {
-        Assert::exception(function (): void {
-            Strings::hamming('hello', 'hi');
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
-
-        Assert::exception(function (): void {
-            Strings::hamming('a', '');
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
-
-        Assert::exception(function (): void {
-            Strings::hamming('', 'a');
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testIndent(): void
@@ -1176,9 +1176,11 @@ class StringsTest extends TestCase
         Assert::same(Strings::jaro('hello', 'helo'), Strings::jaroWinkler('hello', 'helo', 0.0));
     }
 
-    public function testJaroWinklerSymmetry(): void
+    public function testJaroWinklerPrefixScaleAtBoundaryDoesNotThrow(): void
     {
-        Assert::same(Strings::jaroWinkler('martha', 'marhta'), Strings::jaroWinkler('marhta', 'martha'));
+        Assert::noError(function (): void {
+            Strings::jaroWinkler('hello', 'world', 0.25);
+        });
     }
 
     public function testJaroWinklerPrefixScaleThrows(): void
@@ -1192,11 +1194,9 @@ class StringsTest extends TestCase
         }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
-    public function testJaroWinklerPrefixScaleAtBoundaryDoesNotThrow(): void
+    public function testJaroWinklerSymmetry(): void
     {
-        Assert::noError(function (): void {
-            Strings::jaroWinkler('hello', 'world', 0.25);
-        });
+        Assert::same(Strings::jaroWinkler('martha', 'marhta'), Strings::jaroWinkler('marhta', 'martha'));
     }
 
     public function testKebab(): void
@@ -1422,10 +1422,11 @@ class StringsTest extends TestCase
         Assert::same(Strings::metaphone('Smith'), Strings::metaphone('Smythe'));
     }
 
-    public function testMetaphoneMultibyte(): void
+    public function testMetaphoneEmptyThrows(): void
     {
-        Assert::same(Strings::metaphone('hello'), Strings::metaphone('héllo'));
-        Assert::same(Strings::metaphone('cafe'), Strings::metaphone('café'));
+        Assert::exception(function (): void {
+            Strings::metaphone('');
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testMetaphoneMaxPhonemes(): void
@@ -1433,11 +1434,10 @@ class StringsTest extends TestCase
         Assert::same(3, strlen(Strings::metaphone('Thompson', 3)));
     }
 
-    public function testMetaphoneEmptyThrows(): void
+    public function testMetaphoneMultibyte(): void
     {
-        Assert::exception(function (): void {
-            Strings::metaphone('');
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+        Assert::same(Strings::metaphone('hello'), Strings::metaphone('héllo'));
+        Assert::same(Strings::metaphone('cafe'), Strings::metaphone('café'));
     }
 
     public function testMultibyteCharacters(): void

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Type;
 
-use Phuture\Coherence\Enum\CompressionFormat;
 use Phuture\Coherence\Interface\Fileable;
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Files as Transformer;
+use Phuture\Coherence\Enum\CompressionFormat;
 
 /**
  * A fluent wrapper around the Files utility class for chainable file manipulation.
@@ -163,21 +163,6 @@ class Files extends FluentClass implements Fileable
     }
 
     /**
-     * Deletes the file or directory at the current path.
-     *
-     * After deletion, the internal path is set to an empty string. This method
-     * returns void because no further chaining is possible after the path is removed.
-     *
-     * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be deleted
-     * @see \Phuture\Coherence\Files::delete()
-     */
-    public function delete(): void
-    {
-        Transformer::delete($this->data);
-        $this->data = '';
-    }
-
-    /**
      * Extracts or decompresses the wrapped archive to a destination path.
      *
      * @param string $destination The directory where the archive contents will be placed
@@ -192,6 +177,21 @@ class Files extends FluentClass implements Fileable
         Transformer::decompress($this->data, $destination, $format);
 
         return $this;
+    }
+
+    /**
+     * Deletes the file or directory at the current path.
+     *
+     * After deletion, the internal path is set to an empty string. This method
+     * returns void because no further chaining is possible after the path is removed.
+     *
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the path cannot be deleted
+     * @see \Phuture\Coherence\Files::delete()
+     */
+    public function delete(): void
+    {
+        Transformer::delete($this->data);
+        $this->data = '';
     }
 
     /**

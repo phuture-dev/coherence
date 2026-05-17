@@ -340,6 +340,20 @@ class Strings extends FluentClass implements Stringable, \Stringable
     }
 
     /**
+     * Calculates the Hamming distance between the string and another string.
+     *
+     * @param string $other The string to compare against; must have the same character length
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::hamming()
+     */
+    public function hamming(string $other): self
+    {
+        $this->data = Transformer::hamming((string) $this->data, $other);
+
+        return $this;
+    }
+
+    /**
      * Converts the string to a human-readable headline format.
      *
      * @return self Returns the current instance for method chaining
@@ -364,20 +378,6 @@ class Strings extends FluentClass implements Stringable, \Stringable
     public function highlight(string $phrase, string $tagOpen = '<mark>', string $tagClose = '</mark>'): self
     {
         $this->data = Transformer::highlight((string) $this->data, $phrase, $tagOpen, $tagClose);
-
-        return $this;
-    }
-
-    /**
-     * Calculates the Hamming distance between the string and another string.
-     *
-     * @param string $other The string to compare against; must have the same character length
-     * @return self Returns the current instance for method chaining
-     * @see Transformer::hamming()
-     */
-    public function hamming(string $other): self
-    {
-        $this->data = Transformer::hamming((string) $this->data, $other);
 
         return $this;
     }

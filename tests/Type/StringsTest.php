@@ -144,6 +144,13 @@ class StringsTest extends TestCase
         Assert::same('', FluentStrings::from('')->dedupe()->get());
     }
 
+    public function testDistance(): void
+    {
+        Assert::same(Strings::distance('hello', 'hallo'), FluentStrings::from('hello')->distance('hallo')->get());
+        Assert::same(0, FluentStrings::from('hello')->distance('hello')->get());
+        Assert::same(3, FluentStrings::from('kitten')->distance('sitting')->get());
+    }
+
     public function testExcerpt(): void
     {
         Assert::same(
@@ -195,33 +202,12 @@ class StringsTest extends TestCase
         );
     }
 
-    public function testDistance(): void
-    {
-        Assert::same(Strings::distance('hello', 'hallo'), FluentStrings::from('hello')->distance('hallo')->get());
-        Assert::same(0, FluentStrings::from('hello')->distance('hello')->get());
-        Assert::same(3, FluentStrings::from('kitten')->distance('sitting')->get());
-    }
-
     public function testFluentHighlight(): void
     {
         Assert::same(
             Strings::highlight('The quick brown fox', 'quick'),
             FluentStrings::from('The quick brown fox')->highlight('quick')->get()
         );
-    }
-
-    public function testHamming(): void
-    {
-        Assert::same(Strings::hamming('karolin', 'kathrin'), FluentStrings::from('karolin')->hamming('kathrin')->get());
-        Assert::same(0, FluentStrings::from('hello')->hamming('hello')->get());
-        Assert::same(0, FluentStrings::from('')->hamming('')->get());
-    }
-
-    public function testHammingThrows(): void
-    {
-        Assert::exception(function (): void {
-            FluentStrings::from('hello')->hamming('hi')->get();
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testFluentIndent(): void
@@ -275,6 +261,20 @@ class StringsTest extends TestCase
         Assert::same('hello', FluentStrings::from('hello')->get());
     }
 
+    public function testHamming(): void
+    {
+        Assert::same(Strings::hamming('karolin', 'kathrin'), FluentStrings::from('karolin')->hamming('kathrin')->get());
+        Assert::same(0, FluentStrings::from('hello')->hamming('hello')->get());
+        Assert::same(0, FluentStrings::from('')->hamming('')->get());
+    }
+
+    public function testHammingThrows(): void
+    {
+        Assert::exception(function (): void {
+            FluentStrings::from('hello')->hamming('hi')->get();
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+    }
+
     public function testHeadline(): void
     {
         Assert::same(Strings::headline('hello_world'), FluentStrings::from('hello_world')->headline()->get());
@@ -288,6 +288,12 @@ class StringsTest extends TestCase
         Assert::same(Strings::insert('hello world', '!', 5), FluentStrings::from('hello world')->insert('!', 5)->get());
         Assert::same(Strings::insert('hello world', '!', -1), FluentStrings::from('hello world')->insert('!', -1)->get());
         Assert::same(Strings::insert('ñaño', '!', 2), FluentStrings::from('ñaño')->insert('!', 2)->get());
+    }
+
+    public function testInvoke(): void
+    {
+        $fluent = FluentStrings::from('hello')->upper();
+        Assert::same('HELLO', $fluent());
     }
 
     public function testJaro(): void
@@ -314,12 +320,6 @@ class StringsTest extends TestCase
         Assert::exception(function (): void {
             FluentStrings::from('hello')->jaroWinkler('world', 0.26)->get();
         }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
-    }
-
-    public function testInvoke(): void
-    {
-        $fluent = FluentStrings::from('hello')->upper();
-        Assert::same('HELLO', $fluent());
     }
 
     public function testKebab(): void

@@ -18,12 +18,13 @@ namespace Phuture\Coherence\Enum;
 enum CompressionFormat
 {
     /**
-     * ZIP archive format (.zip).
+     * GZIP-compressed TAR archive format (.tar.gz).
      *
-     * Supports compressing files and directories. Uses the nelexa/zip
-     * pure-PHP library, so no system zip command is required.
+     * Supports compressing both files and directories by first building a TAR
+     * archive and then applying GZIP compression. Uses PHP's built-in PharData
+     * class for TAR creation and the zlib extension for GZIP compression.
      */
-    case Zip;
+    case Gzip;
 
     /**
      * TAR archive format (.tar).
@@ -32,13 +33,11 @@ enum CompressionFormat
      * Uses PHP's built-in PharData class.
      */
     case Tar;
-
     /**
-     * GZIP-compressed TAR archive format (.tar.gz).
+     * ZIP archive format (.zip).
      *
-     * Supports compressing both files and directories by first building a TAR
-     * archive and then applying GZIP compression. Uses PHP's built-in PharData
-     * class for TAR creation and the zlib extension for GZIP compression.
+     * Supports compressing files and directories. Uses the nelexa/zip
+     * pure-PHP library, so no system zip command is required.
      */
-    case Gzip;
+    case Zip;
 }

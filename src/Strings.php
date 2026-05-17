@@ -1183,6 +1183,56 @@ class Strings extends StaticClass
     }
 
     /**
+     * Calculates the Hamming distance between two strings.
+     *
+     * The Hamming distance is the number of positions at which the corresponding
+     * characters are different. Think of it as counting the minimum number of
+     * character substitutions needed to turn one string into the other.
+     *
+     * Both strings must have the same number of characters. This method is
+     * multibyte-safe and works correctly with accented characters and other
+     * Unicode text — each Unicode character counts as one unit regardless of
+     * how many bytes it uses.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Strings;
+     *
+     * Strings::hamming('karolin', 'kathrin'); // 3
+     * Strings::hamming('hello', 'hello');     // 0
+     * Strings::hamming('', '');               // 0
+     * ```
+     *
+     * @param string $string The first string to compare
+     * @param string $other The second string to compare against
+     * @return int The number of positions where the characters differ
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the strings have different character lengths
+     * @see \Phuture\Coherence\Strings::distance()
+     * @see \Phuture\Coherence\Strings::jaro()
+     */
+    public static function hamming(string $string, string $other): int
+    {
+        $s1 = mb_str_split($string, 1, 'UTF-8');
+        $s2 = mb_str_split($other, 1, 'UTF-8');
+
+        if (count($s1) !== count($s2)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Strings must be equal length for Hamming distance'
+            );
+        }
+
+        $distance = 0;
+
+        foreach ($s1 as $i => $char) {
+            if ($char !== $s2[$i]) {
+                $distance++;
+            }
+        }
+
+        return $distance;
+    }
+
+    /**
      * Converts a string to a human-readable headline format.
      *
      * Splits on spaces, hyphens, and underscores, capitalises each word, and joins them
@@ -1250,56 +1300,6 @@ class Strings extends StaticClass
         $pattern = '/' . preg_quote($phrase, '/') . '/iu';
 
         return preg_replace($pattern, $tagOpen . '$0' . $tagClose, $string) ?? $string;
-    }
-
-    /**
-     * Calculates the Hamming distance between two strings.
-     *
-     * The Hamming distance is the number of positions at which the corresponding
-     * characters are different. Think of it as counting the minimum number of
-     * character substitutions needed to turn one string into the other.
-     *
-     * Both strings must have the same number of characters. This method is
-     * multibyte-safe and works correctly with accented characters and other
-     * Unicode text — each Unicode character counts as one unit regardless of
-     * how many bytes it uses.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Strings;
-     *
-     * Strings::hamming('karolin', 'kathrin'); // 3
-     * Strings::hamming('hello', 'hello');     // 0
-     * Strings::hamming('', '');               // 0
-     * ```
-     *
-     * @param string $string The first string to compare
-     * @param string $other The second string to compare against
-     * @return int The number of positions where the characters differ
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the strings have different character lengths
-     * @see \Phuture\Coherence\Strings::distance()
-     * @see \Phuture\Coherence\Strings::jaro()
-     */
-    public static function hamming(string $string, string $other): int
-    {
-        $s1 = mb_str_split($string, 1, 'UTF-8');
-        $s2 = mb_str_split($other, 1, 'UTF-8');
-
-        if (count($s1) !== count($s2)) {
-            throw new InvalidArgumentException(
-                'Invalid Argument: Strings must be equal length for Hamming distance'
-            );
-        }
-
-        $distance = 0;
-
-        foreach ($s1 as $i => $char) {
-            if ($char !== $s2[$i]) {
-                $distance++;
-            }
-        }
-
-        return $distance;
     }
 
     /**

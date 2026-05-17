@@ -46,15 +46,6 @@ class HtmlTest extends TestCase
         Assert::same('<p>Hello</p>', $result);
     }
 
-    public function testBuildWithAttributes(): void
-    {
-        $result = Html::build([
-            ['tag' => 'a', 'attributes' => ['href' => 'https://example.com'], 'content' => 'Link'],
-        ]);
-
-        Assert::same('<a href="https://example.com">Link</a>', $result);
-    }
-
     public function testBuildVoidElement(): void
     {
         // Standalone void element
@@ -78,6 +69,15 @@ class HtmlTest extends TestCase
                 ['tag' => 'p', 'content' => 'More'],
             ])
         );
+    }
+
+    public function testBuildWithAttributes(): void
+    {
+        $result = Html::build([
+            ['tag' => 'a', 'attributes' => ['href' => 'https://example.com'], 'content' => 'Link'],
+        ]);
+
+        Assert::same('<a href="https://example.com">Link</a>', $result);
     }
 
     public function testDecodeAll(): void
@@ -403,6 +403,17 @@ class HtmlTest extends TestCase
         Assert::same('<div><p>Hel...</p></div>', Html::truncate('<div><p>Hello</p></div>', 3));
     }
 
+    public function testTruncateEntity(): void
+    {
+        // Entity counts as 1 visible character
+        Assert::same('<p>Tom &amp;...</p>', Html::truncate('<p>Tom &amp; Jerry</p>', 5));
+    }
+
+    public function testTruncateMultibyte(): void
+    {
+        Assert::same('<p>hél...</p>', Html::truncate('<p>héllo</p>', 3));
+    }
+
     public function testTruncateNestedTags(): void
     {
         $result = Html::truncate('<p>Hello <b>World</b></p>', 7);
@@ -417,17 +428,6 @@ class HtmlTest extends TestCase
         $result = Html::truncate('<p>Hello<br>World</p>', 6);
         Assert::notContains('</br>', $result);
         Assert::contains('<br>', $result);
-    }
-
-    public function testTruncateEntity(): void
-    {
-        // Entity counts as 1 visible character
-        Assert::same('<p>Tom &amp;...</p>', Html::truncate('<p>Tom &amp; Jerry</p>', 5));
-    }
-
-    public function testTruncateMultibyte(): void
-    {
-        Assert::same('<p>hél...</p>', Html::truncate('<p>héllo</p>', 3));
     }
 
     public function testTruncateWords(): void
@@ -449,6 +449,11 @@ class HtmlTest extends TestCase
         Assert::same('<p>One [...]</p>', Html::truncateWords('<p>One Two Three</p>', 1, ' [...]'));
     }
 
+    public function testTruncateWordsEntity(): void
+    {
+        Assert::same('<p>Tom &amp;...</p>', Html::truncateWords('<p>Tom &amp; Jerry</p>', 2));
+    }
+
     public function testTruncateWordsNestedTags(): void
     {
         $result = Html::truncateWords('<p>Hello <b>World</b> Foo</p>', 2);
@@ -460,11 +465,6 @@ class HtmlTest extends TestCase
     {
         $result = Html::truncateWords('<p>Hello<br>World Foo</p>', 1);
         Assert::notContains('</br>', $result);
-    }
-
-    public function testTruncateWordsEntity(): void
-    {
-        Assert::same('<p>Tom &amp;...</p>', Html::truncateWords('<p>Tom &amp; Jerry</p>', 2));
     }
 }
 

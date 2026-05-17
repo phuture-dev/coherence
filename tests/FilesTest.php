@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Tests;
 
 use Phuture\Coherence\Files;
-use Phuture\Coherence\Enum\CompressionFormat;
 use RecursiveIteratorIterator;
 use Tester\{Assert, TestCase};
 use RecursiveDirectoryIterator;
+use Phuture\Coherence\Enum\CompressionFormat;
 use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 
 require __DIR__ . '/bootstrap.php';
@@ -69,6 +69,90 @@ class FilesTest extends TestCase
             static fn () => Files::chown('/non/existent/file.txt', 'root'),
             RuntimeException::class
         );
+    }
+
+    public function testCompressGzipDirectory(): void
+    {
+        $srcDir = $this->tempDir . '/gzipdir';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/note.txt', 'gzip dir content');
+
+        $archive = $this->tempDir . '/gzipdir.tar.gz';
+        Files::compress($srcDir, $archive, CompressionFormat::Gzip);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressGzipFile(): void
+    {
+        $source = $this->tempDir . '/data.txt';
+        file_put_contents($source, 'hello gzip');
+
+        $archive = $this->tempDir . '/data.tar.gz';
+        Files::compress($source, $archive, CompressionFormat::Gzip);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressTarDirectory(): void
+    {
+        $srcDir = $this->tempDir . '/tardir';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/c.txt', 'gamma');
+
+        $archive = $this->tempDir . '/dir.tar';
+        Files::compress($srcDir, $archive, CompressionFormat::Tar);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressTarFile(): void
+    {
+        $source = $this->tempDir . '/note.txt';
+        file_put_contents($source, 'hello tar');
+
+        $archive = $this->tempDir . '/out.tar';
+        Files::compress($source, $archive, CompressionFormat::Tar);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressThrowsOnMissingSource(): void
+    {
+        Assert::exception(
+            fn () => Files::compress($this->tempDir . '/nonexistent.txt', $this->tempDir . '/out.zip', CompressionFormat::Zip),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testCompressZipDirectory(): void
+    {
+        $srcDir = $this->tempDir . '/zipdir';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/a.txt', 'alpha');
+        file_put_contents($srcDir . '/b.txt', 'beta');
+
+        $archive = $this->tempDir . '/dir.zip';
+        Files::compress($srcDir, $archive, CompressionFormat::Zip);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
+    }
+
+    public function testCompressZipFile(): void
+    {
+        $source = $this->tempDir . '/hello.txt';
+        file_put_contents($source, 'hello zip');
+
+        $archive = $this->tempDir . '/out.zip';
+        Files::compress($source, $archive, CompressionFormat::Zip);
+
+        Assert::true(file_exists($archive));
+        Assert::true(filesize($archive) > 0);
     }
 
     public function testCopyDirectory(): void
@@ -219,6 +303,64 @@ class FilesTest extends TestCase
 
         Assert::true(file_exists($file));
         Assert::same('', file_get_contents($file));
+    }
+
+    public function testDecompressGzip(): void
+    {
+        $srcDir = $this->tempDir . '/gzip_src';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/hello.txt', 'hello gzip round-trip');
+
+        $archive = $this->tempDir . '/gzip_src.tar.gz';
+        Files::compress($srcDir, $archive, CompressionFormat::Gzip);
+
+        $outDir = $this->tempDir . '/gzip_out';
+        Files::decompress($archive, $outDir, CompressionFormat::Gzip);
+
+        Assert::true(is_dir($outDir));
+        Assert::true(file_exists($outDir . '/hello.txt'));
+        Assert::same('hello gzip round-trip', file_get_contents($outDir . '/hello.txt'));
+    }
+
+    public function testDecompressTar(): void
+    {
+        $srcDir = $this->tempDir . '/tarsrc';
+        mkdir($srcDir);
+        file_put_contents($srcDir . '/msg.txt', 'hello from tar');
+
+        $archive = $this->tempDir . '/msg.tar';
+        Files::compress($srcDir, $archive, CompressionFormat::Tar);
+
+        $outDir = $this->tempDir . '/tar_out';
+        Files::decompress($archive, $outDir, CompressionFormat::Tar);
+
+        Assert::true(is_dir($outDir));
+        Assert::true(file_exists($outDir . '/msg.txt'));
+        Assert::same('hello from tar', file_get_contents($outDir . '/msg.txt'));
+    }
+
+    public function testDecompressThrowsOnMissingArchive(): void
+    {
+        Assert::exception(
+            fn () => Files::decompress($this->tempDir . '/missing.zip', $this->tempDir . '/out', CompressionFormat::Zip),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testDecompressZip(): void
+    {
+        $source = $this->tempDir . '/greet.txt';
+        file_put_contents($source, 'hello from zip');
+
+        $archive = $this->tempDir . '/greet.zip';
+        Files::compress($source, $archive, CompressionFormat::Zip);
+
+        $outDir = $this->tempDir . '/zip_out';
+        Files::decompress($archive, $outDir, CompressionFormat::Zip);
+
+        Assert::true(is_dir($outDir));
+        Assert::true(file_exists($outDir . '/greet.txt'));
+        Assert::same('hello from zip', file_get_contents($outDir . '/greet.txt'));
     }
 
     public function testDeleteDirectory(): void
@@ -1142,148 +1284,6 @@ class FilesTest extends TestCase
         Files::write($file, 'locked content', 0666, true);
 
         Assert::same('locked content', file_get_contents($file));
-    }
-
-    public function testCompressZipFile(): void
-    {
-        $source = $this->tempDir . '/hello.txt';
-        file_put_contents($source, 'hello zip');
-
-        $archive = $this->tempDir . '/out.zip';
-        Files::compress($source, $archive, CompressionFormat::Zip);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testCompressZipDirectory(): void
-    {
-        $srcDir = $this->tempDir . '/zipdir';
-        mkdir($srcDir);
-        file_put_contents($srcDir . '/a.txt', 'alpha');
-        file_put_contents($srcDir . '/b.txt', 'beta');
-
-        $archive = $this->tempDir . '/dir.zip';
-        Files::compress($srcDir, $archive, CompressionFormat::Zip);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testDecompressZip(): void
-    {
-        $source = $this->tempDir . '/greet.txt';
-        file_put_contents($source, 'hello from zip');
-
-        $archive = $this->tempDir . '/greet.zip';
-        Files::compress($source, $archive, CompressionFormat::Zip);
-
-        $outDir = $this->tempDir . '/zip_out';
-        Files::decompress($archive, $outDir, CompressionFormat::Zip);
-
-        Assert::true(is_dir($outDir));
-        Assert::true(file_exists($outDir . '/greet.txt'));
-        Assert::same('hello from zip', file_get_contents($outDir . '/greet.txt'));
-    }
-
-    public function testCompressTarFile(): void
-    {
-        $source = $this->tempDir . '/note.txt';
-        file_put_contents($source, 'hello tar');
-
-        $archive = $this->tempDir . '/out.tar';
-        Files::compress($source, $archive, CompressionFormat::Tar);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testCompressTarDirectory(): void
-    {
-        $srcDir = $this->tempDir . '/tardir';
-        mkdir($srcDir);
-        file_put_contents($srcDir . '/c.txt', 'gamma');
-
-        $archive = $this->tempDir . '/dir.tar';
-        Files::compress($srcDir, $archive, CompressionFormat::Tar);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testDecompressTar(): void
-    {
-        $srcDir = $this->tempDir . '/tarsrc';
-        mkdir($srcDir);
-        file_put_contents($srcDir . '/msg.txt', 'hello from tar');
-
-        $archive = $this->tempDir . '/msg.tar';
-        Files::compress($srcDir, $archive, CompressionFormat::Tar);
-
-        $outDir = $this->tempDir . '/tar_out';
-        Files::decompress($archive, $outDir, CompressionFormat::Tar);
-
-        Assert::true(is_dir($outDir));
-        Assert::true(file_exists($outDir . '/msg.txt'));
-        Assert::same('hello from tar', file_get_contents($outDir . '/msg.txt'));
-    }
-
-    public function testCompressGzipFile(): void
-    {
-        $source = $this->tempDir . '/data.txt';
-        file_put_contents($source, 'hello gzip');
-
-        $archive = $this->tempDir . '/data.tar.gz';
-        Files::compress($source, $archive, CompressionFormat::Gzip);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testCompressGzipDirectory(): void
-    {
-        $srcDir = $this->tempDir . '/gzipdir';
-        mkdir($srcDir);
-        file_put_contents($srcDir . '/note.txt', 'gzip dir content');
-
-        $archive = $this->tempDir . '/gzipdir.tar.gz';
-        Files::compress($srcDir, $archive, CompressionFormat::Gzip);
-
-        Assert::true(file_exists($archive));
-        Assert::true(filesize($archive) > 0);
-    }
-
-    public function testDecompressGzip(): void
-    {
-        $srcDir = $this->tempDir . '/gzip_src';
-        mkdir($srcDir);
-        file_put_contents($srcDir . '/hello.txt', 'hello gzip round-trip');
-
-        $archive = $this->tempDir . '/gzip_src.tar.gz';
-        Files::compress($srcDir, $archive, CompressionFormat::Gzip);
-
-        $outDir = $this->tempDir . '/gzip_out';
-        Files::decompress($archive, $outDir, CompressionFormat::Gzip);
-
-        Assert::true(is_dir($outDir));
-        Assert::true(file_exists($outDir . '/hello.txt'));
-        Assert::same('hello gzip round-trip', file_get_contents($outDir . '/hello.txt'));
-    }
-
-    public function testCompressThrowsOnMissingSource(): void
-    {
-        Assert::exception(
-            fn () => Files::compress($this->tempDir . '/nonexistent.txt', $this->tempDir . '/out.zip', CompressionFormat::Zip),
-            InvalidArgumentException::class
-        );
-    }
-
-    public function testDecompressThrowsOnMissingArchive(): void
-    {
-        Assert::exception(
-            fn () => Files::decompress($this->tempDir . '/missing.zip', $this->tempDir . '/out', CompressionFormat::Zip),
-            InvalidArgumentException::class
-        );
     }
 
     protected function setUp(): void
