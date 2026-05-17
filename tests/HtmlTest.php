@@ -54,6 +54,32 @@ class HtmlTest extends TestCase
 
         Assert::same('<a href="https://example.com">Link</a>', $result);
     }
+
+    public function testBuildVoidElement(): void
+    {
+        // Standalone void element
+        Assert::same('<br>', Html::build([['tag' => 'br']]));
+
+        // Void element with attributes
+        Assert::same(
+            '<img src="photo.jpg" alt="Photo">',
+            Html::build([['tag' => 'img', 'attributes' => ['src' => 'photo.jpg', 'alt' => 'Photo']]])
+        );
+
+        // Content key on a void element is silently ignored
+        Assert::same('<br>', Html::build([['tag' => 'br', 'content' => 'ignored']]));
+
+        // Mixed void and non-void siblings
+        Assert::same(
+            '<p>Text</p><br><p>More</p>',
+            Html::build([
+                ['tag' => 'p', 'content' => 'Text'],
+                ['tag' => 'br'],
+                ['tag' => 'p', 'content' => 'More'],
+            ])
+        );
+    }
+
     public function testDecodeAll(): void
     {
         Assert::same('Tom & Jerry', Html::decode('Tom &amp; Jerry'));
@@ -370,11 +396,11 @@ class HtmlTest extends TestCase
         Assert::same('Hello...', Html::truncate('Hello World', 5));
 
         // Custom end marker
-        Assert::same('<p>Hel</p> [more]', Html::truncate('<p>Hello</p>', 3, ' [more]'));
+        Assert::same('<p>Hel [more]</p>', Html::truncate('<p>Hello</p>', 3, ' [more]'));
         Assert::same('<p>Hel</p>', Html::truncate('<p>Hello</p>', 3, ''));
 
         // Open tags are closed after truncation
-        Assert::same('<div><p>Hel</p></div>...', Html::truncate('<div><p>Hello</p></div>', 3));
+        Assert::same('<div><p>Hel...</p></div>', Html::truncate('<div><p>Hello</p></div>', 3));
     }
 
     public function testTruncateNestedTags(): void
@@ -396,12 +422,12 @@ class HtmlTest extends TestCase
     public function testTruncateEntity(): void
     {
         // Entity counts as 1 visible character
-        Assert::same('<p>Tom &amp;</p>...', Html::truncate('<p>Tom &amp; Jerry</p>', 5));
+        Assert::same('<p>Tom &amp;...</p>', Html::truncate('<p>Tom &amp; Jerry</p>', 5));
     }
 
     public function testTruncateMultibyte(): void
     {
-        Assert::same('<p>hél</p>...', Html::truncate('<p>héllo</p>', 3));
+        Assert::same('<p>hél...</p>', Html::truncate('<p>héllo</p>', 3));
     }
 
     public function testTruncateWords(): void
@@ -414,13 +440,13 @@ class HtmlTest extends TestCase
         Assert::same('One Two...', Html::truncateWords('One Two Three', 2));
 
         // HTML with word truncation — open tags closed
-        Assert::same('<p>One Two</p>...', Html::truncateWords('<p>One Two Three Four</p>', 2));
+        Assert::same('<p>One Two...</p>', Html::truncateWords('<p>One Two Three Four</p>', 2));
 
         // Multiple spaces preserved up to truncation point
-        Assert::same('<p>One   Two</p>...', Html::truncateWords('<p>One   Two  Three</p>', 2));
+        Assert::same('<p>One   Two...</p>', Html::truncateWords('<p>One   Two  Three</p>', 2));
 
         // Custom end marker
-        Assert::same('<p>One</p> [...]', Html::truncateWords('<p>One Two Three</p>', 1, ' [...]'));
+        Assert::same('<p>One [...]</p>', Html::truncateWords('<p>One Two Three</p>', 1, ' [...]'));
     }
 
     public function testTruncateWordsNestedTags(): void
@@ -438,7 +464,7 @@ class HtmlTest extends TestCase
 
     public function testTruncateWordsEntity(): void
     {
-        Assert::same('<p>Tom &amp;</p>...', Html::truncateWords('<p>Tom &amp; Jerry</p>', 2));
+        Assert::same('<p>Tom &amp;...</p>', Html::truncateWords('<p>Tom &amp; Jerry</p>', 2));
     }
 }
 

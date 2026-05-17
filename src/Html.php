@@ -56,6 +56,10 @@ class Html extends StaticClass
      * recursively processed. When `content` is a plain array of tag definitions,
      * each element is processed and concatenated.
      *
+     * Void elements (such as `<br>`, `<img>`, `<input>`, `<hr>`, `<meta>`, etc.)
+     * are rendered without a closing tag and without any content, regardless of
+     * whether a `content` key is provided — it is silently ignored.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Html;
@@ -75,6 +79,13 @@ class Html extends StaticClass
      *     ]],
      * ]);
      * // '<ul><li>Item 1</li><li>Item 2</li></ul>'
+     *
+     * Html::build([
+     *     ['tag' => 'p', 'content' => 'Line one'],
+     *     ['tag' => 'br'],
+     *     ['tag' => 'img', 'attributes' => ['src' => 'photo.jpg', 'alt' => 'Photo']],
+     * ]);
+     * // '<p>Line one</p><br><img src="photo.jpg" alt="Photo">'
      * ```
      *
      * @param array $elements An array of tag definition arrays to build
@@ -88,6 +99,12 @@ class Html extends StaticClass
         foreach ($elements as $element) {
             $name = $element['tag'] ?? '';
             $attributes = $element['attributes'] ?? [];
+
+            if (in_array(strtolower($name), self::VOID_ELEMENTS, true)) {
+                $html .= self::tag($name, '', $attributes);
+                continue;
+            }
+
             $content = $element['content'] ?? '';
 
             if (is_array($content) && isset($content['tag'])) {
@@ -460,13 +477,13 @@ class Html extends StaticClass
      * use Phuture\Coherence\Html;
      *
      * Html::truncate('<p>Hello <b>world</b></p>', 7);
-     * // Returns: '<p>Hello <b>w</b></p>...'
+     * // Returns: '<p>Hello <b>w...</b></p>'
      *
      * Html::truncate('<p>Hello</p>', 10);
      * // Returns: '<p>Hello</p>'
      *
      * Html::truncate('<p>Tom &amp; Jerry</p>', 5);
-     * // Returns: '<p>Tom &amp;</p>...'
+     * // Returns: '<p>Tom &amp;...</p>'
      * ```
      *
      * @param string $html The HTML string to truncate
@@ -516,7 +533,7 @@ class Html extends StaticClass
         }
 
         if ($count >= $limit) {
-            return $result . self::closeOpenTags($openTags) . $end;
+            return $result . $end . self::closeOpenTags($openTags);
         }
 
         return $result;
@@ -545,7 +562,7 @@ class Html extends StaticClass
      * use Phuture\Coherence\Html;
      *
      * Html::truncateWords('<p>One Two Three Four</p>', 2);
-     * // Returns: '<p>One Two</p>...'
+     * // Returns: '<p>One Two...</p>'
      *
      * Html::truncateWords('<p>Hello World</p>', 5);
      * // Returns: '<p>Hello World</p>'
@@ -605,7 +622,7 @@ class Html extends StaticClass
         }
 
         if ($count >= $limit) {
-            return $result . self::closeOpenTags($openTags) . $end;
+            return $result . $end . self::closeOpenTags($openTags);
         }
 
         return $result;
