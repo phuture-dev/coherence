@@ -1640,6 +1640,83 @@ class Dates extends StaticClass
     }
 
     /**
+     * Parses a relative date expression into an absolute date/time value.
+     *
+     * Converts a human-readable relative expression like '3 days', '2 hours ago',
+     * or 'next Monday' into a concrete DateTimeImmutable value. The expression
+     * is evaluated relative to a reference date, which defaults to the current
+     * moment when not provided.
+     *
+     * This method supports everything PHP's `strtotime()` accepts, plus the
+     * 'in X units' pattern that PHP does not handle natively:
+     *
+     * - PHP native: '+2 days', '-1 week', 'next Monday', 'last day of next month'
+     * - Natural language: '3 days ago', '2 hours ago', '1 week'
+     * - Extended: 'in 3 days', 'in 2 hours', 'in 1 week', 'in 5 minutes'
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+     *
+     * // PHP native relative expressions
+     * Dates::parseRelative('+3 days', $ref);  // 2026-04-24 12:00:00
+     * Dates::parseRelative('-1 week', $ref);  // 2026-04-14 12:00:00
+     *
+     * // Natural language
+     * Dates::parseRelative('2 days ago', $ref); // 2026-04-19 12:00:00
+     *
+     * // Extended 'in X units' pattern
+     * Dates::parseRelative('in 5 hours', $ref); // 2026-04-21 17:00:00
+     *
+     * // Without a reference date, resolves against the current moment
+     * Dates::parseRelative('tomorrow');
+     * ```
+     *
+     * @param string $expression A relative date expression (e.g. '+2 days', 'in 3 hours', 'yesterday')
+     * @param DateTimeImmutable|string|null $relativeTo The reference date/time to resolve against.
+     *   Pass null to use the current moment (default: null)
+     * @param string|null $timezone A valid PHP timezone identifier used only when $relativeTo
+     *   is null and the current moment is needed (default: null — UTC)
+     * @return DateTimeImmutable The absolute date/time that the expression resolves to
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the expression cannot be parsed
+     *   or the timezone is invalid
+     * @see \Phuture\Coherence\Dates::parse()
+     * @see \Phuture\Coherence\Dates::toRelative()
+     */
+    public static function parseRelative(
+        string $expression,
+        DateTimeImmutable|string|null $relativeTo = null,
+        ?string $timezone = null
+    ): DateTimeImmutable {
+        if ($expression === '') {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The relative date expression must not be empty.'
+            );
+        }
+
+        $baseDate = self::resolveRelativeBaseDate($relativeTo, $timezone);
+        $phpExpression = self::normalizeRelativeExpression($expression);
+
+        try {
+            $result = $baseDate->modify($phpExpression);
+        } catch (Exception $e) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The relative date expression \"{$expression}\" could not be parsed."
+            );
+        }
+
+        if ($result === false) {
+            throw new InvalidArgumentException(
+                "Invalid Argument: The relative date expression \"{$expression}\" could not be parsed."
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * Parses a date/time string into a DateTimeImmutable value.
      *
      * Accepts any date/time string that PHP's DateTimeImmutable constructor understands,
@@ -2227,8 +2304,68 @@ class Dates extends StaticClass
     }
 
     /**
-     * Converts a date to a Unix timestamp.
+     * Returns a human-readable string describing how far a date is from a reference point.
      *
+     * Produces a relative time string like '2 days ago', 'in 3 hours', or 'just now'.
+     * The comparison point defaults to the current moment. The output automatically
+     * picks the largest whole unit that fits (seconds, minutes, hours, days, weeks,
+     * months, or years) and uses singular or plural form.
+     *
+     * Output format for past dates: '{n} {unit} ago' (e.g. '5 minutes ago')
+     * Output format for future dates: 'in {n} {unit}' (e.g. 'in 2 days')
+     * Output for very recent dates: 'just now'
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+     *
+     * Dates::toRelative('2026-04-21 11:55:00', $ref); // '5 minutes ago'
+     * Dates::toRelative('2026-04-21 12:45:00', $ref); // 'in 45 minutes'
+     * Dates::toRelative('2026-04-19 12:00:00', $ref); // '2 days ago'
+     * Dates::toRelative('2026-04-21 12:00:30', $ref); // 'just now'
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to describe
+     * @param DateTimeImmutable|string|null $comparedTo The reference date/time to compare against.
+     *   Pass null to use the current moment (default: null)
+     * @return string A human-readable relative time string
+     * @see \Phuture\Coherence\Dates::parseRelative()
+     */
+    public static function toRelative(
+        DateTimeImmutable|string $date,
+        DateTimeImmutable|string|null $comparedTo = null
+    ): string {
+        $resolvedDate = self::resolveDate($date);
+        $resolvedComparedTo = $comparedTo !== null
+            ? self::resolveDate($comparedTo)
+            : self::now($resolvedDate->getTimezone()->getName());
+
+        $diffSeconds = $resolvedComparedTo->getTimestamp() - $resolvedDate->getTimestamp();
+        $isFuture = $diffSeconds < 0;
+        $absoluteSeconds = abs($diffSeconds);
+
+        if ($absoluteSeconds < 60) {
+            return 'just now';
+        }
+
+        $thresholds = self::relativeThresholds();
+
+        foreach ($thresholds as $threshold) {
+            if ($absoluteSeconds >= $threshold['minimum']) {
+                $value = (int) floor($absoluteSeconds / $threshold['divisor']);
+
+                return self::formatRelativeString($value, $threshold['unit'], $isFuture);
+            }
+        }
+
+        $value = (int) floor($absoluteSeconds / 31536000);
+
+        return self::formatRelativeString($value, 'year', $isFuture);
+    }
+
+    /**
      * The Unix timestamp is the number of seconds elapsed since
      * 1 January 1970 00:00:00 UTC, regardless of timezone.
      *
@@ -2415,5 +2552,73 @@ class Dates extends StaticClass
         }
 
         return $date;
+    }
+
+    /**
+     * Resolves the base date for parseRelative from the $relativeTo parameter.
+     *
+     * @param DateTimeImmutable|string|null $relativeTo The user-supplied reference date
+     * @param string|null $timezone Timezone used when $relativeTo is null
+     * @return DateTimeImmutable The resolved reference date
+     */
+    private static function resolveRelativeBaseDate(
+        DateTimeImmutable|string|null $relativeTo,
+        ?string $timezone
+    ): DateTimeImmutable {
+        if ($relativeTo === null) {
+            return self::now($timezone);
+        }
+
+        return self::resolveDate($relativeTo);
+    }
+
+    private static function normalizeRelativeExpression(string $expression): string
+    {
+        $trimmed = trim($expression);
+
+        $pattern = '/^in\s+(\d+)\s+(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$/i';
+
+        if (preg_match($pattern, $trimmed, $matches)) {
+            return "+{$matches[1]} {$matches[2]}";
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * Returns the ordered threshold definitions used by toRelative.
+     *
+     * Each entry maps a time unit to its divisor (in seconds) and the minimum
+     * number of seconds that must have elapsed before that unit is chosen.
+     * Ordered from largest unit to smallest so the first match wins.
+     *
+     * @return array<int, array{unit: string, divisor: int, minimum: int}>
+     */
+    private static function relativeThresholds(): array
+    {
+        return [
+            ['unit' => 'year', 'divisor' => 31536000, 'minimum' => 31536000],
+            ['unit' => 'month', 'divisor' => 2592000, 'minimum' => 2592000],
+            ['unit' => 'week', 'divisor' => 604800, 'minimum' => 604800],
+            ['unit' => 'day', 'divisor' => 86400, 'minimum' => 86400],
+            ['unit' => 'hour', 'divisor' => 3600, 'minimum' => 3600],
+            ['unit' => 'minute', 'divisor' => 60, 'minimum' => 60],
+        ];
+    }
+
+    /**
+     * Formats a relative time string with proper singular/plural and direction.
+     *
+     * @param int $value The quantity of the time unit
+     * @param string $unit The time unit name in singular form (e.g. 'day', 'hour')
+     * @param bool $isFuture Whether the target date is in the future
+     * @return string The formatted relative string (e.g. 'in 2 days', '5 hours ago')
+     */
+    private static function formatRelativeString(int $value, string $unit, bool $isFuture): string
+    {
+        $unitLabel = $value === 1 ? $unit : $unit . 's';
+        $formatted = "{$value} {$unitLabel}";
+
+        return $isFuture ? "in {$formatted}" : "{$formatted} ago";
     }
 }

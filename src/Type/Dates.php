@@ -203,6 +203,20 @@ class Dates extends FluentClass implements Dateable
     }
 
     /**
+     * Parses a relative date expression and replaces the wrapped date with the result.
+     *
+     * @param string $expression A relative date expression (e.g. '+2 days', 'in 3 hours')
+     * @return self Returns the current instance for method chaining
+     * @see \Phuture\Coherence\Dates::parseRelative()
+     */
+    public function parseRelative(string $expression): self
+    {
+        $this->data = Transformer::parseRelative($expression, $this->data);
+
+        return $this;
+    }
+
+    /**
      * Removes a number of days from the wrapped date/time value.
      *
      * @param int $days The number of days to remove (must be >= 0)
@@ -459,6 +473,19 @@ class Dates extends FluentClass implements Dateable
     public function toRfc850(): string
     {
         return Transformer::toRfc850($this->data);
+    }
+
+    /**
+     * Returns a human-readable string describing how far the wrapped date is from a reference point.
+     *
+     * @param DateTimeImmutable|string|null $comparedTo The reference date/time to compare against.
+     *   Pass null to use the current moment (default: null)
+     * @return string A human-readable relative time string (e.g. '2 days ago', 'in 3 hours')
+     * @see \Phuture\Coherence\Dates::toRelative()
+     */
+    public function toRelative(DateTimeImmutable|string|null $comparedTo = null): string
+    {
+        return Transformer::toRelative($this->data, $comparedTo);
     }
 
     /**

@@ -1355,6 +1355,112 @@ class DatesTest extends TestCase
         );
     }
 
+    public function testParseRelativeAddsDaysFromReference(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('+3 days', $ref);
+        Assert::same('2026-04-24 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeSubtractsWeeksFromReference(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('-1 week', $ref);
+        Assert::same('2026-04-14 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesDaysAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('2 days ago', $ref);
+        Assert::same('2026-04-19 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInDays(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 5 days', $ref);
+        Assert::same('2026-04-26 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInHours(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 3 hours', $ref);
+        Assert::same('2026-04-21 15:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInMinutes(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 45 minutes', $ref);
+        Assert::same('2026-04-21 12:45:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInWeeks(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 2 weeks', $ref);
+        Assert::same('2026-05-05 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInMonths(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 6 months', $ref);
+        Assert::same('2026-10-21 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInYears(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 1 year', $ref);
+        Assert::same('2027-04-21 12:00:00', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeHandlesInSingleSecond(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = Dates::parseRelative('in 1 second', $ref);
+        Assert::same('2026-04-21 12:00:01', Dates::toDateTime($result));
+    }
+
+    public function testParseRelativeDefaultsToNowWithoutReference(): void
+    {
+        $result = Dates::parseRelative('tomorrow');
+        Assert::type(DateTimeImmutable::class, $result);
+        Assert::true(Dates::isTomorrow($result));
+    }
+
+    public function testParseRelativeAcceptsStringReference(): void
+    {
+        $result = Dates::parseRelative('+1 day', '2026-04-21');
+        Assert::same('2026-04-22', Dates::toDate($result));
+    }
+
+    public function testParseRelativePreservesReferenceTimezone(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'Europe/Paris');
+        $result = Dates::parseRelative('+1 day', $ref);
+        Assert::same('Europe/Paris', Dates::getTimezone($result));
+    }
+
+    public function testParseRelativeThrowsOnEmptyString(): void
+    {
+        Assert::exception(
+            fn () => Dates::parseRelative(''),
+            InvalidArgumentException::class
+        );
+    }
+
+    public function testParseRelativeThrowsOnInvalidExpression(): void
+    {
+        Assert::exception(
+            fn () => Dates::parseRelative('not valid relative'),
+            InvalidArgumentException::class
+        );
+    }
+
     public function testRemoveDaysAcceptsStringDate(): void
     {
         $result = Dates::removeDays('2026-04-21', 5);
@@ -1755,6 +1861,137 @@ class DatesTest extends TestCase
     {
         $date = Dates::parse('2026-04-21 14:30:00', 'UTC');
         Assert::same(Dates::toIso8601($date), Dates::toW3c($date));
+    }
+
+    public function testToRelativeReturnsJustNowForRecentDate(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 12:00:30', 'UTC');
+        Assert::same('just now', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsJustNowForFutureUnderMinute(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 12:00:45', 'UTC');
+        Assert::same('just now', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsMinutesAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 11:55:00', 'UTC');
+        Assert::same('5 minutes ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsSingleMinuteAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 11:59:00', 'UTC');
+        Assert::same('1 minute ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInMinutes(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 12:45:00', 'UTC');
+        Assert::same('in 45 minutes', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInSingleMinute(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 12:01:00', 'UTC');
+        Assert::same('in 1 minute', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsHoursAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 08:00:00', 'UTC');
+        Assert::same('4 hours ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInHours(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-21 17:00:00', 'UTC');
+        Assert::same('in 5 hours', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsDaysAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-19 12:00:00', 'UTC');
+        Assert::same('2 days ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInDays(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-26 12:00:00', 'UTC');
+        Assert::same('in 5 days', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsWeeksAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-04-07 12:00:00', 'UTC');
+        Assert::same('2 weeks ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInWeeks(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-05-05 12:00:00', 'UTC');
+        Assert::same('in 2 weeks', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsMonthsAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-01-21 12:00:00', 'UTC');
+        Assert::same('3 months ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInMonths(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2026-10-21 12:00:00', 'UTC');
+        Assert::same('in 6 months', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsYearsAgo(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2021-04-21 12:00:00', 'UTC');
+        Assert::same('5 years ago', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeReturnsInYears(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $date = Dates::parse('2031-04-21 12:00:00', 'UTC');
+        Assert::same('in 5 years', Dates::toRelative($date, $ref));
+    }
+
+    public function testToRelativeAcceptsStringDate(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        Assert::same('3 days ago', Dates::toRelative('2026-04-18 12:00:00', $ref));
+    }
+
+    public function testToRelativeAcceptsStringReference(): void
+    {
+        Assert::same('2 days ago', Dates::toRelative('2026-04-18 12:00:00', '2026-04-20 12:00:00'));
+    }
+
+    public function testToRelativeDefaultsToNowWithoutReference(): void
+    {
+        $past = Dates::addYears(Dates::now('UTC'), -1);
+        $result = Dates::toRelative($past);
+        Assert::contains('year', $result);
+        Assert::contains('ago', $result);
     }
 }
 

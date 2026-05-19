@@ -463,6 +463,47 @@ class DatesTest extends TestCase
 
         Assert::same('2026-04-21T14:30:00+00:00', $result);
     }
+
+    public function testParseRelativeModifiesWrappedDate(): void
+    {
+        $result = $this->date('2026-04-21 12:00:00')
+            ->parseRelative('+3 days')
+            ->toDateTimeImmutable();
+
+        Assert::same('2026-04-24 12:00:00', $result->format('Y-m-d H:i:s'));
+    }
+
+    public function testParseRelativeHandlesInPattern(): void
+    {
+        $result = $this->date('2026-04-21 12:00:00')
+            ->parseRelative('in 5 hours')
+            ->toDateTimeImmutable();
+
+        Assert::same('2026-04-21 17:00:00', $result->format('Y-m-d H:i:s'));
+    }
+
+    public function testToRelativeReturnsCorrectString(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = $this->date('2026-04-19 12:00:00')->toRelative($ref);
+
+        Assert::same('2 days ago', $result);
+    }
+
+    public function testToRelativeReturnsInFuture(): void
+    {
+        $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
+        $result = $this->date('2026-04-26 12:00:00')->toRelative($ref);
+
+        Assert::same('in 5 days', $result);
+    }
+
+    public function testToRelativeWithoutReference(): void
+    {
+        $result = $this->date('2026-04-21 12:00:00')->toRelative('2026-04-21 12:05:00');
+        Assert::same('5 minutes ago', $result);
+    }
+
     private function date(string $dateString, string $timezone = 'UTC'): FluentDates
     {
         return Dates::of($dateString, $timezone);
