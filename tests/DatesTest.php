@@ -14,6 +14,59 @@ require __DIR__ . '/bootstrap.php';
 
 class DatesTest extends TestCase
 {
+    public function testAddBusinessDaysAcceptsStringDate(): void
+    {
+        $result = Dates::addBusinessDays('2026-04-20', 3);
+        // Mon Apr 20 + 3 business days = Thu Apr 23
+        Assert::same('2026-04-23', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysMultiWeek(): void
+    {
+        // Mon Apr 20 + 10 = Mon May 4 (skips 2 weekends)
+        $date = Dates::parse('2026-04-20', 'UTC');
+        $result = Dates::addBusinessDays($date, 10);
+        Assert::same('2026-05-04', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysSkipsWeekends(): void
+    {
+        // Wed Apr 22 + 3 = Mon Apr 27 (skips Sat 25, Sun 26)
+        $date = Dates::parse('2026-04-22', 'UTC');
+        $result = Dates::addBusinessDays($date, 3);
+        Assert::same('2026-04-27', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysStartingOnSaturday(): void
+    {
+        // Sat Apr 18 + 1 = Mon Apr 20
+        $date = Dates::parse('2026-04-18', 'UTC');
+        $result = Dates::addBusinessDays($date, 1);
+        Assert::same('2026-04-20', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysStartingOnSunday(): void
+    {
+        // Sun Apr 19 + 1 = Mon Apr 20
+        $date = Dates::parse('2026-04-19', 'UTC');
+        $result = Dates::addBusinessDays($date, 1);
+        Assert::same('2026-04-20', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysWithNegativeMovesBackward(): void
+    {
+        // Wed Apr 22 - 3 = Fri Apr 17 (skips Sat 18, Sun 19)
+        $date = Dates::parse('2026-04-22', 'UTC');
+        $result = Dates::addBusinessDays($date, -3);
+        Assert::same('2026-04-17', Dates::toDate($result));
+    }
+
+    public function testAddBusinessDaysWithZeroIsNoop(): void
+    {
+        $date = Dates::parse('2026-04-22', 'UTC');
+        $result = Dates::addBusinessDays($date, 0);
+        Assert::same('2026-04-22', Dates::toDate($result));
+    }
     public function testAddDaysAcceptsStringDate(): void
     {
         $result = Dates::addDays('2026-04-21', 10);
@@ -177,6 +230,41 @@ class DatesTest extends TestCase
     {
         Assert::exception(fn () => Dates::create(2026, 1, 1, 0, 0, -1), InvalidArgumentException::class);
         Assert::exception(fn () => Dates::create(2026, 1, 1, 0, 0, 60), InvalidArgumentException::class);
+    }
+
+    public function testDiffInBusinessDaysAcceptsStringDates(): void
+    {
+        // Mon Apr 20 -> Sat Apr 25: Tue, Wed, Thu, Fri = 4
+        Assert::same(4, Dates::diffInBusinessDays('2026-04-20', '2026-04-25'));
+    }
+
+    public function testDiffInBusinessDaysExcludesWeekends(): void
+    {
+        // Fri Apr 17 -> Mon Apr 20: nothing between = 0
+        $start = Dates::parse('2026-04-17', 'UTC');
+        $end = Dates::parse('2026-04-20', 'UTC');
+        Assert::same(0, Dates::diffInBusinessDays($start, $end));
+    }
+
+    public function testDiffInBusinessDaysIsAbsolute(): void
+    {
+        // Mon Apr 20 -> Fri Apr 24: Tue, Wed, Thu = 3
+        $start = Dates::parse('2026-04-20', 'UTC');
+        $end = Dates::parse('2026-04-24', 'UTC');
+        Assert::same(3, Dates::diffInBusinessDays($end, $start));
+    }
+
+    public function testDiffInBusinessDaysMultiWeek(): void
+    {
+        // Mon Apr 20 -> Mon May 4: 9 business days in between
+        $start = Dates::parse('2026-04-20', 'UTC');
+        $end = Dates::parse('2026-05-04', 'UTC');
+        Assert::same(9, Dates::diffInBusinessDays($start, $end));
+    }
+
+    public function testDiffInBusinessDaysZeroForSameDate(): void
+    {
+        Assert::same(0, Dates::diffInBusinessDays('2026-04-21', '2026-04-21'));
     }
 
     public function testDiffInDaysAcceptsStringDates(): void
@@ -882,6 +970,68 @@ class DatesTest extends TestCase
         Assert::false(Dates::isBefore($later, $earlier));
     }
 
+    public function testIsBusinessDayAcceptsStringDate(): void
+    {
+        // Tuesday Apr 21 — weekday, not a default holiday
+        Assert::true(Dates::isBusinessDay('2026-04-21'));
+        // Saturday Apr 18 — weekend
+        Assert::false(Dates::isBusinessDay('2026-04-18'));
+    }
+
+    public function testIsBusinessDayMatchesIsWeekday(): void
+    {
+        $tuesday = Dates::parse('2026-04-21', 'UTC');
+        $saturday = Dates::parse('2026-04-18', 'UTC');
+        Assert::true(Dates::isBusinessDay($tuesday));
+        Assert::false(Dates::isBusinessDay($saturday));
+    }
+
+    public function testIsBusinessDayReturnsFalseForChristmas(): void
+    {
+        // Fri Dec 25 2026 — weekday but a default holiday
+        Assert::false(Dates::isBusinessDay('2026-12-25'));
+    }
+
+    public function testIsBusinessDayReturnsFalseForDefaultHoliday(): void
+    {
+        // Thu Jan 1 2026 — weekday but a default holiday
+        Assert::false(Dates::isBusinessDay('2026-01-01'));
+    }
+
+    public function testIsBusinessDayReturnsFalseForNewYearsEve(): void
+    {
+        // Thu Dec 31 2026 — weekday but a default holiday
+        Assert::false(Dates::isBusinessDay('2026-12-31'));
+    }
+
+    public function testIsBusinessDayReturnsFalseForWeekendWithHolidays(): void
+    {
+        // Sat Apr 18 — weekend regardless of holidays
+        Assert::false(Dates::isBusinessDay('2026-04-18'));
+    }
+
+    public function testIsBusinessDayReturnsTrueForWeekdayNotHoliday(): void
+    {
+        // Fri Jan 2 2026 — weekday and not a default holiday
+        Assert::true(Dates::isBusinessDay('2026-01-02'));
+    }
+
+    public function testIsBusinessDayWithCustomHolidays(): void
+    {
+        $custom = [['month' => 7, 'day' => 4]];
+
+        // Sat Jul 4 — weekend regardless
+        Assert::false(Dates::isBusinessDay('2026-07-04', $custom));
+        // Mon Jul 6 — weekday, not in custom list
+        Assert::true(Dates::isBusinessDay('2026-07-06', $custom));
+    }
+
+    public function testIsBusinessDayWithEmptyHolidays(): void
+    {
+        // Thu Jan 1 — weekday, no holidays => business day
+        Assert::true(Dates::isBusinessDay('2026-01-01', []));
+    }
+
     public function testIsFutureAcceptsStringDate(): void
     {
         Assert::true(Dates::isFuture('2099-01-01'));
@@ -892,6 +1042,59 @@ class DatesTest extends TestCase
     {
         Assert::true(Dates::isFuture(Dates::parse('2099-01-01', 'UTC')));
         Assert::false(Dates::isFuture(Dates::parse('2020-01-01', 'UTC')));
+    }
+
+    public function testIsHolidayAcceptsStringDate(): void
+    {
+        // Uses default holidays (Jan 1, Dec 25, Dec 31)
+        Assert::true(Dates::isHoliday('2026-01-01'));
+        Assert::true(Dates::isHoliday('2026-12-25'));
+        Assert::true(Dates::isHoliday('2026-12-31'));
+        Assert::false(Dates::isHoliday('2026-03-15'));
+    }
+
+    public function testIsHolidayMatchesAnyHolidayInList(): void
+    {
+        $custom = [
+            ['month' => 1, 'day' => 1],
+            ['month' => 7, 'day' => 4],
+            ['month' => 12, 'day' => 25],
+        ];
+
+        $date = Dates::parse('2026-07-04', 'UTC');
+        Assert::true(Dates::isHoliday($date, $custom));
+    }
+
+    public function testIsHolidayPropertyIsMutable(): void
+    {
+        $original = Dates::$holidays;
+
+        Dates::$holidays[] = ['month' => 7, 'day' => 4];
+        Assert::true(Dates::isHoliday('2026-07-04'));
+
+        Dates::$holidays = $original;
+        Assert::false(Dates::isHoliday('2026-07-04'));
+    }
+
+    public function testIsHolidayReturnsFalseForEmptyList(): void
+    {
+        $date = Dates::parse('2026-01-01', 'UTC');
+        Assert::false(Dates::isHoliday($date, []));
+    }
+
+    public function testIsHolidayReturnsFalseForNonHolidayWithDefaults(): void
+    {
+        Assert::false(Dates::isHoliday('2026-06-15'));
+    }
+
+    public function testIsHolidayWithCustomListOverridesDefaults(): void
+    {
+        $custom = [['month' => 7, 'day' => 4]];
+
+        // Jul 4 is in the custom list
+        Assert::true(Dates::isHoliday('2026-07-04', $custom));
+        // Jan 1 is not in the custom list (overridden)
+        Assert::false(Dates::isHoliday('2026-01-01', $custom));
     }
 
     public function testIsLeapYearAcceptsStringDate(): void

@@ -64,6 +64,63 @@ class Dates extends StaticClass
     private const MARKER_SHORT_DAY_NAME = "\xFD\x01";
 
     /**
+     * Common holidays observed on fixed calendar dates every year.
+     *
+     * Contains New Year's Day (January 1), Christmas Day (December 25),
+     * and New Year's Eve (December 31). Each entry is an associative array
+     * with `month` and `day` keys. Used as the default holiday list by
+     * `isHoliday()` and `isBusinessDay()`.
+     *
+     * @var array
+     */
+    public static array $holidays = [
+        ['month' => 1, 'day' => 1],
+        ['month' => 12, 'day' => 25],
+        ['month' => 12, 'day' => 31],
+    ];
+
+    /**
+     * Adds a number of business days to a date/time value.
+     *
+     * Returns a new date/time value that is the given number of business days
+     * (Monday through Friday) later than the original. Weekends (Saturday and
+     * Sunday) are skipped and do not count toward the total. A negative value
+     * moves backward through the calendar, also skipping weekends.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * // Wednesday + 3 business days = Monday
+     * $date = Dates::parse('2026-04-22'); // Wednesday
+     * $result = Dates::addBusinessDays($date, 3); // 2026-04-27 (Monday)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The starting date/time value
+     * @param int $days The number of business days to add (negative moves backward)
+     * @return DateTimeImmutable A new date/time value with the business days added
+     * @see \Phuture\Coherence\Dates::addDays()
+     * @see \Phuture\Coherence\Dates::diffInBusinessDays()
+     */
+    public static function addBusinessDays(DateTimeImmutable|string $date, int $days): DateTimeImmutable
+    {
+        $resolved = self::resolveDate($date);
+        $direction = $days >= 0 ? 1 : -1;
+        $remaining = abs($days);
+        $current = $resolved;
+
+        while ($remaining > 0) {
+            $current = $current->modify(($direction > 0 ? '+1' : '-1') . ' day');
+
+            if (self::isWeekday($current)) {
+                $remaining--;
+            }
+        }
+
+        return $current;
+    }
+
+    /**
      * Adds a number of days to a date/time value.
      *
      * Returns a new date/time value that is the given number of days later
@@ -303,6 +360,58 @@ class Dates extends StaticClass
         $dateString = sprintf('%04d-%02d-%02d %02d:%02d:%02d', $year, $month, $day, $hour, $minute, $second);
 
         return new DateTimeImmutable($dateString, self::buildTimezone($timezone));
+    }
+
+    /**
+     * Calculates the number of business days between two date/time values.
+     *
+     * Returns the absolute (always positive) number of weekdays (Monday through Friday)
+     * that fall strictly between the two calendar dates. Both the start and end dates
+     * are excluded from the count. Weekends (Saturday and Sunday) are never counted.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * $start = Dates::parse('2026-04-20'); // Monday
+     * $end = Dates::parse('2026-04-25');   // Saturday
+     * Dates::diffInBusinessDays($start, $end); // 4 (Tue, Wed, Thu, Fri)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The first date/time value
+     * @param DateTimeImmutable|string $comparedTo The second date/time value
+     * @return int The number of business days between the two values (always non-negative)
+     * @see \Phuture\Coherence\Dates::diffInDays()
+     * @see \Phuture\Coherence\Dates::addBusinessDays()
+     */
+    public static function diffInBusinessDays(
+        DateTimeImmutable|string $date,
+        DateTimeImmutable|string $comparedTo
+    ): int {
+        $resolved = self::resolveDate($date);
+        $resolvedTo = self::resolveDate($comparedTo);
+
+        $start = self::startOfDay($resolved);
+        $end = self::startOfDay($resolvedTo);
+
+        if ($start > $end) {
+            $temp = $start;
+            $start = $end;
+            $end = $temp;
+        }
+
+        $count = 0;
+        $current = $start->modify('+1 day');
+
+        while ($current < $end) {
+            if (self::isWeekday($current)) {
+                $count++;
+            }
+
+            $current = $current->modify('+1 day');
+        }
+
+        return $count;
     }
 
     /**
@@ -1096,6 +1205,44 @@ class Dates extends StaticClass
     }
 
     /**
+     * Checks whether a date/time value falls on a business day.
+     *
+     * A business day is a weekday (Monday through Friday) that is not a holiday.
+     * When no holiday list is given, the static `Dates::$holidays` property is
+     * used to exclude common holidays. Pass a custom list to override the defaults.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * // Uses default holidays (Jan 1, Dec 25, Dec 31)
+     * Dates::isBusinessDay('2026-01-01'); // false (holiday)
+     * Dates::isBusinessDay('2026-01-02'); // true (Friday, not a holiday)
+     * Dates::isBusinessDay('2026-04-18'); // false (Saturday)
+     *
+     * // Custom holidays override the defaults
+     * $custom = [['month' => 7, 'day' => 4]];
+     * Dates::isBusinessDay('2026-07-04', $custom); // false (holiday)
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @param array<array{month: int, day: int}>|null $holidays A list of holidays,
+     *  each defined as an array with `month` and `day` keys.
+     *  Pass null to use the default `Dates::$holidays` (default: null)
+     * @return bool Returns true if the date is a weekday and not a holiday
+     * @see \Phuture\Coherence\Dates::$holidays
+     * @see \Phuture\Coherence\Dates::isWeekday()
+     * @see \Phuture\Coherence\Dates::isWeekend()
+     * @see \Phuture\Coherence\Dates::isHoliday()
+     */
+    public static function isBusinessDay(
+        DateTimeImmutable|string $date,
+        ?array $holidays = null
+    ): bool {
+        return self::isWeekday($date) && !self::isHoliday($date, $holidays);
+    }
+
+    /**
      * Checks whether a date/time value is in the future.
      *
      * Returns true if the given date/time is strictly after the current moment.
@@ -1119,6 +1266,61 @@ class Dates extends StaticClass
         $resolved = self::resolveDate($date);
 
         return $resolved > new DateTimeImmutable('now', $resolved->getTimezone());
+    }
+
+    /**
+     * Checks whether a date/time value falls on a holiday.
+     *
+     * Compares the month and day of the given date against a list of fixed-date
+     * holidays. Each holiday is defined as an associative array with `month`
+     * (1–12) and `day` (1–31) keys. The year is not considered, so the same
+     * holiday definition matches every year.
+     *
+     * When no holiday list is given, the static `Dates::$holidays` property is
+     * used. That property ships with three common holidays: New Year's Day
+     * (January 1), Christmas Day (December 25), and New Year's Eve (December 31).
+     * You can override it globally or pass a custom list to this method.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Dates;
+     *
+     * // Uses the default holidays (Jan 1, Dec 25, Dec 31)
+     * Dates::isHoliday('2026-01-01'); // true
+     * Dates::isHoliday('2026-12-25'); // true
+     * Dates::isHoliday('2026-12-31'); // true
+     * Dates::isHoliday('2026-03-15'); // false
+     *
+     * // Custom holidays override the defaults
+     * $custom = [['month' => 7, 'day' => 4]];
+     * Dates::isHoliday('2026-07-04', $custom); // true
+     * ```
+     *
+     * @param DateTimeImmutable|string $date The date/time value to inspect
+     * @param array<array{month: int, day: int}>|null $holidays A list of holidays,
+     *  each defined as an array with `month` and `day` keys.
+     *  Pass null to use the default `Dates::$holidays` (default: null)
+     * @return bool Returns true if the date matches any holiday in the list
+     * @see \Phuture\Coherence\Dates::$holidays
+     * @see \Phuture\Coherence\Dates::isBusinessDay()
+     * @see \Phuture\Coherence\Dates::isWeekend()
+     */
+    public static function isHoliday(
+        DateTimeImmutable|string $date,
+        ?array $holidays = null
+    ): bool {
+        $holidays = $holidays ?? self::$holidays;
+        $resolved = self::resolveDate($date);
+        $month = (int) $resolved->format('n');
+        $day = (int) $resolved->format('j');
+
+        foreach ($holidays as $holiday) {
+            if ($holiday['month'] === $month && $holiday['day'] === $day) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
