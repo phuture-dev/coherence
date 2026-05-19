@@ -305,6 +305,143 @@ class FilesTest extends TestCase
         Assert::same('', file_get_contents($file));
     }
 
+    public function testCreateTemporaryDirectoryCreatesDirectory(): void
+    {
+        $tempDir = Files::createTemporaryDirectory();
+
+        try {
+            Assert::true(is_dir($tempDir));
+            Assert::true(str_starts_with($tempDir, sys_get_temp_dir()));
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testCreateTemporaryDirectoryProducesUniquePaths(): void
+    {
+        $first = Files::createTemporaryDirectory();
+        $second = Files::createTemporaryDirectory();
+
+        try {
+            Assert::notSame($first, $second);
+        } finally {
+            $this->removeDirectory($first);
+            $this->removeDirectory($second);
+        }
+    }
+
+    public function testCreateTemporaryDirectoryWithCustomMode(): void
+    {
+        $tempDir = Files::createTemporaryDirectory(mode: 0755);
+
+        try {
+            Assert::true(is_dir($tempDir));
+            clearstatcache(true, $tempDir);
+            Assert::same(0755, fileperms($tempDir) & 0777);
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testCreateTemporaryDirectoryWithCustomParent(): void
+    {
+        $tempDir = Files::createTemporaryDirectory(parentDirectory: $this->tempDir);
+
+        try {
+            Assert::true(is_dir($tempDir));
+            Assert::true(str_starts_with($tempDir, $this->tempDir . DIRECTORY_SEPARATOR));
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testCreateTemporaryDirectoryWithCustomPrefix(): void
+    {
+        $tempDir = Files::createTemporaryDirectory(prefix: 'myapp_');
+
+        try {
+            Assert::true(is_dir($tempDir));
+            Assert::true(str_starts_with(basename($tempDir), 'myapp_'));
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testCreateTemporaryFileCreatesFile(): void
+    {
+        $tempFile = Files::createTemporaryFile();
+
+        try {
+            Assert::true(file_exists($tempFile));
+            Assert::same('', file_get_contents($tempFile));
+            Assert::true(str_starts_with($tempFile, sys_get_temp_dir()));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testCreateTemporaryFileProducesUniquePaths(): void
+    {
+        $first = Files::createTemporaryFile();
+        $second = Files::createTemporaryFile();
+
+        try {
+            Assert::notSame($first, $second);
+        } finally {
+            unlink($first);
+            unlink($second);
+        }
+    }
+
+    public function testCreateTemporaryFileWithCustomMode(): void
+    {
+        $tempFile = Files::createTemporaryFile(mode: 0644);
+
+        try {
+            Assert::true(file_exists($tempFile));
+            clearstatcache(true, $tempFile);
+            Assert::same(0644, fileperms($tempFile) & 0777);
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testCreateTemporaryFileWithCustomParent(): void
+    {
+        $tempFile = Files::createTemporaryFile(parentDirectory: $this->tempDir);
+
+        try {
+            Assert::true(file_exists($tempFile));
+            Assert::true(str_starts_with($tempFile, $this->tempDir . DIRECTORY_SEPARATOR));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testCreateTemporaryFileWithCustomPrefix(): void
+    {
+        $tempFile = Files::createTemporaryFile(prefix: 'myapp_');
+
+        try {
+            Assert::true(file_exists($tempFile));
+            Assert::true(str_starts_with(basename($tempFile), 'myapp_'));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testCreateTemporaryFileWithExtension(): void
+    {
+        $tempFile = Files::createTemporaryFile(extension: '.csv');
+
+        try {
+            Assert::true(file_exists($tempFile));
+            Assert::true(str_ends_with($tempFile, '.csv'));
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
     public function testDecompressGzip(): void
     {
         $srcDir = $this->tempDir . '/gzip_src';

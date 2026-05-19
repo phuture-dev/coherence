@@ -32,6 +32,7 @@ enum CompressionFormat
      * Supports archiving files and directories without compression.
      * Uses PHP's built-in PharData class.
      */
+
     case Tar;
     /**
      * ZIP archive format (.zip).

@@ -366,6 +366,109 @@ class Files extends StaticClass
     }
 
     /**
+     * Creates a temporary directory with a unique name.
+     *
+     * This method creates a new empty directory inside the system's temporary directory
+     * (or a custom directory you specify) with a unique name that avoids collisions.
+     * The directory name is generated using a prefix you provide combined with random
+     * characters, so multiple calls will always produce different directories.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $tempDir = Files::createTemporaryDirectory();
+     * // Returns something like '/tmp/tmp_664b5a3c1f8d2'
+     *
+     * $customDir = Files::createTemporaryDirectory(prefix: 'myapp_');
+     * // Returns something like '/tmp/myapp_664b5a3c1f8d2'
+     *
+     * $specificParent = Files::createTemporaryDirectory(parentDirectory: '/var/tmp');
+     * // Creates the directory inside '/var/tmp' instead
+     * ```
+     *
+     * @param string $prefix A short string added to the start of the directory name
+     *  to make it easy to identify (default: 'tmp_')
+     * @param int $mode The permission mode for the directory (default: 0700)
+     * @param string $parentDirectory The directory where the temporary directory
+     *  will be created (default: system temporary directory)
+     * @return string The full path to the newly created temporary directory
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the directory cannot be created
+     * @see \Phuture\Coherence\Files::createTemporaryFile()
+     * @see \Phuture\Coherence\Files::delete()
+     */
+    public static function createTemporaryDirectory(
+        string $prefix = 'tmp_',
+        int $mode = 0700,
+        string $parentDirectory = ''
+    ): string {
+        $parentDirectory = $parentDirectory !== '' ? $parentDirectory : sys_get_temp_dir();
+        $path = $parentDirectory . DIRECTORY_SEPARATOR . $prefix . uniqid('', true);
+
+        if (!mkdir($path, $mode, false) && !is_dir($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create temporary directory {$path}"
+            );
+        }
+
+        return $path;
+    }
+
+    /**
+     * Creates a temporary file with a unique name.
+     *
+     * This method creates a new empty file inside the system's temporary directory
+     * (or a custom directory you specify) with a unique name that avoids collisions.
+     * The file name is generated using a prefix you provide combined with random
+     * characters, so multiple calls will always produce different files.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Files;
+     *
+     * $tempFile = Files::createTemporaryFile();
+     * // Returns something like '/tmp/tmp_664b5a3c1f8d2'
+     *
+     * $customFile = Files::createTemporaryFile(prefix: 'myapp_', extension: '.csv');
+     * // Returns something like '/tmp/myapp_664b5a3c1f8d2.csv'
+     *
+     * $specificDir = Files::createTemporaryFile(parentDirectory: '/var/tmp');
+     * // Creates the file inside '/var/tmp' instead
+     * ```
+     *
+     * @param string $prefix A short string added to the start of the file name
+     *  to make it easy to identify (default: 'tmp_')
+     * @param string $extension The file extension to append, including the dot
+     *  (default: '' — no extension)
+     * @param int $mode The permission mode for the file (default: 0600)
+     * @param string $parentDirectory The directory where the temporary file
+     *  will be created (default: system temporary directory)
+     * @return string The full path to the newly created temporary file
+     * @throws \Phuture\Coherence\Exception\RuntimeException When the file cannot be created
+     * @see \Phuture\Coherence\Files::createTemporaryDirectory()
+     * @see \Phuture\Coherence\Files::delete()
+     */
+    public static function createTemporaryFile(
+        string $prefix = 'tmp_',
+        string $extension = '',
+        int $mode = 0600,
+        string $parentDirectory = ''
+    ): string {
+        $parentDirectory = $parentDirectory !== '' ? $parentDirectory : sys_get_temp_dir();
+        $path = $parentDirectory . DIRECTORY_SEPARATOR . $prefix . uniqid('', true) . $extension;
+
+        if (!touch($path)) {
+            throw new RuntimeException(
+                "Runtime Error: Unable to create temporary file {$path}"
+            );
+        }
+
+        chmod($path, $mode);
+
+        return $path;
+    }
+
+    /**
      * Extracts an archive into a destination directory.
      *
      * All three formats — `Zip`, `Tar`, and `Gzip` — extract their contents into
