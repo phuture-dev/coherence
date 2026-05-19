@@ -252,6 +252,126 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
+     * Computes the arithmetic mean (average) of a list of numbers.
+     *
+     * @param array $values The list of numbers to average
+     * @return string The arithmetic mean as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::mean()
+     */
+    public function mean(array $values): string
+    {
+        return Transformer::mean($values);
+    }
+
+    /**
+     * Computes the median (middle value) of a list of numbers.
+     *
+     * @param array $values The list of numbers to find the median of
+     * @return string The median as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::median()
+     */
+    public function median(array $values): string
+    {
+        return Transformer::median($values);
+    }
+
+    /**
+     * Finds the mode (most frequently occurring value) of a list of numbers.
+     *
+     * When multiple values share the highest frequency, all of them are returned.
+     *
+     * @param array $values The list of numbers to find the mode of
+     * @return array An array containing the most frequently occurring value(s)
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::mode()
+     */
+    public function mode(array $values): array
+    {
+        return Transformer::mode($values);
+    }
+
+    /**
+     * Computes the population variance of a list of numbers.
+     *
+     * @param array $values The list of numbers to compute variance for
+     * @return string The population variance as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::variance()
+     */
+    public function variance(array $values): string
+    {
+        return Transformer::variance($values);
+    }
+
+    /**
+     * Computes the sample variance of a list of numbers using Bessel's correction.
+     *
+     * @param array $values The list of numbers to compute sample variance for
+     * @return string The sample variance as a BCMath string
+     * @throws \InvalidArgumentException When the values array has fewer than 2 elements
+     * @see Transformer::sampleVariance()
+     */
+    public function sampleVariance(array $values): string
+    {
+        return Transformer::sampleVariance($values);
+    }
+
+    /**
+     * Computes the population standard deviation of a list of numbers.
+     *
+     * @param array $values The list of numbers to compute standard deviation for
+     * @return string The population standard deviation as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::standardDeviation()
+     */
+    public function standardDeviation(array $values): string
+    {
+        return Transformer::standardDeviation($values);
+    }
+
+    /**
+     * Computes the sample standard deviation of a list of numbers.
+     *
+     * @param array $values The list of numbers to compute sample standard deviation for
+     * @return string The sample standard deviation as a BCMath string
+     * @throws \InvalidArgumentException When the values array has fewer than 2 elements
+     * @see Transformer::sampleStandardDeviation()
+     */
+    public function sampleStandardDeviation(array $values): string
+    {
+        return Transformer::sampleStandardDeviation($values);
+    }
+
+    /**
+     * Computes a specific percentile of a list of numbers using linear interpolation.
+     *
+     * @param array $values The list of numbers to compute the percentile for
+     * @param int|float $percentile The percentile to compute, from 0 to 100
+     * @return string The value at the given percentile as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty or percentile is out of range
+     * @see Transformer::percentile()
+     */
+    public function percentile(array $values, int|float $percentile): string
+    {
+        return Transformer::percentile($values, $percentile);
+    }
+
+    /**
+     * Computes the range (difference between maximum and minimum) of a list of numbers.
+     *
+     * @param array $values The list of numbers to compute the range for
+     * @return string The range (max minus min) as a BCMath string
+     * @throws \InvalidArgumentException When the values array is empty
+     * @see Transformer::range()
+     */
+    public function range(array $values): string
+    {
+        return Transformer::range($values);
+    }
+
+    /**
      * Converts the wrapped integer to its ordinal string representation.
      *
      * @return string The ordinal string with the appropriate suffix
