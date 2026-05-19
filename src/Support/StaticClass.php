@@ -40,9 +40,6 @@ use Phuture\Coherence\Exception\MemberAccessException;
  */
 abstract class StaticClass
 {
-    /**
-     * Class is static and cannot be instantiated.
-     */
     private function __construct()
     {
     }
