@@ -608,6 +608,256 @@ class NumbersTest extends TestCase
         Assert::same('42', Numbers::trimTrailingZeros('42'));
         Assert::same('100', Numbers::trimTrailingZeros(100));
     }
+
+    public function testMeanBasic(): void
+    {
+        Assert::same('5.0000000000', Numbers::mean([2, 4, 6, 8]));
+    }
+
+    public function testMeanWithFloats(): void
+    {
+        Assert::same('2.5000000000', Numbers::mean([1.5, 2.5, 3.5]));
+    }
+
+    public function testMeanSingleValue(): void
+    {
+        Assert::same('42.0000000000', Numbers::mean([42]));
+    }
+
+    public function testMeanEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::mean([]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute mean of an empty array');
+    }
+
+    public function testMeanNegativeValues(): void
+    {
+        Assert::same('0.0000000000', Numbers::mean([-2, 0, 2]));
+    }
+
+    public function testMedianOddCount(): void
+    {
+        Assert::same('3.0000000000', Numbers::median([1, 3, 5]));
+    }
+
+    public function testMedianEvenCount(): void
+    {
+        Assert::same('4.0000000000', Numbers::median([1, 3, 5, 7]));
+    }
+
+    public function testMedianUnsorted(): void
+    {
+        Assert::same('4.0000000000', Numbers::median([7, 1, 5, 3]));
+    }
+
+    public function testMedianSingleValue(): void
+    {
+        Assert::same('10.0000000000', Numbers::median([10]));
+    }
+
+    public function testMedianEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::median([]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute median of an empty array');
+    }
+
+    public function testMedianWithFloats(): void
+    {
+        Assert::same('3.5000000000', Numbers::median([1.5, 2.5, 4.5, 5.5]));
+    }
+
+    public function testModeSingleMode(): void
+    {
+        $result = Numbers::mode([1, 2, 2, 3, 3, 3]);
+        Assert::same([3], $result);
+    }
+
+    public function testModeMultipleModes(): void
+    {
+        $result = Numbers::mode([1, 1, 2, 2, 3]);
+        Assert::same([1, 2], $result);
+    }
+
+    public function testModeAllSameFrequency(): void
+    {
+        $result = Numbers::mode([1, 2, 3]);
+        sort($result);
+        Assert::same([1, 2, 3], $result);
+    }
+
+    public function testModeSingleValue(): void
+    {
+        Assert::same([5], Numbers::mode([5]));
+    }
+
+    public function testModeEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::mode([]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute mode of an empty array');
+    }
+
+    public function testModeWithFloats(): void
+    {
+        Assert::same([2.5], Numbers::mode([1.0, 2.5, 2.5, 3.0]));
+    }
+
+    public function testVarianceBasic(): void
+    {
+        Assert::same('4.0000000000', Numbers::variance([2, 4, 4, 4, 5, 5, 7, 9]));
+    }
+
+    public function testVarianceSimple(): void
+    {
+        Assert::same('2.0000000000', Numbers::variance([1, 2, 3, 4, 5]));
+    }
+
+    public function testVarianceZeroVariance(): void
+    {
+        Assert::same('0.0000000000', Numbers::variance([5, 5, 5, 5]));
+    }
+
+    public function testVarianceSingleValue(): void
+    {
+        Assert::same('0.0000000000', Numbers::variance([42]));
+    }
+
+    public function testVarianceEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::variance([]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute variance of an empty array');
+    }
+
+    public function testSampleVarianceBasic(): void
+    {
+        $result = Numbers::sampleVariance([2, 4, 4, 4, 5, 5, 7, 9]);
+        Assert::same('4.5714285714', $result);
+    }
+
+    public function testSampleVarianceSimple(): void
+    {
+        Assert::same('2.5000000000', Numbers::sampleVariance([1, 2, 3, 4, 5]));
+    }
+
+    public function testSampleVarianceSingleValueThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::sampleVariance([5]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Sample variance requires at least 2 values');
+    }
+
+    public function testStandardDeviationBasic(): void
+    {
+        Assert::same('2.0000000000', Numbers::standardDeviation([2, 4, 4, 4, 5, 5, 7, 9]));
+    }
+
+    public function testStandardDeviationSimple(): void
+    {
+        $result = Numbers::standardDeviation([1, 2, 3, 4, 5]);
+        Assert::true(bccomp($result, '1.4142135623', 9) >= 0);
+        Assert::true(bccomp($result, '1.4142135625', 9) <= 0);
+    }
+
+    public function testStandardDeviationZeroVariance(): void
+    {
+        Assert::same('0.0000000000', Numbers::standardDeviation([5, 5, 5, 5]));
+    }
+
+    public function testSampleStandardDeviationBasic(): void
+    {
+        $result = Numbers::sampleStandardDeviation([2, 4, 4, 4, 5, 5, 7, 9]);
+        Assert::same('2.1380899352', $result);
+    }
+
+    public function testSampleStandardDeviationSimple(): void
+    {
+        $result = Numbers::sampleStandardDeviation([1, 2, 3, 4, 5]);
+        Assert::true(bccomp($result, '1.5811388300', 9) >= 0);
+        Assert::true(bccomp($result, '1.5811388302', 9) <= 0);
+    }
+
+    public function testPercentileMedian(): void
+    {
+        Assert::same('3.0000000000', Numbers::percentile([1, 2, 3, 4, 5], 50));
+    }
+
+    public function testPercentile25th(): void
+    {
+        $result = Numbers::percentile([1, 2, 3, 4, 5, 6], 25);
+        Assert::same('2.2500000000', $result);
+    }
+
+    public function testPercentile75th(): void
+    {
+        $result = Numbers::percentile([1, 2, 3, 4, 5, 6], 75);
+        Assert::same('4.7500000000', $result);
+    }
+
+    public function testPercentileZero(): void
+    {
+        Assert::same('1.0000000000', Numbers::percentile([1, 2, 3, 4, 5], 0));
+    }
+
+    public function testPercentileHundred(): void
+    {
+        Assert::same('5.0000000000', Numbers::percentile([1, 2, 3, 4, 5], 100));
+    }
+
+    public function testPercentileUnsorted(): void
+    {
+        Assert::same('3.0000000000', Numbers::percentile([5, 1, 3, 2, 4], 50));
+    }
+
+    public function testPercentileEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::percentile([], 50);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute percentile of an empty array');
+    }
+
+    public function testPercentileOutOfRangeHigh(): void
+    {
+        Assert::exception(function () {
+            Numbers::percentile([1, 2, 3], 101);
+        }, InvalidArgumentException::class, 'Invalid Argument: Percentile must be between 0 and 100');
+    }
+
+    public function testPercentileOutOfRangeNegative(): void
+    {
+        Assert::exception(function () {
+            Numbers::percentile([1, 2, 3], -1);
+        }, InvalidArgumentException::class, 'Invalid Argument: Percentile must be between 0 and 100');
+    }
+
+    public function testRangeBasic(): void
+    {
+        Assert::same('7.0000000000', Numbers::range([3, 7, 2, 9, 5]));
+    }
+
+    public function testRangeWithFloats(): void
+    {
+        Assert::same('3.0000000000', Numbers::range([1.5, 4.5]));
+    }
+
+    public function testRangeSingleValue(): void
+    {
+        Assert::same('0.0000000000', Numbers::range([5]));
+    }
+
+    public function testRangeEmptyThrows(): void
+    {
+        Assert::exception(function () {
+            Numbers::range([]);
+        }, InvalidArgumentException::class, 'Invalid Argument: Cannot compute range of an empty array');
+    }
+
+    public function testRangeNegativeValues(): void
+    {
+        Assert::same('6.0000000000', Numbers::range([-3, -1, 0, 2, 3]));
+    }
 }
 
 (new NumbersTest())->run();
