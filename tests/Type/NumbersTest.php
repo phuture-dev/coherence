@@ -409,6 +409,41 @@ class NumbersTest extends TestCase
         Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
         Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
     }
+
+    public function testConvertChaining(): void
+    {
+        $result = FluentNumbers::from(100)
+            ->convert('celsius', 'fahrenheit')
+            ->get();
+        Assert::same('212.0000000000', $result);
+    }
+
+    public function testConvertWithRoundChaining(): void
+    {
+        $result = FluentNumbers::from(100)
+            ->convert('kilometer', 'mile')
+            ->round(2)
+            ->get();
+        Assert::same('62.14', $result);
+    }
+
+    public function testConvertDistanceChaining(): void
+    {
+        $result = FluentNumbers::from(1)
+            ->convert('mile', 'kilometer')
+            ->get();
+        Assert::same('1.6093440000', $result);
+    }
+
+    public function testConvertThenArithmeticChaining(): void
+    {
+        $result = FluentNumbers::from(10)
+            ->convert('kilometer', 'mile')
+            ->add((float) Numbers::convert(5, 'kilometer', 'mile'))
+            ->round(2)
+            ->get();
+        Assert::same('9.32', $result);
+    }
 }
 
 (new NumbersTest())->run();

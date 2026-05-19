@@ -386,4 +386,38 @@ class Numbers extends FluentClass implements Numberable
     {
         return Transformer::trimTrailingZeros($this->data);
     }
+
+    /**
+     * Converts the wrapped value from one unit of measurement to another.
+     *
+     * The conversion result replaces the wrapped value, enabling further
+     * chaining with arithmetic or formatting methods.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Type\Numbers;
+     *
+     * $fahrenheit = Numbers::from(100)
+     *     ->convert('celsius', 'fahrenheit')
+     *     ->get();
+     * // '212.0000000000'
+     *
+     * $miles = Numbers::from(5)
+     *     ->convert('kilometer', 'mile')
+     *     ->round(2)
+     *     ->get();
+     * // '3.1100000000'
+     * ```
+     *
+     * @param string $from The source unit identifier (e.g., 'celsius', 'kilometer')
+     * @param string $to The target unit identifier (e.g., 'fahrenheit', 'mile')
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::convert() For the static conversion method with full unit list
+     */
+    public function convert(string $from, string $to): self
+    {
+        $this->data = Transformer::convert($this->toString(), $from, $to);
+
+        return $this;
+    }
 }
