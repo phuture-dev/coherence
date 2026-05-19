@@ -19,7 +19,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * Key features:
  *
  * - **Basic Hashing**: Support for MD2, MD4, MD5, SHA1, SHA256, SHA384, SHA512, and Adler-32/CRC32 algorithms
- * - **Password Security**: Secure password hashing with automatic salt generation and verification
+ * - **Password Security**: Secure password hashing with automatic salt generation, verification, and Argon2i support
  * - **HMAC Operations**: Message authentication codes for data integrity and authenticity
  * - **File Integrity**: Efficient file hashing for integrity verification and checksums
  * - **Streaming Support**: Memory-efficient streaming for large data processing
@@ -33,6 +33,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  *
  * - This class includes legacy algorithms (MD2, MD4, MD5, SHA1) for compatibility only
  * - For password hashing, use the dedicated password methods with automatic salt
+ * - For maximum security, prefer Argon2i via the passwordArgon2i() method
  * - For new applications, prefer SHA256, SHA384, or SHA512 for better security
  * - Always use HMAC methods when authentication is required
  * - PBKDF2 provides key stretching for password-derived encryption keys
@@ -1026,7 +1027,7 @@ class Hash extends StaticClass
     public static function hmacWithSalt(
         string $data,
         string $key,
-        string $salt = null,
+        ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'
     ): array {
@@ -1176,30 +1177,66 @@ class Hash extends StaticClass
      * built-in password hashing functions which automatically handle salt generation and
      * use cryptographically secure algorithms.
      *
+     * The algorithm parameter accepts a string name ('default', 'bcrypt', 'argon2i')
+     * or a boolean for backward compatibility (true means bcrypt, false means PHP's default).
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
      *
-     * $password = 'user123';
-     * $hash = Hash::password($password);
-     *
-     * // Returns: $2y$10$AbCdEfGhIjKlMnOpQrStU.vWxYz1234567890abcdefg
+     * $hash = Hash::password('user123');
+     * $bcryptHash = Hash::password('user123', 'bcrypt');
+     * $argon2iHash = Hash::password('user123', 'argon2i');
      * ```
      *
      * @param string $password The plain text password to hash
-     * @param bool $bcrypt If true, forces the use of BCRYPT algorithm (default: false for PHP's default)
-     * @param array $options Additional options like 'cost' for BCRYPT (default: [])
+     * @param bool|string $algorithm The hashing algorithm to use: 'default', 'bcrypt', 'argon2i',
+     *                               or a boolean for backward compatibility (true = bcrypt, false = default).
+     *                               Defaults to 'default' which uses PHP's default algorithm.
+     * @param array $options Algorithm-specific options like 'cost' for bcrypt or
+     *                       'memory_cost', 'time_cost', 'threads' for argon2i (default: [])
      * @return string Returns the hashed password string
      */
-    public static function password(string $password, bool $bcrypt = false, array $options = []): string
+    public static function password(string $password, bool|string $algorithm = 'default', array $options = []): string
     {
-        if ($bcrypt && !isset($options['cost'])) {
+        $resolvedAlgorithm = self::resolvePasswordAlgorithm($algorithm);
+
+        if ($resolvedAlgorithm === PASSWORD_BCRYPT && !isset($options['cost'])) {
             $options['cost'] = PASSWORD_BCRYPT_DEFAULT_COST;
         }
 
-        return $bcrypt
-            ? password_hash($password, PASSWORD_BCRYPT, $options)
-            : password_hash($password, PASSWORD_DEFAULT, $options);
+        if ($resolvedAlgorithm === PASSWORD_ARGON2I) {
+            $options = array_merge(self::defaultArgon2iOptions(), $options);
+        }
+
+        return password_hash($password, $resolvedAlgorithm, $options);
+    }
+
+    /**
+     * Creates a secure password hash using the Argon2i algorithm.
+     *
+     * This method generates an Argon2i hash for storing passwords securely. Argon2i
+     * is the winner of the 2015 Password Hashing Competition and provides strong
+     * resistance against GPU-based attacks. It is recommended for new applications
+     * that require the highest level of password security.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $hash = Hash::passwordArgon2i('user123');
+     *
+     * // Returns: $argon2i$v=19$m=65536,t=4,p=1$...
+     * ```
+     *
+     * @param string $password The plain text password to hash
+     * @param array $options Argon2i-specific options: 'memory_cost' (KiB, default: 65536),
+     *                       'time_cost' (iterations, default: 4), 'threads' (default: 1)
+     * @return string Returns the Argon2i hashed password string
+     */
+    public static function passwordArgon2i(string $password, array $options = []): string
+    {
+        return self::password($password, 'argon2i', $options);
     }
 
     /**
@@ -1261,30 +1298,129 @@ class Hash extends StaticClass
      * algorithm or options. It's useful for upgrading password hashes when you
      * change your hashing parameters or when PHP updates its default algorithm.
      *
+     * The algorithm parameter accepts a string name ('default', 'bcrypt', 'argon2i')
+     * or a boolean for backward compatibility (true means bcrypt, false means PHP's default).
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
      *
-     * $oldHash = '$2y$10$AbCdEfGhIjKlMnOpQrStU.vWxYz1234567890abcdefg';
-     * $needsRehash = Hash::passwordNeedsRehash($oldHash, true, ['cost' => 12]);
+     * $oldHash = Hash::password('password', 'bcrypt', ['cost' => 10]);
+     * $needsRehash = Hash::passwordNeedsRehash($oldHash, 'bcrypt', ['cost' => 12]);
      *
      * // Returns: true if cost should be increased to 12
      * ```
      *
      * @param string $hash The password hash to check
-     * @param bool $bcrypt If true, forces checking against BCRYPT algorithm (default: false for PHP's default)
-     * @param array $options Options to compare against, like 'cost' for BCRYPT (default: [])
+     * @param bool|string $algorithm The hashing algorithm to check against: 'default', 'bcrypt', 'argon2i',
+     *                               or a boolean for backward compatibility (true = bcrypt, false = default).
+     *                               Defaults to 'default' which uses PHP's default algorithm.
+     * @param array $options Options to compare against, like 'cost' for bcrypt or
+     *                       'memory_cost', 'time_cost', 'threads' for argon2i (default: [])
      * @return bool Returns true if the hash needs to be rehashed, false otherwise
      */
-    public static function passwordNeedsRehash(string $hash, bool $bcrypt = false, array $options = []): bool
-    {
-        if ($bcrypt && !isset($options['cost'])) {
+    public static function passwordNeedsRehash(
+        string $hash,
+        bool|string $algorithm = 'default',
+        array $options = []
+    ): bool {
+        $resolvedAlgorithm = self::resolvePasswordAlgorithm($algorithm);
+
+        if ($resolvedAlgorithm === PASSWORD_BCRYPT && !isset($options['cost'])) {
             $options['cost'] = PASSWORD_BCRYPT_DEFAULT_COST;
         }
 
-        return $bcrypt
-            ? password_needs_rehash($hash, PASSWORD_BCRYPT, $options)
-            : password_needs_rehash($hash, PASSWORD_DEFAULT, $options);
+        if ($resolvedAlgorithm === PASSWORD_ARGON2I) {
+            $options = array_merge(self::defaultArgon2iOptions(), $options);
+        }
+
+        return password_needs_rehash($hash, $resolvedAlgorithm, $options);
+    }
+
+    /**
+     * Checks if an Argon2i password hash needs to be rehashed with updated options.
+     *
+     * This method determines if an Argon2i password hash was created using weaker
+     * parameters than currently required. Use this when you want to upgrade Argon2i
+     * hashes to stronger memory cost, time cost, or thread settings.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $hash = Hash::passwordArgon2i('password');
+     * $needsRehash = Hash::passwordNeedsRehashArgon2i($hash, ['memory_cost' => 131072]);
+     *
+     * // Returns: true if memory_cost should be increased
+     * ```
+     *
+     * @param string $hash The password hash to check
+     * @param array $options Argon2i options to compare against: 'memory_cost', 'time_cost', 'threads' (default: [])
+     * @return bool Returns true if the hash needs to be rehashed, false otherwise
+     */
+    public static function passwordNeedsRehashArgon2i(string $hash, array $options = []): bool
+    {
+        return self::passwordNeedsRehash($hash, 'argon2i', $options);
+    }
+
+    /**
+     * Returns the default Argon2i hashing options.
+     *
+     * This method provides the recommended default options for Argon2i password
+     * hashing as defined by PHP's built-in constants. These defaults provide a
+     * good balance of security and performance for most applications.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $defaults = Hash::defaultArgon2iOptions();
+     *
+     * // Returns: ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 1]
+     * ```
+     *
+     * @return array Returns an array with 'memory_cost', 'time_cost', and 'threads' keys
+     */
+    public static function defaultArgon2iOptions(): array
+    {
+        return [
+            'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+            'time_cost' => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            'threads' => PASSWORD_ARGON2_DEFAULT_THREADS,
+        ];
+    }
+
+    /**
+     * Resolves a password algorithm identifier from a user-friendly name or legacy boolean.
+     *
+     * This method maps algorithm names ('default', 'bcrypt', 'argon2i') to their
+     * corresponding PHP password constant. It also supports boolean values for
+     * backward compatibility with the previous API where true meant bcrypt.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $algo = Hash::resolvePasswordAlgorithm('argon2i');
+     *
+     * // Returns: 'argon2i' (PASSWORD_ARGON2I constant value)
+     * ```
+     *
+     * @param bool|string $algorithm The algorithm name ('default', 'bcrypt', 'argon2i')
+     *                               or a boolean for backward compatibility (true = bcrypt, false = default)
+     * @return string Returns the PHP password algorithm constant value
+     */
+    public static function resolvePasswordAlgorithm(bool|string $algorithm): string
+    {
+        if (is_bool($algorithm)) {
+            return $algorithm ? PASSWORD_BCRYPT : PASSWORD_DEFAULT;
+        }
+
+        return match ($algorithm) {
+            'bcrypt' => PASSWORD_BCRYPT,
+            'argon2i' => PASSWORD_ARGON2I,
+            default => PASSWORD_DEFAULT,
+        };
     }
 
     /**
@@ -1313,7 +1449,7 @@ class Hash extends StaticClass
      */
     public static function pbkdf2(
         string $password,
-        string $salt = null,
+        ?string $salt = null,
         int $iterations = self::RECURSION_LIMIT,
         int $length = 32,
         string $algo = 'sha256'
@@ -1733,7 +1869,7 @@ class Hash extends StaticClass
      */
     public static function withSalt(
         string $data,
-        string $salt = null,
+        ?string $salt = null,
         bool $binary = false,
         string $algo = 'sha256'
     ): array {

@@ -41,19 +41,15 @@ use Phuture\Coherence\Exception\MemberAccessException;
  */
 abstract class StaticClass
 {
-    use \Nette\StaticClass {
-        __callStatic as protected callStatic;
+    final private function __construct()
+    {
+        throw new MemberAccessException('Static class cannot be instantiated');
     }
 
-    /**
-     * Call to undefined static method.
-     */
     public static function __callStatic(string $name, array $args): mixed
     {
-        try {
-            return static::callStatic($name, $args);
-        } catch (Throwable $e) {
-            throw new MemberAccessException($e->getMessage(), $e->getCode());
-        }
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 }

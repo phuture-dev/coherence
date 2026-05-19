@@ -501,6 +501,111 @@ class HashTest extends TestCase
         Assert::true(strlen($hash) === 64); // SHA256 hash length
     }
 
+    public function testPasswordArgon2i(): void
+    {
+        $password = 'user123';
+        $hash = Hash::passwordArgon2i($password);
+
+        Assert::true(strpos($hash, '$argon2i$') === 0);
+        Assert::true(Hash::passwordCheck($password, $hash));
+        Assert::false(Hash::passwordCheck('wrongpassword', $hash));
+    }
+
+    public function testPasswordArgon2iWithCustomOptions(): void
+    {
+        $password = 'testpassword';
+        $hash = Hash::passwordArgon2i($password, ['memory_cost' => 65536, 'time_cost' => 4]);
+
+        Assert::true(Hash::passwordCheck($password, $hash));
+
+        $info = Hash::passwordInfo($hash);
+        Assert::same('argon2i', $info['algoName']);
+        Assert::same(65536, $info['options']['memory_cost']);
+        Assert::same(4, $info['options']['time_cost']);
+    }
+
+    public function testPasswordArgon2iAlgorithmString(): void
+    {
+        $password = 'user123';
+        $hash = Hash::password($password, 'argon2i');
+
+        Assert::true(strpos($hash, '$argon2i$') === 0);
+        Assert::true(Hash::passwordCheck($password, $hash));
+    }
+
+    public function testPasswordBackwardCompatBoolean(): void
+    {
+        $password = 'user123';
+
+        $defaultHash = Hash::password($password, false);
+        Assert::true(Hash::passwordCheck($password, $defaultHash));
+
+        $bcryptHash = Hash::password($password, true);
+        Assert::true(strpos($bcryptHash, '$2y$') === 0);
+        Assert::true(Hash::passwordCheck($password, $bcryptHash));
+    }
+
+    public function testPasswordInfoArgon2i(): void
+    {
+        $hash = Hash::passwordArgon2i('password');
+        $info = Hash::passwordInfo($hash);
+
+        Assert::true(isset($info['algo']));
+        Assert::true(isset($info['algoName']));
+        Assert::true(isset($info['options']));
+        Assert::same('argon2i', $info['algoName']);
+        Assert::true(isset($info['options']['memory_cost']));
+        Assert::true(isset($info['options']['time_cost']));
+        Assert::true(isset($info['options']['threads']));
+    }
+
+    public function testPasswordNeedsRehashArgon2i(): void
+    {
+        $hash = Hash::passwordArgon2i('password', ['time_cost' => 4]);
+
+        Assert::false(Hash::passwordNeedsRehashArgon2i($hash, ['time_cost' => 4]));
+        Assert::true(Hash::passwordNeedsRehashArgon2i($hash, ['time_cost' => 8]));
+    }
+
+    public function testPasswordNeedsRehashWithAlgorithmString(): void
+    {
+        $hash = Hash::password('password', 'argon2i', ['time_cost' => 4]);
+
+        Assert::false(Hash::passwordNeedsRehash($hash, 'argon2i', ['time_cost' => 4]));
+        Assert::true(Hash::passwordNeedsRehash($hash, 'argon2i', ['time_cost' => 8]));
+        Assert::true(Hash::passwordNeedsRehash($hash, 'bcrypt'));
+    }
+
+    public function testDefaultArgon2iOptions(): void
+    {
+        $options = Hash::defaultArgon2iOptions();
+
+        Assert::true(isset($options['memory_cost']));
+        Assert::true(isset($options['time_cost']));
+        Assert::true(isset($options['threads']));
+        Assert::same(PASSWORD_ARGON2_DEFAULT_MEMORY_COST, $options['memory_cost']);
+        Assert::same(PASSWORD_ARGON2_DEFAULT_TIME_COST, $options['time_cost']);
+        Assert::same(PASSWORD_ARGON2_DEFAULT_THREADS, $options['threads']);
+    }
+
+    public function testResolvePasswordAlgorithm(): void
+    {
+        Assert::same(PASSWORD_DEFAULT, Hash::resolvePasswordAlgorithm('default'));
+        Assert::same(PASSWORD_BCRYPT, Hash::resolvePasswordAlgorithm('bcrypt'));
+        Assert::same(PASSWORD_ARGON2I, Hash::resolvePasswordAlgorithm('argon2i'));
+        Assert::same(PASSWORD_BCRYPT, Hash::resolvePasswordAlgorithm(true));
+        Assert::same(PASSWORD_DEFAULT, Hash::resolvePasswordAlgorithm(false));
+        Assert::same(PASSWORD_DEFAULT, Hash::resolvePasswordAlgorithm('unknown'));
+    }
+
+    public function testPasswordNeedsRehashBackwardCompat(): void
+    {
+        $hash = Hash::password('password', true, ['cost' => 10]);
+
+        Assert::true(Hash::passwordNeedsRehash($hash, true, ['cost' => 12]));
+        Assert::false(Hash::passwordNeedsRehash($hash, true, ['cost' => 10]));
+    }
+
     public function testPassword(): void
     {
         $password = 'user123';

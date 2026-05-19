@@ -41,22 +41,17 @@ use Phuture\Coherence\Exception\{MemberAccessException, SerializationException};
  */
 abstract class SingletonClass
 {
-    use \Nette\StaticClass {
-        __callStatic as protected callStatic;
-    }
-
     private static ?SingletonClass $instance = null;
 
-    /**
-     * Call to undefined static method.
-     */
+    final private function __construct()
+    {
+    }
+
     public static function __callStatic(string $name, array $args): mixed
     {
-        try {
-            return static::callStatic($name, $args);
-        } catch (Throwable $e) {
-            throw new MemberAccessException($e->getMessage(), $e->getCode());
-        }
+        throw new MemberAccessException(
+            sprintf('Call to undefined method %s::%s()', static::class, $name)
+        );
     }
 
     /**
