@@ -1608,6 +1608,10 @@ class Hash extends StaticClass
      * use cryptographically secure algorithms. Use the \Phuture\Coherence\Enum\PasswordAlgorithm
      * enum to choose between PHP's recommended default, BCrypt, or Argon2ID.
      *
+     * The cost parameter controls the computational expense of hashing. Higher values make
+     * brute-force attacks slower but also increase the time to hash a password. For BCrypt,
+     * this maps directly to the algorithm's cost factor. When null, PHP's default cost is used.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
@@ -1616,8 +1620,11 @@ class Hash extends StaticClass
      * // PHP's recommended default
      * $hash = Hash::password('user123');
      *
-     * // BCrypt
+     * // BCrypt with default cost
      * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt);
+     *
+     * // BCrypt with explicit cost
+     * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt, cost: 12);
      *
      * // Argon2ID
      * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id);
@@ -1627,7 +1634,8 @@ class Hash extends StaticClass
      *
      * @param string $password The plain text password to hash
      * @param PasswordAlgorithm $algo The algorithm to use (default: PasswordAlgorithm::Default)
-     * @param array $options Algorithm options: 'cost' for BCrypt; 'memory_cost', 'time_cost', 'threads' for Argon2ID
+     * @param array $options Algorithm options: 'memory_cost', 'time_cost', 'threads' for Argon2ID
+     * @param int|null $cost The work factor for the hash algorithm, or null to use PHP's default (default: null)
      * @return string Returns the hashed password string
      * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
      * @see \Phuture\Coherence\Hash::passwordCheck() For verifying a password against its hash
@@ -1636,8 +1644,13 @@ class Hash extends StaticClass
     public static function password(
         #[SensitiveParameter] string $password,
         PasswordAlgorithm $algo = PasswordAlgorithm::Default,
-        array $options = []
+        array $options = [],
+        ?int $cost = null
     ): string {
+        if ($cost !== null) {
+            $options['cost'] = $cost;
+        }
+
         if ($algo === PasswordAlgorithm::Argon2id && !in_array('argon2id', password_algos())) {
             throw new RuntimeException(
                 "Runtime Error: Argon2ID is not supported by the current PHP installation"
@@ -1715,14 +1728,17 @@ class Hash extends StaticClass
      * or when PHP updates its default algorithm. Use the \Phuture\Coherence\Enum\PasswordAlgorithm
      * enum to specify which algorithm the hash should be checked against.
      *
+     * The cost parameter lets you check if the hash was created with a specific work factor.
+     * When null, PHP's default cost is used for comparison.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Hash;
      * use Phuture\Coherence\Enum\PasswordAlgorithm;
      *
-     * // BCrypt cost upgrade
-     * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt, ['cost' => 10]);
-     * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 12]);
+     * // BCrypt cost upgrade using dedicated parameter
+     * $hash = Hash::password('user123', PasswordAlgorithm::Bcrypt, cost: 10);
+     * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, cost: 12);
      *
      * // Argon2ID memory upgrade
      * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id, ['memory_cost' => 65536]);
@@ -1734,6 +1750,7 @@ class Hash extends StaticClass
      * @param string $hash The password hash to check
      * @param PasswordAlgorithm $algo The algorithm to check against (default: PasswordAlgorithm::Default)
      * @param array $options Options to compare against (default: [])
+     * @param int|null $cost The work factor to compare against, or null to use PHP's default (default: null)
      * @return bool Returns true if the hash needs to be rehashed, false otherwise
      * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
      * @see \Phuture\Coherence\Hash::password() For creating a password hash
@@ -1742,8 +1759,13 @@ class Hash extends StaticClass
     public static function passwordNeedsRehash(
         string $hash,
         PasswordAlgorithm $algo = PasswordAlgorithm::Default,
-        array $options = []
+        array $options = [],
+        ?int $cost = null
     ): bool {
+        if ($cost !== null) {
+            $options['cost'] = $cost;
+        }
+
         if ($algo === PasswordAlgorithm::Argon2id && !in_array('argon2id', password_algos())) {
             throw new RuntimeException(
                 "Runtime Error: Argon2ID is not supported by the current PHP installation"

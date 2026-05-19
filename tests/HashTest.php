@@ -871,6 +871,61 @@ class HashTest extends TestCase
         }, RuntimeException::class, 'Runtime Error: Argon2ID is not supported by the current PHP installation');
     }
 
+    public function testPasswordWithCostParameter(): void
+    {
+        $password = 'user123';
+
+        $hash = Hash::password($password, PasswordAlgorithm::Bcrypt, cost: 10);
+        Assert::true(Hash::passwordCheck($password, $hash));
+
+        $info = Hash::passwordInfo($hash);
+        Assert::same(10, $info['options']['cost']);
+
+        $hashHigher = Hash::password($password, PasswordAlgorithm::Bcrypt, cost: 12);
+        Assert::true(Hash::passwordCheck($password, $hashHigher));
+
+        $infoHigher = Hash::passwordInfo($hashHigher);
+        Assert::same(12, $infoHigher['options']['cost']);
+    }
+
+    public function testPasswordWithCostParameterOverridesOptions(): void
+    {
+        $password = 'user123';
+
+        $hash = Hash::password($password, PasswordAlgorithm::Bcrypt, ['cost' => 8], cost: 10);
+        Assert::true(Hash::passwordCheck($password, $hash));
+
+        $info = Hash::passwordInfo($hash);
+        Assert::same(10, $info['options']['cost']);
+    }
+
+    public function testPasswordWithNullCostUsesDefault(): void
+    {
+        $password = 'user123';
+
+        $hash = Hash::password($password, PasswordAlgorithm::Bcrypt, cost: null);
+        Assert::true(Hash::passwordCheck($password, $hash));
+
+        $info = Hash::passwordInfo($hash);
+        Assert::same(PASSWORD_BCRYPT_DEFAULT_COST, $info['options']['cost']);
+    }
+
+    public function testPasswordNeedsRehashWithCostParameter(): void
+    {
+        $hash = Hash::password('password', PasswordAlgorithm::Bcrypt, cost: 10);
+
+        Assert::true(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, cost: 12));
+        Assert::false(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, cost: 10));
+    }
+
+    public function testPasswordNeedsRehashWithCostParameterOverridesOptions(): void
+    {
+        $hash = Hash::password('password', PasswordAlgorithm::Bcrypt, cost: 10);
+
+        Assert::false(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 10], cost: 10));
+        Assert::true(Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Bcrypt, ['cost' => 10], cost: 12));
+    }
+
     public function testPbkdf2(): void
     {
         $key = Hash::pbkdf2('password', 'salt', 1000, 32);
