@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence;
 
+use DateMalformedStringException;
 use Exception;
 use DateTimeZone;
 use DateTimeImmutable;
@@ -1701,7 +1702,7 @@ class Dates extends StaticClass
 
         try {
             $result = $baseDate->modify($phpExpression);
-        } catch (Exception $e) {
+        } catch (DateMalformedStringException $e) { // @phpstan-ignore catch.neverThrown
             throw new InvalidArgumentException(
                 "Invalid Argument: The relative date expression \"{$expression}\" could not be parsed."
             );
