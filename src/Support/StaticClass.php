@@ -40,22 +40,19 @@ use Phuture\Coherence\Exception\MemberAccessException;
  */
 abstract class StaticClass
 {
-    private function __construct()
-    {
-    }
+    use \Nette\StaticClass;
 
     /**
-     * Handle calls to undefined static methods.
+     * Call to undefined static method.
      *
      * @param string $name The name of the method being called
      * @param array $arguments Enumerated array containing the parameters passed to the method
      * @throws MemberAccessException If the called static method does not exist on the class
      */
-    public static function __callStatic(string $name, array $arguments): void
+    public static function __callStatic(string $name, array $arguments): mixed
     {
-        $class = static::class;
         throw new MemberAccessException(
-            "Call to undefined method {$class}::{$name}()"
+            'Member Access: Call to undefined static method ' . static::class . '::' . $name . '()'
         );
     }
 }
