@@ -6,6 +6,7 @@ namespace Phuture\Coherence\Tests\Type;
 
 use RoundingMode;
 use Phuture\Coherence\Numbers;
+use Phuture\Coherence\Enum\Unit;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Type\Numbers as FluentNumbers;
 use Phuture\Coherence\Exception\{InvalidArgumentException};
@@ -401,7 +402,7 @@ class NumbersTest extends TestCase
     public function testConvertChaining(): void
     {
         $result = FluentNumbers::from(100)
-            ->convert('celsius', 'fahrenheit')
+            ->convert(Unit::Celsius, Unit::Fahrenheit)
             ->get();
         Assert::same('212.0000000000', $result);
     }
@@ -409,7 +410,7 @@ class NumbersTest extends TestCase
     public function testConvertWithRoundChaining(): void
     {
         $result = FluentNumbers::from(100)
-            ->convert('kilometer', 'mile')
+            ->convert(Unit::Kilometer, Unit::Mile)
             ->round(2)
             ->get();
         Assert::same('62.14', $result);
@@ -418,7 +419,7 @@ class NumbersTest extends TestCase
     public function testConvertDistanceChaining(): void
     {
         $result = FluentNumbers::from(1)
-            ->convert('mile', 'kilometer')
+            ->convert(Unit::Mile, Unit::Kilometer)
             ->get();
         Assert::same('1.6093440000', $result);
     }
@@ -426,8 +427,8 @@ class NumbersTest extends TestCase
     public function testConvertThenArithmeticChaining(): void
     {
         $result = FluentNumbers::from(10)
-            ->convert('kilometer', 'mile')
-            ->add((float) Numbers::convert(5, 'kilometer', 'mile'))
+            ->convert(Unit::Kilometer, Unit::Mile)
+            ->add((float) Numbers::convert(5, Unit::Kilometer, Unit::Mile))
             ->round(2)
             ->get();
         Assert::same('9.32', $result);

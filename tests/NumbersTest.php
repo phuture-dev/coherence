@@ -6,6 +6,7 @@ namespace Phuture\Coherence\Tests;
 
 use RoundingMode;
 use Phuture\Coherence\Numbers;
+use Phuture\Coherence\Enum\Unit;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
@@ -611,286 +612,264 @@ class NumbersTest extends TestCase
 
     public function testConvertSameUnit(): void
     {
-        Assert::same('100.0000000000', Numbers::convert(100, 'celsius', 'celsius'));
-        Assert::same('5.0000000000', Numbers::convert(5, 'meter', 'meter'));
+        Assert::same('100.0000000000', Numbers::convert(100, Unit::Celsius, Unit::Celsius));
+        Assert::same('5.0000000000', Numbers::convert(5, Unit::Meter, Unit::Meter));
     }
 
     public function testConvertTemperatureCelsiusToFahrenheit(): void
     {
-        Assert::same('212.0000000000', Numbers::convert(100, 'celsius', 'fahrenheit'));
-        Assert::same('32.0000000000', Numbers::convert(0, 'celsius', 'fahrenheit'));
-        Assert::same('-40.0000000000', Numbers::convert(-40, 'celsius', 'fahrenheit'));
+        Assert::same('212.0000000000', Numbers::convert(100, Unit::Celsius, Unit::Fahrenheit));
+        Assert::same('32.0000000000', Numbers::convert(0, Unit::Celsius, Unit::Fahrenheit));
+        Assert::same('-40.0000000000', Numbers::convert(-40, Unit::Celsius, Unit::Fahrenheit));
     }
 
     public function testConvertTemperatureFahrenheitToCelsius(): void
     {
-        Assert::same('100.0000000000', Numbers::convert(212, 'fahrenheit', 'celsius'));
-        Assert::same('0.0000000000', Numbers::convert(32, 'fahrenheit', 'celsius'));
-        Assert::same('-40.0000000000', Numbers::convert(-40, 'fahrenheit', 'celsius'));
+        Assert::same('100.0000000000', Numbers::convert(212, Unit::Fahrenheit, Unit::Celsius));
+        Assert::same('0.0000000000', Numbers::convert(32, Unit::Fahrenheit, Unit::Celsius));
+        Assert::same('-40.0000000000', Numbers::convert(-40, Unit::Fahrenheit, Unit::Celsius));
     }
 
     public function testConvertTemperatureCelsiusToKelvin(): void
     {
-        Assert::same('373.1500000000', Numbers::convert(100, 'celsius', 'kelvin'));
-        Assert::same('273.1500000000', Numbers::convert(0, 'celsius', 'kelvin'));
-        Assert::same('0.0000000000', Numbers::convert(-273.15, 'celsius', 'kelvin'));
+        Assert::same('373.1500000000', Numbers::convert(100, Unit::Celsius, Unit::Kelvin));
+        Assert::same('273.1500000000', Numbers::convert(0, Unit::Celsius, Unit::Kelvin));
+        Assert::same('0.0000000000', Numbers::convert(-273.15, Unit::Celsius, Unit::Kelvin));
     }
 
     public function testConvertTemperatureKelvinToCelsius(): void
     {
-        Assert::same('100.0000000000', Numbers::convert(373.15, 'kelvin', 'celsius'));
-        Assert::same('0.0000000000', Numbers::convert(273.15, 'kelvin', 'celsius'));
+        Assert::same('100.0000000000', Numbers::convert(373.15, Unit::Kelvin, Unit::Celsius));
+        Assert::same('0.0000000000', Numbers::convert(273.15, Unit::Kelvin, Unit::Celsius));
     }
 
     public function testConvertTemperatureFahrenheitToRankine(): void
     {
-        Assert::same('671.6700000000', Numbers::convert(212, 'fahrenheit', 'rankine'));
-        Assert::same('491.6700000000', Numbers::convert(32, 'fahrenheit', 'rankine'));
+        Assert::same('671.6700000000', Numbers::convert(212, Unit::Fahrenheit, Unit::Rankine));
+        Assert::same('491.6700000000', Numbers::convert(32, Unit::Fahrenheit, Unit::Rankine));
     }
 
     public function testConvertTemperatureRoundTrip(): void
     {
         $original = 37.5;
-        $kelvin = Numbers::convert($original, 'celsius', 'kelvin');
-        $fahrenheit = Numbers::convert($kelvin, 'kelvin', 'fahrenheit');
-        $result = Numbers::convert($fahrenheit, 'fahrenheit', 'celsius');
+        $kelvin = Numbers::convert($original, Unit::Celsius, Unit::Kelvin);
+        $fahrenheit = Numbers::convert($kelvin, Unit::Kelvin, Unit::Fahrenheit);
+        $result = Numbers::convert($fahrenheit, Unit::Fahrenheit, Unit::Celsius);
         Assert::same('37.5000000000', $result);
     }
 
     public function testConvertDistanceKilometerToMile(): void
     {
-        $result = Numbers::convert(1, 'kilometer', 'mile');
+        $result = Numbers::convert(1, Unit::Kilometer, Unit::Mile);
         Assert::same('0.6213711922', $result);
     }
 
     public function testConvertDistanceMileToKilometer(): void
     {
-        $result = Numbers::convert(1, 'mile', 'kilometer');
+        $result = Numbers::convert(1, Unit::Mile, Unit::Kilometer);
         Assert::same('1.6093440000', $result);
     }
 
     public function testConvertDistanceMeterToFoot(): void
     {
-        $result = Numbers::convert(1, 'meter', 'foot');
+        $result = Numbers::convert(1, Unit::Meter, Unit::Foot);
         Assert::same('3.2808398950', $result);
     }
 
     public function testConvertDistanceInchToCentimeter(): void
     {
-        $result = Numbers::convert(1, 'inch', 'centimeter');
+        $result = Numbers::convert(1, Unit::Inch, Unit::Centimeter);
         Assert::same('2.5400000000', $result);
     }
 
     public function testConvertDistanceNauticalMileToKilometer(): void
     {
-        $result = Numbers::convert(1, 'nautical_mile', 'kilometer');
+        $result = Numbers::convert(1, Unit::NauticalMile, Unit::Kilometer);
         Assert::same('1.8520000000', $result);
     }
 
     public function testConvertDistanceYardToMeter(): void
     {
-        $result = Numbers::convert(100, 'yard', 'meter');
+        $result = Numbers::convert(100, Unit::Yard, Unit::Meter);
         Assert::same('91.4400000000', $result);
     }
 
     public function testConvertMassKilogramToPound(): void
     {
-        $result = Numbers::convert(1, 'kilogram', 'pound');
+        $result = Numbers::convert(1, Unit::Kilogram, Unit::Pound);
         Assert::same('2.2046226218', $result);
     }
 
     public function testConvertMassPoundToKilogram(): void
     {
-        $result = Numbers::convert(1, 'pound', 'kilogram');
+        $result = Numbers::convert(1, Unit::Pound, Unit::Kilogram);
         Assert::same('0.4535923700', $result);
     }
 
     public function testConvertMassOunceToGram(): void
     {
-        $result = Numbers::convert(1, 'ounce', 'gram');
+        $result = Numbers::convert(1, Unit::Ounce, Unit::Gram);
         Assert::same('28.3495231000', $result);
     }
 
     public function testConvertMassMetricTonToKilogram(): void
     {
-        $result = Numbers::convert(1, 'metric_ton', 'kilogram');
+        $result = Numbers::convert(1, Unit::MetricTon, Unit::Kilogram);
         Assert::same('1000.0000000000', $result);
     }
 
     public function testConvertMassStoneToPound(): void
     {
-        $result = Numbers::convert(1, 'stone', 'pound');
+        $result = Numbers::convert(1, Unit::Stone, Unit::Pound);
         Assert::same('14.0000000000', $result);
     }
 
     public function testConvertVolumeLiterToGallonUs(): void
     {
-        $result = Numbers::convert(1, 'liter', 'gallon_us');
+        $result = Numbers::convert(1, Unit::Liter, Unit::GallonUs);
         Assert::same('0.2641720523', $result);
     }
 
     public function testConvertVolumeGallonUsToLiter(): void
     {
-        $result = Numbers::convert(1, 'gallon_us', 'liter');
+        $result = Numbers::convert(1, Unit::GallonUs, Unit::Liter);
         Assert::same('3.7854117840', $result);
     }
 
     public function testConvertVolumeCupUsToMilliliter(): void
     {
-        $result = Numbers::convert(1, 'cup_us', 'milliliter');
+        $result = Numbers::convert(1, Unit::CupUs, Unit::Milliliter);
         Assert::same('236.5882365000', $result);
     }
 
     public function testConvertVolumeTablespoonToTeaspoon(): void
     {
-        $result = Numbers::convert(1, 'tablespoon', 'teaspoon');
+        $result = Numbers::convert(1, Unit::Tablespoon, Unit::Teaspoon);
         Assert::same('2.9999999835', $result);
     }
 
     public function testConvertTimeHourToSecond(): void
     {
-        Assert::same('3600.0000000000', Numbers::convert(1, 'hour', 'second'));
+        Assert::same('3600.0000000000', Numbers::convert(1, Unit::Hour, Unit::Second));
     }
 
     public function testConvertTimeDayToHour(): void
     {
-        Assert::same('24.0000000000', Numbers::convert(1, 'day', 'hour'));
+        Assert::same('24.0000000000', Numbers::convert(1, Unit::Day, Unit::Hour));
     }
 
     public function testConvertTimeWeekToDay(): void
     {
-        Assert::same('7.0000000000', Numbers::convert(1, 'week', 'day'));
+        Assert::same('7.0000000000', Numbers::convert(1, Unit::Week, Unit::Day));
     }
 
     public function testConvertTimeMillisecondToSecond(): void
     {
-        Assert::same('0.0010000000', Numbers::convert(1, 'millisecond', 'second'));
+        Assert::same('0.0010000000', Numbers::convert(1, Unit::Millisecond, Unit::Second));
     }
 
     public function testConvertAreaSquareMeterToSquareFoot(): void
     {
-        $result = Numbers::convert(1, 'square_meter', 'square_foot');
+        $result = Numbers::convert(1, Unit::SquareMeter, Unit::SquareFoot);
         Assert::same('10.7639104167', $result);
     }
 
     public function testConvertAreaHectareToAcre(): void
     {
-        $result = Numbers::convert(1, 'hectare', 'acre');
+        $result = Numbers::convert(1, Unit::Hectare, Unit::Acre);
         Assert::same('2.4710538146', $result);
     }
 
     public function testConvertAreaSquareKilometerToSquareMile(): void
     {
-        $result = Numbers::convert(1, 'square_kilometer', 'square_mile');
+        $result = Numbers::convert(1, Unit::SquareKilometer, Unit::SquareMile);
         Assert::same('0.3861021585', $result);
     }
 
     public function testConvertSpeedKilometerPerHourToMeterPerSecond(): void
     {
-        $result = Numbers::convert(100, 'kilometer_per_hour', 'meter_per_second');
+        $result = Numbers::convert(100, Unit::KilometerPerHour, Unit::MeterPerSecond);
         Assert::same('27.7777777800', $result);
     }
 
     public function testConvertSpeedMilePerHourToKnot(): void
     {
-        $result = Numbers::convert(100, 'mile_per_hour', 'knot');
+        $result = Numbers::convert(100, Unit::MilePerHour, Unit::Knot);
         Assert::same('86.8976241975', $result);
     }
 
     public function testConvertPressureAtmosphereToPascal(): void
     {
-        $result = Numbers::convert(1, 'atmosphere', 'pascal');
+        $result = Numbers::convert(1, Unit::Atmosphere, Unit::Pascal);
         Assert::same('101325.0000000000', $result);
     }
 
     public function testConvertPressureBarToPsi(): void
     {
-        $result = Numbers::convert(1, 'bar', 'psi');
+        $result = Numbers::convert(1, Unit::Bar, Unit::Psi);
         Assert::same('14.5037737730', $result);
     }
 
     public function testConvertEnergyKilowattHourToJoule(): void
     {
-        $result = Numbers::convert(1, 'kilowatt_hour', 'joule');
+        $result = Numbers::convert(1, Unit::KilowattHour, Unit::Joule);
         Assert::same('3600000.0000000000', $result);
     }
 
     public function testConvertEnergyKilocalorieToCalorie(): void
     {
-        $result = Numbers::convert(1, 'kilocalorie', 'calorie');
+        $result = Numbers::convert(1, Unit::Kilocalorie, Unit::Calorie);
         Assert::same('1000.0000000000', $result);
     }
 
     public function testConvertPowerHorsepowerToWatt(): void
     {
-        $result = Numbers::convert(1, 'horsepower_mechanical', 'watt');
+        $result = Numbers::convert(1, Unit::HorsepowerMechanical, Unit::Watt);
         Assert::same('745.7000000000', $result);
     }
 
     public function testConvertForceNewtonToPoundForce(): void
     {
-        $result = Numbers::convert(100, 'newton', 'pound_force');
+        $result = Numbers::convert(100, Unit::Newton, Unit::PoundForce);
         Assert::same('22.4808943099', $result);
     }
 
     public function testConvertForceKilogramForceToNewton(): void
     {
-        $result = Numbers::convert(1, 'kilogram_force', 'newton');
+        $result = Numbers::convert(1, Unit::KilogramForce, Unit::Newton);
         Assert::same('9.8066500000', $result);
     }
 
     public function testConvertElectricPotentialKilovoltToVolt(): void
     {
-        $result = Numbers::convert(1, 'kilovolt', 'volt');
+        $result = Numbers::convert(1, Unit::Kilovolt, Unit::Volt);
         Assert::same('1000.0000000000', $result);
     }
 
     public function testConvertElectricCurrentAmpereToMilliampere(): void
     {
-        $result = Numbers::convert(1, 'ampere', 'milliampere');
+        $result = Numbers::convert(1, Unit::Ampere, Unit::Milliampere);
         Assert::same('1000.0000000000', $result);
     }
 
     public function testConvertLuminousIntensityCandelaToMillicandela(): void
     {
-        $result = Numbers::convert(1, 'candela', 'millicandela');
+        $result = Numbers::convert(1, Unit::Candela, Unit::Millicandela);
         Assert::same('1000.0000000000', $result);
-    }
-
-    public function testConvertUnknownUnit(): void
-    {
-        Assert::exception(function () {
-            Numbers::convert(1, 'foobar', 'meter');
-        }, InvalidArgumentException::class, 'Invalid Argument: Unknown unit \'foobar\'');
-    }
-
-    public function testConvertUnknownTargetUnit(): void
-    {
-        Assert::exception(function () {
-            Numbers::convert(1, 'meter', 'bazqux');
-        }, InvalidArgumentException::class, 'Invalid Argument: Unknown unit \'bazqux\'');
     }
 
     public function testConvertCrossCategoryRejected(): void
     {
         Assert::exception(function () {
-            Numbers::convert(1, 'celsius', 'meter');
-        }, InvalidArgumentException::class, "Invalid Argument: Cannot convert between different categories: celsius (temperature) and meter (distance)");
-    }
-
-    public function testConvertCaseInsensitive(): void
-    {
-        Assert::same(
-            Numbers::convert(100, 'celsius', 'fahrenheit'),
-            Numbers::convert(100, 'Celsius', 'Fahrenheit')
-        );
+            Numbers::convert(1, Unit::Celsius, Unit::Meter);
+        }, InvalidArgumentException::class, "Invalid Argument: Cannot convert between different categories: Celsius (temperature) and Meter (distance)");
     }
 
     public function testConvertRoundTripDistance(): void
     {
         $original = '42.195';
-        $miles = Numbers::convert($original, 'kilometer', 'mile');
-        $result = Numbers::convert($miles, 'mile', 'kilometer');
+        $miles = Numbers::convert($original, Unit::Kilometer, Unit::Mile);
+        $result = Numbers::convert($miles, Unit::Mile, Unit::Kilometer);
         Assert::same('42.1949999999', $result);
     }
 
@@ -912,9 +891,9 @@ class NumbersTest extends TestCase
         Assert::true(array_key_exists('electric_potential', $units));
         Assert::true(array_key_exists('electric_current', $units));
         Assert::true(array_key_exists('luminous_intensity', $units));
-        Assert::true(in_array('celsius', $units['temperature']));
-        Assert::true(in_array('kilometer', $units['distance']));
-        Assert::true(in_array('kilogram', $units['mass']));
+        Assert::true(in_array(Unit::Celsius, $units['temperature']));
+        Assert::true(in_array(Unit::Kilometer, $units['distance']));
+        Assert::true(in_array(Unit::Kilogram, $units['mass']));
     }
 
     public function testMeanBasic(): void

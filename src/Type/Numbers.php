@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phuture\Coherence\Type;
 
 use RoundingMode;
+use Phuture\Coherence\Enum\Unit;
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Interface\Numberable;
 use Phuture\Coherence\Numbers as Transformer;
@@ -372,26 +373,28 @@ class Numbers extends FluentClass implements Numberable
      *
      * Example:
      * ```php
+     * use Phuture\Coherence\Enum\Unit;
      * use Phuture\Coherence\Type\Numbers;
      *
      * $fahrenheit = Numbers::from(100)
-     *     ->convert('celsius', 'fahrenheit')
+     *     ->convert(Unit::Celsius, Unit::Fahrenheit)
      *     ->get();
      * // '212.0000000000'
      *
      * $miles = Numbers::from(5)
-     *     ->convert('kilometer', 'mile')
+     *     ->convert(Unit::Kilometer, Unit::Mile)
      *     ->round(2)
      *     ->get();
      * // '3.1100000000'
      * ```
      *
-     * @param string $from The source unit identifier (e.g., 'celsius', 'kilometer')
-     * @param string $to The target unit identifier (e.g., 'fahrenheit', 'mile')
+     * @param Unit $from The source unit to convert from
+     * @param Unit $to The target unit to convert to
      * @return self Returns the current instance for method chaining
-     * @see Transformer::convert() For the static conversion method with full unit list
+     * @see Transformer::convert() For the static conversion method
+     * @see \Phuture\Coherence\Enum\Unit For all available unit cases
      */
-    public function convert(string $from, string $to): self
+    public function convert(Unit $from, Unit $to): self
     {
         $this->data = Transformer::convert($this->toString(), $from, $to);
 

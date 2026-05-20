@@ -6,6 +6,7 @@ namespace Phuture\Coherence;
 
 use RoundingMode;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Enum\Unit;
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
 /**
@@ -1699,80 +1700,63 @@ class Numbers extends StaticClass
      * units or both must be distance units). The conversion uses BCMath for precise
      * decimal arithmetic.
      *
-     * Supported categories and their units:
-     *
-     * - **Temperature**: celsius, fahrenheit, kelvin, rankine
-     * - **Distance**: meter, millimeter, centimeter, decimeter, kilometer, inch, foot, yard, mile, nautical_mile
-     * - **Mass**: kilogram, gram, milligram, microgram, metric_ton, pound, ounce, stone, us_ton, imperial_ton
-     * - **Volume**: liter, milliliter, cubic_meter, gallon_us, quart_us, pint_us, cup_us,
-     *   fluid_ounce_us, tablespoon, teaspoon
-     * - **Time**: second, millisecond, microsecond, nanosecond, minute, hour, day, week
-     * - **Area**: square_meter, square_kilometer, hectare, acre, square_foot, square_yard, square_mile, square_inch
-     * - **Speed**: meter_per_second, kilometer_per_hour, mile_per_hour, knot, foot_per_second
-     * - **Pressure**: pascal, kilopascal, bar, millibar, atmosphere, psi, mmhg
-     * - **Energy**: joule, kilojoule, calorie, kilocalorie, watt_hour, kilowatt_hour, btu, electronvolt
-     * - **Power**: watt, kilowatt, megawatt, horsepower_mechanical, horsepower_metric
-     * - **Force**: newton, kilonewton, dyne, pound_force, kilogram_force
-     * - **Electric Potential**: volt, millivolt, kilovolt, megavolt
-     * - **Electric Current**: ampere, milliampere, microampere, kiloampere
-     * - **Luminous Intensity**: candela, millicandela, kilocandela
+     * Use the Unit enum to specify the source and target units. See
+     * \Phuture\Coherence\Enum\Unit for the full list of supported units organized
+     * by category (temperature, distance, mass, volume, time, area, speed, pressure,
+     * energy, power, force, electric potential, electric current, and luminous intensity).
      *
      * Example:
      * ```php
+     * use Phuture\Coherence\Enum\Unit;
      * use Phuture\Coherence\Numbers;
      *
-     * Numbers::convert(100, 'celsius', 'fahrenheit');
+     * Numbers::convert(100, Unit::Celsius, Unit::Fahrenheit);
      * // Returns: '212.0000000000'
      *
-     * Numbers::convert(1, 'kilometer', 'mile');
+     * Numbers::convert(1, Unit::Kilometer, Unit::Mile);
      * // Returns: '0.6213711922'
      *
-     * Numbers::convert(1, 'gallon_us', 'liter');
+     * Numbers::convert(1, Unit::GallonUs, Unit::Liter);
      * // Returns: '3.7854117840'
      * ```
      *
      * @param int|float|string $value The numeric value to convert
-     * @param string $from The source unit identifier (e.g., 'celsius', 'kilometer')
-     * @param string $to The target unit identifier (e.g., 'fahrenheit', 'mile')
+     * @param Unit $from The source unit to convert from
+     * @param Unit $to The target unit to convert to
      * @return string The converted value as a BCMath string with up to 10 decimal places
-     * @throws InvalidArgumentException When either unit is unknown or units belong to different categories
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When units belong to different categories
+     * @see \Phuture\Coherence\Enum\Unit For all available unit cases
      * @see \Phuture\Coherence\Type\Numbers::convert() For the fluent equivalent
      */
-    public static function convert(int|float|string $value, string $from, string $to): string
+    public static function convert(int|float|string $value, Unit $from, Unit $to): string
     {
-        $fromNormalized = strtolower($from);
-        $toNormalized = strtolower($to);
-
-        if ($fromNormalized === $toNormalized) {
+        if ($from === $to) {
             return bcadd((string) $value, '0', self::DEFAULT_SCALE);
         }
 
-        $fromMeta = self::getUnitMeta($fromNormalized, $from);
-        $toMeta = self::getUnitMeta($toNormalized, $to);
-
-        if ($fromMeta['category'] !== $toMeta['category']) {
+        if ($from->category() !== $to->category()) {
             throw new InvalidArgumentException(
                 "Invalid Argument: Cannot convert between different categories: " .
-                "{$from} ({$fromMeta['category']}) and {$to} ({$toMeta['category']})"
+                "{$from->name} ({$from->category()}) and {$to->name} ({$to->category()})"
             );
         }
 
-        if ($fromMeta['category'] === 'temperature') {
-            return self::convertTemperature($value, $fromNormalized, $toNormalized);
+        if ($from->category() === 'temperature') {
+            return self::convertTemperature($value, $from, $to);
         }
 
-        $baseValue = bcmul((string) $value, (string) $fromMeta['factor'], self::DEFAULT_SCALE);
+        $baseValue = bcmul((string) $value, $from->factor(), self::DEFAULT_SCALE);
 
-        return bcdiv($baseValue, (string) $toMeta['factor'], self::DEFAULT_SCALE);
+        return bcdiv($baseValue, $to->factor(), self::DEFAULT_SCALE);
     }
 
     /**
-     * Returns all supported unit identifiers grouped by measurement category.
+     * Returns all supported units grouped by measurement category.
      *
      * This method returns an associative array where each key is a measurement
-     * category name and the value is an array of unit identifier strings that
-     * belong to that category. This is useful for building user interfaces that
-     * let users pick units from a dropdown.
+     * category name and the value is an array of Unit enum cases that belong to
+     * that category. This is useful for building user interfaces that let users
+     * pick units from a dropdown.
      *
      * Example:
      * ```php
@@ -1780,20 +1764,21 @@ class Numbers extends StaticClass
      *
      * $units = Numbers::conversionUnits();
      * // Returns: [
-     * //     'temperature' => ['celsius', 'fahrenheit', 'kelvin', 'rankine'],
-     * //     'distance' => ['meter', 'millimeter', ...],
+     * //     'temperature' => [Unit::Celsius, Unit::Fahrenheit, ...],
+     * //     'distance' => [Unit::Meter, Unit::Millimeter, ...],
      * //     ...
      * // ]
      * ```
      *
-     * @return array An associative array mapping category names to arrays of unit identifiers
+     * @return array An associative array mapping category names to arrays of Unit enum cases
+     * @see \Phuture\Coherence\Enum\Unit
      * @see \Phuture\Coherence\Numbers::convert()
      */
     public static function conversionUnits(): array
     {
         $categories = [];
-        foreach (self::unitDefinitions() as $unit => $meta) {
-            $categories[$meta['category']][] = $unit;
+        foreach (Unit::cases() as $unit) {
+            $categories[$unit->category()][] = $unit;
         }
 
         return $categories;
@@ -1808,32 +1793,27 @@ class Numbers extends StaticClass
      * temperature units. All arithmetic uses BCMath for precision.
      *
      * @param int|float|string $value The temperature value to convert
-     * @param string $from The source temperature unit ('celsius', 'fahrenheit', 'kelvin', 'rankine')
-     * @param string $to The target temperature unit ('celsius', 'fahrenheit', 'kelvin', 'rankine')
+     * @param Unit $from The source temperature unit
+     * @param Unit $to The target temperature unit
      * @return string The converted temperature as a BCMath string
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When an unrecognized temperature unit is given
      * @see \Phuture\Coherence\Numbers::convert()
      */
-    private static function convertTemperature(int|float|string $value, string $from, string $to): string
+    private static function convertTemperature(int|float|string $value, Unit $from, Unit $to): string
     {
         $celsius = match ($from) {
-            'celsius' => (string) $value,
-            'fahrenheit' => self::fahrenheitToCelsius((string) $value),
-            'kelvin' => bcsub((string) $value, '273.15', self::DEFAULT_SCALE),
-            'rankine' => self::rankineToCelsius((string) $value),
-            default => throw new InvalidArgumentException(
-                "Invalid Argument: Unknown temperature unit '{$from}'"
-            ),
+            Unit::Celsius => (string) $value,
+            Unit::Fahrenheit => self::fahrenheitToCelsius((string) $value),
+            Unit::Kelvin => bcsub((string) $value, '273.15', self::DEFAULT_SCALE),
+            Unit::Rankine => self::rankineToCelsius((string) $value),
+            default => (string) $value,
         };
 
         $result = match ($to) {
-            'celsius' => $celsius,
-            'fahrenheit' => self::celsiusToFahrenheit($celsius),
-            'kelvin' => bcadd($celsius, '273.15', self::DEFAULT_SCALE),
-            'rankine' => self::celsiusToRankine($celsius),
-            default => throw new InvalidArgumentException(
-                "Invalid Argument: Unknown temperature unit '{$to}'"
-            ),
+            Unit::Celsius => $celsius,
+            Unit::Fahrenheit => self::celsiusToFahrenheit($celsius),
+            Unit::Kelvin => bcadd($celsius, '273.15', self::DEFAULT_SCALE),
+            Unit::Rankine => self::celsiusToRankine($celsius),
+            default => $celsius,
         };
 
         return bcadd($result, '0', self::DEFAULT_SCALE);
@@ -1903,162 +1883,6 @@ class Numbers extends StaticClass
         $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
 
         return bcadd($scaled, '491.67', self::DEFAULT_SCALE);
-    }
-
-    /**
-     * Looks up the category and conversion factor for a normalized unit identifier.
-     *
-     * Searches the unit definitions for the given unit name and returns its metadata
-     * array containing the 'category' and 'factor' keys. Throws when the unit is not
-     * found in the definitions.
-     *
-     * @param string $normalizedUnit The lowercase unit identifier to look up
-     * @param string $originalUnit The original unit identifier used in the error message
-     * @return array The unit metadata with 'category' and 'factor' keys
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the unit is not defined
-     * @see \Phuture\Coherence\Numbers::unitDefinitions()
-     */
-    private static function getUnitMeta(string $normalizedUnit, string $originalUnit): array
-    {
-        $definitions = self::unitDefinitions();
-
-        if (isset($definitions[$normalizedUnit])) {
-            return $definitions[$normalizedUnit];
-        }
-
-        throw new InvalidArgumentException(
-            "Invalid Argument: Unknown unit '{$originalUnit}'"
-        );
-    }
-
-    /**
-     * Returns the complete map of unit identifiers to their conversion metadata.
-     *
-     * Each entry maps a lowercase unit name to an array with 'category' (the measurement
-     * group) and 'factor' (the multiplication factor to convert to the base unit of that
-     * category). The result is cached in a static variable so the large array is only
-     * built once per request.
-     *
-     * @return array An associative array mapping unit names to their category and factor
-     * @see \Phuture\Coherence\Numbers::getUnitMeta()
-     * @see \Phuture\Coherence\Numbers::conversionUnits()
-     */
-    private static function unitDefinitions(): array
-    {
-        static $units = null;
-
-        if ($units !== null) {
-            return $units;
-        }
-
-        $units = [
-            'celsius' => ['category' => 'temperature', 'factor' => 1],
-            'fahrenheit' => ['category' => 'temperature', 'factor' => 1],
-            'kelvin' => ['category' => 'temperature', 'factor' => 1],
-            'rankine' => ['category' => 'temperature', 'factor' => 1],
-
-            'meter' => ['category' => 'distance', 'factor' => 1],
-            'millimeter' => ['category' => 'distance', 'factor' => '0.001'],
-            'centimeter' => ['category' => 'distance', 'factor' => '0.01'],
-            'decimeter' => ['category' => 'distance', 'factor' => '0.1'],
-            'kilometer' => ['category' => 'distance', 'factor' => '1000'],
-            'inch' => ['category' => 'distance', 'factor' => '0.0254'],
-            'foot' => ['category' => 'distance', 'factor' => '0.3048'],
-            'yard' => ['category' => 'distance', 'factor' => '0.9144'],
-            'mile' => ['category' => 'distance', 'factor' => '1609.344'],
-            'nautical_mile' => ['category' => 'distance', 'factor' => '1852'],
-
-            'kilogram' => ['category' => 'mass', 'factor' => 1],
-            'gram' => ['category' => 'mass', 'factor' => '0.001'],
-            'milligram' => ['category' => 'mass', 'factor' => '0.000001'],
-            'microgram' => ['category' => 'mass', 'factor' => '0.000000001'],
-            'metric_ton' => ['category' => 'mass', 'factor' => '1000'],
-            'pound' => ['category' => 'mass', 'factor' => '0.45359237'],
-            'ounce' => ['category' => 'mass', 'factor' => '0.028349523125'],
-            'stone' => ['category' => 'mass', 'factor' => '6.35029318'],
-            'us_ton' => ['category' => 'mass', 'factor' => '907.18474'],
-            'imperial_ton' => ['category' => 'mass', 'factor' => '1016.0469088'],
-
-            'liter' => ['category' => 'volume', 'factor' => 1],
-            'milliliter' => ['category' => 'volume', 'factor' => '0.001'],
-            'cubic_meter' => ['category' => 'volume', 'factor' => '1000'],
-            'gallon_us' => ['category' => 'volume', 'factor' => '3.785411784'],
-            'quart_us' => ['category' => 'volume', 'factor' => '0.946352946'],
-            'pint_us' => ['category' => 'volume', 'factor' => '0.473176473'],
-            'cup_us' => ['category' => 'volume', 'factor' => '0.2365882365'],
-            'fluid_ounce_us' => ['category' => 'volume', 'factor' => '0.0295735295625'],
-            'tablespoon' => ['category' => 'volume', 'factor' => '0.01478676478125'],
-            'teaspoon' => ['category' => 'volume', 'factor' => '0.00492892159375'],
-
-            'second' => ['category' => 'time', 'factor' => 1],
-            'millisecond' => ['category' => 'time', 'factor' => '0.001'],
-            'microsecond' => ['category' => 'time', 'factor' => '0.000001'],
-            'nanosecond' => ['category' => 'time', 'factor' => '0.000000001'],
-            'minute' => ['category' => 'time', 'factor' => '60'],
-            'hour' => ['category' => 'time', 'factor' => '3600'],
-            'day' => ['category' => 'time', 'factor' => '86400'],
-            'week' => ['category' => 'time', 'factor' => '604800'],
-
-            'square_meter' => ['category' => 'area', 'factor' => 1],
-            'square_kilometer' => ['category' => 'area', 'factor' => '1000000'],
-            'hectare' => ['category' => 'area', 'factor' => '10000'],
-            'acre' => ['category' => 'area', 'factor' => '4046.8564224'],
-            'square_foot' => ['category' => 'area', 'factor' => '0.09290304'],
-            'square_yard' => ['category' => 'area', 'factor' => '0.83612736'],
-            'square_mile' => ['category' => 'area', 'factor' => '2589988.110336'],
-            'square_inch' => ['category' => 'area', 'factor' => '0.00064516'],
-
-            'meter_per_second' => ['category' => 'speed', 'factor' => 1],
-            'kilometer_per_hour' => ['category' => 'speed', 'factor' => '0.2777777778'],
-            'mile_per_hour' => ['category' => 'speed', 'factor' => '0.44704'],
-            'knot' => ['category' => 'speed', 'factor' => '0.5144444444'],
-            'foot_per_second' => ['category' => 'speed', 'factor' => '0.3048'],
-
-            'pascal' => ['category' => 'pressure', 'factor' => 1],
-            'kilopascal' => ['category' => 'pressure', 'factor' => '1000'],
-            'bar' => ['category' => 'pressure', 'factor' => '100000'],
-            'millibar' => ['category' => 'pressure', 'factor' => '100'],
-            'atmosphere' => ['category' => 'pressure', 'factor' => '101325'],
-            'psi' => ['category' => 'pressure', 'factor' => '6894.757293168'],
-            'mmhg' => ['category' => 'pressure', 'factor' => '133.3223684211'],
-
-            'joule' => ['category' => 'energy', 'factor' => 1],
-            'kilojoule' => ['category' => 'energy', 'factor' => '1000'],
-            'calorie' => ['category' => 'energy', 'factor' => '4.184'],
-            'kilocalorie' => ['category' => 'energy', 'factor' => '4184'],
-            'watt_hour' => ['category' => 'energy', 'factor' => '3600'],
-            'kilowatt_hour' => ['category' => 'energy', 'factor' => '3600000'],
-            'btu' => ['category' => 'energy', 'factor' => '1055.06'],
-            'electronvolt' => ['category' => 'energy', 'factor' => '0.0000000000000000001602176634'],
-
-            'watt' => ['category' => 'power', 'factor' => 1],
-            'kilowatt' => ['category' => 'power', 'factor' => '1000'],
-            'megawatt' => ['category' => 'power', 'factor' => '1000000'],
-            'horsepower_mechanical' => ['category' => 'power', 'factor' => '745.7'],
-            'horsepower_metric' => ['category' => 'power', 'factor' => '735.499'],
-
-            'newton' => ['category' => 'force', 'factor' => 1],
-            'kilonewton' => ['category' => 'force', 'factor' => '1000'],
-            'dyne' => ['category' => 'force', 'factor' => '0.00001'],
-            'pound_force' => ['category' => 'force', 'factor' => '4.4482216152605'],
-            'kilogram_force' => ['category' => 'force', 'factor' => '9.80665'],
-
-            'volt' => ['category' => 'electric_potential', 'factor' => 1],
-            'millivolt' => ['category' => 'electric_potential', 'factor' => '0.001'],
-            'kilovolt' => ['category' => 'electric_potential', 'factor' => '1000'],
-            'megavolt' => ['category' => 'electric_potential', 'factor' => '1000000'],
-
-            'ampere' => ['category' => 'electric_current', 'factor' => 1],
-            'milliampere' => ['category' => 'electric_current', 'factor' => '0.001'],
-            'microampere' => ['category' => 'electric_current', 'factor' => '0.000001'],
-            'kiloampere' => ['category' => 'electric_current', 'factor' => '1000'],
-
-            'candela' => ['category' => 'luminous_intensity', 'factor' => 1],
-            'millicandela' => ['category' => 'luminous_intensity', 'factor' => '0.001'],
-            'kilocandela' => ['category' => 'luminous_intensity', 'factor' => '1000'],
-        ];
-
-        return $units;
     }
 
     /**
