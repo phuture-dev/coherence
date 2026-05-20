@@ -774,6 +774,17 @@ class HashTest extends TestCase
             $argonHash2 = Hash::password($password, PasswordAlgorithm::Argon2id);
             Assert::notSame($argonHash, $argonHash2);
         }
+
+        // Argon2I
+        if (in_array('argon2i', password_algos())) {
+            $argon2iHash = Hash::password($password, PasswordAlgorithm::Argon2i);
+            Assert::true(strpos($argon2iHash, '$argon2i$') === 0);
+            Assert::true(Hash::passwordCheck($password, $argon2iHash));
+            Assert::false(Hash::passwordCheck('wrongpassword', $argon2iHash));
+
+            $argon2iHash2 = Hash::password($password, PasswordAlgorithm::Argon2i);
+            Assert::notSame($argon2iHash, $argon2iHash2);
+        }
     }
 
     public function testPasswordArgon2idNotSupported(): void
@@ -785,6 +796,17 @@ class HashTest extends TestCase
         Assert::exception(function () {
             Hash::password('test', PasswordAlgorithm::Argon2id);
         }, RuntimeException::class, 'Runtime Error: Argon2ID is not supported by the current PHP installation');
+    }
+
+    public function testPasswordArgon2iNotSupported(): void
+    {
+        if (in_array('argon2i', password_algos())) {
+            Environment::skip('Argon2I is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::password('test', PasswordAlgorithm::Argon2i);
+        }, RuntimeException::class, 'Runtime Error: Argon2I is not supported by the current PHP installation');
     }
 
     public function testPasswordCheck(): void
@@ -819,6 +841,20 @@ class HashTest extends TestCase
 
             $argonInfo = Hash::passwordInfo($argonHash);
             Assert::same('argon2id', $argonInfo['algoName']);
+        }
+
+        // Argon2I with custom options
+        if (in_array('argon2i', password_algos())) {
+            $argon2iHash = Hash::password($password, PasswordAlgorithm::Argon2i, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+                'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS,
+            ]);
+
+            Assert::true(Hash::passwordCheck($password, $argon2iHash));
+
+            $argon2iInfo = Hash::passwordInfo($argon2iHash);
+            Assert::same('argon2i', $argon2iInfo['algoName']);
         }
     }
 
@@ -858,6 +894,24 @@ class HashTest extends TestCase
                 'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
             ]));
         }
+
+        // Argon2I: lower memory cost → rehash needed
+        if (in_array('argon2i', password_algos())) {
+            $argon2iHash = Hash::password('password', PasswordAlgorithm::Argon2i, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]);
+
+            Assert::false(Hash::passwordNeedsRehash($argon2iHash, PasswordAlgorithm::Argon2i, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]));
+
+            Assert::true(Hash::passwordNeedsRehash($argon2iHash, PasswordAlgorithm::Argon2i, [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST * 2,
+                'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            ]));
+        }
     }
 
     public function testPasswordNeedsRehashArgon2idNotSupported(): void
@@ -869,6 +923,17 @@ class HashTest extends TestCase
         Assert::exception(function () {
             Hash::passwordNeedsRehash('$argon2id$dummy', PasswordAlgorithm::Argon2id);
         }, RuntimeException::class, 'Runtime Error: Argon2ID is not supported by the current PHP installation');
+    }
+
+    public function testPasswordNeedsRehashArgon2iNotSupported(): void
+    {
+        if (in_array('argon2i', password_algos())) {
+            Environment::skip('Argon2I is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::passwordNeedsRehash('$argon2i$dummy', PasswordAlgorithm::Argon2i);
+        }, RuntimeException::class, 'Runtime Error: Argon2I is not supported by the current PHP installation');
     }
 
     public function testPbkdf2(): void

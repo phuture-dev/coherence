@@ -18,6 +18,16 @@ namespace Phuture\Coherence\Enum;
 enum PasswordAlgorithm
 {
     /**
+     * Use the Argon2I algorithm.
+     *
+     * Argon2I is a memory-hard algorithm optimized to resist side-channel attacks.
+     * It is the winner of the 2015 Password Hashing Competition. Use this when
+     * side-channel resistance is the primary concern. Requires PHP compiled with
+     * libargon2 support.
+     */
+    case Argon2i;
+
+    /**
      * Use the Argon2ID algorithm.
      *
      * Argon2ID is a memory-hard algorithm that provides resistance against GPU-based

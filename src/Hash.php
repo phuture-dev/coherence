@@ -24,6 +24,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * - **Blake2 Hashing**: Support for Blake2b (512-bit) and Blake2s (256-bit) modern cryptographic hash algorithms
  * - **Password Security**: Secure password hashing with automatic salt generation and verification
  * - **Argon2ID Password Hashing**: Memory-hard password hashing with resistance to GPU and side-channel attacks
+ * - **Argon2I Password Hashing**: Side-channel resistant password hashing using the Argon2I variant
  * - **HMAC Operations**: Message authentication codes for data integrity and authenticity
  * - **File Integrity**: Efficient file hashing for integrity verification and checksums
  * - **Streaming Support**: Memory-efficient streaming for large data processing
@@ -40,7 +41,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
  * - For new applications, prefer SHA256, SHA384, or SHA512 for better security
  * - Always use HMAC methods when authentication is required
  * - PBKDF2 provides key stretching for password-derived encryption keys
- * - For modern password hashing, prefer Argon2ID via the dedicated passwordArgon2id() method when available
+ * - For modern password hashing, prefer Argon2ID or Argon2I via the PasswordAlgorithm enum
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -1606,7 +1607,7 @@ class Hash extends StaticClass
      * This method generates a strong hash for storing passwords securely. It uses PHP's
      * built-in password hashing functions which automatically handle salt generation and
      * use cryptographically secure algorithms. Use the \Phuture\Coherence\Enum\PasswordAlgorithm
-     * enum to choose between PHP's recommended default, BCrypt, or Argon2ID.
+     * enum to choose between PHP's recommended default, BCrypt, Argon2I, or Argon2ID.
      *
      * Example:
      * ```php
@@ -1622,14 +1623,18 @@ class Hash extends StaticClass
      * // Argon2ID
      * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id);
      *
+     * // Argon2I
+     * $hash = Hash::password('user123', PasswordAlgorithm::Argon2i);
+     *
      * // Returns: hashed password string
      * ```
      *
      * @param string $password The plain text password to hash
      * @param PasswordAlgorithm $algo The algorithm to use (default: PasswordAlgorithm::Default)
-     * @param array $options Algorithm options: 'cost' for BCrypt; 'memory_cost', 'time_cost', 'threads' for Argon2ID
+     * @param array $options Algorithm options: 'cost' for BCrypt;
+     *                       'memory_cost', 'time_cost', 'threads' for Argon2I and Argon2ID
      * @return string Returns the hashed password string
-     * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When an Argon2 algorithm is requested but not supported
      * @see \Phuture\Coherence\Hash::passwordCheck() For verifying a password against its hash
      * @see \Phuture\Coherence\Hash::passwordNeedsRehash() For checking if a hash needs updating
      */
@@ -1644,8 +1649,15 @@ class Hash extends StaticClass
             );
         }
 
+        if ($algo === PasswordAlgorithm::Argon2i && !in_array('argon2i', password_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Argon2I is not supported by the current PHP installation"
+            );
+        }
+
         return match ($algo) {
             PasswordAlgorithm::Argon2id => password_hash($password, PASSWORD_ARGON2ID, $options),
+            PasswordAlgorithm::Argon2i => password_hash($password, PASSWORD_ARGON2I, $options),
             PasswordAlgorithm::Bcrypt => password_hash($password, PASSWORD_BCRYPT, $options),
             PasswordAlgorithm::Default => password_hash($password, PASSWORD_DEFAULT, $options),
         };
@@ -1728,6 +1740,10 @@ class Hash extends StaticClass
      * $hash = Hash::password('user123', PasswordAlgorithm::Argon2id, ['memory_cost' => 65536]);
      * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Argon2id, ['memory_cost' => 131072]);
      *
+     * // Argon2I time cost upgrade
+     * $hash = Hash::password('user123', PasswordAlgorithm::Argon2i, ['time_cost' => 4]);
+     * $needsRehash = Hash::passwordNeedsRehash($hash, PasswordAlgorithm::Argon2i, ['time_cost' => 8]);
+     *
      * // Returns: true if the hash was created with lower cost parameters
      * ```
      *
@@ -1735,7 +1751,7 @@ class Hash extends StaticClass
      * @param PasswordAlgorithm $algo The algorithm to check against (default: PasswordAlgorithm::Default)
      * @param array $options Options to compare against (default: [])
      * @return bool Returns true if the hash needs to be rehashed, false otherwise
-     * @throws \Phuture\Coherence\Exception\RuntimeException When Argon2ID is requested but not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When an Argon2 algorithm is requested but not supported
      * @see \Phuture\Coherence\Hash::password() For creating a password hash
      * @see \Phuture\Coherence\Hash::passwordCheck() For verifying a password
      */
@@ -1750,8 +1766,15 @@ class Hash extends StaticClass
             );
         }
 
+        if ($algo === PasswordAlgorithm::Argon2i && !in_array('argon2i', password_algos())) {
+            throw new RuntimeException(
+                "Runtime Error: Argon2I is not supported by the current PHP installation"
+            );
+        }
+
         return match ($algo) {
             PasswordAlgorithm::Argon2id => password_needs_rehash($hash, PASSWORD_ARGON2ID, $options),
+            PasswordAlgorithm::Argon2i => password_needs_rehash($hash, PASSWORD_ARGON2I, $options),
             PasswordAlgorithm::Bcrypt => password_needs_rehash($hash, PASSWORD_BCRYPT, $options),
             PasswordAlgorithm::Default => password_needs_rehash($hash, PASSWORD_DEFAULT, $options),
         };
