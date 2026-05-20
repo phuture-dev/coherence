@@ -398,12 +398,6 @@ class NumbersTest extends TestCase
         Assert::same('0.3000000000', FluentNumbers::from(0.1)->add(0.2)->toNumber()->get());
     }
 
-    public function testTrimTrailingZeros(): void
-    {
-        Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
-        Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
-    }
-
     public function testConvertChaining(): void
     {
         $result = FluentNumbers::from(100)

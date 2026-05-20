@@ -365,17 +365,6 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
-     * Removes trailing zeros from the wrapped numeric string representation.
-     *
-     * @return string The trimmed number string
-     * @see Transformer::trimTrailingZeros()
-     */
-    public function trimTrailingZeros(): string
-    {
-        return Transformer::trimTrailingZeros($this->data);
-    }
-
-    /**
      * Converts the wrapped value from one unit of measurement to another.
      *
      * The conversion result replaces the wrapped value, enabling further
