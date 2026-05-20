@@ -25,6 +25,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
  * - **Human-Readable Output**: Convert numbers into readable strings like "1.5K" or "2.5 MB"
  * - **Unit Conversion**: Convert between units of temperature, distance, mass, volume, time, area, speed,
  *   pressure, energy, power, force, electric potential, electric current, and luminosity
+ * - **Statistical Functions**: Compute mean, median, mode, variance, standard deviation, and percentiles
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -1217,6 +1218,402 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Computes the arithmetic mean (average) of a list of numbers.
+     *
+     * This method calculates the average by summing all values and dividing
+     * by the count. It uses BCMath for precision, returning a string result.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::mean([2, 4, 6, 8]);
+     * // Returns: '5.0000000000'
+     *
+     * Numbers::mean([1.5, 2.5, 3.5]);
+     * // Returns: '2.5000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to average
+     * @return string The arithmetic mean as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::median()
+     * @see \Phuture\Coherence\Numbers::mode()
+     */
+    public static function mean(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute mean of an empty array'
+            );
+        }
+
+        $sum = '0';
+        foreach ($values as $value) {
+            $sum = bcadd($sum, (string) $value, self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sum, (string) count($values), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the median (middle value) of a list of numbers.
+     *
+     * This method sorts the values and returns the middle value for odd-count
+     * arrays, or the average of the two middle values for even-count arrays.
+     * Returns a BCMath string for precision.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::median([1, 3, 5]);
+     * // Returns: '3.0000000000'
+     *
+     * Numbers::median([1, 3, 5, 7]);
+     * // Returns: '4.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to find the median of
+     * @return string The median as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::mean()
+     * @see \Phuture\Coherence\Numbers::percentile()
+     */
+    public static function median(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute median of an empty array'
+            );
+        }
+
+        $sorted = $values;
+        sort($sorted, SORT_NUMERIC);
+
+        $count = count($sorted);
+        $middle = intdiv($count, 2);
+
+        if ($count % 2 === 1) {
+            return bcadd((string) $sorted[$middle], '0', self::DEFAULT_SCALE);
+        }
+
+        return bcdiv(
+            bcadd((string) $sorted[$middle - 1], (string) $sorted[$middle], self::DEFAULT_SCALE),
+            '2',
+            self::DEFAULT_SCALE
+        );
+    }
+
+    /**
+     * Finds the mode (most frequently occurring value) of a list of numbers.
+     *
+     * This method returns the value that appears most often. When multiple
+     * values share the highest frequency, all of them are returned. The result
+     * is an array of the mode values, preserving their original types.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::mode([1, 2, 2, 3, 3, 3]);
+     * // Returns: [3]
+     *
+     * Numbers::mode([1, 1, 2, 2, 3]);
+     * // Returns: [1, 2]
+     *
+     * Numbers::mode([5]);
+     * // Returns: [5]
+     * ```
+     *
+     * @param array $values The list of numbers to find the mode of
+     * @return array An array containing the most frequently occurring value(s)
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::mean()
+     * @see \Phuture\Coherence\Numbers::median()
+     */
+    public static function mode(array $values): array
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute mode of an empty array'
+            );
+        }
+
+        $frequency = [];
+        foreach ($values as $value) {
+            $key = (string) $value;
+            $frequency[$key] = ($frequency[$key] ?? 0) + 1;
+        }
+
+        $maxCount = max($frequency);
+        $modes = [];
+        foreach ($values as $value) {
+            $key = (string) $value;
+            if ($frequency[$key] === $maxCount && !in_array($value, $modes, true)) {
+                $modes[] = $value;
+            }
+        }
+
+        return $modes;
+    }
+
+    /**
+     * Computes the population variance of a list of numbers.
+     *
+     * Population variance measures how far each number in the set is from the
+     * mean squared, averaged across all values. Use this when your data
+     * represents an entire population, not a sample.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::variance([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '4.0000000000'
+     *
+     * Numbers::variance([1, 2, 3, 4, 5]);
+     * // Returns: '2.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute variance for
+     * @return string The population variance as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::sampleVariance()
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function variance(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute variance of an empty array'
+            );
+        }
+
+        $mean = self::mean($values);
+        $sumSquaredDiffs = '0';
+        foreach ($values as $value) {
+            $diff = bcsub((string) $value, $mean, self::DEFAULT_SCALE);
+            $sumSquaredDiffs = bcadd($sumSquaredDiffs, bcmul($diff, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sumSquaredDiffs, (string) count($values), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the sample variance of a list of numbers.
+     *
+     * Sample variance is similar to population variance but divides by N-1
+     * instead of N (Bessel's correction). Use this when your data is a sample
+     * from a larger population to get an unbiased estimate.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::sampleVariance([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '4.5714285714'
+     *
+     * Numbers::sampleVariance([1, 2, 3, 4, 5]);
+     * // Returns: '2.5000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute sample variance for
+     * @return string The sample variance as a BCMath string
+     * @throws InvalidArgumentException When the values array has fewer than 2 elements
+     * @see \Phuture\Coherence\Numbers::variance()
+     * @see \Phuture\Coherence\Numbers::sampleStandardDeviation()
+     */
+    public static function sampleVariance(array $values): string
+    {
+        if (count($values) < 2) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Sample variance requires at least 2 values'
+            );
+        }
+
+        $mean = self::mean($values);
+        $sumSquaredDiffs = '0';
+        foreach ($values as $value) {
+            $diff = bcsub((string) $value, $mean, self::DEFAULT_SCALE);
+            $sumSquaredDiffs = bcadd($sumSquaredDiffs, bcmul($diff, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sumSquaredDiffs, (string) (count($values) - 1), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the population standard deviation of a list of numbers.
+     *
+     * Standard deviation is the square root of the variance. It measures how
+     * spread out the numbers are from the mean in the same units as the data.
+     * Use this when your data represents an entire population.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::standardDeviation([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '2.0000000000'
+     *
+     * Numbers::standardDeviation([1, 2, 3, 4, 5]);
+     * // Returns: '1.4142135624'
+     * ```
+     *
+     * @param array $values The list of numbers to compute standard deviation for
+     * @return string The population standard deviation as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::variance()
+     * @see \Phuture\Coherence\Numbers::sampleStandardDeviation()
+     */
+    public static function standardDeviation(array $values): string
+    {
+        return self::squareRoot(self::variance($values));
+    }
+
+    /**
+     * Computes the sample standard deviation of a list of numbers.
+     *
+     * Sample standard deviation uses sample variance (N-1 denominator) as its
+     * base. Use this when your data is a sample from a larger population.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::sampleStandardDeviation([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '2.1380899353'
+     *
+     * Numbers::sampleStandardDeviation([1, 2, 3, 4, 5]);
+     * // Returns: '1.5811388301'
+     * ```
+     *
+     * @param array $values The list of numbers to compute sample standard deviation for
+     * @return string The sample standard deviation as a BCMath string
+     * @throws InvalidArgumentException When the values array has fewer than 2 elements
+     * @see \Phuture\Coherence\Numbers::sampleVariance()
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function sampleStandardDeviation(array $values): string
+    {
+        return self::squareRoot(self::sampleVariance($values));
+    }
+
+    /**
+     * Computes a specific percentile of a list of numbers.
+     *
+     * This method uses linear interpolation to compute the value at a given
+     * percentile rank. The 50th percentile is equivalent to the median.
+     * Values are sorted internally, and the result uses BCMath for precision.
+     *
+     * The percentile is computed using the "exclusive" method: the 0th
+     * percentile is the minimum value and the 100th percentile is the maximum.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5], 50);
+     * // Returns: '3.0000000000' (the median)
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5, 6], 25);
+     * // Returns: '2.5000000000'
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5], 0);
+     * // Returns: '1.0000000000' (the minimum)
+     * ```
+     *
+     * @param array $values The list of numbers to compute the percentile for
+     * @param int|float $percentile The percentile to compute, from 0 to 100
+     * @return string The value at the given percentile as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty or percentile is out of range
+     * @see \Phuture\Coherence\Numbers::median()
+     */
+    public static function percentile(array $values, int|float $percentile): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute percentile of an empty array'
+            );
+        }
+
+        if ($percentile < 0 || $percentile > 100) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Percentile must be between 0 and 100'
+            );
+        }
+
+        $sorted = $values;
+        sort($sorted, SORT_NUMERIC);
+
+        $count = count($values);
+
+        if ($percentile === 0) {
+            return bcadd((string) $sorted[0], '0', self::DEFAULT_SCALE);
+        }
+
+        if ($percentile === 100) {
+            return bcadd((string) $sorted[$count - 1], '0', self::DEFAULT_SCALE);
+        }
+
+        $rank = bcmul(
+            bcdiv((string) $percentile, '100', self::DEFAULT_SCALE),
+            (string) ($count - 1),
+            self::DEFAULT_SCALE
+        );
+        $lowerIndex = (int) floor((float) $rank);
+        $upperIndex = (int) ceil((float) $rank);
+
+        if ($lowerIndex === $upperIndex) {
+            return bcadd((string) $sorted[$lowerIndex], '0', self::DEFAULT_SCALE);
+        }
+
+        $fraction = bcsub($rank, (string) $lowerIndex, self::DEFAULT_SCALE);
+        $lowerValue = (string) $sorted[$lowerIndex];
+        $upperValue = (string) $sorted[$upperIndex];
+        $diff = bcsub($upperValue, $lowerValue, self::DEFAULT_SCALE);
+
+        return bcadd($lowerValue, bcmul($fraction, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the range (difference between maximum and minimum) of a list of numbers.
+     *
+     * This method finds the difference between the largest and smallest values
+     * in the set, giving a simple measure of data spread.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::range([3, 7, 2, 9, 5]);
+     * // Returns: '7.0000000000'
+     *
+     * Numbers::range([1.5, 4.5]);
+     * // Returns: '3.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute the range for
+     * @return string The range (max minus min) as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function range(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute range of an empty array'
+            );
+        }
+
+        return bcsub(
+            (string) max($values),
+            (string) min($values),
+            self::DEFAULT_SCALE
+        );
+    }
+
+    /**
      * Asserts that the given value is not NAN.
      *
      * NAN cannot be meaningfully compared with any value, including itself.
@@ -1307,7 +1704,8 @@ class Numbers extends StaticClass
      * - **Temperature**: celsius, fahrenheit, kelvin, rankine
      * - **Distance**: meter, millimeter, centimeter, decimeter, kilometer, inch, foot, yard, mile, nautical_mile
      * - **Mass**: kilogram, gram, milligram, microgram, metric_ton, pound, ounce, stone, us_ton, imperial_ton
-     * - **Volume**: liter, milliliter, cubic_meter, gallon_us, quart_us, pint_us, cup_us, fluid_ounce_us, tablespoon, teaspoon
+     * - **Volume**: liter, milliliter, cubic_meter, gallon_us, quart_us, pint_us, cup_us,
+     *   fluid_ounce_us, tablespoon, teaspoon
      * - **Time**: second, millisecond, microsecond, nanosecond, minute, hour, day, week
      * - **Area**: square_meter, square_kilometer, hectare, acre, square_foot, square_yard, square_mile, square_inch
      * - **Speed**: meter_per_second, kilometer_per_hour, mile_per_hour, knot, foot_per_second
@@ -1346,7 +1744,7 @@ class Numbers extends StaticClass
         $toNormalized = strtolower($to);
 
         if ($fromNormalized === $toNormalized) {
-            return self::formatBcmath((string) $value);
+            return bcadd((string) $value, '0', self::DEFAULT_SCALE);
         }
 
         $fromMeta = self::getUnitMeta($fromNormalized, $from);
@@ -1354,7 +1752,8 @@ class Numbers extends StaticClass
 
         if ($fromMeta['category'] !== $toMeta['category']) {
             throw new InvalidArgumentException(
-                "Invalid Argument: Cannot convert between different categories: {$from} ({$fromMeta['category']}) and {$to} ({$toMeta['category']})"
+                "Invalid Argument: Cannot convert between different categories: " .
+                "{$from} ({$fromMeta['category']}) and {$to} ({$toMeta['category']})"
             );
         }
 
@@ -1402,40 +1801,57 @@ class Numbers extends StaticClass
 
     private static function convertTemperature(int|float|string $value, string $from, string $to): string
     {
-        $toCelsius = [
-            'celsius' => fn ($v) => $v,
-            'fahrenheit' => fn ($v) => bcdiv(bcmul(bcsub((string) $v, '32', self::DEFAULT_SCALE), '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE),
-            'kelvin' => fn ($v) => bcsub((string) $v, '273.15', self::DEFAULT_SCALE),
-            'rankine' => fn ($v) => bcdiv(bcmul(bcsub((string) $v, '491.67', self::DEFAULT_SCALE), '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE),
-        ];
+        $celsius = match ($from) {
+            'celsius' => (string) $value,
+            'fahrenheit' => self::fahrenheitToCelsius((string) $value),
+            'kelvin' => bcsub((string) $value, '273.15', self::DEFAULT_SCALE),
+            'rankine' => self::rankineToCelsius((string) $value),
+            default => throw new InvalidArgumentException(
+                "Invalid Argument: Unknown temperature unit '{$from}'"
+            ),
+        };
 
-        $fromCelsius = [
-            'celsius' => fn ($v) => $v,
-            'fahrenheit' => fn ($v) => bcadd(bcmul(bcdiv((string) $v, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE), '32', self::DEFAULT_SCALE),
-            'kelvin' => fn ($v) => bcadd((string) $v, '273.15', self::DEFAULT_SCALE),
-            'rankine' => fn ($v) => bcadd(bcmul(bcdiv((string) $v, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE), '491.67', self::DEFAULT_SCALE),
-        ];
+        $result = match ($to) {
+            'celsius' => $celsius,
+            'fahrenheit' => self::celsiusToFahrenheit($celsius),
+            'kelvin' => bcadd($celsius, '273.15', self::DEFAULT_SCALE),
+            'rankine' => self::celsiusToRankine($celsius),
+            default => throw new InvalidArgumentException(
+                "Invalid Argument: Unknown temperature unit '{$to}'"
+            ),
+        };
 
-        $celsius = $toCelsius[$from]((string) $value);
-
-        return self::formatBcmath($fromCelsius[$to]($celsius));
+        return bcadd($result, '0', self::DEFAULT_SCALE);
     }
 
-    private static function formatBcmath(string $value): string
+    private static function fahrenheitToCelsius(string $value): string
     {
-        if (!str_contains($value, '.')) {
-            return $value . '.' . str_repeat('0', self::DEFAULT_SCALE);
-        }
+        $diff = bcsub($value, '32', self::DEFAULT_SCALE);
+        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
 
-        $parts = explode('.', $value);
-        $decimals = $parts[1] ?? '';
-        if (strlen($decimals) < self::DEFAULT_SCALE) {
-            $parts[1] = str_pad($decimals, self::DEFAULT_SCALE, '0');
-        } elseif (strlen($decimals) > self::DEFAULT_SCALE) {
-            $parts[1] = substr($decimals, 0, self::DEFAULT_SCALE);
-        }
+        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
+    }
 
-        return implode('.', $parts);
+    private static function celsiusToFahrenheit(string $value): string
+    {
+        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
+
+        return bcadd($scaled, '32', self::DEFAULT_SCALE);
+    }
+
+    private static function rankineToCelsius(string $value): string
+    {
+        $diff = bcsub($value, '491.67', self::DEFAULT_SCALE);
+        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
+
+        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
+    }
+
+    private static function celsiusToRankine(string $value): string
+    {
+        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
+
+        return bcadd($scaled, '491.67', self::DEFAULT_SCALE);
     }
 
     private static function getUnitMeta(string $normalizedUnit, string $originalUnit): array

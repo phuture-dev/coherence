@@ -14,12 +14,6 @@ require __DIR__ . '/../bootstrap.php';
 
 class NumbersTest extends TestCase
 {
-    public function testAbbreviate(): void
-    {
-        Assert::same(Numbers::abbreviate(1500), FluentNumbers::from(1500)->abbreviate());
-        Assert::same(Numbers::abbreviate(1000000), FluentNumbers::from(1000000)->abbreviate());
-        Assert::same(Numbers::abbreviate(1500, 2), FluentNumbers::from(1500)->abbreviate(2));
-    }
     public function testAbsolute(): void
     {
         Assert::same(5, FluentNumbers::from(-5)->absolute()->get());
