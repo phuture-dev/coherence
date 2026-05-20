@@ -1799,6 +1799,21 @@ class Numbers extends StaticClass
         return $categories;
     }
 
+    /**
+     * Converts a temperature value from one scale to another via Celsius as the
+     * intermediate step.
+     *
+     * Uses a two-step conversion: first to Celsius, then from Celsius to the target
+     * scale. This avoids needing a conversion formula for every possible pair of
+     * temperature units. All arithmetic uses BCMath for precision.
+     *
+     * @param int|float|string $value The temperature value to convert
+     * @param string $from The source temperature unit ('celsius', 'fahrenheit', 'kelvin', 'rankine')
+     * @param string $to The target temperature unit ('celsius', 'fahrenheit', 'kelvin', 'rankine')
+     * @return string The converted temperature as a BCMath string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When an unrecognized temperature unit is given
+     * @see \Phuture\Coherence\Numbers::convert()
+     */
     private static function convertTemperature(int|float|string $value, string $from, string $to): string
     {
         $celsius = match ($from) {
@@ -1824,6 +1839,15 @@ class Numbers extends StaticClass
         return bcadd($result, '0', self::DEFAULT_SCALE);
     }
 
+    /**
+     * Converts a Fahrenheit temperature to Celsius using BCMath for precision.
+     *
+     * Applies the formula: Celsius = (Fahrenheit - 32) * 5 / 9
+     *
+     * @param string $value The Fahrenheit temperature as a numeric string
+     * @return string The Celsius temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::celsiusToFahrenheit()
+     */
     private static function fahrenheitToCelsius(string $value): string
     {
         $diff = bcsub($value, '32', self::DEFAULT_SCALE);
@@ -1832,6 +1856,15 @@ class Numbers extends StaticClass
         return bcdiv($scaled, '9', self::DEFAULT_SCALE);
     }
 
+    /**
+     * Converts a Celsius temperature to Fahrenheit using BCMath for precision.
+     *
+     * Applies the formula: Fahrenheit = (Celsius / 5) * 9 + 32
+     *
+     * @param string $value The Celsius temperature as a numeric string
+     * @return string The Fahrenheit temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::fahrenheitToCelsius()
+     */
     private static function celsiusToFahrenheit(string $value): string
     {
         $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
@@ -1839,6 +1872,15 @@ class Numbers extends StaticClass
         return bcadd($scaled, '32', self::DEFAULT_SCALE);
     }
 
+    /**
+     * Converts a Rankine temperature to Celsius using BCMath for precision.
+     *
+     * Applies the formula: Celsius = (Rankine - 491.67) * 5 / 9
+     *
+     * @param string $value The Rankine temperature as a numeric string
+     * @return string The Celsius temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::celsiusToRankine()
+     */
     private static function rankineToCelsius(string $value): string
     {
         $diff = bcsub($value, '491.67', self::DEFAULT_SCALE);
@@ -1847,6 +1889,15 @@ class Numbers extends StaticClass
         return bcdiv($scaled, '9', self::DEFAULT_SCALE);
     }
 
+    /**
+     * Converts a Celsius temperature to Rankine using BCMath for precision.
+     *
+     * Applies the formula: Rankine = (Celsius / 5) * 9 + 491.67
+     *
+     * @param string $value The Celsius temperature as a numeric string
+     * @return string The Rankine temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::rankineToCelsius()
+     */
     private static function celsiusToRankine(string $value): string
     {
         $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
@@ -1854,6 +1905,19 @@ class Numbers extends StaticClass
         return bcadd($scaled, '491.67', self::DEFAULT_SCALE);
     }
 
+    /**
+     * Looks up the category and conversion factor for a normalized unit identifier.
+     *
+     * Searches the unit definitions for the given unit name and returns its metadata
+     * array containing the 'category' and 'factor' keys. Throws when the unit is not
+     * found in the definitions.
+     *
+     * @param string $normalizedUnit The lowercase unit identifier to look up
+     * @param string $originalUnit The original unit identifier used in the error message
+     * @return array The unit metadata with 'category' and 'factor' keys
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the unit is not defined
+     * @see \Phuture\Coherence\Numbers::unitDefinitions()
+     */
     private static function getUnitMeta(string $normalizedUnit, string $originalUnit): array
     {
         $definitions = self::unitDefinitions();
@@ -1867,6 +1931,18 @@ class Numbers extends StaticClass
         );
     }
 
+    /**
+     * Returns the complete map of unit identifiers to their conversion metadata.
+     *
+     * Each entry maps a lowercase unit name to an array with 'category' (the measurement
+     * group) and 'factor' (the multiplication factor to convert to the base unit of that
+     * category). The result is cached in a static variable so the large array is only
+     * built once per request.
+     *
+     * @return array An associative array mapping unit names to their category and factor
+     * @see \Phuture\Coherence\Numbers::getUnitMeta()
+     * @see \Phuture\Coherence\Numbers::conversionUnits()
+     */
     private static function unitDefinitions(): array
     {
         static $units = null;
