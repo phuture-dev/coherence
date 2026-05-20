@@ -14,12 +14,6 @@ require __DIR__ . '/../bootstrap.php';
 
 class NumbersTest extends TestCase
 {
-    public function testAbbreviate(): void
-    {
-        Assert::same(Numbers::abbreviate(1500), FluentNumbers::from(1500)->abbreviate());
-        Assert::same(Numbers::abbreviate(1000000), FluentNumbers::from(1000000)->abbreviate());
-        Assert::same(Numbers::abbreviate(1500, 2), FluentNumbers::from(1500)->abbreviate(2));
-    }
     public function testAbsolute(): void
     {
         Assert::same(5, FluentNumbers::from(-5)->absolute()->get());
@@ -402,12 +396,6 @@ class NumbersTest extends TestCase
     public function testToNumberAfterBcmath(): void
     {
         Assert::same('0.3000000000', FluentNumbers::from(0.1)->add(0.2)->toNumber()->get());
-    }
-
-    public function testTrimTrailingZeros(): void
-    {
-        Assert::same('13.14', FluentNumbers::from(10)->add(3.14)->trimTrailingZeros());
-        Assert::same('5', FluentNumbers::from(2.5)->add(2.5)->trimTrailingZeros());
     }
 }
 

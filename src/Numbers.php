@@ -23,6 +23,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
  * - **Clamping & Limits**: Constrain numbers to a minimum, maximum, or both
  * - **Formatting**: Abbreviate numbers, format file sizes, percentages, ordinals, and more
  * - **Human-Readable Output**: Convert numbers into readable strings like "1.5K" or "2.5 MB"
+ * - **Statistical Functions**: Compute mean, median, mode, variance, standard deviation, and percentiles
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -1212,6 +1213,402 @@ class Numbers extends StaticClass
         $string = rtrim($string, '.');
 
         return $string;
+    }
+
+    /**
+     * Computes the arithmetic mean (average) of a list of numbers.
+     *
+     * This method calculates the average by summing all values and dividing
+     * by the count. It uses BCMath for precision, returning a string result.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::mean([2, 4, 6, 8]);
+     * // Returns: '5.0000000000'
+     *
+     * Numbers::mean([1.5, 2.5, 3.5]);
+     * // Returns: '2.5000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to average
+     * @return string The arithmetic mean as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::median()
+     * @see \Phuture\Coherence\Numbers::mode()
+     */
+    public static function mean(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute mean of an empty array'
+            );
+        }
+
+        $sum = '0';
+        foreach ($values as $value) {
+            $sum = bcadd($sum, (string) $value, self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sum, (string) count($values), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the median (middle value) of a list of numbers.
+     *
+     * This method sorts the values and returns the middle value for odd-count
+     * arrays, or the average of the two middle values for even-count arrays.
+     * Returns a BCMath string for precision.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::median([1, 3, 5]);
+     * // Returns: '3.0000000000'
+     *
+     * Numbers::median([1, 3, 5, 7]);
+     * // Returns: '4.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to find the median of
+     * @return string The median as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::mean()
+     * @see \Phuture\Coherence\Numbers::percentile()
+     */
+    public static function median(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute median of an empty array'
+            );
+        }
+
+        $sorted = $values;
+        sort($sorted, SORT_NUMERIC);
+
+        $count = count($sorted);
+        $middle = intdiv($count, 2);
+
+        if ($count % 2 === 1) {
+            return bcadd((string) $sorted[$middle], '0', self::DEFAULT_SCALE);
+        }
+
+        return bcdiv(
+            bcadd((string) $sorted[$middle - 1], (string) $sorted[$middle], self::DEFAULT_SCALE),
+            '2',
+            self::DEFAULT_SCALE
+        );
+    }
+
+    /**
+     * Finds the mode (most frequently occurring value) of a list of numbers.
+     *
+     * This method returns the value that appears most often. When multiple
+     * values share the highest frequency, all of them are returned. The result
+     * is an array of the mode values, preserving their original types.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::mode([1, 2, 2, 3, 3, 3]);
+     * // Returns: [3]
+     *
+     * Numbers::mode([1, 1, 2, 2, 3]);
+     * // Returns: [1, 2]
+     *
+     * Numbers::mode([5]);
+     * // Returns: [5]
+     * ```
+     *
+     * @param array $values The list of numbers to find the mode of
+     * @return array An array containing the most frequently occurring value(s)
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::mean()
+     * @see \Phuture\Coherence\Numbers::median()
+     */
+    public static function mode(array $values): array
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute mode of an empty array'
+            );
+        }
+
+        $frequency = [];
+        foreach ($values as $value) {
+            $key = (string) $value;
+            $frequency[$key] = ($frequency[$key] ?? 0) + 1;
+        }
+
+        $maxCount = max($frequency);
+        $modes = [];
+        foreach ($values as $value) {
+            $key = (string) $value;
+            if ($frequency[$key] === $maxCount && !in_array($value, $modes, true)) {
+                $modes[] = $value;
+            }
+        }
+
+        return $modes;
+    }
+
+    /**
+     * Computes the population variance of a list of numbers.
+     *
+     * Population variance measures how far each number in the set is from the
+     * mean squared, averaged across all values. Use this when your data
+     * represents an entire population, not a sample.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::variance([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '4.0000000000'
+     *
+     * Numbers::variance([1, 2, 3, 4, 5]);
+     * // Returns: '2.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute variance for
+     * @return string The population variance as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::sampleVariance()
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function variance(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute variance of an empty array'
+            );
+        }
+
+        $mean = self::mean($values);
+        $sumSquaredDiffs = '0';
+        foreach ($values as $value) {
+            $diff = bcsub((string) $value, $mean, self::DEFAULT_SCALE);
+            $sumSquaredDiffs = bcadd($sumSquaredDiffs, bcmul($diff, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sumSquaredDiffs, (string) count($values), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the sample variance of a list of numbers.
+     *
+     * Sample variance is similar to population variance but divides by N-1
+     * instead of N (Bessel's correction). Use this when your data is a sample
+     * from a larger population to get an unbiased estimate.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::sampleVariance([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '4.5714285714'
+     *
+     * Numbers::sampleVariance([1, 2, 3, 4, 5]);
+     * // Returns: '2.5000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute sample variance for
+     * @return string The sample variance as a BCMath string
+     * @throws InvalidArgumentException When the values array has fewer than 2 elements
+     * @see \Phuture\Coherence\Numbers::variance()
+     * @see \Phuture\Coherence\Numbers::sampleStandardDeviation()
+     */
+    public static function sampleVariance(array $values): string
+    {
+        if (count($values) < 2) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Sample variance requires at least 2 values'
+            );
+        }
+
+        $mean = self::mean($values);
+        $sumSquaredDiffs = '0';
+        foreach ($values as $value) {
+            $diff = bcsub((string) $value, $mean, self::DEFAULT_SCALE);
+            $sumSquaredDiffs = bcadd($sumSquaredDiffs, bcmul($diff, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+        }
+
+        return bcdiv($sumSquaredDiffs, (string) (count($values) - 1), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the population standard deviation of a list of numbers.
+     *
+     * Standard deviation is the square root of the variance. It measures how
+     * spread out the numbers are from the mean in the same units as the data.
+     * Use this when your data represents an entire population.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::standardDeviation([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '2.0000000000'
+     *
+     * Numbers::standardDeviation([1, 2, 3, 4, 5]);
+     * // Returns: '1.4142135624'
+     * ```
+     *
+     * @param array $values The list of numbers to compute standard deviation for
+     * @return string The population standard deviation as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::variance()
+     * @see \Phuture\Coherence\Numbers::sampleStandardDeviation()
+     */
+    public static function standardDeviation(array $values): string
+    {
+        return self::squareRoot(self::variance($values));
+    }
+
+    /**
+     * Computes the sample standard deviation of a list of numbers.
+     *
+     * Sample standard deviation uses sample variance (N-1 denominator) as its
+     * base. Use this when your data is a sample from a larger population.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::sampleStandardDeviation([2, 4, 4, 4, 5, 5, 7, 9]);
+     * // Returns: '2.1380899353'
+     *
+     * Numbers::sampleStandardDeviation([1, 2, 3, 4, 5]);
+     * // Returns: '1.5811388301'
+     * ```
+     *
+     * @param array $values The list of numbers to compute sample standard deviation for
+     * @return string The sample standard deviation as a BCMath string
+     * @throws InvalidArgumentException When the values array has fewer than 2 elements
+     * @see \Phuture\Coherence\Numbers::sampleVariance()
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function sampleStandardDeviation(array $values): string
+    {
+        return self::squareRoot(self::sampleVariance($values));
+    }
+
+    /**
+     * Computes a specific percentile of a list of numbers.
+     *
+     * This method uses linear interpolation to compute the value at a given
+     * percentile rank. The 50th percentile is equivalent to the median.
+     * Values are sorted internally, and the result uses BCMath for precision.
+     *
+     * The percentile is computed using the "exclusive" method: the 0th
+     * percentile is the minimum value and the 100th percentile is the maximum.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5], 50);
+     * // Returns: '3.0000000000' (the median)
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5, 6], 25);
+     * // Returns: '2.5000000000'
+     *
+     * Numbers::percentile([1, 2, 3, 4, 5], 0);
+     * // Returns: '1.0000000000' (the minimum)
+     * ```
+     *
+     * @param array $values The list of numbers to compute the percentile for
+     * @param int|float $percentile The percentile to compute, from 0 to 100
+     * @return string The value at the given percentile as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty or percentile is out of range
+     * @see \Phuture\Coherence\Numbers::median()
+     */
+    public static function percentile(array $values, int|float $percentile): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute percentile of an empty array'
+            );
+        }
+
+        if ($percentile < 0 || $percentile > 100) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Percentile must be between 0 and 100'
+            );
+        }
+
+        $sorted = $values;
+        sort($sorted, SORT_NUMERIC);
+
+        $count = count($values);
+
+        if ($percentile === 0) {
+            return bcadd((string) $sorted[0], '0', self::DEFAULT_SCALE);
+        }
+
+        if ($percentile === 100) {
+            return bcadd((string) $sorted[$count - 1], '0', self::DEFAULT_SCALE);
+        }
+
+        $rank = bcmul(
+            bcdiv((string) $percentile, '100', self::DEFAULT_SCALE),
+            (string) ($count - 1),
+            self::DEFAULT_SCALE
+        );
+        $lowerIndex = (int) floor((float) $rank);
+        $upperIndex = (int) ceil((float) $rank);
+
+        if ($lowerIndex === $upperIndex) {
+            return bcadd((string) $sorted[$lowerIndex], '0', self::DEFAULT_SCALE);
+        }
+
+        $fraction = bcsub($rank, (string) $lowerIndex, self::DEFAULT_SCALE);
+        $lowerValue = (string) $sorted[$lowerIndex];
+        $upperValue = (string) $sorted[$upperIndex];
+        $diff = bcsub($upperValue, $lowerValue, self::DEFAULT_SCALE);
+
+        return bcadd($lowerValue, bcmul($fraction, $diff, self::DEFAULT_SCALE), self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Computes the range (difference between maximum and minimum) of a list of numbers.
+     *
+     * This method finds the difference between the largest and smallest values
+     * in the set, giving a simple measure of data spread.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * Numbers::range([3, 7, 2, 9, 5]);
+     * // Returns: '7.0000000000'
+     *
+     * Numbers::range([1.5, 4.5]);
+     * // Returns: '3.0000000000'
+     * ```
+     *
+     * @param array $values The list of numbers to compute the range for
+     * @return string The range (max minus min) as a BCMath string
+     * @throws InvalidArgumentException When the values array is empty
+     * @see \Phuture\Coherence\Numbers::standardDeviation()
+     */
+    public static function range(array $values): string
+    {
+        if (empty($values)) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Cannot compute range of an empty array'
+            );
+        }
+
+        return bcsub(
+            (string) max($values),
+            (string) min($values),
+            self::DEFAULT_SCALE
+        );
     }
 
     /**

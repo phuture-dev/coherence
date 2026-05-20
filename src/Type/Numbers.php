@@ -40,18 +40,6 @@ use Phuture\Coherence\Numbers as Transformer;
 class Numbers extends FluentClass implements Numberable
 {
     /**
-     * Abbreviates the wrapped number using suffix letters (K, M, B, T).
-     *
-     * @param int $precision The number of decimal places to keep (default: 1)
-     * @return string The abbreviated number string
-     * @see Transformer::abbreviate()
-     */
-    public function abbreviate(int $precision = 1): string
-    {
-        return Transformer::abbreviate($this->toString(), $precision);
-    }
-
-    /**
      * Returns the absolute (non-negative) value of the wrapped number.
      *
      * @return self Returns the current instance for method chaining
@@ -374,16 +362,5 @@ class Numbers extends FluentClass implements Numberable
         }
 
         return (string) $this->data;
-    }
-
-    /**
-     * Removes trailing zeros from the wrapped numeric string representation.
-     *
-     * @return string The trimmed number string
-     * @see Transformer::trimTrailingZeros()
-     */
-    public function trimTrailingZeros(): string
-    {
-        return Transformer::trimTrailingZeros($this->data);
     }
 }
