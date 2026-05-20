@@ -1554,7 +1554,11 @@ class Numbers extends StaticClass
             return bcadd((string) $sorted[$count - 1], '0', self::DEFAULT_SCALE);
         }
 
-        $rank = bcmul(bcdiv((string) $percentile, '100', self::DEFAULT_SCALE), (string) ($count - 1), self::DEFAULT_SCALE);
+        $rank = bcmul(
+            bcdiv((string) $percentile, '100', self::DEFAULT_SCALE),
+            (string) ($count - 1),
+            self::DEFAULT_SCALE
+        );
         $lowerIndex = (int) floor((float) $rank);
         $upperIndex = (int) ceil((float) $rank);
 
