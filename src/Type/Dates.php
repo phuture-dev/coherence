@@ -207,11 +207,11 @@ class Dates extends FluentClass implements Dateable
      *
      * @param string $expression A relative date expression (e.g. '+2 days', 'in 3 hours')
      * @return self Returns the current instance for method chaining
-     * @see \Phuture\Coherence\Dates::parseRelative()
+     * @see \Phuture\Coherence\Dates::fromRelative()
      */
-    public function parseRelative(string $expression): self
+    public function fromRelative(string $expression): self
     {
-        $this->data = Transformer::parseRelative($expression, $this->data);
+        $this->data = Transformer::fromRelative($expression, $this->data);
 
         return $this;
     }

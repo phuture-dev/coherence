@@ -464,19 +464,19 @@ class DatesTest extends TestCase
         Assert::same('2026-04-21T14:30:00+00:00', $result);
     }
 
-    public function testParseRelativeModifiesWrappedDate(): void
+    public function testFromRelativeModifiesWrappedDate(): void
     {
         $result = $this->date('2026-04-21 12:00:00')
-            ->parseRelative('+3 days')
+            ->fromRelative('+3 days')
             ->toDateTimeImmutable();
 
         Assert::same('2026-04-24 12:00:00', $result->format('Y-m-d H:i:s'));
     }
 
-    public function testParseRelativeHandlesInPattern(): void
+    public function testFromRelativeHandlesInPattern(): void
     {
         $result = $this->date('2026-04-21 12:00:00')
-            ->parseRelative('in 5 hours')
+            ->fromRelative('in 5 hours')
             ->toDateTimeImmutable();
 
         Assert::same('2026-04-21 17:00:00', $result->format('Y-m-d H:i:s'));

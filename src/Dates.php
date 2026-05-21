@@ -1662,17 +1662,17 @@ class Dates extends StaticClass
      * $ref = Dates::parse('2026-04-21 12:00:00', 'UTC');
      *
      * // PHP native relative expressions
-     * Dates::parseRelative('+3 days', $ref);  // 2026-04-24 12:00:00
-     * Dates::parseRelative('-1 week', $ref);  // 2026-04-14 12:00:00
+     * Dates::fromRelative('+3 days', $ref);  // 2026-04-24 12:00:00
+     * Dates::fromRelative('-1 week', $ref);  // 2026-04-14 12:00:00
      *
      * // Natural language
-     * Dates::parseRelative('2 days ago', $ref); // 2026-04-19 12:00:00
+     * Dates::fromRelative('2 days ago', $ref); // 2026-04-19 12:00:00
      *
      * // Extended 'in X units' pattern
-     * Dates::parseRelative('in 5 hours', $ref); // 2026-04-21 17:00:00
+     * Dates::fromRelative('in 5 hours', $ref); // 2026-04-21 17:00:00
      *
      * // Without a reference date, resolves against the current moment
-     * Dates::parseRelative('tomorrow');
+     * Dates::fromRelative('tomorrow');
      * ```
      *
      * @param string $expression A relative date expression (e.g. '+2 days', 'in 3 hours', 'yesterday')
@@ -1686,7 +1686,7 @@ class Dates extends StaticClass
      * @see \Phuture\Coherence\Dates::parse()
      * @see \Phuture\Coherence\Dates::toRelative()
      */
-    public static function parseRelative(
+    public static function fromRelative(
         string $expression,
         DateTimeImmutable|string|null $relativeTo = null,
         ?string $timezone = null
@@ -2332,7 +2332,7 @@ class Dates extends StaticClass
      * @param DateTimeImmutable|string|null $comparedTo The reference date/time to compare against.
      *   Pass null to use the current moment (default: null)
      * @return string A human-readable relative time string
-     * @see \Phuture\Coherence\Dates::parseRelative()
+     * @see \Phuture\Coherence\Dates::fromRelative()
      */
     public static function toRelative(
         DateTimeImmutable|string $date,
@@ -2556,7 +2556,7 @@ class Dates extends StaticClass
     }
 
     /**
-     * Resolves the base date for parseRelative from the $relativeTo parameter.
+     * Resolves the base date for fromRelative from the $relativeTo parameter.
      *
      * @param DateTimeImmutable|string|null $relativeTo The user-supplied reference date
      * @param string|null $timezone Timezone used when $relativeTo is null
