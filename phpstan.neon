@@ -1,0 +1,12 @@
+parameters:
+    phpVersion: 80100
+    excludePaths:
+        - tests/*
+    ignoreErrors:
+        - identifier: missingType.iterableValue
+        - identifier: missingType.generics
+        - identifier: parameter.notFound
+        - identifier: argument.type
+
+    # Set rules level
+    level: 9

@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Phuture\Coherence\Interface;
+
+/**
+ * Interface for objects that can be converted to arrays.
+ *
+ * This interface provides a standardized way for objects to be converted
+ * to their array representation, making it easier to work with different
+ * data types consistently.
+ *
+ * @copyright Copyright (c) 2026, Advandz Technologies, LLC
+ * @license https://opensource.org/licenses/MIT MIT License
+ * @link https://www.phuture.dev/ Phuture
+ */
+interface Arrayable
+{
+    /**
+     * Convert the object to an array representation.
+     *
+     * This method should return a native PHP array that represents
+     * the object's data in a serializable format.
+     *
+     * @return array The array representation of the object
+     */
+    public function toArray(): array;
+
+    /**
+     * Convert the object to a JSON string representation.
+     *
+     * This method should return a JSON-encoded string that represents
+     * the object's data in a format suitable for storage or transmission.
+     *
+     * @return string The JSON representation of the object
+     */
+    public function toJson(): string;
+
+    /**
+     * Convert the object to a generic object representation.
+     *
+     * This method should return a plain PHP object (stdClass) that represents
+     * the object's data, making it easier to access properties dynamically.
+     *
+     * @return object The object representation of the object
+     */
+    public function toObject(): object;
+}
