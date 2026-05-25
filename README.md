@@ -7,7 +7,7 @@
 ![PHP Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fphuture-dev%2Fcoherence%2Frefs%2Fheads%2Fmain%2Fcomposer.json&query=require.php&style=for-the-badge&label=PHP%20Version&color=purple)
 ![Latest Release](https://img.shields.io/github/v/tag/phuture-dev/coherence?sort=semver&style=for-the-badge&label=latest%20release&color=blue)
 ![Tests Status](https://img.shields.io/github/actions/workflow/status/phuture-dev/coherence/tests.yml?style=for-the-badge&label=tests)
-![License](https://img.shields.io/github/license/phuture-dev/coherence?style=for-the-badge&color=orange)
+![License](https://img.shields.io/github/license/phuture-dev/coherence?style=for-the-badge)
 
 </div>
 
