@@ -29,7 +29,6 @@ class StaticClassTest extends TestCase
             // Attempt to instantiate via reflection
             $reflection = new ReflectionClass(TestStaticClass::class);
             $constructor = $reflection->getConstructor();
-            $constructor->setAccessible(true);
             $constructor->newInstance();
         }, Error::class);
     }

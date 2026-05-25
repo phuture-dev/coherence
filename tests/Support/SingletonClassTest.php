@@ -30,7 +30,6 @@ class SingletonClassTest extends TestCase
             // Attempt to instantiate directly
             $reflection = new ReflectionClass(TestSingletonClass::class);
             $constructor = $reflection->getConstructor();
-            $constructor->setAccessible(true);
             $constructor->newInstance();
         }, Throwable::class);
     }
