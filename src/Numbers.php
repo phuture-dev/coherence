@@ -222,6 +222,56 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Converts a Celsius temperature to Fahrenheit using BCMath for precision.
+     *
+     * Applies the formula: Fahrenheit = (Celsius / 5) * 9 + 32
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * $fahrenheit = Numbers::celsiusToFahrenheit('100');
+     *
+     * // Returns: '212.0000000000'
+     * ```
+     *
+     * @param string $value The Celsius temperature as a numeric string
+     * @return string The Fahrenheit temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::fahrenheitToCelsius()
+     */
+    public static function celsiusToFahrenheit(string $value): string
+    {
+        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
+
+        return bcadd($scaled, '32', self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Converts a Celsius temperature to Rankine using BCMath for precision.
+     *
+     * Applies the formula: Rankine = (Celsius / 5) * 9 + 491.67
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * $rankine = Numbers::celsiusToRankine('100');
+     *
+     * // Returns: '671.6700000000'
+     * ```
+     *
+     * @param string $value The Celsius temperature as a numeric string
+     * @return string The Rankine temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::rankineToCelsius()
+     */
+    public static function celsiusToRankine(string $value): string
+    {
+        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
+
+        return bcadd($scaled, '491.67', self::DEFAULT_SCALE);
+    }
+
+    /**
      * Restricts a number to be within the given minimum and maximum bounds.
      *
      * When the number is below `$min`, `$min` is returned. When the number is
@@ -420,6 +470,32 @@ class Numbers extends StaticClass
         }
 
         return bcdiv((string) $dividend, (string) $divisor, self::DEFAULT_SCALE);
+    }
+
+    /**
+     * Converts a Fahrenheit temperature to Celsius using BCMath for precision.
+     *
+     * Applies the formula: Celsius = (Fahrenheit - 32) * 5 / 9
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * $celsius = Numbers::fahrenheitToCelsius('212');
+     *
+     * // Returns: '100.0000000000'
+     * ```
+     *
+     * @param string $value The Fahrenheit temperature as a numeric string
+     * @return string The Celsius temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::celsiusToFahrenheit()
+     */
+    public static function fahrenheitToCelsius(string $value): string
+    {
+        $diff = bcsub($value, '32', self::DEFAULT_SCALE);
+        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
+
+        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
     }
 
     /**
@@ -1419,6 +1495,32 @@ class Numbers extends StaticClass
     }
 
     /**
+     * Converts a Rankine temperature to Celsius using BCMath for precision.
+     *
+     * Applies the formula: Celsius = (Rankine - 491.67) * 5 / 9
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Numbers;
+     *
+     * $celsius = Numbers::rankineToCelsius('671.67');
+     *
+     * // Returns: '100.0000000000'
+     * ```
+     *
+     * @param string $value The Rankine temperature as a numeric string
+     * @return string The Celsius temperature as a BCMath string
+     * @see \Phuture\Coherence\Numbers::celsiusToRankine()
+     */
+    public static function rankineToCelsius(string $value): string
+    {
+        $diff = bcsub($value, '491.67', self::DEFAULT_SCALE);
+        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
+
+        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
+    }
+
+    /**
      * Rounds a number to the specified precision using the given rounding mode.
      *
      * Delegates to the polyfilled/native `bcround()` for full BCMath precision.
@@ -1828,38 +1930,6 @@ class Numbers extends StaticClass
     }
 
     /**
-     * Converts a Celsius temperature to Fahrenheit using BCMath for precision.
-     *
-     * Applies the formula: Fahrenheit = (Celsius / 5) * 9 + 32
-     *
-     * @param string $value The Celsius temperature as a numeric string
-     * @return string The Fahrenheit temperature as a BCMath string
-     * @see \Phuture\Coherence\Numbers::fahrenheitToCelsius()
-     */
-    private static function celsiusToFahrenheit(string $value): string
-    {
-        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
-
-        return bcadd($scaled, '32', self::DEFAULT_SCALE);
-    }
-
-    /**
-     * Converts a Celsius temperature to Rankine using BCMath for precision.
-     *
-     * Applies the formula: Rankine = (Celsius / 5) * 9 + 491.67
-     *
-     * @param string $value The Celsius temperature as a numeric string
-     * @return string The Rankine temperature as a BCMath string
-     * @see \Phuture\Coherence\Numbers::rankineToCelsius()
-     */
-    private static function celsiusToRankine(string $value): string
-    {
-        $scaled = bcmul(bcdiv($value, '5', self::DEFAULT_SCALE), '9', self::DEFAULT_SCALE);
-
-        return bcadd($scaled, '491.67', self::DEFAULT_SCALE);
-    }
-
-    /**
      * Converts an integer between 0 and 999,999,999 into English words.
      *
      * Breaks the number into groups of three digits and converts each group
@@ -1971,39 +2041,5 @@ class Numbers extends StaticClass
         }
 
         return strlen(substr($string, strpos($string, '.') + 1));
-    }
-
-    /**
-     * Converts a Fahrenheit temperature to Celsius using BCMath for precision.
-     *
-     * Applies the formula: Celsius = (Fahrenheit - 32) * 5 / 9
-     *
-     * @param string $value The Fahrenheit temperature as a numeric string
-     * @return string The Celsius temperature as a BCMath string
-     * @see \Phuture\Coherence\Numbers::celsiusToFahrenheit()
-     */
-    private static function fahrenheitToCelsius(string $value): string
-    {
-        $diff = bcsub($value, '32', self::DEFAULT_SCALE);
-        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
-
-        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
-    }
-
-    /**
-     * Converts a Rankine temperature to Celsius using BCMath for precision.
-     *
-     * Applies the formula: Celsius = (Rankine - 491.67) * 5 / 9
-     *
-     * @param string $value The Rankine temperature as a numeric string
-     * @return string The Celsius temperature as a BCMath string
-     * @see \Phuture\Coherence\Numbers::celsiusToRankine()
-     */
-    private static function rankineToCelsius(string $value): string
-    {
-        $diff = bcsub($value, '491.67', self::DEFAULT_SCALE);
-        $scaled = bcmul($diff, '5', self::DEFAULT_SCALE);
-
-        return bcdiv($scaled, '9', self::DEFAULT_SCALE);
     }
 }

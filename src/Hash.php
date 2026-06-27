@@ -268,7 +268,7 @@ class Hash extends StaticClass
      * ```php
      * use Phuture\Coherence\Hash;
      *
-     * $result = Hash::withSalt('password123');
+     * $result = Hash::makeWithSalt('password123');
      * $isValid = Hash::checkWithSalt('password123', $result['hash'], $result['salt']);
      *
      * // Returns: true
@@ -279,7 +279,7 @@ class Hash extends StaticClass
      * @param string $salt The salt that was used to create the original hash
      * @param string $algo The hash algorithm that was used (default: 'sha256')
      * @return bool Returns true if the data and salt match the hash, false otherwise
-     * @see \Phuture\Coherence\Hash::withSalt() For generating a salted hash
+     * @see \Phuture\Coherence\Hash::makeWithSalt() For generating a salted hash
      * @see \Phuture\Coherence\Hash::check() For verifying data against an unsalted hash
      */
     public static function checkWithSalt(
@@ -747,6 +747,41 @@ class Hash extends StaticClass
     public static function fromBinary(string $data): string
     {
         return bin2hex($data);
+    }
+
+    /**
+     * Generates a combined hash by joining the SHA-256 and SHA-512 hashes of the data.
+     *
+     * This method produces a single, longer fingerprint by hashing the data twice — once
+     * with SHA-256 and once with SHA-512 — and joining the two results together. When a
+     * salt is provided, both halves are salted before hashing, which makes identical inputs
+     * produce different fingerprints.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $hash = Hash::hash('Hello, World!');
+     *
+     * // Returns: the SHA-256 hash followed by the SHA-512 hash, joined into one string
+     * ```
+     *
+     * @param string $data The data to hash
+     * @param string|null $salt Optional salt applied to both hashes (default: null for no salt)
+     * @param bool $binary Whether to return raw binary data (default: false for hex string)
+     * @return string Returns the SHA-256 and SHA-512 hashes joined into a single string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @see \Phuture\Coherence\Hash::make() For generating a single-algorithm hash
+     * @see \Phuture\Coherence\Hash::makeWithSalt() For generating a salted hash
+     */
+    public static function hash(string $data, ?string $salt = null, bool $binary = false): string
+    {
+        if (!is_null($salt)) {
+            return self::makeWithSalt($data, $salt, $binary, 'sha256')['hash']
+                . self::makeWithSalt($data, $salt, $binary, 'sha512')['hash'];
+        }
+
+        return self::make($data, $binary, 'sha256') . self::make($data, $binary, 'sha512');
     }
 
     /**
@@ -1400,7 +1435,7 @@ class Hash extends StaticClass
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the specified algorithm is not supported
      * @throws \Phuture\Coherence\Exception\RuntimeException When random bytes generation fails
      * @see \Phuture\Coherence\Hash::hmacCheckWithSalt() For verifying a salted HMAC
-     * @see \Phuture\Coherence\Hash::withSalt() For generating a salted hash
+     * @see \Phuture\Coherence\Hash::makeWithSalt() For generating a salted hash
      */
     public static function hmacWithSalt(
         string $data,
@@ -1488,6 +1523,51 @@ class Hash extends StaticClass
         }
 
         return hash($algo, $data, $binary);
+    }
+
+    /**
+     * Generates a salted hash using the specified algorithm.
+     *
+     * This method creates a hash by combining a salted hash of the salt with the data
+     * before final hashing. This prevents length extension attacks and makes identical
+     * inputs produce different hashes. Returns both the hash and salt for storage.
+     *
+     * The method uses a secure construction: hash(hash('sha256', $salt, true) . $data)
+     * instead of the insecure $data . $salt concatenation.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Hash;
+     *
+     * $result = Hash::makeWithSalt('password123');
+     *
+     * // Returns: ['hash' => '...', 'salt' => '...']
+     * // The hash is: hash(hash('sha256', $salt, true) . 'password123')
+     * ```
+     *
+     * @param string $data The data to hash with salt
+     * @param string|null $salt Optional custom salt (default: null to generate random salt)
+     * @param bool $binary Whether to output raw binary data (default: false for hex string)
+     * @param string $algo The hash algorithm to use (default: 'sha256')
+     * @return array Returns an array with 'hash' and 'salt' keys
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
+     * @throws \Phuture\Coherence\Exception\RuntimeException When random bytes generation fails
+     * @see \Phuture\Coherence\Hash::checkWithSalt() For verifying a salted hash
+     * @see \Phuture\Coherence\Hash::hmacWithSalt() For generating a salted HMAC
+     */
+    public static function makeWithSalt(
+        #[SensitiveParameter] string $data,
+        ?string $salt = null,
+        bool $binary = false,
+        string $algo = 'sha256'
+    ): array {
+        $salt = $salt ?? self::salt();
+        $hash = self::make(hash('sha256', $salt, true) . (string) $data, $binary, $algo);
+
+        return [
+            'hash' => $hash,
+            'salt' => $salt
+        ];
     }
 
     /**
@@ -1946,7 +2026,7 @@ class Hash extends StaticClass
      * @return string Returns a hexadecimal string representing the random salt
      * @throws \Phuture\Coherence\Exception\RuntimeException When unable to generate random bytes
      * @see \Phuture\Coherence\Hash::random() For generating random data
-     * @see \Phuture\Coherence\Hash::withSalt() For generating a salted hash
+     * @see \Phuture\Coherence\Hash::makeWithSalt() For generating a salted hash
      */
     public static function salt(int $length = 16): string
     {
@@ -2057,7 +2137,8 @@ class Hash extends StaticClass
      *
      * $hash = Hash::sha512('Hello, World!');
      *
-     * // Returns: '374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387'
+     * // Returns:
+     * '374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387'
      * ```
      *
      * @param string $data The data to hash
@@ -2229,50 +2310,5 @@ class Hash extends StaticClass
         $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
 
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }
-
-    /**
-     * Generates a salted hash using the specified algorithm.
-     *
-     * This method creates a hash by combining a salted hash of the salt with the data
-     * before final hashing. This prevents length extension attacks and makes identical
-     * inputs produce different hashes. Returns both the hash and salt for storage.
-     *
-     * The method uses a secure construction: hash(hash('sha256', $salt, true) . $data)
-     * instead of the insecure $data . $salt concatenation.
-     *
-     * Example:
-     * ```php
-     * use Phuture\Coherence\Hash;
-     *
-     * $result = Hash::withSalt('password123');
-     *
-     * // Returns: ['hash' => '...', 'salt' => '...']
-     * // The hash is: hash(hash('sha256', $salt, true) . 'password123')
-     * ```
-     *
-     * @param string $data The data to hash with salt
-     * @param string|null $salt Optional custom salt (default: null to generate random salt)
-     * @param bool $binary Whether to output raw binary data (default: false for hex string)
-     * @param string $algo The hash algorithm to use (default: 'sha256')
-     * @return array Returns an array with 'hash' and 'salt' keys
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the algorithm is not supported
-     * @throws \Phuture\Coherence\Exception\RuntimeException When random bytes generation fails
-     * @see \Phuture\Coherence\Hash::checkWithSalt() For verifying a salted hash
-     * @see \Phuture\Coherence\Hash::hmacWithSalt() For generating a salted HMAC
-     */
-    public static function withSalt(
-        #[SensitiveParameter] string $data,
-        ?string $salt = null,
-        bool $binary = false,
-        string $algo = 'sha256'
-    ): array {
-        $salt = $salt ?? self::salt();
-        $hash = self::make(hash('sha256', $salt, true) . (string) $data, $binary, $algo);
-
-        return [
-            'hash' => $hash,
-            'salt' => $salt
-        ];
     }
 }

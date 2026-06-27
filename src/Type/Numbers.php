@@ -96,6 +96,38 @@ class Numbers extends FluentClass implements Numberable
     }
 
     /**
+     * Converts the wrapped Celsius temperature to Fahrenheit using BCMath for precision.
+     *
+     * The conversion result replaces the wrapped value, enabling further
+     * chaining with arithmetic or formatting methods.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::celsiusToFahrenheit()
+     */
+    public function celsiusToFahrenheit(): self
+    {
+        $this->data = Transformer::celsiusToFahrenheit($this->toString());
+
+        return $this;
+    }
+
+    /**
+     * Converts the wrapped Celsius temperature to Rankine using BCMath for precision.
+     *
+     * The conversion result replaces the wrapped value, enabling further
+     * chaining with arithmetic or formatting methods.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::celsiusToRankine()
+     */
+    public function celsiusToRankine(): self
+    {
+        $this->data = Transformer::celsiusToRankine($this->toString());
+
+        return $this;
+    }
+
+    /**
      * Restricts the wrapped number to be within the given minimum and maximum bounds.
      *
      * @param int|float $min The lower bound
@@ -168,6 +200,22 @@ class Numbers extends FluentClass implements Numberable
     public function divide(int|float $value): self
     {
         $this->data = Transformer::divide($this->toString(), $value);
+
+        return $this;
+    }
+
+    /**
+     * Converts the wrapped Fahrenheit temperature to Celsius using BCMath for precision.
+     *
+     * The conversion result replaces the wrapped value, enabling further
+     * chaining with arithmetic or formatting methods.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::fahrenheitToCelsius()
+     */
+    public function fahrenheitToCelsius(): self
+    {
+        $this->data = Transformer::fahrenheitToCelsius($this->toString());
 
         return $this;
     }
@@ -327,6 +375,22 @@ class Numbers extends FluentClass implements Numberable
     public function percentage(int|float $percentage): self
     {
         $this->data = Transformer::percentage($this->toString(), $percentage);
+
+        return $this;
+    }
+
+    /**
+     * Converts the wrapped Rankine temperature to Celsius using BCMath for precision.
+     *
+     * The conversion result replaces the wrapped value, enabling further
+     * chaining with arithmetic or formatting methods.
+     *
+     * @return self Returns the current instance for method chaining
+     * @see Transformer::rankineToCelsius()
+     */
+    public function rankineToCelsius(): self
+    {
+        $this->data = Transformer::rankineToCelsius($this->toString());
 
         return $this;
     }

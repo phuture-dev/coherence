@@ -120,6 +120,17 @@ class HashTest extends TestCase
         }
     }
 
+    public function testBlake2bFileMethodNotSupported(): void
+    {
+        if (in_array('blake2b512', hash_algos())) {
+            Environment::skip('Blake2b is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::fileBlake2b('/tmp/any-path');
+        }, InvalidArgumentException::class, 'Invalid Argument: blake2b512 is not a valid hash algorithm');
+    }
+
     public function testBlake2bHmacMethod(): void
     {
         if (!in_array('blake2b512', hash_algos())) {
@@ -136,6 +147,17 @@ class HashTest extends TestCase
 
         Assert::same(128, strlen($hmac)); // Blake2b-512 HMAC produces 128 hex chars
         Assert::same(hash_hmac('blake2b512', $data, $key), $hmac);
+    }
+
+    public function testBlake2bHmacMethodNotSupported(): void
+    {
+        if (in_array('blake2b512', hash_hmac_algos())) {
+            Environment::skip('Blake2b HMAC is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::hmacBlake2b('message', 'secret');
+        }, InvalidArgumentException::class, 'Invalid Argument: blake2b512 is not a valid HMAC hash algorithm');
     }
 
     public function testBlake2bNotSupported(): void
@@ -188,6 +210,17 @@ class HashTest extends TestCase
         }
     }
 
+    public function testBlake2sFileMethodNotSupported(): void
+    {
+        if (in_array('blake2s256', hash_algos())) {
+            Environment::skip('Blake2s is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::fileBlake2s('/tmp/any-path');
+        }, InvalidArgumentException::class, 'Invalid Argument: blake2s256 is not a valid hash algorithm');
+    }
+
     public function testBlake2sHmacMethod(): void
     {
         if (!in_array('blake2s256', hash_algos())) {
@@ -204,6 +237,17 @@ class HashTest extends TestCase
 
         Assert::same(64, strlen($hmac)); // Blake2s-256 HMAC produces 64 hex chars
         Assert::same(hash_hmac('blake2s256', $data, $key), $hmac);
+    }
+
+    public function testBlake2sHmacMethodNotSupported(): void
+    {
+        if (in_array('blake2s256', hash_hmac_algos())) {
+            Environment::skip('Blake2s HMAC is supported; skipping unavailability test');
+        }
+
+        Assert::exception(function () {
+            Hash::hmacBlake2s('message', 'secret');
+        }, InvalidArgumentException::class, 'Invalid Argument: blake2s256 is not a valid HMAC hash algorithm');
     }
 
     public function testBlake2sNotSupported(): void
@@ -230,7 +274,7 @@ class HashTest extends TestCase
     public function testCheckWithSalt(): void
     {
         $data = 'password123';
-        $result = Hash::withSalt($data);
+        $result = Hash::makeWithSalt($data);
 
         Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
         Assert::false(Hash::checkWithSalt('wrongpassword', $result['hash'], $result['salt']));
@@ -251,12 +295,22 @@ class HashTest extends TestCase
     {
         $hash = Hash::crc32b('Hello, World!');
         Assert::same('ec4ac3d0', $hash);
+
+        // Binary output: 4 bytes that hex-encode back to the hex digest
+        $binary = Hash::crc32b('Hello, World!', true);
+        Assert::same(4, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testCrc32c(): void
     {
         $hash = Hash::crc32c('Hello, World!');
         Assert::same('4d551068', $hash);
+
+        // Binary output: 4 bytes that hex-encode back to the hex digest
+        $binary = Hash::crc32c('Hello, World!', true);
+        Assert::same(4, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testDeterministicBehavior(): void
@@ -338,6 +392,31 @@ class HashTest extends TestCase
         $binary = "\x48\x65\x6C\x6C\x6F"; // "Hello" in binary
         $hex = Hash::fromBinary($binary);
         Assert::same('48656c6c6f', $hex);
+    }
+
+    public function testHash(): void
+    {
+        $data = 'Hello, World!';
+
+        // Without salt: SHA-256 (64 hex chars) joined with SHA-512 (128 hex chars)
+        $hash = Hash::hash($data);
+        Assert::same(Hash::make($data, false, 'sha256') . Hash::make($data, false, 'sha512'), $hash);
+        Assert::same(192, strlen($hash));
+
+        // With salt: both halves are salted, result is still a single joined string
+        $salt = 'fixed-salt';
+        $salted = Hash::hash($data, $salt);
+        Assert::type('string', $salted);
+        Assert::same(
+            Hash::makeWithSalt($data, $salt, false, 'sha256')['hash']
+                . Hash::makeWithSalt($data, $salt, false, 'sha512')['hash'],
+            $salted
+        );
+        Assert::same(192, strlen($salted));
+
+        // Salting changes the output and never leaks an "Array to string" artifact
+        Assert::notSame($hash, $salted);
+        Assert::false(str_contains($salted, 'Array'));
     }
 
     public function testHmac(): void
@@ -557,44 +636,87 @@ class HashTest extends TestCase
 
     public function testHmacMd2(): void
     {
+        if (!in_array('md2', hash_hmac_algos())) {
+            Environment::skip('MD2 HMAC not supported');
+        }
+
         $hmac = Hash::hmacMd2('test', 'key');
         Assert::same(32, strlen($hmac)); // MD2 HMAC length
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacMd2('test', 'key', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacMd4(): void
     {
+        if (!in_array('md4', hash_hmac_algos())) {
+            Environment::skip('MD4 HMAC not supported');
+        }
+
         $hmac = Hash::hmacMd4('test', 'key');
         Assert::same(32, strlen($hmac)); // MD4 HMAC length
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacMd4('test', 'key', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacMd5(): void
     {
         $hmac = Hash::hmacMd5('test', 'key');
         Assert::same(32, strlen($hmac)); // MD5 HMAC length
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacMd5('test', 'key', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacSha1(): void
     {
         $hmac = Hash::hmacSha1('test', 'key');
         Assert::same(40, strlen($hmac)); // SHA1 HMAC length
+
+        // Binary output: 20 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacSha1('test', 'key', true);
+        Assert::same(20, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacSha256(): void
     {
         $hmac = Hash::hmacSha256('test', 'key');
         Assert::same(64, strlen($hmac)); // SHA256 HMAC length
+
+        // Binary output: 32 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacSha256('test', 'key', true);
+        Assert::same(32, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacSha384(): void
     {
         $hmac = Hash::hmacSha384('test', 'key');
         Assert::same(96, strlen($hmac)); // SHA384 HMAC length
+
+        // Binary output: 48 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacSha384('test', 'key', true);
+        Assert::same(48, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacSha512(): void
     {
         $hmac = Hash::hmacSha512('test', 'key');
         Assert::same(128, strlen($hmac)); // SHA512 HMAC length
+
+        // Binary output: 64 bytes that hex-encode back to the hex digest
+        $binary = Hash::hmacSha512('test', 'key', true);
+        Assert::same(64, strlen($binary));
+        Assert::same($hmac, bin2hex($binary));
     }
 
     public function testHmacSupports(): void
@@ -721,22 +843,58 @@ class HashTest extends TestCase
         }, InvalidArgumentException::class, 'Invalid Argument: invalid_algorithm is not a valid hash algorithm');
     }
 
+    public function testMakeWithSalt(): void
+    {
+        $data = 'password123';
+        $result = Hash::makeWithSalt($data);
+
+        Assert::true(isset($result['hash']));
+        Assert::true(isset($result['salt']));
+        Assert::true(strlen($result['salt']) === 32); // 16 bytes = 32 hex chars
+
+        // Verify the salted hash
+        Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
+    }
+
     public function testMd2(): void
     {
+        if (!in_array('md2', hash_algos())) {
+            Environment::skip('MD2 not supported');
+        }
+
         $hash = Hash::md2('Hello, World!');
         Assert::same('1c8f1e6a94aaa7145210bf90bb52871a', $hash);
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::md2('Hello, World!', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testMd4(): void
     {
+        if (!in_array('md4', hash_algos())) {
+            Environment::skip('MD4 not supported');
+        }
+
         $hash = Hash::md4('Hello, World!');
         Assert::same('94e3cb0fa9aa7a5ee3db74b79e915989', $hash);
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::md4('Hello, World!', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testMd5(): void
     {
         $hash = Hash::md5('Hello, World!');
         Assert::same('65a8e27d8879283831b664bd8b7f0ad4', $hash);
+
+        // Binary output: 16 bytes that hex-encode back to the hex digest
+        $binary = Hash::md5('Hello, World!', true);
+        Assert::same(16, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testObject(): void
@@ -1072,18 +1230,33 @@ class HashTest extends TestCase
     {
         $hash = Hash::sha1('Hello, World!');
         Assert::same('0a0a9f2a6772942557ab5355d76af442f8f65e01', $hash);
+
+        // Binary output: 20 bytes that hex-encode back to the hex digest
+        $binary = Hash::sha1('Hello, World!', true);
+        Assert::same(20, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testSha256(): void
     {
         $hash = Hash::sha256('Hello, World!');
         Assert::same('dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f', $hash);
+
+        // Binary output: 32 bytes that hex-encode back to the hex digest
+        $binary = Hash::sha256('Hello, World!', true);
+        Assert::same(32, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testSha384(): void
     {
         $hash = Hash::sha384('Hello, World!');
         Assert::same('5485cc9b3365b4305dfb4e8337e0a598a574f8242bf17289e0dd6c20a3cd44a089de16ab4ab308f63e44b1170eb5f515', $hash);
+
+        // Binary output: 48 bytes that hex-encode back to the hex digest
+        $binary = Hash::sha384('Hello, World!', true);
+        Assert::same(48, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testSha512(): void
@@ -1091,6 +1264,11 @@ class HashTest extends TestCase
         $hash = Hash::sha512('Hello, World!');
         Assert::same('374d794a95cdcfd8b35993185fef9ba368f160d8daf432d08ba9f1ed1e5abe6cc69291e0fa2fe0006a52570ef18c19def4e617c33ce52ef0a6e5fbe318cb0387', $hash);
         Assert::true(strlen($hash) === 128); // SHA512 produces 128 hex chars
+
+        // Binary output: 64 bytes that hex-encode back to the hex digest
+        $binary = Hash::sha512('Hello, World!', true);
+        Assert::same(64, strlen($binary));
+        Assert::same($hash, bin2hex($binary));
     }
 
     public function testStreamingHash(): void
@@ -1156,19 +1334,6 @@ class HashTest extends TestCase
             $uuid = Hash::uuid();
             Assert::match('#^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$#i', $uuid);
         }
-    }
-
-    public function testWithSalt(): void
-    {
-        $data = 'password123';
-        $result = Hash::withSalt($data);
-
-        Assert::true(isset($result['hash']));
-        Assert::true(isset($result['salt']));
-        Assert::true(strlen($result['salt']) === 32); // 16 bytes = 32 hex chars
-
-        // Verify the salted hash
-        Assert::true(Hash::checkWithSalt($data, $result['hash'], $result['salt']));
     }
 }
 

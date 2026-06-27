@@ -176,6 +176,25 @@ class NumbersTest extends TestCase
         Assert::same('5', FluentNumbers::from(5.0)->ceil()->get());
     }
 
+    public function testCelsiusToFahrenheit(): void
+    {
+        Assert::same('212.0000000000', FluentNumbers::from(100)->celsiusToFahrenheit()->get());
+        Assert::same('32.0000000000', FluentNumbers::from(0)->celsiusToFahrenheit()->get());
+        Assert::same('98.6000000000', FluentNumbers::from(37)->celsiusToFahrenheit()->get());
+
+        // Chaining with arithmetic after conversion
+        Assert::same('222.0000000000', FluentNumbers::from(100)->celsiusToFahrenheit()->add(10)->get());
+    }
+
+    public function testCelsiusToRankine(): void
+    {
+        Assert::same('671.6700000000', FluentNumbers::from(100)->celsiusToRankine()->get());
+        Assert::same('491.6700000000', FluentNumbers::from(0)->celsiusToRankine()->get());
+
+        // Chaining with arithmetic after conversion
+        Assert::same('676.6700000000', FluentNumbers::from(100)->celsiusToRankine()->add(5)->get());
+    }
+
     public function testChaining(): void
     {
         $result = FluentNumbers::from(10)
@@ -272,6 +291,16 @@ class NumbersTest extends TestCase
         );
     }
 
+    public function testFahrenheitToCelsius(): void
+    {
+        Assert::same('100.0000000000', FluentNumbers::from(212)->fahrenheitToCelsius()->get());
+        Assert::same('0.0000000000', FluentNumbers::from(32)->fahrenheitToCelsius()->get());
+        Assert::same('37.0000000000', FluentNumbers::from(98.6)->fahrenheitToCelsius()->get());
+
+        // Chaining with arithmetic after conversion
+        Assert::same('110.0000000000', FluentNumbers::from(212)->fahrenheitToCelsius()->add(10)->get());
+    }
+
     public function testFileSize(): void
     {
         Assert::same(Numbers::fileSize(500), FluentNumbers::from(500)->fileSize());
@@ -366,6 +395,15 @@ class NumbersTest extends TestCase
         Assert::same('40.0000000000', FluentNumbers::from(200)->percentage(20)->get());
         Assert::same('5.0000000000', FluentNumbers::from(50)->percentage(10)->get());
         Assert::same('5.5000000000', FluentNumbers::from(100)->percentage(5.5)->get());
+    }
+
+    public function testRankineToCelsius(): void
+    {
+        Assert::same('100.0000000000', FluentNumbers::from(671.67)->rankineToCelsius()->get());
+        Assert::same('0.0000000000', FluentNumbers::from(491.67)->rankineToCelsius()->get());
+
+        // Chaining with arithmetic after conversion
+        Assert::same('105.0000000000', FluentNumbers::from(671.67)->rankineToCelsius()->add(5)->get());
     }
 
     public function testRound(): void
