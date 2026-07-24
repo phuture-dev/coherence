@@ -2413,6 +2413,24 @@ class Files extends StaticClass
     }
 
     /**
+     * Throws a RuntimeException that includes the last PHP-level error message.
+     *
+     * Use this after calling `error_clear_last()` and then a PHP filesystem
+     * function that may fail. The actual PHP error (e.g. "Permission denied")
+     * is appended to `$prefix` so the developer can see the real reason.
+     *
+     * @param string $prefix The base exception message
+     * @throws \Phuture\Coherence\Exception\RuntimeException Always
+     */
+    private static function handleLastError(string $prefix): never
+    {
+        $error = error_get_last();
+        $suffix = $error !== null ? ': ' . $error['message'] : '';
+
+        throw new RuntimeException($prefix . $suffix);
+    }
+
+    /**
      * Handles a multiple file upload by processing each file individually.
      *
      * @param array $files The upload information array with array values from $_FILES
@@ -2539,23 +2557,5 @@ class Files extends StaticClass
         }
 
         return false;
-    }
-
-    /**
-     * Throws a RuntimeException that includes the last PHP-level error message.
-     *
-     * Use this after calling `error_clear_last()` and then a PHP filesystem
-     * function that may fail. The actual PHP error (e.g. "Permission denied")
-     * is appended to `$prefix` so the developer can see the real reason.
-     *
-     * @param string $prefix The base exception message
-     * @throws \Phuture\Coherence\Exception\RuntimeException Always
-     */
-    private static function handleLastError(string $prefix): never
-    {
-        $error = error_get_last();
-        $suffix = $error !== null ? ': ' . $error['message'] : '';
-
-        throw new RuntimeException($prefix . $suffix);
     }
 }

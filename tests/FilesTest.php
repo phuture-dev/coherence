@@ -36,6 +36,27 @@ class FilesTest extends TestCase
         Assert::same('first second', file_get_contents($file));
     }
 
+    public function testAppendToReadOnlyFileIncludesPhpError(): void
+    {
+        $file = $this->tempDir . '/readonly_append.txt';
+        file_put_contents($file, 'original');
+        chmod($file, 0444);
+
+        if (is_writable($file)) {
+            chmod($file, 0666);
+            $this->skip('chmod not enforced on this system');
+        }
+
+        $exception = Assert::exception(
+            static fn () => Files::append($file, ' more'),
+            RuntimeException::class,
+        );
+
+        Assert::true(str_starts_with($exception->getMessage(), 'Runtime Error'));
+
+        chmod($file, 0666);
+    }
+
     public function testChgrpNonExistentThrows(): void
     {
         Assert::exception(
@@ -285,6 +306,27 @@ class FilesTest extends TestCase
         Files::create($this->tempDir . '/');
 
         Assert::true(is_dir($this->tempDir));
+    }
+
+    public function testCreateDirectoryFailureIncludesPhpError(): void
+    {
+        $readOnlyDir = $this->tempDir . '/readonly_create';
+        mkdir($readOnlyDir, 0555);
+
+        if (is_writable($readOnlyDir)) {
+            chmod($readOnlyDir, 0777);
+            $this->skip('chmod not enforced on this system');
+        }
+
+        $newDir = $readOnlyDir . '/subdir';
+
+        Assert::exception(
+            static fn () => Files::create($newDir . '/'),
+            RuntimeException::class,
+            'Runtime Error: Unable to create directory %a%: mkdir%a%',
+        );
+
+        chmod($readOnlyDir, 0777);
     }
 
     public function testCreateDirectoryWithMode(): void
@@ -1127,6 +1169,19 @@ class FilesTest extends TestCase
         Assert::same('file content', Files::read($file));
     }
 
+    public function testReadFromNonExistentMessageIncludesPath(): void
+    {
+        $path = $this->tempDir . '/nonexistent_read.txt';
+
+        $exception = Assert::exception(
+            static fn () => Files::read($path),
+            RuntimeException::class,
+            "Runtime Error: File {$path} does not exist",
+        );
+
+        Assert::true(str_contains($exception->getMessage(), $path));
+    }
+
     public function testReadLines(): void
     {
         $file = $this->tempDir . '/lines.txt';
@@ -1266,6 +1321,19 @@ class FilesTest extends TestCase
         Assert::same(300, Files::size($dir));
     }
 
+    public function testSizeNonExistentMessageIncludesPath(): void
+    {
+        $path = $this->tempDir . '/nonexistent_size.txt';
+
+        $exception = Assert::exception(
+            static fn () => Files::size($path),
+            RuntimeException::class,
+            "Runtime Error: Path {$path} does not exist",
+        );
+
+        Assert::true(str_contains($exception->getMessage(), $path));
+    }
+
     public function testSizeNonExistentThrows(): void
     {
         Assert::exception(
@@ -1358,6 +1426,76 @@ class FilesTest extends TestCase
         Assert::same('pdf', $results[1]['extension']);
     }
 
+    public function testUploadMultipleWithValidationFiltersInvalid(): void
+    {
+        $tmpFile1 = tempnam(sys_get_temp_dir(), 'upload_m1_');
+        $tmpFile2 = tempnam(sys_get_temp_dir(), 'upload_m2_');
+        file_put_contents($tmpFile1, 'image one');
+        file_put_contents($tmpFile2, 'script two');
+
+        $files = [
+            'files' => [
+                'name' => ['photo.jpg', 'script.exe'],
+                'type' => ['image/jpeg', 'application/octet-stream'],
+                'tmp_name' => [$tmpFile1, $tmpFile2],
+                'error' => [UPLOAD_ERR_OK, UPLOAD_ERR_OK],
+                'size' => [9, 10],
+            ],
+        ];
+
+        $results = Files::upload('files', $this->tempDir, $files, [
+            'extensions' => ['jpg', 'png'],
+        ]);
+
+        Assert::count(1, $results);
+        Assert::same('photo.jpg', $results[0]['name']);
+    }
+
+    public function testUploadRejectsInvalidExtension(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_ext_');
+        file_put_contents($tmpFile, 'script content');
+
+        $files = [
+            'file' => [
+                'name' => 'malicious.exe',
+                'type' => 'application/octet-stream',
+                'tmp_name' => $tmpFile,
+                'error' => UPLOAD_ERR_OK,
+                'size' => 14,
+            ],
+        ];
+
+        $result = Files::upload('file', $this->tempDir, $files, [
+            'extensions' => ['jpg', 'png', 'gif'],
+        ]);
+
+        Assert::false($result);
+        Assert::false(file_exists($this->tempDir . '/malicious.exe'));
+    }
+
+    public function testUploadRejectsOversizeFile(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_size_');
+        file_put_contents($tmpFile, 'this is a large file content');
+
+        $files = [
+            'file' => [
+                'name' => 'big.txt',
+                'type' => 'text/plain',
+                'tmp_name' => $tmpFile,
+                'error' => UPLOAD_ERR_OK,
+                'size' => 27,
+            ],
+        ];
+
+        $result = Files::upload('file', $this->tempDir, $files, [
+            'maxSize' => 10,
+        ]);
+
+        Assert::false($result);
+    }
+
     public function testUploadSingleFile(): void
     {
         $tmpFile = tempnam(sys_get_temp_dir(), 'upload_');
@@ -1384,117 +1522,6 @@ class FilesTest extends TestCase
         Assert::same('jpg', $result['extension']);
         Assert::true(file_exists($result['path']));
         Assert::same('uploaded content', file_get_contents($result['path']));
-    }
-
-    public function testUploadWithExtensionValidation(): void
-    {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_ext_');
-        file_put_contents($tmpFile, 'image content');
-
-        $files = [
-            'avatar' => [
-                'name' => 'photo.jpg',
-                'type' => 'image/jpeg',
-                'tmp_name' => $tmpFile,
-                'error' => UPLOAD_ERR_OK,
-                'size' => 12,
-            ],
-        ];
-
-        $result = Files::upload('avatar', $this->tempDir, $files, [
-            'extensions' => ['jpg', 'png'],
-        ]);
-
-        Assert::same('photo.jpg', $result['name']);
-    }
-
-    public function testUploadRejectsInvalidExtension(): void
-    {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_ext_');
-        file_put_contents($tmpFile, 'script content');
-
-        $files = [
-            'file' => [
-                'name' => 'malicious.exe',
-                'type' => 'application/octet-stream',
-                'tmp_name' => $tmpFile,
-                'error' => UPLOAD_ERR_OK,
-                'size' => 14,
-            ],
-        ];
-
-        $result = Files::upload('file', $this->tempDir, $files, [
-            'extensions' => ['jpg', 'png', 'gif'],
-        ]);
-
-        Assert::false($result);
-        Assert::false(file_exists($this->tempDir . '/malicious.exe'));
-    }
-
-    public function testUploadWithMaxSizeValidation(): void
-    {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_size_');
-        file_put_contents($tmpFile, 'small');
-
-        $files = [
-            'file' => [
-                'name' => 'small.txt',
-                'type' => 'text/plain',
-                'tmp_name' => $tmpFile,
-                'error' => UPLOAD_ERR_OK,
-                'size' => 5,
-            ],
-        ];
-
-        $result = Files::upload('file', $this->tempDir, $files, [
-            'maxSize' => 100,
-        ]);
-
-        Assert::same('small.txt', $result['name']);
-    }
-
-    public function testUploadRejectsOversizeFile(): void
-    {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_size_');
-        file_put_contents($tmpFile, 'this is a large file content');
-
-        $files = [
-            'file' => [
-                'name' => 'big.txt',
-                'type' => 'text/plain',
-                'tmp_name' => $tmpFile,
-                'error' => UPLOAD_ERR_OK,
-                'size' => 27,
-            ],
-        ];
-
-        $result = Files::upload('file', $this->tempDir, $files, [
-            'maxSize' => 10,
-        ]);
-
-        Assert::false($result);
-    }
-
-    public function testUploadWithMimeTypeValidation(): void
-    {
-        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_mime_');
-        file_put_contents($tmpFile, "<?php echo 'hello';");
-
-        $files = [
-            'file' => [
-                'name' => 'script.php',
-                'type' => 'text/plain',
-                'tmp_name' => $tmpFile,
-                'error' => UPLOAD_ERR_OK,
-                'size' => 22,
-            ],
-        ];
-
-        $result = Files::upload('file', $this->tempDir, $files, [
-            'mimeTypes' => ['image/png', 'image/jpeg'],
-        ]);
-
-        Assert::false($result);
     }
 
     public function testUploadStrictThrowsOnInvalidExtension(): void
@@ -1547,29 +1574,70 @@ class FilesTest extends TestCase
         );
     }
 
-    public function testUploadMultipleWithValidationFiltersInvalid(): void
+    public function testUploadWithExtensionValidation(): void
     {
-        $tmpFile1 = tempnam(sys_get_temp_dir(), 'upload_m1_');
-        $tmpFile2 = tempnam(sys_get_temp_dir(), 'upload_m2_');
-        file_put_contents($tmpFile1, 'image one');
-        file_put_contents($tmpFile2, 'script two');
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_ext_');
+        file_put_contents($tmpFile, 'image content');
 
         $files = [
-            'files' => [
-                'name' => ['photo.jpg', 'script.exe'],
-                'type' => ['image/jpeg', 'application/octet-stream'],
-                'tmp_name' => [$tmpFile1, $tmpFile2],
-                'error' => [UPLOAD_ERR_OK, UPLOAD_ERR_OK],
-                'size' => [9, 10],
+            'avatar' => [
+                'name' => 'photo.jpg',
+                'type' => 'image/jpeg',
+                'tmp_name' => $tmpFile,
+                'error' => UPLOAD_ERR_OK,
+                'size' => 12,
             ],
         ];
 
-        $results = Files::upload('files', $this->tempDir, $files, [
+        $result = Files::upload('avatar', $this->tempDir, $files, [
             'extensions' => ['jpg', 'png'],
         ]);
 
-        Assert::count(1, $results);
-        Assert::same('photo.jpg', $results[0]['name']);
+        Assert::same('photo.jpg', $result['name']);
+    }
+
+    public function testUploadWithMaxSizeValidation(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_size_');
+        file_put_contents($tmpFile, 'small');
+
+        $files = [
+            'file' => [
+                'name' => 'small.txt',
+                'type' => 'text/plain',
+                'tmp_name' => $tmpFile,
+                'error' => UPLOAD_ERR_OK,
+                'size' => 5,
+            ],
+        ];
+
+        $result = Files::upload('file', $this->tempDir, $files, [
+            'maxSize' => 100,
+        ]);
+
+        Assert::same('small.txt', $result['name']);
+    }
+
+    public function testUploadWithMimeTypeValidation(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'upload_mime_');
+        file_put_contents($tmpFile, "<?php echo 'hello';");
+
+        $files = [
+            'file' => [
+                'name' => 'script.php',
+                'type' => 'text/plain',
+                'tmp_name' => $tmpFile,
+                'error' => UPLOAD_ERR_OK,
+                'size' => 22,
+            ],
+        ];
+
+        $result = Files::upload('file', $this->tempDir, $files, [
+            'mimeTypes' => ['image/png', 'image/jpeg'],
+        ]);
+
+        Assert::false($result);
     }
 
     public function testUploadWithoutOptionsBackwardCompatible(): void
@@ -1621,13 +1689,26 @@ class FilesTest extends TestCase
         Assert::same('deep content', file_get_contents($file));
     }
 
-    public function testWriteWithLock(): void
+    public function testWriteErrorMessageContainsBasePrefix(): void
     {
-        $file = $this->tempDir . '/locked_write.txt';
+        $readOnlyDir = $this->tempDir . '/readonly_prefix';
+        mkdir($readOnlyDir, 0555);
 
-        Files::write($file, 'locked content', 0666, true);
+        if (is_writable($readOnlyDir)) {
+            chmod($readOnlyDir, 0777);
+            $this->skip('chmod not enforced on this system');
+        }
 
-        Assert::same('locked content', file_get_contents($file));
+        $file = $readOnlyDir . '/fail_prefix.txt';
+
+        $exception = Assert::exception(
+            static fn () => Files::write($file, 'content'),
+            RuntimeException::class,
+        );
+
+        Assert::true(str_starts_with($exception->getMessage(), 'Runtime Error: Unable to write to file'));
+
+        chmod($readOnlyDir, 0777);
     }
 
     public function testWriteToReadOnlyDirectoryIncludesPhpError(): void
@@ -1652,94 +1733,13 @@ class FilesTest extends TestCase
         chmod($readOnlyDir, 0777);
     }
 
-    public function testAppendToReadOnlyFileIncludesPhpError(): void
+    public function testWriteWithLock(): void
     {
-        $file = $this->tempDir . '/readonly_append.txt';
-        file_put_contents($file, 'original');
-        chmod($file, 0444);
+        $file = $this->tempDir . '/locked_write.txt';
 
-        if (is_writable($file)) {
-            chmod($file, 0666);
-            $this->skip('chmod not enforced on this system');
-        }
+        Files::write($file, 'locked content', 0666, true);
 
-        $exception = Assert::exception(
-            static fn () => Files::append($file, ' more'),
-            RuntimeException::class,
-        );
-
-        Assert::true(str_starts_with($exception->getMessage(), 'Runtime Error'));
-
-        chmod($file, 0666);
-    }
-
-    public function testReadFromNonExistentMessageIncludesPath(): void
-    {
-        $path = $this->tempDir . '/nonexistent_read.txt';
-
-        $exception = Assert::exception(
-            static fn () => Files::read($path),
-            RuntimeException::class,
-            "Runtime Error: File {$path} does not exist",
-        );
-
-        Assert::true(str_contains($exception->getMessage(), $path));
-    }
-
-    public function testSizeNonExistentMessageIncludesPath(): void
-    {
-        $path = $this->tempDir . '/nonexistent_size.txt';
-
-        $exception = Assert::exception(
-            static fn () => Files::size($path),
-            RuntimeException::class,
-            "Runtime Error: Path {$path} does not exist",
-        );
-
-        Assert::true(str_contains($exception->getMessage(), $path));
-    }
-
-    public function testCreateDirectoryFailureIncludesPhpError(): void
-    {
-        $readOnlyDir = $this->tempDir . '/readonly_create';
-        mkdir($readOnlyDir, 0555);
-
-        if (is_writable($readOnlyDir)) {
-            chmod($readOnlyDir, 0777);
-            $this->skip('chmod not enforced on this system');
-        }
-
-        $newDir = $readOnlyDir . '/subdir';
-
-        Assert::exception(
-            static fn () => Files::create($newDir . '/'),
-            RuntimeException::class,
-            'Runtime Error: Unable to create directory %a%: mkdir%a%',
-        );
-
-        chmod($readOnlyDir, 0777);
-    }
-
-    public function testWriteErrorMessageContainsBasePrefix(): void
-    {
-        $readOnlyDir = $this->tempDir . '/readonly_prefix';
-        mkdir($readOnlyDir, 0555);
-
-        if (is_writable($readOnlyDir)) {
-            chmod($readOnlyDir, 0777);
-            $this->skip('chmod not enforced on this system');
-        }
-
-        $file = $readOnlyDir . '/fail_prefix.txt';
-
-        $exception = Assert::exception(
-            static fn () => Files::write($file, 'content'),
-            RuntimeException::class,
-        );
-
-        Assert::true(str_starts_with($exception->getMessage(), 'Runtime Error: Unable to write to file'));
-
-        chmod($readOnlyDir, 0777);
+        Assert::same('locked content', file_get_contents($file));
     }
 
     protected function setUp(): void
