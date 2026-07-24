@@ -40,7 +40,7 @@ use Phuture\Coherence\Exception\{InvalidArgumentException, RuntimeException};
 class Files extends StaticClass
 {
     /**
-     * Appends content to the end of an existing file.
+     * Appends content to the end of a file, creating it if it does not exist.
      *
      * When the file does not exist, it is created. Parent directories are
      * created automatically when they do not exist.
@@ -67,21 +67,19 @@ class Files extends StaticClass
             self::createDirectory($directory);
         }
 
-        $handle = fopen($path, 'a');
+        error_clear_last();
+        $handle = @fopen($path, 'a');
 
         if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open file {$path} for appending"
-            );
+            self::handleLastError("Runtime Error: Unable to open file {$path} for appending");
         }
 
         try {
-            $result = fwrite($handle, $content);
+            error_clear_last();
+            $result = @fwrite($handle, $content);
 
             if ($result === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to append to file {$path}"
-                );
+                self::handleLastError("Runtime Error: Unable to append to file {$path}");
             }
         } finally {
             fclose($handle);
@@ -113,10 +111,10 @@ class Files extends StaticClass
             );
         }
 
-        if (!chgrp($path, $group)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change group of {$path}"
-            );
+        error_clear_last();
+
+        if (!@chgrp($path, $group)) {
+            self::handleLastError("Runtime Error: Unable to change group of {$path}");
         }
     }
 
@@ -147,10 +145,10 @@ class Files extends StaticClass
             );
         }
 
-        if (!chmod($path, $mode)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change permissions of {$path}"
-            );
+        error_clear_last();
+
+        if (!@chmod($path, $mode)) {
+            self::handleLastError("Runtime Error: Unable to change permissions of {$path}");
         }
     }
 
@@ -179,10 +177,10 @@ class Files extends StaticClass
             );
         }
 
-        if (!chown($path, $user)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change owner of {$path}"
-            );
+        error_clear_last();
+
+        if (!@chown($path, $user)) {
+            self::handleLastError("Runtime Error: Unable to change owner of {$path}");
         }
     }
     /**
@@ -236,8 +234,8 @@ class Files extends StaticClass
         }
 
         match ($format) {
-            CompressionFormat::Zip  => self::compressZip($source, $destination),
-            CompressionFormat::Tar  => self::compressTar($source, $destination),
+            CompressionFormat::Zip => self::compressZip($source, $destination),
+            CompressionFormat::Tar => self::compressTar($source, $destination),
             CompressionFormat::Gzip => self::compressGzip($source, $destination),
         };
     }
@@ -298,22 +296,22 @@ class Files extends StaticClass
 
         $tempPath = $destination . '.tmp.' . uniqid('', true);
 
-        if (!copy($source, $tempPath)) {
+        error_clear_last();
+
+        if (!@copy($source, $tempPath)) {
             if (file_exists($tempPath)) {
                 @unlink($tempPath);
             }
 
-            throw new RuntimeException(
-                "Runtime Error: Unable to copy {$source} to {$destination}"
-            );
+            self::handleLastError("Runtime Error: Unable to copy {$source} to {$destination}");
         }
 
-        if (!rename($tempPath, $destination)) {
+        error_clear_last();
+
+        if (!@rename($tempPath, $destination)) {
             @unlink($tempPath);
 
-            throw new RuntimeException(
-                "Runtime Error: Unable to copy {$source} to {$destination}"
-            );
+            self::handleLastError("Runtime Error: Unable to copy {$source} to {$destination}");
         }
     }
 
@@ -357,10 +355,10 @@ class Files extends StaticClass
             self::createDirectory($directory, $mode);
         }
 
-        if (!touch($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create file {$path}"
-            );
+        error_clear_last();
+
+        if (!@touch($path)) {
+            self::handleLastError("Runtime Error: Unable to create file {$path}");
         }
 
         chmod($path, $mode & 0666);
@@ -406,10 +404,10 @@ class Files extends StaticClass
         $parentDirectory = $parentDirectory !== '' ? $parentDirectory : sys_get_temp_dir();
         $path = $parentDirectory . DIRECTORY_SEPARATOR . $prefix . uniqid('', true);
 
-        if (!mkdir($path, $mode, false) && !is_dir($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create temporary directory {$path}"
-            );
+        error_clear_last();
+
+        if (!@mkdir($path, $mode, false) && !is_dir($path)) {
+            self::handleLastError("Runtime Error: Unable to create temporary directory {$path}");
         }
 
         return $path;
@@ -458,10 +456,10 @@ class Files extends StaticClass
         $parentDirectory = $parentDirectory !== '' ? $parentDirectory : sys_get_temp_dir();
         $path = $parentDirectory . DIRECTORY_SEPARATOR . $prefix . uniqid('', true) . $extension;
 
-        if (!touch($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create temporary file {$path}"
-            );
+        error_clear_last();
+
+        if (!@touch($path)) {
+            self::handleLastError("Runtime Error: Unable to create temporary file {$path}");
         }
 
         chmod($path, $mode);
@@ -547,10 +545,10 @@ class Files extends StaticClass
         }
 
         if (is_link($path)) {
-            if (!unlink($path)) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to delete link {$path}"
-                );
+            error_clear_last();
+
+            if (!@unlink($path)) {
+                self::handleLastError("Runtime Error: Unable to delete link {$path}");
             }
 
             return;
@@ -559,7 +557,9 @@ class Files extends StaticClass
         if (is_dir($path)) {
             $tempPath = $path . '.deleting.' . uniqid('', true);
 
-            if (!rename($path, $tempPath)) {
+            error_clear_last();
+
+            if (!@rename($path, $tempPath)) {
                 self::deleteDirectory($path);
 
                 return;
@@ -572,22 +572,24 @@ class Files extends StaticClass
 
         $tempPath = $path . '.deleting.' . uniqid('', true);
 
-        if (rename($path, $tempPath)) {
-            if (!unlink($tempPath)) {
+        error_clear_last();
+
+        if (@rename($path, $tempPath)) {
+            error_clear_last();
+
+            if (!@unlink($tempPath)) {
                 @rename($tempPath, $path);
 
-                throw new RuntimeException(
-                    "Runtime Error: Unable to delete file {$path}"
-                );
+                self::handleLastError("Runtime Error: Unable to delete file {$path}");
             }
 
             return;
         }
 
-        if (!unlink($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to delete file {$path}"
-            );
+        error_clear_last();
+
+        if (!@unlink($path)) {
+            self::handleLastError("Runtime Error: Unable to delete file {$path}");
         }
     }
 
@@ -778,12 +780,11 @@ class Files extends StaticClass
             );
         }
 
-        $target = readlink($path);
+        error_clear_last();
+        $target = @readlink($path);
 
         if ($target === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to read symbolic link {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to read symbolic link {$path}");
         }
 
         return $target;
@@ -875,12 +876,11 @@ class Files extends StaticClass
             );
         }
 
-        $handle = opendir($path);
+        error_clear_last();
+        $handle = @opendir($path);
 
         if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open directory {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to open directory {$path}");
         }
 
         $isEmpty = true;
@@ -971,12 +971,11 @@ class Files extends StaticClass
             );
         }
 
-        $handle = fopen($path, 'r');
+        error_clear_last();
+        $handle = @fopen($path, 'r');
 
         if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open file {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to open file {$path}");
         }
 
         $wouldBlock = false;
@@ -1082,12 +1081,11 @@ class Files extends StaticClass
             );
         }
 
-        $time = filemtime($path);
+        error_clear_last();
+        $time = @filemtime($path);
 
         if ($time === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to get modification time for {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to get modification time for {$path}");
         }
 
         return $time;
@@ -1118,10 +1116,10 @@ class Files extends StaticClass
             self::createDirectory($directory);
         }
 
-        if (!symlink($target, $link)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create symbolic link from {$target} to {$link}"
-            );
+        error_clear_last();
+
+        if (!@symlink($target, $link)) {
+            self::handleLastError("Runtime Error: Unable to create symbolic link from {$target} to {$link}");
         }
     }
 
@@ -1160,12 +1158,11 @@ class Files extends StaticClass
             );
         }
 
-        $handle = opendir($path);
+        error_clear_last();
+        $handle = @opendir($path);
 
         if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open directory {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to open directory {$path}");
         }
 
         $results = [];
@@ -1226,10 +1223,10 @@ class Files extends StaticClass
         }
 
         if (is_dir($path)) {
-            if (!chmod($path, $directoryMode)) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to change permissions for {$path}"
-                );
+            error_clear_last();
+
+            if (!@chmod($path, $directoryMode)) {
+                self::handleLastError("Runtime Error: Unable to change permissions for {$path}");
             }
 
             $iterator = new RecursiveIteratorIterator(
@@ -1243,20 +1240,20 @@ class Files extends StaticClass
                 }
                 $itemMode = $item->isDir() ? $directoryMode : $fileMode;
 
-                if (!chmod($item->getPathname(), $itemMode)) {
-                    throw new RuntimeException(
-                        "Runtime Error: Unable to change permissions for {$item->getPathname()}"
-                    );
+                error_clear_last();
+
+                if (!@chmod($item->getPathname(), $itemMode)) {
+                    self::handleLastError("Runtime Error: Unable to change permissions for {$item->getPathname()}");
                 }
             }
 
             return;
         }
 
-        if (!chmod($path, $fileMode)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to change permissions for {$path}"
-            );
+        error_clear_last();
+
+        if (!@chmod($path, $fileMode)) {
+            self::handleLastError("Runtime Error: Unable to change permissions for {$path}");
         }
     }
 
@@ -1296,12 +1293,11 @@ class Files extends StaticClass
             );
         }
 
-        $mimeType = mime_content_type($path);
+        error_clear_last();
+        $mimeType = @mime_content_type($path);
 
         if ($mimeType === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to detect MIME type for {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to detect MIME type for {$path}");
         }
 
         return $mimeType;
@@ -1363,24 +1359,24 @@ class Files extends StaticClass
         if (is_dir($source) && is_dir($destination)) {
             $tempDestination = $destination . '.replacing.' . uniqid('', true);
             rename($destination, $tempDestination);
-            $moveSuccess = rename($source, $destination);
+
+            error_clear_last();
+            $moveSuccess = @rename($source, $destination);
             self::deleteDirectory($tempDestination);
 
             if (!$moveSuccess) {
                 @rename($tempDestination, $destination);
 
-                throw new RuntimeException(
-                    "Runtime Error: Unable to move {$source} to {$destination}"
-                );
+                self::handleLastError("Runtime Error: Unable to move {$source} to {$destination}");
             }
 
             return;
         }
 
-        if (!rename($source, $destination)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to move {$source} to {$destination}"
-            );
+        error_clear_last();
+
+        if (!@rename($source, $destination)) {
+            self::handleLastError("Runtime Error: Unable to move {$source} to {$destination}");
         }
     }
 
@@ -1590,12 +1586,11 @@ class Files extends StaticClass
             );
         }
 
-        $content = file_get_contents($path);
+        error_clear_last();
+        $content = @file_get_contents($path);
 
         if ($content === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to read file {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to read file {$path}");
         }
 
         return $content;
@@ -1631,12 +1626,11 @@ class Files extends StaticClass
             );
         }
 
-        $handle = fopen($path, 'r');
+        error_clear_last();
+        $handle = @fopen($path, 'r');
 
         if ($handle === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to open file {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to open file {$path}");
         }
 
         try {
@@ -1702,10 +1696,10 @@ class Files extends StaticClass
             );
         }
 
-        if (!rename($path, $newPath)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to rename {$path} to {$newPath}"
-            );
+        error_clear_last();
+
+        if (!@rename($path, $newPath)) {
+            self::handleLastError("Runtime Error: Unable to rename {$path} to {$newPath}");
         }
     }
 
@@ -1769,12 +1763,11 @@ class Files extends StaticClass
         }
 
         if (is_file($path)) {
-            $size = filesize($path);
+            error_clear_last();
+            $size = @filesize($path);
 
             if ($size === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to get size of {$path}"
-                );
+                self::handleLastError("Runtime Error: Unable to get size of {$path}");
             }
 
             return $size;
@@ -1838,10 +1831,10 @@ class Files extends StaticClass
             );
         }
 
-        if (!unlink($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to remove symbolic link {$path}"
-            );
+        error_clear_last();
+
+        if (!@unlink($path)) {
+            self::handleLastError("Runtime Error: Unable to remove symbolic link {$path}");
         }
     }
 
@@ -1856,6 +1849,12 @@ class Files extends StaticClass
      * When the first parameter is `"files"` and the request contains `files[]`,
      * the method detects the array structure and processes all uploaded files.
      *
+     * Optional validation rules can be passed via the `$options` array. When a file
+     * fails validation in non-strict mode (default), it is silently skipped. When
+     * `'strict'` is `true`, an `InvalidArgumentException` is thrown for the first
+     * invalid file. MIME type validation uses the actual file content, not the
+     * client-provided `type` field.
+     *
      * Example:
      * ```php
      * use Phuture\Coherence\Files;
@@ -1867,18 +1866,41 @@ class Files extends StaticClass
      * // Multiple file upload: <input type="file" name="files[]" multiple>
      * $results = Files::upload('files', '/path/to/uploads');
      * // Returns: [['name' => 'a.jpg', ...], ['name' => 'b.jpg', ...]]
+     *
+     * // With validation
+     * $result = Files::upload('avatar', '/uploads', null, [
+     *     'extensions' => ['jpg', 'png', 'gif'],
+     *     'mimeTypes'  => ['image/jpeg', 'image/png', 'image/gif'],
+     *     'maxSize'    => 2 * 1024 * 1024, // 2 MB
+     * ]);
+     *
+     * // Strict mode: throws on invalid file
+     * Files::upload('document', '/uploads', null, [
+     *     'extensions' => ['pdf', 'docx'],
+     *     'strict'     => true,
+     * ]);
      * ```
      *
      * @param string $key The form field name from the upload request
      * @param string $destination The directory path where uploaded files should be saved
      * @param array|null $files The files array to use (default: null, which uses $_FILES)
+     * @param array $options Optional validation rules with keys:
+     *     - `extensions`: `string[]` of allowed extensions without dots (e.g. `['jpg', 'png']`)
+     *     - `mimeTypes`: `string[]` of allowed MIME types, checked against actual file content
+     *     - `maxSize`: `int` maximum file size in bytes
+     *     - `strict`: `bool` when true, throws on validation failure instead of skipping (default: false)
      * @return array|false A single file info array, an array of file info arrays
      *     for multiple uploads, or false on failure
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When a file fails validation in strict mode
      * @see \Phuture\Coherence\Files::move()
      * @see \Phuture\Coherence\Files::create()
      */
-    public static function upload(string $key, string $destination, ?array $files = null): array|false
-    {
+    public static function upload(
+        string $key,
+        string $destination,
+        ?array $files = null,
+        array $options = []
+    ): array|false {
         $files = $files ?? $_FILES;
 
         if (!isset($files[$key])) {
@@ -1890,10 +1912,10 @@ class Files extends StaticClass
         self::createDirectory($destination);
 
         if (is_array($file['name'])) {
-            return self::handleMultipleUpload($file, $destination);
+            return self::handleMultipleUpload($file, $destination, $options);
         }
 
-        return self::handleSingleUpload($file, $destination);
+        return self::handleSingleUpload($file, $destination, $options);
     }
 
     /**
@@ -1933,24 +1955,24 @@ class Files extends StaticClass
 
         $flags = $lock ? LOCK_EX : 0;
         $tempPath = $path . '.tmp.' . uniqid('', true);
-        $result = file_put_contents($tempPath, $content, $flags);
+
+        error_clear_last();
+        $result = @file_put_contents($tempPath, $content, $flags);
 
         if ($result === false) {
             if (file_exists($tempPath)) {
                 @unlink($tempPath);
             }
 
-            throw new RuntimeException(
-                "Runtime Error: Unable to write to file {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to write to file {$path}");
         }
 
-        if (!rename($tempPath, $path)) {
+        error_clear_last();
+
+        if (!@rename($tempPath, $path)) {
             @unlink($tempPath);
 
-            throw new RuntimeException(
-                "Runtime Error: Unable to write to file {$path}"
-            );
+            self::handleLastError("Runtime Error: Unable to write to file {$path}");
         }
 
         if (file_exists($path)) {
@@ -1988,26 +2010,24 @@ class Files extends StaticClass
                 );
             }
 
-            $tarContent = file_get_contents($tempTar);
+            error_clear_last();
+            $tarContent = @file_get_contents($tempTar);
 
             if ($tarContent === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to read temporary archive"
-                );
+                self::handleLastError("Runtime Error: Unable to read temporary archive");
             }
 
-            $compressed = gzencode($tarContent);
+            error_clear_last();
+            $compressed = @gzencode($tarContent);
 
             if ($compressed === false) {
-                throw new RuntimeException(
-                    "Runtime Error: GZIP compression failed for {$source}"
-                );
+                self::handleLastError("Runtime Error: GZIP compression failed for {$source}");
             }
 
-            if (file_put_contents($destination, $compressed) === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to write GZIP archive to {$destination}"
-                );
+            error_clear_last();
+
+            if (@file_put_contents($destination, $compressed) === false) {
+                self::handleLastError("Runtime Error: Unable to write GZIP archive to {$destination}");
             }
         } finally {
             if (file_exists($tempTar)) {
@@ -2113,10 +2133,10 @@ class Files extends StaticClass
                     continue;
                 }
 
-                if (!copy($item->getPathname(), $targetPath)) {
-                    throw new RuntimeException(
-                        "Runtime Error: Unable to copy {$item->getPathname()} to {$targetPath}"
-                    );
+                error_clear_last();
+
+                if (!@copy($item->getPathname(), $targetPath)) {
+                    self::handleLastError("Runtime Error: Unable to copy {$item->getPathname()} to {$targetPath}");
                 }
             }
         }
@@ -2134,10 +2154,10 @@ class Files extends StaticClass
             return;
         }
 
-        if (!mkdir($path, $mode, true) && !is_dir($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to create directory {$path}"
-            );
+        error_clear_last();
+
+        if (!@mkdir($path, $mode, true) && !is_dir($path)) {
+            self::handleLastError("Runtime Error: Unable to create directory {$path}");
         }
     }
 
@@ -2158,29 +2178,27 @@ class Files extends StaticClass
             self::createDirectory($destination);
         }
 
-        $compressed = file_get_contents($archive);
+        error_clear_last();
+        $compressed = @file_get_contents($archive);
 
         if ($compressed === false) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to read archive {$archive}"
-            );
+            self::handleLastError("Runtime Error: Unable to read archive {$archive}");
         }
 
-        $tarContent = gzdecode($compressed);
+        error_clear_last();
+        $tarContent = @gzdecode($compressed);
 
         if ($tarContent === false) {
-            throw new RuntimeException(
-                "Runtime Error: GZIP decompression failed for {$archive}"
-            );
+            self::handleLastError("Runtime Error: GZIP decompression failed for {$archive}");
         }
 
         $tempTar = sys_get_temp_dir() . '/coherence_' . uniqid() . '.tar';
 
         try {
-            if (file_put_contents($tempTar, $tarContent) === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to write temporary archive"
-                );
+            error_clear_last();
+
+            if (@file_put_contents($tempTar, $tarContent) === false) {
+                self::handleLastError("Runtime Error: Unable to write temporary archive");
             }
 
             try {
@@ -2269,24 +2287,24 @@ class Files extends StaticClass
                 continue;
             }
             if ($item->isDir()) {
-                if (!rmdir($item->getPathname())) {
-                    throw new RuntimeException(
-                        "Runtime Error: Unable to remove directory {$item->getPathname()}"
-                    );
+                error_clear_last();
+
+                if (!@rmdir($item->getPathname())) {
+                    self::handleLastError("Runtime Error: Unable to remove directory {$item->getPathname()}");
                 }
             } else {
-                if (!unlink($item->getPathname())) {
-                    throw new RuntimeException(
-                        "Runtime Error: Unable to delete file {$item->getPathname()}"
-                    );
+                error_clear_last();
+
+                if (!@unlink($item->getPathname())) {
+                    self::handleLastError("Runtime Error: Unable to delete file {$item->getPathname()}");
                 }
             }
         }
 
-        if (!rmdir($path)) {
-            throw new RuntimeException(
-                "Runtime Error: Unable to remove directory {$path}"
-            );
+        error_clear_last();
+
+        if (!@rmdir($path)) {
+            self::handleLastError("Runtime Error: Unable to remove directory {$path}");
         }
     }
 
@@ -2358,12 +2376,11 @@ class Files extends StaticClass
                 }
             }
         } else {
-            $handle = opendir($directory);
+            error_clear_last();
+            $handle = @opendir($directory);
 
             if ($handle === false) {
-                throw new RuntimeException(
-                    "Runtime Error: Unable to open directory {$directory}"
-                );
+                self::handleLastError("Runtime Error: Unable to open directory {$directory}");
             }
 
             while (($entry = readdir($handle)) !== false) {
@@ -2400,9 +2417,10 @@ class Files extends StaticClass
      *
      * @param array $files The upload information array with array values from $_FILES
      * @param string $destination The directory to save files in
+     * @param array $options Validation options (see {@see \Phuture\Coherence\Files::upload()})
      * @return array Array of file information arrays for each successfully uploaded file
      */
-    private static function handleMultipleUpload(array $files, string $destination): array
+    private static function handleMultipleUpload(array $files, string $destination, array $options): array
     {
         $results = [];
         $count = count($files['name']);
@@ -2416,7 +2434,7 @@ class Files extends StaticClass
                 'size' => $files['size'][$i],
             ];
 
-            $result = self::handleSingleUpload($file, $destination);
+            $result = self::handleSingleUpload($file, $destination, $options);
 
             if ($result !== false) {
                 $results[] = $result;
@@ -2429,17 +2447,63 @@ class Files extends StaticClass
     /**
      * Handles a single file upload by moving it to the destination directory.
      *
+     * Runs validation checks (extension, MIME type, file size) when the
+     * corresponding options are provided. In non-strict mode invalid files
+     * return false; in strict mode an InvalidArgumentException is thrown.
+     *
      * @param array $file The upload information array from $_FILES
      * @param string $destination The directory to save the file in
+     * @param array $options Validation options (see {@see \Phuture\Coherence\Files::upload()})
      * @return array|false File information array or false on failure
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When validation fails in strict mode
      */
-    private static function handleSingleUpload(array $file, string $destination): array|false
+    private static function handleSingleUpload(array $file, string $destination, array $options): array|false
     {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             return false;
         }
 
         $filename = basename($file['name']);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $strict = $options['strict'] ?? false;
+
+        if (isset($options['maxSize']) && $file['size'] > $options['maxSize']) {
+            if ($strict) {
+                throw new InvalidArgumentException(
+                    "Invalid Argument: File {$filename} exceeds maximum size of {$options['maxSize']} bytes"
+                );
+            }
+
+            return false;
+        }
+
+        if (isset($options['extensions']) && !in_array($extension, $options['extensions'], true)) {
+            if ($strict) {
+                $allowed = implode(', ', $options['extensions']);
+                throw new InvalidArgumentException(
+                    "Invalid Argument: File {$filename} has extension '{$extension}', allowed: {$allowed}"
+                );
+            }
+
+            return false;
+        }
+
+        if (isset($options['mimeTypes'])) {
+            $detectedMime = mime_content_type($file['tmp_name']);
+
+            if ($detectedMime === false || !in_array($detectedMime, $options['mimeTypes'], true)) {
+                if ($strict) {
+                    $allowed = implode(', ', $options['mimeTypes']);
+                    $actual = $detectedMime !== false ? $detectedMime : 'unknown';
+                    throw new InvalidArgumentException(
+                        "Invalid Argument: File {$filename} has MIME type '{$actual}', allowed: {$allowed}"
+                    );
+                }
+
+                return false;
+            }
+        }
+
         $targetPath = rtrim($destination, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
 
         $moved = is_uploaded_file($file['tmp_name'])
@@ -2455,7 +2519,7 @@ class Files extends StaticClass
             'path' => $targetPath,
             'size' => (int) $file['size'],
             'type' => $file['type'],
-            'extension' => pathinfo($filename, PATHINFO_EXTENSION),
+            'extension' => $extension,
         ];
     }
 
@@ -2475,5 +2539,23 @@ class Files extends StaticClass
         }
 
         return false;
+    }
+
+    /**
+     * Throws a RuntimeException that includes the last PHP-level error message.
+     *
+     * Use this after calling `error_clear_last()` and then a PHP filesystem
+     * function that may fail. The actual PHP error (e.g. "Permission denied")
+     * is appended to `$prefix` so the developer can see the real reason.
+     *
+     * @param string $prefix The base exception message
+     * @throws \Phuture\Coherence\Exception\RuntimeException Always
+     */
+    private static function handleLastError(string $prefix): never
+    {
+        $error = error_get_last();
+        $suffix = $error !== null ? ': ' . $error['message'] : '';
+
+        throw new RuntimeException($prefix . $suffix);
     }
 }
