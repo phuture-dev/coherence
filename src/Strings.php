@@ -2345,7 +2345,7 @@ class Strings extends StaticClass
      * use Phuture\Coherence\Strings;
      *
      * Strings::metaphone('World'); // 'WRLT'
-     * Strings::metaphone('Thompson'); // 'TMPSN'
+     * Strings::metaphone('Thompson'); // '0MPSN'
      * Strings::metaphone('Smith'); // 'SM0'
      * Strings::metaphone('Smythe'); // 'SM0'
      * Strings::metaphone('héllo'); // 'HL'
@@ -2355,6 +2355,7 @@ class Strings extends StaticClass
      * @param int $maxPhonemes The maximum number of phonemes to return; 0 means no limit (default: 0)
      * @return string The metaphone phonetic key
      * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$string` is empty
+     *   or `$maxPhonemes` is negative
      * @see \Phuture\Coherence\Strings::soundex()
      * @see \Phuture\Coherence\Strings::ascii()
      */
@@ -2366,7 +2367,13 @@ class Strings extends StaticClass
             );
         }
 
-        return \metaphone(self::ascii($string), $maxPhonemes);
+        if ($maxPhonemes < 0) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The maximum number of phonemes must not be negative for metaphone'
+            );
+        }
+
+        return self::phonizeMetaphone(self::ascii($string), $maxPhonemes);
     }
 
     /**
@@ -3660,13 +3667,13 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to trim
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return string The trimmed string
      * @see \Phuture\Coherence\Strings::trimLeft()
      * @see \Phuture\Coherence\Strings::trimRight()
      * @see \Phuture\Coherence\Strings::squish()
      */
-    public static function trim(string $string, string $characters = " \t\n\r\0\x0B"): string
+    public static function trim(string $string, ?string $characters = null): string
     {
         return mb_trim($string, $characters);
     }
@@ -3685,12 +3692,12 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to trim
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return string The left-trimmed string
      * @see \Phuture\Coherence\Strings::trimRight()
      * @see \Phuture\Coherence\Strings::trim()
      */
-    public static function trimLeft(string $string, string $characters = " \t\n\r\0\x0B"): string
+    public static function trimLeft(string $string, ?string $characters = null): string
     {
         return mb_ltrim($string, $characters);
     }
@@ -3709,12 +3716,12 @@ class Strings extends StaticClass
      * ```
      *
      * @param string $string The input string to trim
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return string The right-trimmed string
      * @see \Phuture\Coherence\Strings::trimLeft()
      * @see \Phuture\Coherence\Strings::trim()
      */
-    public static function trimRight(string $string, string $characters = " \t\n\r\0\x0B"): string
+    public static function trimRight(string $string, ?string $characters = null): string
     {
         return mb_rtrim($string, $characters);
     }
@@ -4128,6 +4135,328 @@ class Strings extends StaticClass
             '&' => [' #### ', '#  #  ', ' ##   ', '#  # #', ' ## ##'],
             '%' => ['#   ##', ' # #  ', '  #   ', '  # # ', '##   #'],
         ];
+    }
+
+    /**
+     * Tests an upper-cased letter against a metaphone character class.
+     *
+     * The classes are the bit flags of the algorithm's lookup table: 1 marks a
+     * vowel (AEIOU), 2 a letter passed through unchanged (FJMNR), 4 a letter
+     * forming a diphthong before H (CGPST), 8 a letter making C and G soft
+     * (EIY), and 16 a letter preventing GH from becoming F (BDH).
+     *
+     * @param string $letter The upper-cased letter to test
+     * @param int $trait The character class bit flag to test for
+     * @return bool True when `$letter` belongs to the given class
+     */
+    private static function hasMetaphoneTrait(string $letter, int $trait): bool
+    {
+        // Indexed by A-Z; taken from the reference implementation of the algorithm
+        static $codes = [
+            1, 16, 4, 16, 9, 2, 4, 16, 9, 2, 0, 2, 2, 2, 1, 4, 0, 2, 4, 4, 1, 0, 0, 0, 8, 0,
+        ];
+
+        if ($letter < 'A' || $letter > 'Z') {
+            return false;
+        }
+
+        return ($codes[ord($letter) - 65] & $trait) !== 0;
+    }
+
+    /**
+     * Determines whether a byte is an ASCII letter.
+     *
+     * @param string $byte The single byte to test
+     * @return bool True when the byte is in A-Z or a-z
+     */
+    private static function isMetaphoneLetter(string $byte): bool
+    {
+        return ($byte >= 'A' && $byte <= 'Z') || ($byte >= 'a' && $byte <= 'z');
+    }
+
+    /**
+     * Looks ahead a fixed number of bytes from an offset, stopping at the string end.
+     *
+     * @param string $word The ASCII string being encoded
+     * @param int $index The byte offset to look ahead from
+     * @param int $distance The number of bytes to look ahead
+     * @return string The upper-cased byte found, or "\0" when the string ends first
+     */
+    private static function lookAheadMetaphone(string $word, int $index, int $distance): string
+    {
+        $offset = 0;
+
+        while ($offset < $distance && self::readMetaphoneByte($word, $index + $offset) !== "\0") {
+            $offset++;
+        }
+
+        return self::readMetaphoneLetter($word, $index + $offset);
+    }
+
+    /**
+     * Computes the metaphone key of an ASCII string.
+     *
+     * Pure PHP implementation of the traditional metaphone algorithm, kept
+     * byte-for-byte compatible with PHP's native `metaphone()`, which is
+     * deprecated as of PHP 8.6. The input is treated as single-byte ASCII and
+     * terminates at the first NUL byte, matching the native implementation.
+     *
+     * @param string $word The ASCII string to encode
+     * @param int $maxPhonemes The maximum number of phonemes to return; 0 means no limit
+     * @return string The metaphone phonetic key
+     */
+    private static function phonizeMetaphone(string $word, int $maxPhonemes): string
+    {
+        $phoned = '';
+        $index = 0;
+
+        // Skip leading non-letters; a word without any letter encodes to nothing
+        while (true) {
+            $raw = self::readMetaphoneByte($word, $index);
+
+            if ($raw === "\0") {
+                return '';
+            }
+
+            if (self::isMetaphoneLetter($raw)) {
+                break;
+            }
+
+            $index++;
+        }
+
+        // The first phoneme is special-cased so that leading vowels are preserved
+        $current = self::readMetaphoneLetter($word, $index);
+        $next = self::readMetaphoneLetter($word, $index + 1);
+
+        switch ($current) {
+            case 'A':
+                // AE becomes E, any other leading A is kept
+                $phoned .= $next === 'E' ? 'E' : 'A';
+                $index += $next === 'E' ? 2 : 1;
+                break;
+            case 'G':
+            case 'K':
+            case 'P':
+                // [GKP]N becomes N
+                if ($next === 'N') {
+                    $phoned .= 'N';
+                    $index += 2;
+                }
+                break;
+            case 'W':
+                // WR becomes R; WH and W before a vowel become W
+                if ($next === 'R') {
+                    $phoned .= 'R';
+                    $index += 2;
+                } elseif ($next === 'H' || self::hasMetaphoneTrait($next, 1)) {
+                    $phoned .= 'W';
+                    $index += 2;
+                }
+                break;
+            case 'X':
+                // X becomes S
+                $phoned .= 'S';
+                $index++;
+                break;
+            case 'E':
+            case 'I':
+            case 'O':
+            case 'U':
+                // Remaining leading vowels are kept as-is
+                $phoned .= $current;
+                $index++;
+                break;
+        }
+
+        while (($raw = self::readMetaphoneByte($word, $index)) !== "\0") {
+            if ($maxPhonemes !== 0 && strlen($phoned) >= $maxPhonemes) {
+                break;
+            }
+
+            // Letters consumed by the current phoneme and skipped on the next pass
+            $skip = 0;
+
+            if (!self::isMetaphoneLetter($raw)) {
+                $index++;
+
+                continue;
+            }
+
+            $current = self::readMetaphoneLetter($word, $index);
+            $previous = $index >= 1 ? self::readMetaphoneLetter($word, $index - 1) : "\0";
+            $next = self::readMetaphoneLetter($word, $index + 1);
+            $afterNext = $next === "\0" ? "\0" : self::readMetaphoneLetter($word, $index + 2);
+
+            // Doubled letters collapse into one, except CC
+            if ($current === $previous && $current !== 'C') {
+                $index++;
+
+                continue;
+            }
+
+            switch ($current) {
+                case 'B':
+                    // B unless it closes MB
+                    if ($previous !== 'M') {
+                        $phoned .= 'B';
+                    }
+                    break;
+                case 'C':
+                    if (self::hasMetaphoneTrait($next, 8)) {
+                        if ($next === 'I' && $afterNext === 'A') {
+                            // CIA
+                            $phoned .= 'X';
+                        } elseif ($previous !== 'S') {
+                            // C[IEY], but dropped in SC[IEY]
+                            $phoned .= 'S';
+                        }
+                    } elseif ($next === 'H') {
+                        $phoned .= 'X';
+                        $skip++;
+                    } else {
+                        $phoned .= 'K';
+                    }
+                    break;
+                case 'D':
+                    // J in DG[IEY], otherwise T
+                    if ($next === 'G' && self::hasMetaphoneTrait($afterNext, 8)) {
+                        $phoned .= 'J';
+                        $skip++;
+                    } else {
+                        $phoned .= 'T';
+                    }
+                    break;
+                case 'G':
+                    if ($next === 'H') {
+                        // GH is F unless preceded by B, D or H at distance 3, or by H at distance 4
+                        $back3 = $index >= 3 ? self::readMetaphoneLetter($word, $index - 3) : "\0";
+                        $back4 = $index >= 4 ? self::readMetaphoneLetter($word, $index - 4) : "\0";
+
+                        if (!self::hasMetaphoneTrait($back3, 16) && $back4 !== 'H') {
+                            $phoned .= 'F';
+                            $skip++;
+                        }
+                    } elseif ($next === 'N') {
+                        // Silent in GN at a word break and in GNED, otherwise K
+                        $isGned = $afterNext === 'E' && self::lookAheadMetaphone($word, $index, 3) === 'D';
+
+                        if (self::isMetaphoneLetter($afterNext) && !$isGned) {
+                            $phoned .= 'K';
+                        }
+                    } elseif (self::hasMetaphoneTrait($next, 8) && $previous !== 'G') {
+                        $phoned .= 'J';
+                    } else {
+                        $phoned .= 'K';
+                    }
+                    break;
+                case 'H':
+                    // H before a vowel, unless it forms a diphthong with C, G, P, S or T
+                    if (self::hasMetaphoneTrait($next, 1) && !self::hasMetaphoneTrait($previous, 4)) {
+                        $phoned .= 'H';
+                    }
+                    break;
+                case 'K':
+                    // Dropped after C
+                    if ($previous !== 'C') {
+                        $phoned .= 'K';
+                    }
+                    break;
+                case 'P':
+                    // F before H, otherwise P
+                    $phoned .= $next === 'H' ? 'F' : 'P';
+                    break;
+                case 'Q':
+                    $phoned .= 'K';
+                    break;
+                case 'S':
+                    if ($next === 'I' && ($afterNext === 'O' || $afterNext === 'A')) {
+                        // SIO and SIA
+                        $phoned .= 'X';
+                    } elseif ($next === 'H') {
+                        $phoned .= 'X';
+                        $skip++;
+                    } else {
+                        $phoned .= 'S';
+                    }
+                    break;
+                case 'T':
+                    if ($next === 'I' && ($afterNext === 'O' || $afterNext === 'A')) {
+                        // TIO and TIA
+                        $phoned .= 'X';
+                    } elseif ($next === 'H') {
+                        $phoned .= '0';
+                        $skip++;
+                    } elseif (!($next === 'C' && $afterNext === 'H')) {
+                        // Dropped in TCH, otherwise T
+                        $phoned .= 'T';
+                    }
+                    break;
+                case 'V':
+                    $phoned .= 'F';
+                    break;
+                case 'W':
+                    // W before a vowel, otherwise dropped
+                    if (self::hasMetaphoneTrait($next, 1)) {
+                        $phoned .= 'W';
+                    }
+                    break;
+                case 'X':
+                    $phoned .= 'KS';
+                    break;
+                case 'Y':
+                    // Y before a vowel, otherwise dropped
+                    if (self::hasMetaphoneTrait($next, 1)) {
+                        $phoned .= 'Y';
+                    }
+                    break;
+                case 'Z':
+                    $phoned .= 'S';
+                    break;
+                case 'F':
+                case 'J':
+                case 'L':
+                case 'M':
+                case 'N':
+                case 'R':
+                    // Passed through unchanged
+                    $phoned .= $current;
+                    break;
+            }
+
+            $index += $skip + 1;
+        }
+
+        return $phoned;
+    }
+
+    /**
+     * Reads a single raw byte from a metaphone input string.
+     *
+     * Returns a NUL byte for out-of-range offsets, mirroring the NUL-terminated
+     * string the native implementation walks.
+     *
+     * @param string $word The ASCII string being encoded
+     * @param int $index The byte offset to read
+     * @return string The byte at `$index`, or "\0" when out of range
+     */
+    private static function readMetaphoneByte(string $word, int $index): string
+    {
+        return $index >= 0 && $index < strlen($word) ? $word[$index] : "\0";
+    }
+
+    /**
+     * Reads a single byte from a metaphone input string, upper-cased.
+     *
+     * @param string $word The ASCII string being encoded
+     * @param int $index The byte offset to read
+     * @return string The upper-cased byte at `$index`, or "\0" when out of range
+     */
+    private static function readMetaphoneLetter(string $word, int $index): string
+    {
+        $byte = self::readMetaphoneByte($word, $index);
+
+        return $byte >= 'a' && $byte <= 'z' ? chr(ord($byte) - 32) : $byte;
     }
 
     /**

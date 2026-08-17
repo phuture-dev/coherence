@@ -479,7 +479,7 @@ class Numbers extends FluentClass implements Numberable
     #[Override]
     public function toInt(): int
     {
-        if (is_integer($this->data)) {
+        if (is_int($this->data)) {
             return $this->data;
         }
 
