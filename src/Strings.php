@@ -6,8 +6,8 @@ namespace Phuture\Coherence;
 
 use Random\RandomException;
 use Phuture\Coherence\Support\StaticClass;
-use Phuture\Coherence\Enum\{PadDirection, UuidVersion};
 use Phuture\Coherence\Exception\InvalidArgumentException;
+use Phuture\Coherence\Enum\{CharCountMode, PadDirection, UuidVersion};
 
 /**
  * Comprehensive string manipulation utility class with multibyte-safe operations.
@@ -36,6 +36,15 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  */
 class Strings extends StaticClass
 {
+    /**
+     * Highest number of decimal places accepted by `numberFormat()`.
+     *
+     * Formatting with an arbitrarily large number of decimals allocates a string of that length,
+     * which exhausts memory long before the result is useful. PHP 8.6 rejects out-of-range values
+     * outright, so the limit is enforced here to keep the behaviour identical across versions.
+     */
+    public const MAX_DECIMALS = 100;
+
     /**
      * Escapes specific characters in a string using C-style backslash notation.
      *
@@ -467,36 +476,38 @@ class Strings extends StaticClass
     /**
      * Returns information about the byte values used in a string.
      *
-     * Mode 0 returns an array with all 256 possible byte values as keys and their
-     * frequency as values. Mode 1 returns only byte values with a count greater than
-     * zero. Mode 2 returns only byte values with a count of zero. Mode 3 returns a
-     * string containing all unique byte values found.
+     * `CharCountMode::All` returns an array with all 256 possible byte values as keys and
+     * their frequency as values. `CharCountMode::Present` returns only byte values with a
+     * count greater than zero. `CharCountMode::Absent` returns only byte values with a
+     * count of zero. `CharCountMode::Unique` returns a string containing all unique byte
+     * values found.
      *
      * Example:
      * ```php
      * use Phuture\Coherence\Strings;
+     * use Phuture\Coherence\Enum\CharCountMode;
      *
-     * $counts = Strings::charCounts('hello', 1);
+     * $counts = Strings::charCounts('hello', CharCountMode::Present);
      * // $counts[104] is 1 (one 'h'), $counts[108] is 2 (two 'l's)
      *
-     * $unique = Strings::charCounts('hello', 3);
+     * $unique = Strings::charCounts('hello', CharCountMode::Unique);
      * // 'ehlo' — unique bytes sorted
      * ```
      *
      * @param string $string The input string to analyze
-     * @param int $mode The return mode: 0 (all), 1 (present), 2 (absent), 3 (unique string) (default: 0)
+     * @param \Phuture\Coherence\Enum\CharCountMode $mode The return mode — All, Present, Absent
+     *  or Unique (default: CharCountMode::All)
      * @return array|int|string The result depends on `$mode`
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$mode` is not 0, 1, 2, or 3
+     * @see \Phuture\Coherence\Enum\CharCountMode
      */
-    public static function charCounts(string $string, int $mode = 0): array|int|string
+    public static function charCounts(string $string, CharCountMode $mode = CharCountMode::All): array|int|string
     {
-        if ($mode < 0 || $mode > 3) {
-            throw new InvalidArgumentException(
-                "Invalid Argument: Mode must be 0, 1, 2, or 3"
-            );
-        }
-
-        return count_chars($string, $mode);
+        return count_chars($string, match ($mode) {
+            CharCountMode::All => 0,
+            CharCountMode::Present => 1,
+            CharCountMode::Absent => 2,
+            CharCountMode::Unique => 3,
+        });
     }
 
     /**
@@ -2441,6 +2452,8 @@ class Strings extends StaticClass
      * @param string $decimalSeparator The character for the decimal point (default: '.')
      * @param string $thousandsSeparator The character for thousands grouping (default: ',')
      * @return string The formatted number string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$decimals` is negative
+     *   or greater than MAX_DECIMALS
      */
     public static function numberFormat(
         float|int $number,
@@ -2448,6 +2461,12 @@ class Strings extends StaticClass
         string $decimalSeparator = '.',
         string $thousandsSeparator = ','
     ): string {
+        if ($decimals < 0 || $decimals > self::MAX_DECIMALS) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The number of decimals must be between 0 and ' . self::MAX_DECIMALS
+            );
+        }
+
         return number_format($number, $decimals, $decimalSeparator, $thousandsSeparator);
     }
 

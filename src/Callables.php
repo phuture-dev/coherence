@@ -538,7 +538,7 @@ class Callables extends StaticClass
     public static function defer(callable $callback, int $milliseconds = self::EXECUTION_DELAY): Closure
     {
         return function (...$args) use ($callback, $milliseconds) {
-            usleep($milliseconds * 1000);
+            self::delay($milliseconds);
 
             return $callback(...$args);
         };
@@ -1240,7 +1240,7 @@ class Callables extends StaticClass
                     $attempts++;
 
                     if ($attempts < $maxAttempts && $milliseconds > 0) {
-                        usleep($milliseconds * 1000);
+                        self::delay($milliseconds);
                     }
                 }
             }
@@ -1733,5 +1733,34 @@ class Callables extends StaticClass
 
             return $result;
         };
+    }
+
+    /**
+     * Suspends execution for the given number of milliseconds.
+     *
+     * Whole seconds are slept separately from the remaining microseconds so that the microsecond
+     * count handed to `usleep()` always stays below UINT_MAX. Passing the delay straight to
+     * `usleep()` overflows for delays beyond roughly 71 minutes, which PHP 8.6 reports as a
+     * ValueError. Delays of zero or less return immediately.
+     *
+     * @param int $milliseconds The number of milliseconds to sleep
+     */
+    private static function delay(int $milliseconds): void
+    {
+        if ($milliseconds <= 0) {
+            return;
+        }
+
+        $seconds = intdiv($milliseconds, 1000);
+
+        if ($seconds > 0) {
+            sleep($seconds);
+        }
+
+        $microseconds = ($milliseconds % 1000) * 1000;
+
+        if ($microseconds > 0) {
+            usleep($microseconds);
+        }
     }
 }

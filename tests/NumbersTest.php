@@ -7,7 +7,7 @@ namespace Phuture\Coherence\Tests;
 use RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
-use Phuture\Coherence\Enum\Unit;
+use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
 require __DIR__ . '/bootstrap.php';
@@ -483,6 +483,23 @@ class NumbersTest extends TestCase
         Assert::same('0 B', Numbers::fileSize(0));
     }
 
+    public function testFileSizeDecimalBase(): void
+    {
+        Assert::same('1 KB', Numbers::fileSize(1000, 0, ByteBase::Decimal));
+        Assert::same('1 MB', Numbers::fileSize(1000000, 0, ByteBase::Decimal));
+        Assert::same('500 B', Numbers::fileSize(500, 0, ByteBase::Decimal));
+
+        // Binary is the default, so the two calls must agree
+        Assert::same(
+            Numbers::fileSize(1024),
+            Numbers::fileSize(1024, 0, ByteBase::Binary)
+        );
+
+        // The same byte count reads differently under each base
+        Assert::same('1.02 KB', Numbers::fileSize(1024, 2, ByteBase::Decimal));
+        Assert::same('1.00 KB', Numbers::fileSize(1024, 2, ByteBase::Binary));
+    }
+
     public function testFloatComparisonPrecision(): void
     {
         $a = 0.1 + 0.2;
@@ -535,12 +552,49 @@ class NumbersTest extends TestCase
         Assert::same('100', Numbers::format(100));
     }
 
+    public function testFormatAutoPrecisionCapsLongDecimalStrings(): void
+    {
+        // A detected precision is capped rather than rejected, so long decimal strings still work
+        $number = '1.' . str_repeat('0', Numbers::MAX_PRECISION + 50) . '1';
+
+        Assert::type('string', Numbers::format($number));
+    }
+
     public function testFormatPercentage(): void
     {
         Assert::same('75.0%', Numbers::formatPercentage(0.75));
         Assert::same('75.00%', Numbers::formatPercentage(0.75, 2));
         Assert::same('150.0%', Numbers::formatPercentage(1.5, 1));
         Assert::same('3%', Numbers::formatPercentage(3, 0, 1));
+    }
+
+    public function testFormatThrowsWithInvalidPrecision(): void
+    {
+        Assert::exception(function (): void {
+            Numbers::format(1.5, -1);
+        }, InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Numbers::format(1.5, Numbers::MAX_PRECISION + 1);
+        }, InvalidArgumentException::class);
+    }
+
+    public function testFormattingThrowsWithInvalidPrecision(): void
+    {
+        $cases = [
+            fn () => Numbers::abbreviate(1500, -1),
+            fn () => Numbers::abbreviate(1500, Numbers::MAX_PRECISION + 1),
+            fn () => Numbers::fileSize(1024, -1),
+            fn () => Numbers::fileSize(1024, Numbers::MAX_PRECISION + 1),
+            fn () => Numbers::forHumans(1500, -1),
+            fn () => Numbers::forHumans(1500, Numbers::MAX_PRECISION + 1),
+            fn () => Numbers::formatPercentage(0.75, -1),
+            fn () => Numbers::formatPercentage(0.75, Numbers::MAX_PRECISION + 1),
+        ];
+
+        foreach ($cases as $case) {
+            Assert::exception($case, InvalidArgumentException::class);
+        }
     }
 
     public function testIsFloat(): void

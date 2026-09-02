@@ -6,7 +6,7 @@ namespace Phuture\Coherence\Type;
 
 use Override;
 use RoundingMode;
-use Phuture\Coherence\Enum\Unit;
+use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Interface\Numberable;
 use Phuture\Coherence\Numbers as Transformer;
@@ -224,11 +224,13 @@ class Numbers extends FluentClass implements Numberable
      * Converts the wrapped byte count into a human-readable file size string.
      *
      * @param int $precision The number of decimal places to show (default: 0)
-     * @param int $base The base for unit conversion: 1024 or 1000 (default: 1024)
+     * @param \Phuture\Coherence\Enum\ByteBase $base The base for unit conversion — Binary (1024)
+     *  or Decimal (1000) (default: ByteBase::Binary)
      * @return string The human-readable file size string
      * @see Transformer::fileSize()
+     * @see \Phuture\Coherence\Enum\ByteBase
      */
-    public function fileSize(int $precision = 0, int $base = 1024): string
+    public function fileSize(int $precision = 0, ByteBase $base = ByteBase::Binary): string
     {
         return Transformer::fileSize($this->toString(), $precision, $base);
     }

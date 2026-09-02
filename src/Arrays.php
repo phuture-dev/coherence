@@ -8,15 +8,16 @@ use WeakMap;
 use stdClass;
 use Throwable;
 use TypeError;
+use Stringable;
 use ArrayAccess;
 use Traversable;
 use ReflectionClass;
 use JsonSerializable;
 use ReflectionException;
 use Phuture\Coherence\Interface\Arrayable;
-use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Exception\LogicException;
 use Phuture\Coherence\Support\{ArgumentExtractor, StaticClass};
+use Phuture\Coherence\Enum\{ArrayComparator, CountMode, KeyCase, SortComparison};
 use Phuture\Coherence\Exception\{InvalidArgumentException, InvalidDataTypeException, OutOfBoundsException};
 
 /**
@@ -317,6 +318,7 @@ class Arrays extends StaticClass
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
+     * use Phuture\Coherence\Enum\KeyCase;
      *
      * $array = ['Name' => 'John', 'EMAIL' => 'john@example.com', 'Age' => 30];
      *
@@ -325,17 +327,22 @@ class Arrays extends StaticClass
      * // Returns: ['name' => 'John', 'email' => 'john@example.com', 'age' => 30]
      *
      * // Convert to uppercase
-     * $upper = Arrays::changeKeyCase($array, CASE_UPPER);
+     * $upper = Arrays::changeKeyCase($array, KeyCase::Upper);
      * // Returns: ['NAME' => 'John', 'EMAIL' => 'john@example.com', 'AGE' => 30]
      * ```
      *
      * @param array $array The array whose keys to change case.
-     * @param int $case Either CASE_LOWER (default) or CASE_UPPER.
+     * @param \Phuture\Coherence\Enum\KeyCase $case The case to convert keys to — Lower or Upper
+     *  (default: KeyCase::Lower)
      * @return array Returns a new array with case-changed keys
+     * @see \Phuture\Coherence\Enum\KeyCase
      */
-    public static function changeKeyCase(array $array, int $case = CASE_LOWER): array
+    public static function changeKeyCase(array $array, KeyCase $case = KeyCase::Lower): array
     {
-        return array_change_key_case($array, $case);
+        return array_change_key_case($array, match ($case) {
+            KeyCase::Lower => CASE_LOWER,
+            KeyCase::Upper => CASE_UPPER,
+        });
     }
 
     /**
@@ -1966,11 +1973,16 @@ class Arrays extends StaticClass
      * // Returns: [1 => Jane object] (only user with id=2 exists in both)
      * ```
      *
+     * Without a comparison callback the values are compared as strings, so every value must be
+     * scalar, null or stringable. Pass a comparison callback to intersect arrays holding nested
+     * arrays or objects that cannot be converted to a string.
+     *
      * @param array $array The array to compare from.
      * @param array ...$arrays Arrays to compare against
      * @param callable|null $callback Optional comparison function that returns <0, 0, or >0
      * @return array Returns values present in all arrays with keys preserved from the first array
-     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison array is provided
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When no comparison array is
+     *   provided, or when a value cannot be compared as a string and no comparison callback is given
      * @see \Phuture\Coherence\Arrays::intersectAssoc()
      * @see \Phuture\Coherence\Arrays::intersectKeys()
      */
@@ -1987,6 +1999,8 @@ class Arrays extends StaticClass
         if ($callbacks !== []) {
             return array_uintersect($array, ...$arrays, ...$callbacks);
         }
+
+        self::assertStringComparable($array, ...$arrays);
 
         return array_intersect($array, ...$arrays);
     }
@@ -2328,7 +2342,9 @@ class Arrays extends StaticClass
      * // $data is now with all string values in uppercase
      * ```
      *
-     * @param array|object $array The array or object to iterate over (passed by reference)
+     * @param array|object $array The array or object to iterate over (passed by reference).
+     *  For objects, only public properties are visited and values modified by reference are
+     *  written back to the object.
      * @param callable $callback The function to apply to each element
      *  The callback has the signature `function (mixed $value, mixed $key): mixed`
      * @param bool $recursive Whether to recursively process nested arrays (default: false)
@@ -2341,6 +2357,26 @@ class Arrays extends StaticClass
         bool $recursive = false,
         mixed $args = null
     ): bool {
+        if (is_object($array)) {
+            // Objects are walked through their public properties so that no object is handed to
+            // array_walk(), which deprecates that usage as of PHP 8.6
+            $original = get_object_vars($array);
+            $properties = $original;
+
+            $result = $recursive
+                ? array_walk_recursive($properties, $callback, $args)
+                : array_walk($properties, $callback, $args);
+
+            foreach ($properties as $key => $value) {
+                // Only touched properties are written back, leaving readonly properties intact
+                if ($value !== $original[$key]) {
+                    $array->$key = $value;
+                }
+            }
+
+            return $result;
+        }
+
         if ($recursive) {
             return array_walk_recursive($array, $callback, $args);
         }
@@ -2477,6 +2513,7 @@ class Arrays extends StaticClass
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
+     * use Phuture\Coherence\Enum\CountMode;
      *
      * $fruits = ['apple', 'banana', 'cherry'];
      * $count = Arrays::length($fruits);
@@ -2484,18 +2521,23 @@ class Arrays extends StaticClass
      * // Returns: 3
      *
      * $nested = ['a', 'b', ['c', 'd', 'e']];
-     * $total = Arrays::length($nested, COUNT_RECURSIVE);
+     * $total = Arrays::length($nested, CountMode::Recursive);
      *
      * // Returns: 6 (counts all nested elements)
      * ```
      *
      * @param array $array The array to count elements in
-     * @param int $mode Counting mode: COUNT_NORMAL or COUNT_RECURSIVE (default: COUNT_NORMAL)
+     * @param \Phuture\Coherence\Enum\CountMode $mode The counting mode — Normal or Recursive
+     *  (default: CountMode::Normal)
      * @return int The number of elements in the array
+     * @see \Phuture\Coherence\Enum\CountMode
      */
-    public static function length(array $array, int $mode = COUNT_NORMAL): int
+    public static function length(array $array, CountMode $mode = CountMode::Normal): int
     {
-        return count($array, $mode);
+        return count($array, match ($mode) {
+            CountMode::Normal => COUNT_NORMAL,
+            CountMode::Recursive => COUNT_RECURSIVE,
+        });
     }
 
     /**
@@ -4535,20 +4577,33 @@ class Arrays extends StaticClass
      * Example:
      * ```php
      * use Phuture\Coherence\Arrays;
+     * use Phuture\Coherence\Enum\SortComparison;
      *
      * $colors = ['red', 'blue', 'red', 'green', 'blue'];
      * $uniqueColors = Arrays::unique($colors);
      *
      * // Returns: ['red', 'blue', 'green']
+     *
+     * $numbers = ['1', 1, '1.0', 2];
+     * $uniqueNumbers = Arrays::unique($numbers, SortComparison::Numeric);
+     *
+     * // Returns: ['1', 2]
      * ```
      *
      * @param array $array The array to remove duplicates from
-     * @param int $flags Optional sorting behavior flags for comparison (default: SORT_STRING)
+     * @param \Phuture\Coherence\Enum\SortComparison $comparison How values are compared to detect
+     *  duplicates — Regular, Numeric, String or LocaleString (default: SortComparison::String)
      * @return array Returns an array with unique values
+     * @see \Phuture\Coherence\Enum\SortComparison
      */
-    public static function unique(array $array, int $flags = SORT_STRING): array
+    public static function unique(array $array, SortComparison $comparison = SortComparison::String): array
     {
-        return array_unique($array, $flags);
+        return array_unique($array, match ($comparison) {
+            SortComparison::Regular => SORT_REGULAR,
+            SortComparison::Numeric => SORT_NUMERIC,
+            SortComparison::String => SORT_STRING,
+            SortComparison::LocaleString => SORT_LOCALE_STRING,
+        });
     }
 
     /**
@@ -4846,6 +4901,34 @@ class Arrays extends StaticClass
         }
 
         return $result;
+    }
+
+    /**
+     * Asserts that every value in the given arrays can be compared as a string.
+     *
+     * The native intersection functions compare values by casting them to strings, which is
+     * undefined for nested arrays and for objects without a `__toString()` method. PHP 8.6 also
+     * changed when that conversion happens, so the inputs are validated up front to keep the
+     * behaviour identical across versions.
+     *
+     * @param array ...$arrays The arrays whose values must be comparable as strings
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When a value cannot be
+     *   converted to a string
+     */
+    private static function assertStringComparable(array ...$arrays): void
+    {
+        foreach ($arrays as $array) {
+            foreach ($array as $value) {
+                if (is_scalar($value) || $value === null || $value instanceof Stringable) {
+                    continue;
+                }
+
+                throw new InvalidArgumentException(
+                    'Invalid Argument: Values must be scalar, null or stringable to be intersected. '
+                    . 'Provide a comparison callback to intersect ' . get_debug_type($value) . ' values'
+                );
+            }
+        }
     }
 
     /**
