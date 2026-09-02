@@ -1047,11 +1047,11 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Strips whitespace (or given characters) from both ends of the string.
      *
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return self Returns the current instance for method chaining
      * @see Transformer::trim()
      */
-    public function trim(string $characters = " \t\n\r\0\x0B"): self
+    public function trim(?string $characters = null): self
     {
         $this->data = Transformer::trim($this->toString(), $characters);
 
@@ -1061,11 +1061,11 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Strips whitespace (or given characters) from the beginning of the string.
      *
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return self Returns the current instance for method chaining
      * @see Transformer::trimLeft()
      */
-    public function trimLeft(string $characters = " \t\n\r\0\x0B"): self
+    public function trimLeft(?string $characters = null): self
     {
         $this->data = Transformer::trimLeft($this->toString(), $characters);
 
@@ -1075,11 +1075,11 @@ class Strings extends FluentClass implements Stringable, \Stringable
     /**
      * Strips whitespace (or given characters) from the end of the string.
      *
-     * @param string $characters The characters to strip (default: whitespace)
+     * @param string|null $characters The characters to strip (default: whitespace)
      * @return self Returns the current instance for method chaining
      * @see Transformer::trimRight()
      */
-    public function trimRight(string $characters = " \t\n\r\0\x0B"): self
+    public function trimRight(?string $characters = null): self
     {
         $this->data = Transformer::trimRight($this->toString(), $characters);
 

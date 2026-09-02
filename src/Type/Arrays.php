@@ -12,8 +12,8 @@ use ArrayIterator;
 use IteratorAggregate;
 use Phuture\Coherence\Interface\Arrayable;
 use Phuture\Coherence\Support\FluentClass;
-use Phuture\Coherence\Enum\ArrayComparator;
 use Phuture\Coherence\Arrays as Transformer;
+use Phuture\Coherence\Enum\{ArrayComparator, KeyCase, SortComparison};
 
 /**
  * A fluent, array-like wrapper that provides object-oriented array manipulation.
@@ -77,11 +77,13 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     /**
      * Changes the case of all keys in an array.
      *
-     * @param int $case The case to convert keys to (CASE_LOWER or CASE_UPPER, default: CASE_LOWER)
+     * @param \Phuture\Coherence\Enum\KeyCase $case The case to convert keys to — Lower or Upper
+     *  (default: KeyCase::Lower)
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::changeKeyCase()
+     * @see \Phuture\Coherence\Enum\KeyCase
      */
-    public function changeKeyCase(int $case = CASE_LOWER): self
+    public function changeKeyCase(KeyCase $case = KeyCase::Lower): self
     {
         $this->data = Transformer::changeKeyCase($this->data, $case);
 
@@ -908,13 +910,15 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
     /**
      * Removes duplicate values from an array.
      *
-     * @param int $flags The comparison flags to use for uniqueness (default: SORT_STRING)
+     * @param \Phuture\Coherence\Enum\SortComparison $comparison How values are compared to detect
+     *  duplicates — Regular, Numeric, String or LocaleString (default: SortComparison::String)
      * @return self An instance of the Arrays class with the transformed array
      * @see \Phuture\Coherence\Arrays::unique()
+     * @see \Phuture\Coherence\Enum\SortComparison
      */
-    public function unique(int $flags = SORT_STRING): self
+    public function unique(SortComparison $comparison = SortComparison::String): self
     {
-        $this->data = Transformer::unique($this->data, $flags);
+        $this->data = Transformer::unique($this->data, $comparison);
 
         return $this;
     }

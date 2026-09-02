@@ -9,9 +9,15 @@ use ArrayObject;
 use JsonSerializable;
 use Phuture\Coherence\Arrays;
 use Tester\{Assert, TestCase};
-use Phuture\Coherence\Enum\ArrayComparator;
+use Phuture\Coherence\Enum\{ArrayComparator, CountMode, KeyCase, SortComparison};
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException, OutOfBoundsException};
-use Phuture\Coherence\Tests\Fixtures\{SampleEntity, SampleEntityWithNested, SampleProtectedEntity};
+use Phuture\Coherence\Tests\Fixtures\{
+    SampleEntity,
+    SampleEntityWithNested,
+    SampleProtectedEntity,
+    SamplePublicEntity,
+    SampleReadonlyEntity
+};
 
 require __DIR__ . '/bootstrap.php';
 
@@ -121,21 +127,21 @@ class ArraysTest extends TestCase
     public function testChangeKeyCase(): void
     {
         $array = ['Name' => 'John', 'AGE' => 30];
-        $result = Arrays::changeKeyCase($array, CASE_LOWER);
+        $result = Arrays::changeKeyCase($array, KeyCase::Lower);
         Assert::same(['name' => 'John', 'age' => 30], $result);
     }
 
     public function testChangeKeyCaseNumericKeys(): void
     {
         $array = [0 => 'a', 'Name' => 'John'];
-        $result = Arrays::changeKeyCase($array, CASE_LOWER);
+        $result = Arrays::changeKeyCase($array, KeyCase::Lower);
         Assert::same([0 => 'a', 'name' => 'John'], $result);
     }
 
     public function testChangeKeyCaseUpper(): void
     {
         $array = ['name' => 'John', 'age' => 30];
-        $result = Arrays::changeKeyCase($array, CASE_UPPER);
+        $result = Arrays::changeKeyCase($array, KeyCase::Upper);
         Assert::same(['NAME' => 'John', 'AGE' => 30], $result);
     }
 
@@ -1276,6 +1282,20 @@ class ArraysTest extends TestCase
         Assert::same([1 => 2, 2 => 3], $result);
     }
 
+    public function testIntersectAcceptsNullAndStringableValues(): void
+    {
+        $stringable = new class () {
+            public function __toString(): string
+            {
+                return 'b';
+            }
+        };
+
+        Assert::same([0 => 'a', 1 => null], Arrays::intersect(['a', null, 'z'], ['a', null]));
+        // Values are kept from the first array, so the stringable object itself is returned
+        Assert::same([0 => $stringable], Arrays::intersect([$stringable], ['b']));
+    }
+
     public function testIntersectAssoc(): void
     {
         $array1 = ['a' => 1, 'b' => 2, 'c' => 3];
@@ -1393,6 +1413,17 @@ class ArraysTest extends TestCase
         Assert::same([1 => 2, 2 => 3], $result);
     }
 
+    public function testIntersectThrowsWithNonStringableValues(): void
+    {
+        Assert::exception(function (): void {
+            Arrays::intersect([['a']], [['a']]);
+        }, InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Arrays::intersect([new stdClass()], [new stdClass()]);
+        }, InvalidArgumentException::class);
+    }
+
     public function testIntersectThrowsWithSingleArray(): void
     {
         Assert::exception(
@@ -1407,6 +1438,16 @@ class ArraysTest extends TestCase
         $array2 = ['A', 'C'];
         $result = Arrays::intersect($array1, $array2, fn ($a, $b) => strcasecmp($a, $b));
         Assert::same([0 => 'a', 2 => 'c'], $result);
+    }
+
+    public function testIntersectWithCallbackAcceptsObjects(): void
+    {
+        $first = [(object) ['id' => 1], (object) ['id' => 2]];
+        $second = [(object) ['id' => 2]];
+        $result = Arrays::intersect($first, $second, fn ($a, $b) => $a->id <=> $b->id);
+
+        Assert::count(1, $result);
+        Assert::same(2, reset($result)->id);
     }
 
     public function testIsAssoc(): void
@@ -1492,6 +1533,89 @@ class ArraysTest extends TestCase
         Assert::same([2, 4, 6], $array);
     }
 
+    public function testIterateOverObject(): void
+    {
+        $entity = new SamplePublicEntity('widget', 3);
+        $seen = [];
+        $result = Arrays::iterate($entity, function ($value, $key) use (&$seen) {
+            $seen[$key] = $value;
+        });
+
+        Assert::true($result);
+        Assert::same(['count' => 3, 'name' => 'widget', 'tags' => []], $seen);
+    }
+
+    public function testIterateOverObjectLeavesUntouchedReadonlyProperties(): void
+    {
+        $entity = new SampleReadonlyEntity('widget', 3);
+        Arrays::iterate($entity, function (&$value, $key) {
+            if (is_int($value)) {
+                $value *= 10;
+            }
+        });
+
+        Assert::same('widget', $entity->name);
+        Assert::same(30, $entity->count);
+    }
+
+    public function testIterateOverObjectModifiesByReference(): void
+    {
+        $entity = new SamplePublicEntity('widget', 3);
+        Arrays::iterate($entity, function (&$value, $key) {
+            if (is_int($value)) {
+                $value *= 10;
+            }
+        });
+
+        Assert::same(30, $entity->count);
+        Assert::same('widget', $entity->name);
+    }
+
+    public function testIterateOverObjectRecursive(): void
+    {
+        $entity = new SamplePublicEntity('widget', 1, ['a' => 'red', 'b' => 'blue']);
+        $leaves = [];
+        Arrays::iterate($entity, function (&$value, $key) use (&$leaves) {
+            $leaves[] = $key;
+
+            if (is_string($value)) {
+                $value = strtoupper($value);
+            }
+        }, true);
+
+        // Scalar properties are leaves, and the nested array property is recursed into
+        Assert::same(['count', 'name', 'a', 'b'], $leaves);
+        Assert::same(['a' => 'RED', 'b' => 'BLUE'], $entity->tags);
+        Assert::same('WIDGET', $entity->name);
+    }
+
+    public function testIterateOverObjectSkipsNonPublicProperties(): void
+    {
+        $entity = new SamplePublicEntity('widget');
+        $seen = [];
+        Arrays::iterate($entity, function ($value, $key) use (&$seen) {
+            $seen[] = $key;
+        });
+
+        sort($seen);
+        Assert::same(['count', 'name', 'tags'], $seen);
+        Assert::same('protected', $entity->getSecret());
+        Assert::same('private', $entity->getToken());
+    }
+
+    public function testIterateOverObjectWithoutPublicProperties(): void
+    {
+        $entity = new SampleEntity('John', 30);
+        $seen = [];
+        $result = Arrays::iterate($entity, function ($value, $key) use (&$seen) {
+            $seen[] = $key;
+        });
+
+        Assert::true($result);
+        Assert::same([], $seen);
+        Assert::same('John', $entity->getName());
+    }
+
     public function testIterateRecursive(): void
     {
         $array = [1, [2, 3], [4, [5]]];
@@ -1502,6 +1626,16 @@ class ArraysTest extends TestCase
             }
         }, true);
         Assert::same([1, 2, 3, 4, 5], $values);
+    }
+
+    public function testIterateWithArgs(): void
+    {
+        $array = [1, 2];
+        $received = [];
+        Arrays::iterate($array, function ($value, $key, $extra) use (&$received) {
+            $received[] = $extra;
+        }, false, 'context');
+        Assert::same(['context', 'context'], $received);
     }
 
     public function testIterateWithKeyAndValue(): void
@@ -1555,8 +1689,9 @@ class ArraysTest extends TestCase
     public function testLengthRecursive(): void
     {
         $array = [1, [2, 3], [4, [5, 6]]];
-        // COUNT_RECURSIVE counts the array elements plus the nested arrays themselves
-        Assert::same(9, Arrays::length($array, COUNT_RECURSIVE));
+        // CountMode::Recursive counts the array elements plus the nested arrays themselves
+        Assert::same(9, Arrays::length($array, CountMode::Recursive));
+        Assert::same(3, Arrays::length($array, CountMode::Normal));
     }
 
     public function testMap(): void
@@ -3096,8 +3231,33 @@ class ArraysTest extends TestCase
     public function testUniqueNumeric(): void
     {
         $array = ['1', 1, '2', 2];
-        $result = Arrays::unique($array, SORT_NUMERIC);
+        $result = Arrays::unique($array, SortComparison::Numeric);
         Assert::same([0 => '1', 2 => '2'], $result);
+    }
+
+    public function testUniqueRegular(): void
+    {
+        // Regular comparison keeps PHP's native semantics rather than casting to string
+        $array = [1, '1', 1.0, 2];
+        $result = Arrays::unique($array, SortComparison::Regular);
+        Assert::same([0 => 1, 3 => 2], $result);
+    }
+
+    public function testUniqueLocaleString(): void
+    {
+        $array = ['a', 'b', 'a', 'c'];
+        $result = Arrays::unique($array, SortComparison::LocaleString);
+        Assert::same([0 => 'a', 1 => 'b', 3 => 'c'], $result);
+    }
+
+    public function testUniqueStringComparison(): void
+    {
+        // String is the default, so both calls must agree
+        $array = ['1', 1, '2', 2];
+        Assert::same(
+            Arrays::unique($array),
+            Arrays::unique($array, SortComparison::String)
+        );
     }
 
     public function testUniqueStrings(): void

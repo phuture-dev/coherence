@@ -7,7 +7,7 @@ namespace Phuture\Coherence\Tests\Type;
 use RoundingMode;
 use Phuture\Coherence\Numbers;
 use Tester\{Assert, TestCase};
-use Phuture\Coherence\Enum\Unit;
+use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Type\Numbers as FluentNumbers;
 use Phuture\Coherence\Exception\{InvalidArgumentException};
 
@@ -306,6 +306,10 @@ class NumbersTest extends TestCase
         Assert::same(Numbers::fileSize(500), FluentNumbers::from(500)->fileSize());
         Assert::same(Numbers::fileSize(1024), FluentNumbers::from(1024)->fileSize());
         Assert::same(Numbers::fileSize(1500, 2), FluentNumbers::from(1500)->fileSize(2));
+        Assert::same(
+            Numbers::fileSize(1000, 0, ByteBase::Decimal),
+            FluentNumbers::from(1000)->fileSize(0, ByteBase::Decimal)
+        );
     }
 
     public function testFloor(): void
