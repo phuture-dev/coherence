@@ -260,6 +260,21 @@ class CallablesTest extends TestCase
         Assert::true($elapsed >= 9);
     }
 
+    public function testDeferCrossesTheOneSecondBoundary(): void
+    {
+        // Delays of a second or more are split into sleep() plus usleep(), so the microsecond
+        // count handed to usleep() can never overflow
+        $deferred = Callables::defer(fn () => 'done', 1010);
+
+        $start = microtime(true);
+        $result = $deferred();
+        $elapsed = (microtime(true) - $start) * 1000;
+
+        Assert::same('done', $result);
+        Assert::true($elapsed >= 1000);
+        Assert::true($elapsed < 2000);
+    }
+
     public function testDeferDefaultDelay(): void
     {
         $deferred = Callables::defer(fn () => 'done');
@@ -269,6 +284,16 @@ class CallablesTest extends TestCase
 
         Assert::same('done', $result);
         Assert::true($elapsed >= 400);
+    }
+
+    public function testDeferWithoutDelay(): void
+    {
+        $start = microtime(true);
+        Assert::same('done', (Callables::defer(fn () => 'done', 0))());
+        Assert::same('done', (Callables::defer(fn () => 'done', -5))());
+        $elapsed = (microtime(true) - $start) * 1000;
+
+        Assert::true($elapsed < 100);
     }
 
     public function testExecutionDelayConstant(): void

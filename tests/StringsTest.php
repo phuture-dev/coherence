@@ -7,7 +7,7 @@ namespace Phuture\Coherence\Tests;
 use Phuture\Coherence\Strings;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Type\Strings as FluentStrings;
-use Phuture\Coherence\Enum\{PadDirection, UuidVersion};
+use Phuture\Coherence\Enum\{CharCountMode, PadDirection, UuidVersion};
 
 require __DIR__ . '/bootstrap.php';
 
@@ -283,21 +283,27 @@ class StringsTest extends TestCase
 
     public function testCharCounts(): void
     {
-        // Mode 1: only bytes with count > 0
-        $counts = Strings::charCounts('hello', 1);
+        // Present: only bytes with count > 0
+        $counts = Strings::charCounts('hello', CharCountMode::Present);
         Assert::same(1, $counts[104]); // 'h'
         Assert::same(2, $counts[108]); // 'l'
+        Assert::false(isset($counts[122])); // 'z' never occurs
 
-        // Mode 3: string of unique bytes
-        $unique = Strings::charCounts('hello', 3);
+        // Unique: string of unique bytes
+        $unique = Strings::charCounts('hello', CharCountMode::Unique);
         Assert::true(strlen($unique) === 4); // e, h, l, o
-    }
 
-    public function testCharCountsInvalidModeThrows(): void
-    {
-        Assert::exception(function (): void {
-            Strings::charCounts('hello', 5);
-        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+        // All: every one of the 256 byte values is reported
+        $all = Strings::charCounts('hello', CharCountMode::All);
+        Assert::same(256, count($all));
+        Assert::same(2, $all[108]); // 'l'
+        Assert::same(0, $all[122]); // 'z'
+
+        // Absent: only bytes that never occur
+        $absent = Strings::charCounts('hello', CharCountMode::Absent);
+        Assert::same(252, count($absent)); // 256 minus e, h, l, o
+        Assert::same(0, $absent[122]); // 'z'
+        Assert::false(isset($absent[108])); // 'l' occurs, so it is excluded
     }
 
     public function testChunk(): void
@@ -1577,6 +1583,17 @@ class StringsTest extends TestCase
         Assert::same('1.234,57', Strings::numberFormat(1234.5678, 2, ',', '.'));
         Assert::same('1,000,000', Strings::numberFormat(1000000));
         Assert::same('0', Strings::numberFormat(0));
+    }
+
+    public function testNumberFormatThrowsWithInvalidDecimals(): void
+    {
+        Assert::exception(function (): void {
+            Strings::numberFormat(1234.5678, -1);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
+
+        Assert::exception(function (): void {
+            Strings::numberFormat(1234.5678, Strings::MAX_DECIMALS + 1);
+        }, \Phuture\Coherence\Exception\InvalidArgumentException::class);
     }
 
     public function testOfChaining(): void

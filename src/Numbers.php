@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phuture\Coherence;
 
 use RoundingMode;
-use Phuture\Coherence\Enum\Unit;
 use Phuture\Coherence\Support\StaticClass;
+use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Exception\{InvalidArgumentException, LogicException};
 
 /**
@@ -40,6 +40,15 @@ class Numbers extends StaticClass
     private const DEFAULT_SCALE = 10;
 
     /**
+     * Highest number of decimal places accepted by the formatting methods.
+     *
+     * Formatting with an arbitrarily large precision allocates a string of that length, which
+     * exhausts memory long before the result is useful. PHP 8.6 rejects out-of-range values
+     * outright, so the limit is enforced here to keep the behaviour identical across versions.
+     */
+    public const MAX_PRECISION = 100;
+
+    /**
      * Abbreviates a number using suffix letters (K, M, B, T).
      *
      * Converts large numbers into shorter human-readable strings by dividing
@@ -58,10 +67,14 @@ class Numbers extends StaticClass
      * @param int|float|string $number The number to abbreviate
      * @param int $precision The number of decimal places to keep (default: 1)
      * @return string The abbreviated number string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$precision` is negative
+     *   or greater than MAX_PRECISION
      * @see \Phuture\Coherence\Numbers::forHumans()
      */
     public static function abbreviate(int|float|string $number, int $precision = 1): string
     {
+        self::assertPrecision($precision);
+
         $suffixes = ['', 'K', 'M', 'B', 'T'];
         $number = (float) $number;
         $absolute = abs($number);
@@ -507,33 +520,48 @@ class Numbers extends StaticClass
      * Example:
      * ```php
      * use Phuture\Coherence\Numbers;
+     * use Phuture\Coherence\Enum\ByteBase;
      *
      * Numbers::fileSize(500); // '500 B'
      * Numbers::fileSize(1024); // '1 KB'
      * Numbers::fileSize(1048576); // '1 MB'
      * Numbers::fileSize(1073741824); // '1 GB'
      * Numbers::fileSize(1500, 2); // '1.46 KB'
+     * Numbers::fileSize(1000, 0, ByteBase::Decimal); // '1 KB'
      * ```
      *
      * @param int|float|string $bytes The file size in bytes
      * @param int $precision The number of decimal places to show (default: 0)
-     * @param int $base The base for unit conversion: 1024 or 1000 (default: 1024)
+     * @param \Phuture\Coherence\Enum\ByteBase $base The base for unit conversion — Binary (1024)
+     *  or Decimal (1000) (default: ByteBase::Binary)
      * @return string The human-readable file size string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$precision` is negative
+     *   or greater than MAX_PRECISION
      * @see \Phuture\Coherence\Numbers::forHumans()
+     * @see \Phuture\Coherence\Enum\ByteBase
      */
-    public static function fileSize(int|float|string $bytes, int $precision = 0, int $base = 1024): string
-    {
+    public static function fileSize(
+        int|float|string $bytes,
+        int $precision = 0,
+        ByteBase $base = ByteBase::Binary
+    ): string {
+        self::assertPrecision($precision);
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
         $bytes = (float) $bytes;
+        $divisor = match ($base) {
+            ByteBase::Binary => 1024,
+            ByteBase::Decimal => 1000,
+        };
 
-        if ($bytes < (float) $base) {
+        if ($bytes < (float) $divisor) {
             return round($bytes, $precision) . ' B';
         }
 
-        $exp = (int) floor(log($bytes, $base));
+        $exp = (int) floor(log($bytes, $divisor));
         $exp = min($exp, count($units) - 1);
 
-        $value = round($bytes / pow($base, $exp), $precision);
+        $value = round($bytes / pow($divisor, $exp), $precision);
 
         return number_format($value, $precision) . ' ' . $units[$exp];
     }
@@ -581,10 +609,14 @@ class Numbers extends StaticClass
      * @param int|float|string $number The number to format
      * @param int $precision The number of decimal places to keep (default: 1)
      * @return string The human-readable number string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$precision` is negative
+     *   or greater than MAX_PRECISION
      * @see \Phuture\Coherence\Numbers::abbreviate()
      */
     public static function forHumans(int|float|string $number, int $precision = 1): string
     {
+        self::assertPrecision($precision);
+
         $units = ['', 'thousand', 'million', 'billion', 'trillion'];
         $number = (float) $number;
         $absolute = abs($number);
@@ -621,13 +653,19 @@ class Numbers extends StaticClass
      * @param int|float|string $number The number to format
      * @param int|null $precision The number of decimal places (default: null — preserve original)
      * @return string The formatted number string
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$precision` is explicitly
+     *   given and is negative or greater than MAX_PRECISION
      * @see \Phuture\Coherence\Numbers::formatPercentage()
      * @see \Phuture\Coherence\Numbers::abbreviate()
      */
     public static function format(int|float|string $number, ?int $precision = null): string
     {
         if ($precision === null) {
-            $precision = self::detectPrecision($number);
+            // A detected precision comes from the number itself rather than the caller, so it is
+            // capped instead of rejected to keep long decimal strings working
+            $precision = min(self::detectPrecision($number), self::MAX_PRECISION);
+        } else {
+            self::assertPrecision($precision);
         }
 
         return number_format((float) $number, $precision, '.', ',');
@@ -652,6 +690,8 @@ class Numbers extends StaticClass
      * @param int $precision The number of decimal places (default: 1)
      * @param int $multiplicand The value to multiply by before formatting (default: 100)
      * @return string The formatted percentage string with a percent sign
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When `$precision` is negative
+     *   or greater than MAX_PRECISION
      * @see \Phuture\Coherence\Numbers::format()
      * @see \Phuture\Coherence\Numbers::percentage()
      * @see \Phuture\Coherence\Numbers::addPercentage()
@@ -662,6 +702,8 @@ class Numbers extends StaticClass
         int $precision = 1,
         int $multiplicand = 100
     ): string {
+        self::assertPrecision($precision);
+
         return number_format((float) $number * $multiplicand, $precision) . '%';
     }
 
@@ -1925,6 +1967,22 @@ class Numbers extends StaticClass
         if (is_nan((float) $value)) {
             throw new LogicException(
                 "Logic Error: NAN is not a comparable value (parameter \${$label})"
+            );
+        }
+    }
+
+    /**
+     * Asserts that the given precision is within the supported range.
+     *
+     * @param int $precision The number of decimal places to validate
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the precision is negative
+     *   or greater than MAX_PRECISION
+     */
+    private static function assertPrecision(int $precision): void
+    {
+        if ($precision < 0 || $precision > self::MAX_PRECISION) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: The precision must be between 0 and ' . self::MAX_PRECISION
             );
         }
     }

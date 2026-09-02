@@ -8,6 +8,7 @@ use stdClass;
 use ArrayIterator;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Type\Arrays;
+use Phuture\Coherence\Enum\{KeyCase, SortComparison};
 use Phuture\Coherence\Exception\InvalidArgumentException;
 
 require __DIR__ . '/../bootstrap.php';
@@ -78,12 +79,12 @@ class ArraysTest extends TestCase
         $data = new Arrays(['NAME' => 'John', 'AGE' => 30, 'Email' => 'john@example.com']);
 
         // Test to lowercase
-        $result = $data->changeKeyCase(CASE_LOWER)->toArray();
+        $result = $data->changeKeyCase(KeyCase::Lower)->toArray();
         Assert::same(['name' => 'John', 'age' => 30, 'email' => 'john@example.com'], $result);
 
         // Test to uppercase
         $data = new Arrays(['name' => 'John', 'age' => 30]);
-        $result = $data->changeKeyCase(CASE_UPPER)->toArray();
+        $result = $data->changeKeyCase(KeyCase::Upper)->toArray();
         Assert::same(['NAME' => 'John', 'AGE' => 30], $result);
     }
 
@@ -1295,13 +1296,13 @@ class ArraysTest extends TestCase
     {
         $data = new Arrays([1, 2, 2, 3, 4, 4, 4, 5]);
 
-        // Test default (SORT_STRING)
+        // Test default (SortComparison::String)
         $result = $data->unique()->toArray();
         Assert::same([0 => 1, 1 => 2, 3 => 3, 4 => 4, 7 => 5], $result);
 
-        // Test with numeric sort
+        // Test with numeric comparison
         $data = new Arrays([1, 1, 2, 2, 3, 3]);
-        $result = $data->unique(SORT_NUMERIC)->toArray();
+        $result = $data->unique(SortComparison::Numeric)->toArray();
         Assert::same([0 => 1, 2 => 2, 4 => 3], $result);
     }
 
