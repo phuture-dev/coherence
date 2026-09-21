@@ -18,7 +18,7 @@ use DateTimeImmutable;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Dateable
+interface Dateable extends \Stringable
 {
     /**
      * Returns the date portion formatted as a string.
@@ -120,6 +120,17 @@ interface Dateable
      * @return string The date and time in RFC 850 format
      */
     public function toRfc850(): string;
+
+    /**
+     * Returns the full date and time formatted as a string.
+     *
+     * This method provides the object's default string representation, combining
+     * the date and time into a single readable value. Implementations backed by
+     * `\Stringable` should return the same value from `__toString()`.
+     *
+     * @return string The string representation of the date and time (e.g., 'Y-m-d H:i:s')
+     */
+    public function toString(): string;
 
     /**
      * Returns the time portion formatted as a string.

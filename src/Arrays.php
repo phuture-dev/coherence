@@ -132,7 +132,7 @@ class Arrays extends StaticClass
      * Checks if a value can be accessed like an array.
      *
      * This method determines if a given value supports array-style access using square brackets.
-     * Returns true for arrays and objects implementing ArrayAccess or Arrayable.
+     * Returns true for arrays and objects implementing ArrayAccess, which Arrayable extends.
      *
      * This is useful when you need to verify that a value can be safely accessed with bracket
      * notation before attempting to read or write values using keys.
@@ -160,8 +160,7 @@ class Arrays extends StaticClass
     public static function accessible(mixed $value): bool
     {
         return is_array($value)
-            || $value instanceof ArrayAccess
-            || $value instanceof Arrayable;
+            || $value instanceof ArrayAccess;
     }
 
     /**

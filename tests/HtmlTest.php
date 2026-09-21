@@ -6,11 +6,36 @@ namespace Phuture\Coherence\Tests;
 
 use Phuture\Coherence\Html;
 use Tester\{Assert, TestCase};
+use Phuture\Coherence\Type\Html as FluentHtml;
 
 require __DIR__ . '/bootstrap.php';
 
 class HtmlTest extends TestCase
 {
+    public function testAttributes(): void
+    {
+        Assert::same(' class="btn" id="save"', Html::attributes(['class' => 'btn', 'id' => 'save']));
+        Assert::same(' disabled', Html::attributes(['disabled' => true]));
+        Assert::same('', Html::attributes(['hidden' => false, 'extra' => null]));
+        Assert::same('', Html::attributes([]));
+    }
+
+    public function testAttributesEscapesValues(): void
+    {
+        Assert::same(' title="a &amp; b"', Html::attributes(['title' => 'a & b']));
+        Assert::same(' title="say &quot;hi&quot;"', Html::attributes(['title' => 'say "hi"']));
+        Assert::notContains('<script>', Html::attributes(['title' => '<script>']));
+    }
+
+    public function testAttributesMatchesTagOutput(): void
+    {
+        // tag() is built on attributes(), so the two must stay in step
+        Assert::same(
+            '<p' . Html::attributes(['class' => 'greeting']) . '>Hello</p>',
+            Html::tag('p', 'Hello', ['class' => 'greeting'])
+        );
+    }
+
     public function testBuildEmptyArray(): void
     {
         Assert::same('', Html::build([]));
@@ -80,6 +105,26 @@ class HtmlTest extends TestCase
         Assert::same('<a href="https://example.com">Link</a>', $result);
     }
 
+    public function testComment(): void
+    {
+        Assert::same('<!-- Section starts here -->', Html::comment('Section starts here'));
+        Assert::same('<!--  -->', Html::comment(''));
+    }
+
+    public function testCommentCannotBeEscaped(): void
+    {
+        // A naive implementation would let the script out of the comment
+        $result = Html::comment('x --> <script>alert(1)</script> <!-- y');
+
+        Assert::notContains('-->', substr($result, 5, -4));
+        Assert::same('', Html::sanitize($result));
+    }
+
+    public function testCommentRoundTripsWithStripComments(): void
+    {
+        Assert::same('', Html::stripComments(Html::comment('note')));
+    }
+
     public function testDecodeAll(): void
     {
         Assert::same('Tom & Jerry', Html::decode('Tom &amp; Jerry'));
@@ -122,6 +167,46 @@ class HtmlTest extends TestCase
     {
         Assert::same('a &quot;b&quot; c', Html::encode('a "b" c'));
         Assert::same("a &#039;b&#039; c", Html::encode("a 'b' c"));
+    }
+
+    public function testImages(): void
+    {
+        Assert::same(
+            ['a.png', 'b.png'],
+            Html::images('<img src="a.png"><p>x</p><img src="b.png">')
+        );
+
+        // Repeats collapse and the result is a plain list
+        Assert::same(['a.png'], Html::images('<img src="a.png"><img src="a.png">'));
+        Assert::same([], Html::images('<p>No pictures here</p>'));
+    }
+
+    public function testImagesIgnoresHiddenMarkup(): void
+    {
+        Assert::same([], Html::images('<!-- <img src="hidden.png"> -->'));
+        Assert::same(['ok.png'], Html::images('<!-- <img src="no.png"> --><img src="ok.png">'));
+    }
+
+    public function testIsSanitized(): void
+    {
+        Assert::true(Html::isSanitized('<p>Hello</p>'));
+        Assert::false(Html::isSanitized('<p onclick="steal()">Hello</p>'));
+        Assert::true(Html::isSanitized(''));
+    }
+
+    public function testIsSanitizedIsFalseForHarmlessDifferences(): void
+    {
+        // A false result does not mean the HTML is dangerous
+        Assert::false(Html::isSanitized('<p class="lead">Hello</p>'));
+        Assert::false(Html::isSanitized('<br>'));
+        Assert::false(Html::isSanitized('<p>Tom & Jerry</p>'));
+    }
+
+    public function testIsSanitizedAgreesWithSanitize(): void
+    {
+        $html = '<p onclick="x()">Hello</p>';
+
+        Assert::true(Html::isSanitized(Html::sanitize($html)));
     }
 
     public function testLinkWithAllAttributes(): void
@@ -181,6 +266,222 @@ class HtmlTest extends TestCase
         Assert::contains('src="app.js"', $result);
         Assert::contains('<script', $result);
         Assert::contains('</script>', $result);
+    }
+
+    public function testLinks(): void
+    {
+        Assert::same(
+            ['/about', 'https://e.com'],
+            Html::links('<a href="/about">About</a> and <a href="https://e.com">E</a>')
+        );
+        Assert::same([], Html::links('<p>No links here</p>'));
+    }
+
+    public function testLinksDecodesEntities(): void
+    {
+        Assert::same(['/x?a=1&b=2'], Html::links('<a href="/x?a=1&amp;b=2">q</a>'));
+        Assert::same(['mailto:a@b.c'], Html::links('<a href="mailto:a@b.c">m</a>'));
+    }
+
+    public function testLinksIgnoresHiddenAndUnsafeMarkup(): void
+    {
+        // Addresses cleaning rejects are not reported
+        Assert::same([], Html::links('<a href="javascript:alert(1)">Bad</a>'));
+
+        // Neither are links buried in comments or script strings
+        $html = '<!-- <a href="/c">c</a> --><script>"<a href=\'/s\'>"</script><a href="/ok">o</a>';
+        Assert::same(['/ok'], Html::links($html));
+    }
+
+    public function testMinify(): void
+    {
+        Assert::same('<div> <p>Hello</p> </div>', Html::minify("<div>\n    <p>Hello</p>\n</div>"));
+        Assert::same('<p>a</p><p>b</p>', Html::minify('<p>a</p><!-- note --><p>b</p>'));
+        Assert::same('', Html::minify(''));
+    }
+
+    public function testMinifyKeepsRenderingIntact(): void
+    {
+        // The space between inline elements is significant and must survive
+        Assert::same('<b>a</b> <i>b</i>', Html::minify("<b>a</b>\n<i>b</i>"));
+        Assert::same('<span>a</span> <span>b</span>', Html::minify('<span>a</span>  <span>b</span>'));
+    }
+
+    public function testMinifyPreservesPreformattedBlocks(): void
+    {
+        Assert::same("<pre>keep   me\n  here</pre>", Html::minify("<pre>keep   me\n  here</pre>"));
+        Assert::same("<textarea>  raw\n  text </textarea>", Html::minify("<textarea>  raw\n  text </textarea>"));
+    }
+
+    public function testOfReturnsFluentWrapper(): void
+    {
+        $fluent = Html::of('<p>Hello</p>');
+
+        Assert::type(FluentHtml::class, $fluent);
+        Assert::same('<p>Hello</p>', $fluent->get());
+    }
+
+    public function testSafeTags(): void
+    {
+        $tags = Html::safeTags();
+
+        Assert::same(121, count($tags));
+        Assert::contains('p', $tags);
+        Assert::contains('em', $tags);
+        Assert::notContains('script', $tags);
+        Assert::notContains('style', $tags);
+        Assert::notContains('form', $tags);
+    }
+
+    public function testSafeTagsIsSortedList(): void
+    {
+        $tags = Html::safeTags();
+        $sorted = $tags;
+        sort($sorted);
+
+        Assert::same($sorted, $tags);
+        Assert::same(range(0, count($tags) - 1), array_keys($tags));
+    }
+
+    public function testSafeTagsIncludesHeadOnlyTagsThatNeverSurvive(): void
+    {
+        // These are recognised names, but sanitize() treats its input as page content
+        Assert::contains('title', Html::safeTags());
+        Assert::same('', Html::sanitize('<title>x</title>'));
+    }
+
+    public function testSanitizeAllowedTagsUnwrapOthers(): void
+    {
+        // Safe tags outside the allow-list are unwrapped, keeping their text
+        Assert::same(
+            'Keep <em>this</em> and that',
+            Html::sanitize('<p>Keep <em>this</em> and <b>that</b></p>', ['em'])
+        );
+
+        // Tag names are matched case-insensitively and tolerate angle brackets
+        Assert::same(
+            'Keep <em>this</em>',
+            Html::sanitize('<p>Keep <em>this</em></p>', ['<EM>'])
+        );
+
+        // Unsafe tags cannot be re-enabled through the allow-list
+        Assert::same('a', Html::sanitize('<p>a</p>', ['script']));
+    }
+
+    public function testSanitizeDropsUnsafeElementsWithContent(): void
+    {
+        Assert::same('<div>text</div>', Html::sanitize('<div><style>body{display:none}</style>text</div>'));
+        Assert::same('<p>Hello world</p>', Html::sanitize('<p>Hello <script>alert(1)</script>world</p>'));
+    }
+
+    public function testSanitizeEmpty(): void
+    {
+        Assert::same('', Html::sanitize(''));
+    }
+
+    public function testSanitizeInvalidMaxLengthThrows(): void
+    {
+        Assert::throws(
+            static fn () => Html::sanitize('<p>a</p>', [], ['https'], -2),
+            \Phuture\Coherence\Exception\InvalidArgumentException::class
+        );
+    }
+
+    public function testSanitizeKeepsSafeMarkup(): void
+    {
+        Assert::same(
+            '<a href="https://example.com" title="Home">Link</a>',
+            Html::sanitize('<a href="https://example.com" title="Home">Link</a>')
+        );
+
+        // Relative URLs are preserved
+        Assert::same('<a href="/about">About</a>', Html::sanitize('<a href="/about">About</a>'));
+
+        // Malformed markup is repaired rather than dropped
+        Assert::same('<p>unclosed <b>bold</b></p>', Html::sanitize('<p>unclosed <b>bold'));
+    }
+
+    public function testSanitizeRemovesEventHandlers(): void
+    {
+        Assert::same('<p>Hello</p>', Html::sanitize('<p onclick="steal()">Hello</p>'));
+        Assert::same('<img src="x" />', Html::sanitize('<img src="x" onerror="alert(1)">'));
+    }
+
+    public function testSanitizeRespectsAllowedSchemes(): void
+    {
+        // Schemes outside the list lose the attribute but keep the element
+        Assert::same('<a>Click</a>', Html::sanitize('<a href="javascript:alert(1)">Click</a>'));
+        Assert::same('<a>Mail</a>', Html::sanitize('<a href="mailto:a@b.c">Mail</a>', [], ['https']));
+
+        // Obfuscated schemes are normalized before the check
+        Assert::same('<img />', Html::sanitize('<IMG SRC=jAvAsCrIpT:alert(1)>'));
+
+        // A scheme that is explicitly allowed survives, with the URL entity-encoded
+        Assert::same(
+            '<a href="mailto:a&#64;b.c">Mail</a>',
+            Html::sanitize('<a href="mailto:a@b.c">Mail</a>', [], ['mailto'])
+        );
+    }
+
+    public function testSanitizeTruncatesAtMaxLength(): void
+    {
+        $long = '<p>' . str_repeat('a', 100) . '</p>';
+
+        // The limit applies to the raw input, so the tail is cut before parsing
+        Assert::same('<p>' . str_repeat('a', 7) . '</p>', Html::sanitize($long, [], ['https'], 10));
+
+        // -1 disables the limit entirely
+        Assert::same($long, Html::sanitize($long, [], ['https'], -1));
+    }
+
+    public function testSecureLinks(): void
+    {
+        Assert::same(
+            '<a href="https://example.com" rel="noopener noreferrer">Visit</a>',
+            Html::secureLinks('<a href="https://example.com">Visit</a>')
+        );
+        Assert::same('', Html::secureLinks(''));
+    }
+
+    public function testSecureLinksForcesHttps(): void
+    {
+        Assert::same(
+            '<a href="https://example.com" rel="nofollow">Visit</a>',
+            Html::secureLinks('<a href="http://example.com">Visit</a>', 'nofollow', true)
+        );
+
+        // Media addresses are rewritten too
+        Assert::contains('src="https://e.com/a.png"', Html::secureLinks('<img src="http://e.com/a.png">', 'x', true));
+    }
+
+    public function testSecureLinksAlsoCleansTheDocument(): void
+    {
+        // It runs the full cleaner, so unsafe markup and class attributes go too
+        $result = Html::secureLinks('<p class="lead">Hi</p><script>alert(1)</script>');
+
+        Assert::same('<p>Hi</p>', $result);
+
+        // Anchors without an address still receive the relationship value
+        Assert::same('<a rel="noopener noreferrer">jump</a>', Html::secureLinks('<a>jump</a>'));
+    }
+
+    public function testStripComments(): void
+    {
+        Assert::same('<p class="lead">Hello</p>', Html::stripComments('<p class="lead">Hello<!-- note --></p>'));
+        Assert::same('<p>a</p><p>b</p>', Html::stripComments('<p>a</p><!-- one --><!-- two --><p>b</p>'));
+        Assert::same('', Html::stripComments(''));
+    }
+
+    public function testStripCommentsEdgeCases(): void
+    {
+        // Spans newlines
+        Assert::same('<p>ab</p>', Html::stripComments("<p>a<!-- over\ntwo lines -->b</p>"));
+
+        // Conditional comments go as well
+        Assert::same('', Html::stripComments('<!--[if IE]><p>ie</p><![endif]-->'));
+
+        // An unfinished comment is left alone rather than eating the document
+        Assert::same('<p>Kept<!-- unfinished', Html::stripComments('<p>Kept<!-- unfinished'));
     }
 
     public function testStripTags(): void
@@ -337,6 +638,24 @@ class HtmlTest extends TestCase
     public function testTagWithAttributes(): void
     {
         Assert::same('<p class="greeting">Hello</p>', Html::tag('p', 'Hello', ['class' => 'greeting']));
+    }
+
+    public function testTags(): void
+    {
+        Assert::same(['div', 'p'], Html::tags('<div><p>Hi</p><p>There</p></div>'));
+        Assert::same([], Html::tags('Just text'));
+        Assert::same([], Html::tags(''));
+    }
+
+    public function testTagsAreLowercasedAndUnique(): void
+    {
+        Assert::same(['p'], Html::tags('<P>one</P><p>two</p>'));
+    }
+
+    public function testTagsIgnoresHiddenMarkup(): void
+    {
+        Assert::same(['p'], Html::tags('<!-- <b>x</b> --><p>hi</p>'));
+        Assert::same(['p'], Html::tags('<script>"<i>y</i>"</script><p>hi</p>'));
     }
 
     public function testToHtmlEmpty(): void

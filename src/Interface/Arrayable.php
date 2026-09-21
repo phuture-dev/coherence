@@ -15,7 +15,7 @@ namespace Phuture\Coherence\Interface;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Arrayable
+interface Arrayable extends \ArrayAccess
 {
     /**
      * Convert the object to an array representation.

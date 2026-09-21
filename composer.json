@@ -23,6 +23,7 @@
         "nelexa/zip": "~4.0",
         "nette/php-generator": "~4.2",
         "phuture/continuum": "~0.1",
+        "symfony/html-sanitizer": "~6.4 || ~7.0 || ~8.0",
         "symfony/polyfill-deepclone": "~1.34"
     },
     "require-dev": {

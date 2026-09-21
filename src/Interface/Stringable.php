@@ -15,7 +15,7 @@ namespace Phuture\Coherence\Interface;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Stringable
+interface Stringable extends \Stringable
 {
     /**
      * Convert the object to a string representation.

@@ -8,6 +8,8 @@ use League\HTMLToMarkdown\HtmlConverter;
 use Phuture\Coherence\Enum\EncodingMode;
 use League\CommonMark\CommonMarkConverter;
 use Phuture\Coherence\Support\StaticClass;
+use Symfony\Component\HtmlSanitizer\HtmlSanitizer;
+use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
 use Phuture\Coherence\Exception\InvalidArgumentException;
 
 /**
@@ -20,12 +22,16 @@ use Phuture\Coherence\Exception\InvalidArgumentException;
  *
  * Key features:
  *
+ * - **Sanitization**: Remove scripts and unsafe markup from untrusted HTML
  * - **Text Extraction**: Strip HTML tags and decode entities back to readable text
  * - **HTML Conversion**: Convert plain text or Markdown to HTML
  * - **Markdown Conversion**: Convert HTML to Markdown
  * - **Encoding & Decoding**: Encode and decode HTML entities with mode selection via enum
  * - **Tag Generation**: Generate arbitrary HTML tags with attributes
  * - **Structured Building**: Generate complex HTML trees from multi-dimensional arrays
+ * - **Inspection**: List the links, images and tag names a document contains
+ * - **Size Reduction**: Shrink markup and remove comments without changing how it renders
+ * - **Fluent Interface**: Chain operations with `of()` for readable transformations
  *
  * @copyright Copyright (c) 2026, Advandz Technologies, LLC
  * @license https://opensource.org/licenses/MIT MIT License
@@ -43,6 +49,59 @@ class Html extends StaticClass
         'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
         'link', 'meta', 'param', 'source', 'track', 'wbr',
     ];
+
+    /**
+     * Turns a list of attributes into a string you can drop inside a tag.
+     *
+     * Each key becomes the attribute name and each value becomes the attribute
+     * value, escaped so that quotes and angle brackets cannot break out of the
+     * tag. A value of `true` writes the name on its own, which is how HTML marks
+     * on/off options such as `disabled`. A value of `false` or `null` leaves the
+     * attribute out altogether.
+     *
+     * When there is at least one attribute the result begins with a space, so it
+     * can be placed straight after a tag name without adding one yourself. Note
+     * that attribute names are written out as given, so they must come from your
+     * own code rather than from user input.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::attributes(['class' => 'btn', 'id' => 'save']);
+     * // Returns: ' class="btn" id="save"'
+     *
+     * Html::attributes(['disabled' => true, 'hidden' => false]);
+     * // Returns: ' disabled'
+     *
+     * Html::attributes([]);
+     * // Returns: ''
+     * ```
+     *
+     * @param array $attributes The attribute names and the values to give them
+     * @return string The attributes as text beginning with a space, or an empty string when there are none
+     * @see \Phuture\Coherence\Html::tag()
+     * @see \Phuture\Coherence\Html::build()
+     */
+    public static function attributes(array $attributes): string
+    {
+        $html = '';
+
+        foreach ($attributes as $key => $value) {
+            if ($value === false || $value === null) {
+                continue;
+            }
+
+            if ($value === true) {
+                $html .= ' ' . $key;
+                continue;
+            }
+
+            $html .= ' ' . $key . '="' . self::encode((string) $value, EncodingMode::SpecialChars) . '"';
+        }
+
+        return $html;
+    }
 
     /**
      * Builds HTML from a multi-dimensional array structure.
@@ -117,6 +176,34 @@ class Html extends StaticClass
         }
 
         return $html;
+    }
+
+    /**
+     * Wraps text in an HTML comment.
+     *
+     * A comment is a note in the markup that the browser does not display. Any
+     * run of two dashes inside the text is broken apart first, because `-->` and
+     * `--!>` both end a comment early, which would let whatever follows run as
+     * real markup.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::comment('Section starts here');
+     * // Returns: '<!-- Section starts here -->'
+     *
+     * Html::comment('a --> b');
+     * // Returns: '<!-- a - -> b -->'
+     * ```
+     *
+     * @param string $content The text to place inside the comment
+     * @return string The text wrapped in comment markers
+     * @see \Phuture\Coherence\Html::stripComments()
+     */
+    public static function comment(string $content): string
+    {
+        return '<!-- ' . str_replace('--', '- -', $content) . ' -->';
     }
 
     /**
@@ -202,6 +289,80 @@ class Html extends StaticClass
     }
 
     /**
+     * Lists the addresses of every image in the HTML.
+     *
+     * The HTML is cleaned first, so anything hidden inside a comment or a script
+     * is not reported, and addresses that cleaning rejects, such as
+     * `javascript:` ones, are left out. Each value appears once, in the order it
+     * first shows up.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::images('<img src="a.png"><p>x</p><img src="b.png">');
+     * // Returns: ['a.png', 'b.png']
+     *
+     * Html::images('<p>No pictures here</p>');
+     * // Returns: []
+     * ```
+     *
+     * @param string $html The HTML to read the image addresses from
+     * @return array The image addresses in the order they appear, without repeats
+     * @see \Phuture\Coherence\Html::links()
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function images(string $html): array
+    {
+        return self::extractAttributeValues($html, 'img', 'src');
+    }
+
+    /**
+     * Checks whether HTML is already exactly what cleaning would produce.
+     *
+     * Returns true only when `sanitize()` would leave the HTML untouched. A
+     * false result does **not** mean the HTML is dangerous: cleaning also tidies
+     * harmless things, so `<p class="x">y</p>`, `<br>` and `Tom & Jerry` all
+     * come back as false simply because cleaning would rewrite them. Use it to
+     * tell whether stored HTML still matches what cleaning produces today, not
+     * as a test for whether something is safe.
+     *
+     * The options are the same as `sanitize()` and must match the ones used to
+     * clean the HTML in the first place, otherwise the answer is meaningless.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::isSanitized('<p>Hello</p>');
+     * // Returns: true
+     *
+     * Html::isSanitized('<p onclick="steal()">Hello</p>');
+     * // Returns: false
+     *
+     * Html::isSanitized('<p class="lead">Hello</p>');
+     * // Returns: false, because cleaning removes the class
+     * ```
+     *
+     * @param string $html The HTML to check
+     * @param array $allowedTags The tag names to keep, or an empty array to keep every safe tag (default: [])
+     * @param array $allowedSchemes The kinds of address allowed in links and images
+     *   (default: ['http', 'https', 'mailto', 'tel'])
+     * @param int $maxLength How many bytes of input to read, or -1 to read all of it (default: 20000)
+     * @return bool True when cleaning would change nothing, false when it would change something
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the maximum length is below -1
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function isSanitized(
+        string $html,
+        array $allowedTags = [],
+        array $allowedSchemes = ['http', 'https', 'mailto', 'tel'],
+        int $maxLength = 20000,
+    ): bool {
+        return self::sanitize($html, $allowedTags, $allowedSchemes, $maxLength) === $html;
+    }
+
+    /**
      * Generates an HTML link element.
      *
      * Creates a `<link>` tag, typically used for stylesheets, favicons, and other
@@ -262,6 +423,222 @@ class Html extends StaticClass
     }
 
     /**
+     * Lists the addresses of every link in the HTML.
+     *
+     * The HTML is cleaned first, so anything hidden inside a comment or a script
+     * is not reported, and addresses that cleaning rejects, such as
+     * `javascript:` ones, are left out. Each value appears once, in the order it
+     * first shows up.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::links('<a href="/about">About</a> and <a href="https://e.com">E</a>');
+     * // Returns: ['/about', 'https://e.com']
+     *
+     * Html::links('<a href="javascript:alert(1)">Bad</a>');
+     * // Returns: []
+     * ```
+     *
+     * @param string $html The HTML to read the link addresses from
+     * @return array The link addresses in the order they appear, without repeats
+     * @see \Phuture\Coherence\Html::images()
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function links(string $html): array
+    {
+        return self::extractAttributeValues($html, 'a', 'href');
+    }
+
+    /**
+     * Makes HTML smaller without changing how it looks.
+     *
+     * Squeezes every run of spaces, tabs and newlines down to a single space and
+     * drops comments. A browser already treats any run of spacing as one space,
+     * so the page renders exactly as before — the spacing is never removed
+     * outright, because deleting the space in `<b>a</b> <b>b</b>` would join the
+     * two words together.
+     *
+     * Everything inside `<pre>`, `<textarea>`, `<script>` and `<style>` is left
+     * exactly as it was, since spacing matters there. Spacing is still reduced
+     * if your stylesheet makes some other element preserve it.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::minify("<div>\n    <p>Hello</p>\n</div>");
+     * // Returns: '<div> <p>Hello</p> </div>'
+     *
+     * Html::minify('<p>a</p><!-- note --><p>b</p>');
+     * // Returns: '<p>a</p><p>b</p>'
+     * ```
+     *
+     * @param string $html The HTML to shrink
+     * @return string The HTML with spacing reduced and comments removed
+     * @see \Phuture\Coherence\Html::stripComments()
+     */
+    public static function minify(string $html): string
+    {
+        $parts = preg_split(
+            '#(<(?:pre|textarea|script|style)\b.*?</(?:pre|textarea|script|style)>)#is',
+            $html,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
+        );
+
+        if ($parts === false) {
+            return $html;
+        }
+
+        $minified = '';
+
+        foreach ($parts as $index => $part) {
+            if ($index % 2 === 1) {
+                $minified .= $part;
+                continue;
+            }
+
+            $minified .= preg_replace('/\s+/', ' ', self::stripComments($part));
+        }
+
+        return trim($minified);
+    }
+
+    /**
+     * Creates a fluent wrapper around the given HTML for method chaining.
+     *
+     * Returns a `Type\Html` instance that wraps the provided markup and exposes
+     * the HTML-returning methods as chainable calls.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * $result = Html::of('<p onclick="steal()">Hello</p>')
+     *     ->sanitize()
+     *     ->toString();
+     * // '<p>Hello</p>'
+     * ```
+     *
+     * @param string $html The HTML to wrap for fluent operations
+     * @return Type\Html A fluent wrapper instance that enables method chaining
+     * @see \Phuture\Coherence\Type\Html For the fluent wrapper implementation
+     */
+    public static function of(string $html): Type\Html
+    {
+        return new Type\Html($html);
+    }
+
+    /**
+     * Lists the tag names that cleaning treats as safe.
+     *
+     * These are the names `sanitize()` keeps when you do not narrow the list
+     * yourself, useful for building a tag picker or explaining to someone why
+     * their markup disappeared. The names are returned in alphabetical order.
+     *
+     * Four of them describe the head of a page rather than its content: `head`,
+     * `link`, `meta` and `title`. Those never survive `sanitize()`, which treats
+     * its input as page content, so treat this as the list of names the cleaner
+     * recognises rather than a promise that each one survives.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * in_array('em', Html::safeTags(), true);
+     * // Returns: true
+     *
+     * in_array('script', Html::safeTags(), true);
+     * // Returns: false
+     * ```
+     *
+     * @return array The safe tag names in alphabetical order
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function safeTags(): array
+    {
+        $tags = array_map(
+            'strval',
+            array_keys((new HtmlSanitizerConfig())->allowSafeElements()->getAllowedElements())
+        );
+
+        sort($tags);
+
+        return $tags;
+    }
+
+    /**
+     * Removes dangerous code from HTML that came from an untrusted source.
+     *
+     * Takes HTML written by someone you do not trust, such as a comment or a
+     * profile description, and returns a version that is safe to put on a page.
+     * Scripts, click handlers like `onclick`, and links that try to run code are
+     * removed. Broken or half-written HTML is repaired instead of rejected.
+     *
+     * By default every tag considered safe is kept, which is what you want for
+     * text a user has formatted themselves. Attributes are filtered the same
+     * way, and two common ones are not on the safe list: `class` and `style`
+     * are always removed, because either can be used to cover the page with an
+     * invisible clickable layer. Plan for styling by tag name, not by class.
+     *
+     * Pass a list of tag names in
+     * `$allowedTags` to keep fewer: the other safe tags are removed but their
+     * text stays, the same way `stripTags()` behaves. Tags that are never safe,
+     * such as `script` and `style`, are always removed together with everything
+     * inside them, even when you list them.
+     *
+     * A link or image keeps its address only when the address starts with one of
+     * the `$allowedSchemes`, which is what stops `javascript:` links from working.
+     * Addresses with no scheme, such as `/about`, are always kept, and the ones
+     * that are kept may come back with characters like `@` written as `&#64;`,
+     * which a browser displays the same way.
+     *
+     * Input longer than `$maxLength` bytes is cut before anything is read, so a
+     * huge page cannot be used to slow the server down. Pass `-1` to read it all.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::sanitize('<p onclick="steal()">Hello <script>alert(1)</script>world</p>');
+     * // Returns: '<p>Hello world</p>'
+     *
+     * Html::sanitize('<a href="javascript:alert(1)">Click</a>');
+     * // Returns: '<a>Click</a>'
+     *
+     * Html::sanitize('<p>Keep <em>this</em> and <b>that</b></p>', ['em']);
+     * // Returns: 'Keep <em>this</em> and that'
+     * ```
+     *
+     * @param string $html The untrusted HTML to clean
+     * @param array $allowedTags The tag names to keep, written without angle brackets,
+     *   or an empty array to keep every safe tag (default: [])
+     * @param array $allowedSchemes The kinds of address allowed in links and images
+     *   (default: ['http', 'https', 'mailto', 'tel'])
+     * @param int $maxLength How many bytes of input to read, or -1 to read all of it (default: 20000)
+     * @return string The cleaned HTML, safe to display on a page
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the maximum length is below -1
+     * @see \Phuture\Coherence\Html::stripTags()
+     * @see \Phuture\Coherence\Html::encode()
+     */
+    public static function sanitize(
+        string $html,
+        array $allowedTags = [],
+        array $allowedSchemes = ['http', 'https', 'mailto', 'tel'],
+        int $maxLength = 20000,
+    ): string {
+        $config = self::buildSanitizerConfig($allowedTags, $allowedSchemes, $maxLength);
+
+        if ($html === '') {
+            return $html;
+        }
+
+        return (new HtmlSanitizer($config))->sanitize($html);
+    }
+
+    /**
      * Generates an HTML script element.
      *
      * Creates a `<script>` tag. When a source URL is provided, the script
@@ -295,6 +672,88 @@ class Html extends StaticClass
         }
 
         return self::tag('script', $content, $attributes);
+    }
+
+    /**
+     * Cleans HTML and hardens every link it contains.
+     *
+     * This does everything `sanitize()` does — the whole document is cleaned, so
+     * scripts go, and `class` and `style` are removed along with them — and then
+     * adds a `rel` attribute to every link. The usual value, `noopener
+     * noreferrer`, stops a page you link to from reaching back into the page
+     * that opened it and hides where the visitor came from.
+     *
+     * Turning on `$forceHttps` rewrites `http://` addresses to `https://` in
+     * links and images alike. Anchors without an address, such as in-page jump
+     * targets, still receive the `rel` attribute.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::secureLinks('<a href="https://example.com">Visit</a>');
+     * // Returns: '<a href="https://example.com" rel="noopener noreferrer">Visit</a>'
+     *
+     * Html::secureLinks('<a href="http://example.com">Visit</a>', 'nofollow', true);
+     * // Returns: '<a href="https://example.com" rel="nofollow">Visit</a>'
+     * ```
+     *
+     * @param string $html The untrusted HTML to clean and harden
+     * @param string $rel The relationship value to put on every link, which tells the browser how
+     *   the linked page relates to this one (default: 'noopener noreferrer')
+     * @param bool $forceHttps Whether to rewrite insecure addresses to their secure form (default: false)
+     * @return string The cleaned HTML with every link hardened
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function secureLinks(
+        string $html,
+        string $rel = 'noopener noreferrer',
+        bool $forceHttps = false,
+    ): string {
+        if ($html === '') {
+            return $html;
+        }
+
+        $config = self::buildSanitizerConfig([], ['http', 'https', 'mailto', 'tel'], 20000)
+            ->forceAttribute('a', 'rel', $rel);
+
+        if ($forceHttps) {
+            $config = $config->forceHttpsUrls();
+        }
+
+        return (new HtmlSanitizer($config))->sanitize($html);
+    }
+
+    /**
+     * Removes HTML comments, leaving the rest of the markup alone.
+     *
+     * Comments are the notes between `<!--` and `-->` that a browser does not
+     * display. Unlike `stripTags()` and `sanitize()`, which also drop comments
+     * but change the surrounding markup too, this touches nothing else — useful
+     * for trimming trusted templates you do not want otherwise rewritten.
+     *
+     * A `<!--` with no closing `-->` is left in place rather than swallowing the
+     * rest of the document.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::stripComments('<p class="lead">Hello<!-- note --></p>');
+     * // Returns: '<p class="lead">Hello</p>'
+     *
+     * Html::stripComments('<p>Kept<!-- unfinished');
+     * // Returns: '<p>Kept<!-- unfinished'
+     * ```
+     *
+     * @param string $html The HTML to remove comments from
+     * @return string The HTML without its comments
+     * @see \Phuture\Coherence\Html::comment()
+     * @see \Phuture\Coherence\Html::minify()
+     */
+    public static function stripComments(string $html): string
+    {
+        return (string) preg_replace('/<!--.*?-->/s', '', $html);
     }
 
     /**
@@ -434,13 +893,48 @@ class Html extends StaticClass
         }
 
         $name = strtolower($name);
-        $attributeString = self::buildAttributes($attributes);
+        $attributeString = self::attributes($attributes);
 
         if (in_array($name, self::VOID_ELEMENTS, true)) {
             return '<' . $name . $attributeString . '>';
         }
 
         return '<' . $name . $attributeString . '>' . $content . '</' . $name . '>';
+    }
+
+    /**
+     * Lists the tag names used in the HTML.
+     *
+     * The HTML is cleaned first, so anything hidden inside a comment or a script
+     * is not reported, and addresses that cleaning rejects, such as
+     * `javascript:` ones, are left out. Each value appears once, in the order it
+     * first shows up.
+     * Opening and closing tags of the same element count once, and the names
+     * come back in lower case.
+     *
+     * Example:
+     * ```php
+     * use Phuture\Coherence\Html;
+     *
+     * Html::tags('<div><p>Hi</p><p>There</p></div>');
+     * // Returns: ['div', 'p']
+     *
+     * Html::tags('Just text');
+     * // Returns: []
+     * ```
+     *
+     * @param string $html The HTML to read the tag names from
+     * @return array The tag names in the order they appear, without repeats
+     * @see \Phuture\Coherence\Html::safeTags()
+     * @see \Phuture\Coherence\Html::sanitize()
+     */
+    public static function tags(string $html): array
+    {
+        $clean = self::sanitize($html, [], ['http', 'https', 'mailto', 'tel'], -1);
+
+        preg_match_all('/<([a-z][a-z0-9]*)\b/i', $clean, $matches);
+
+        return array_values(array_unique(array_map('strtolower', $matches[1])));
     }
 
     /**
@@ -731,33 +1225,49 @@ class Html extends StaticClass
     }
 
     /**
-     * Builds the HTML attribute string from an associative array.
+     * Builds the sanitizer configuration shared by every cleaning method.
      *
-     * Converts an associative array of attribute names and values into a
-     * properly escaped HTML attribute string. Boolean `true` values render
-     * as standalone attributes, `false` and `null` values are omitted.
-     *
-     * @param array $attributes The attributes to format
-     * @return string A space-prefixed attribute string, or an empty string when no attributes remain
+     * @param array $allowedTags The tag names to keep, or an empty array for every safe tag
+     * @param array $allowedSchemes The kinds of address allowed in links and images
+     * @param int $maxLength The maximum input length in bytes, or -1 for no limit
+     * @return HtmlSanitizerConfig The configuration to hand to the sanitizer
+     * @throws \Phuture\Coherence\Exception\InvalidArgumentException When the maximum length is below -1
      */
-    private static function buildAttributes(array $attributes): string
-    {
-        $html = '';
-
-        foreach ($attributes as $key => $value) {
-            if ($value === false || $value === null) {
-                continue;
-            }
-
-            if ($value === true) {
-                $html .= ' ' . $key;
-                continue;
-            }
-
-            $html .= ' ' . $key . '="' . self::encode((string) $value, EncodingMode::SpecialChars) . '"';
+    private static function buildSanitizerConfig(
+        array $allowedTags,
+        array $allowedSchemes,
+        int $maxLength,
+    ): HtmlSanitizerConfig {
+        if ($maxLength < -1) {
+            throw new InvalidArgumentException(
+                'Invalid Argument: Maximum length must be -1 or greater'
+            );
         }
 
-        return $html;
+        $config = (new HtmlSanitizerConfig())
+            ->allowSafeElements()
+            ->allowLinkSchemes($allowedSchemes)
+            ->allowMediaSchemes($allowedSchemes)
+            ->allowRelativeLinks()
+            ->allowRelativeMedias()
+            ->withMaxInputLength($maxLength);
+
+        if ($allowedTags === []) {
+            return $config;
+        }
+
+        $allowedTags = array_map(
+            static fn (string $tag): string => strtolower(trim($tag, '<>')),
+            $allowedTags
+        );
+
+        foreach (array_keys($config->getAllowedElements()) as $element) {
+            if (!in_array((string) $element, $allowedTags, true)) {
+                $config = $config->blockElement((string) $element);
+            }
+        }
+
+        return $config;
     }
 
     /**
@@ -788,6 +1298,29 @@ class Html extends StaticClass
         $converter = new CommonMarkConverter();
 
         return trim((string) $converter->convert($markdown));
+    }
+
+    /**
+     * Collects one attribute's values from every matching tag in cleaned HTML.
+     *
+     * @param string $html The HTML to read
+     * @param string $tag The tag name to look for
+     * @param string $attribute The attribute whose value to collect
+     * @return array The attribute values in document order, without repeats
+     */
+    private static function extractAttributeValues(string $html, string $tag, string $attribute): array
+    {
+        $clean = self::sanitize($html, [], ['http', 'https', 'mailto', 'tel'], -1);
+        $pattern = '/<' . $tag . '\b[^>]*\b' . $attribute . '="([^"]*)"/i';
+
+        preg_match_all($pattern, $clean, $matches);
+
+        $values = array_map(
+            static fn (string $value): string => self::decode($value),
+            $matches[1]
+        );
+
+        return array_values(array_unique($values));
     }
 
     /**
