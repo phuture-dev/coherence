@@ -452,6 +452,38 @@ class DatesTest extends TestCase
         Assert::same('Tuesday, 21-Apr-26 14:30:00 UTC', $result);
     }
 
+    public function testToString(): void
+    {
+        $fluent = $this->date('2026-04-21 14:30:00')->addDays(10)->startOfDay();
+
+        Assert::same('2026-05-01 00:00:00', (string) $fluent);
+    }
+
+    public function testToStringMatchesToDateTime(): void
+    {
+        $fluent = $this->date('2026-04-21 14:30:00');
+
+        Assert::same($fluent->toDateTime(), $fluent->toString());
+        Assert::same($fluent->toString(), (string) $fluent);
+    }
+
+    public function testToStringMethod(): void
+    {
+        $result = $this->date('2026-04-21 14:30:00')
+            ->toString();
+
+        Assert::same('2026-04-21 14:30:00', $result);
+    }
+
+    public function testToStringRespectsTimezone(): void
+    {
+        $result = $this->date('2026-04-21 12:00:00')
+            ->toTimezone('America/New_York')
+            ->toString();
+
+        Assert::same('2026-04-21 08:00:00', $result);
+    }
+
     public function testToTimestampForEpoch(): void
     {
         $result = $this->date('1970-01-01 00:00:00', 'UTC')

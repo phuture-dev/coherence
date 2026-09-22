@@ -3228,6 +3228,13 @@ class ArraysTest extends TestCase
         Assert::same([0 => 1, 1 => 2, 3 => 3, 5 => 4], $result);
     }
 
+    public function testUniqueLocaleString(): void
+    {
+        $array = ['a', 'b', 'a', 'c'];
+        $result = Arrays::unique($array, SortComparison::LocaleString);
+        Assert::same([0 => 'a', 1 => 'b', 3 => 'c'], $result);
+    }
+
     public function testUniqueNumeric(): void
     {
         $array = ['1', 1, '2', 2];
@@ -3241,13 +3248,6 @@ class ArraysTest extends TestCase
         $array = [1, '1', 1.0, 2];
         $result = Arrays::unique($array, SortComparison::Regular);
         Assert::same([0 => 1, 3 => 2], $result);
-    }
-
-    public function testUniqueLocaleString(): void
-    {
-        $array = ['a', 'b', 'a', 'c'];
-        $result = Arrays::unique($array, SortComparison::LocaleString);
-        Assert::same([0 => 'a', 1 => 'b', 3 => 'c'], $result);
     }
 
     public function testUniqueStringComparison(): void

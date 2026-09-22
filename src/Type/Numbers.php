@@ -6,9 +6,9 @@ namespace Phuture\Coherence\Type;
 
 use Override;
 use RoundingMode;
-use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Interface\Numberable;
+use Phuture\Coherence\Enum\{ByteBase, Unit};
 use Phuture\Coherence\Numbers as Transformer;
 
 /**

@@ -34,7 +34,7 @@ use Phuture\Coherence\Strings as Transformer;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-class Strings extends FluentClass implements Stringable, \Stringable
+class Strings extends FluentClass implements Stringable
 {
     /**
      * The character encoding used for all multibyte operations.

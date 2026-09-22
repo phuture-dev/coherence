@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Type;
 
+use Override;
 use DateTimeImmutable;
 use Phuture\Coherence\Interface\Dateable;
 use Phuture\Coherence\Support\FluentClass;
@@ -41,6 +42,17 @@ use Phuture\Coherence\Dates as Transformer;
  */
 class Dates extends FluentClass implements Dateable
 {
+    /**
+     * Returns the string representation of the wrapped date/time value.
+     *
+     * @return string The date and time formatted as 'Y-m-d H:i:s'
+     */
+    #[Override]
+    public function __toString(): string
+    {
+        return $this->toString();
+    }
+
     /**
      * Adds a number of days to the wrapped date/time value.
      *
@@ -372,6 +384,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date portion formatted as 'Y-m-d'
      * @see \Phuture\Coherence\Dates::toDate()
      */
+    #[Override]
     public function toDate(): string
     {
         return Transformer::toDate($this->data);
@@ -383,6 +396,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted as 'Y-m-d H:i:s'
      * @see \Phuture\Coherence\Dates::toDateTime()
      */
+    #[Override]
     public function toDateTime(): string
     {
         return Transformer::toDateTime($this->data);
@@ -393,6 +407,7 @@ class Dates extends FluentClass implements Dateable
      *
      * @return DateTimeImmutable The wrapped date and time value
      */
+    #[Override]
     public function toDateTimeImmutable(): DateTimeImmutable
     {
         return ($this->data instanceof DateTimeImmutable) ? $this->data : new DateTimeImmutable();
@@ -404,6 +419,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to ISO 8601
      * @see \Phuture\Coherence\Dates::toIso8601()
      */
+    #[Override]
     public function toIso8601(): string
     {
         return Transformer::toIso8601($this->data);
@@ -428,6 +444,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 1036
      * @see \Phuture\Coherence\Dates::toRfc1036()
      */
+    #[Override]
     public function toRfc1036(): string
     {
         return Transformer::toRfc1036($this->data);
@@ -439,6 +456,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 1123
      * @see \Phuture\Coherence\Dates::toRfc1123()
      */
+    #[Override]
     public function toRfc1123(): string
     {
         return Transformer::toRfc1123($this->data);
@@ -450,6 +468,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 2822
      * @see \Phuture\Coherence\Dates::toRfc2822()
      */
+    #[Override]
     public function toRfc2822(): string
     {
         return Transformer::toRfc2822($this->data);
@@ -461,6 +480,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 7231
      * @see \Phuture\Coherence\Dates::toRfc7231()
      */
+    #[Override]
     public function toRfc7231(): string
     {
         return Transformer::toRfc7231($this->data);
@@ -472,6 +492,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 822
      * @see \Phuture\Coherence\Dates::toRfc822()
      */
+    #[Override]
     public function toRfc822(): string
     {
         return Transformer::toRfc822($this->data);
@@ -483,9 +504,22 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to RFC 850
      * @see \Phuture\Coherence\Dates::toRfc850()
      */
+    #[Override]
     public function toRfc850(): string
     {
         return Transformer::toRfc850($this->data);
+    }
+
+    /**
+     * Returns the wrapped date/time formatted as a string.
+     *
+     * @return string The date and time formatted as 'Y-m-d H:i:s'
+     * @see \Phuture\Coherence\Dates::toDateTime()
+     */
+    #[Override]
+    public function toString(): string
+    {
+        return Transformer::toDateTime($this->data);
     }
 
     /**
@@ -494,6 +528,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The time portion formatted as 'H:i:s'
      * @see \Phuture\Coherence\Dates::toTime()
      */
+    #[Override]
     public function toTime(): string
     {
         return Transformer::toTime($this->data);
@@ -505,6 +540,7 @@ class Dates extends FluentClass implements Dateable
      * @return int The number of seconds since the Unix epoch
      * @see \Phuture\Coherence\Dates::toTimestamp()
      */
+    #[Override]
     public function toTimestamp(): int
     {
         return Transformer::toTimestamp($this->data);
@@ -530,6 +566,7 @@ class Dates extends FluentClass implements Dateable
      * @return string The date and time formatted according to the W3C standard
      * @see \Phuture\Coherence\Dates::toW3c()
      */
+    #[Override]
     public function toW3c(): string
     {
         return Transformer::toW3c($this->data);
