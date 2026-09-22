@@ -194,6 +194,13 @@ class HtmlTest extends TestCase
         Assert::true(Html::isSanitized(''));
     }
 
+    public function testIsSanitizedAgreesWithSanitize(): void
+    {
+        $html = '<p onclick="x()">Hello</p>';
+
+        Assert::true(Html::isSanitized(Html::sanitize($html)));
+    }
+
     public function testIsSanitizedIsFalseForHarmlessDifferences(): void
     {
         // A false result does not mean the HTML is dangerous
@@ -202,11 +209,29 @@ class HtmlTest extends TestCase
         Assert::false(Html::isSanitized('<p>Tom & Jerry</p>'));
     }
 
-    public function testIsSanitizedAgreesWithSanitize(): void
+    public function testLinks(): void
     {
-        $html = '<p onclick="x()">Hello</p>';
+        Assert::same(
+            ['/about', 'https://e.com'],
+            Html::links('<a href="/about">About</a> and <a href="https://e.com">E</a>')
+        );
+        Assert::same([], Html::links('<p>No links here</p>'));
+    }
 
-        Assert::true(Html::isSanitized(Html::sanitize($html)));
+    public function testLinksDecodesEntities(): void
+    {
+        Assert::same(['/x?a=1&b=2'], Html::links('<a href="/x?a=1&amp;b=2">q</a>'));
+        Assert::same(['mailto:a@b.c'], Html::links('<a href="mailto:a@b.c">m</a>'));
+    }
+
+    public function testLinksIgnoresHiddenAndUnsafeMarkup(): void
+    {
+        // Addresses cleaning rejects are not reported
+        Assert::same([], Html::links('<a href="javascript:alert(1)">Bad</a>'));
+
+        // Neither are links buried in comments or script strings
+        $html = '<!-- <a href="/c">c</a> --><script>"<a href=\'/s\'>"</script><a href="/ok">o</a>';
+        Assert::same(['/ok'], Html::links($html));
     }
 
     public function testLinkWithAllAttributes(): void
@@ -234,63 +259,6 @@ class HtmlTest extends TestCase
         Assert::contains('href="styles.css"', $result);
         Assert::contains('rel="stylesheet"', $result);
         Assert::contains('type="text/css"', $result);
-    }
-
-    public function testScriptWithContent(): void
-    {
-        $result = Html::script(null, 'alert("hi");');
-
-        Assert::same('<script>alert("hi");</script>', $result);
-    }
-
-    public function testScriptWithExtraAttributes(): void
-    {
-        $result = Html::script('app.js', '', ['defer' => true, 'async' => true]);
-
-        Assert::contains('defer', $result);
-        Assert::contains('async', $result);
-        Assert::contains('src="app.js"', $result);
-    }
-
-    public function testScriptWithNoSrc(): void
-    {
-        $result = Html::script(null);
-
-        Assert::same('<script></script>', $result);
-    }
-
-    public function testScriptWithSrc(): void
-    {
-        $result = Html::script('app.js');
-
-        Assert::contains('src="app.js"', $result);
-        Assert::contains('<script', $result);
-        Assert::contains('</script>', $result);
-    }
-
-    public function testLinks(): void
-    {
-        Assert::same(
-            ['/about', 'https://e.com'],
-            Html::links('<a href="/about">About</a> and <a href="https://e.com">E</a>')
-        );
-        Assert::same([], Html::links('<p>No links here</p>'));
-    }
-
-    public function testLinksDecodesEntities(): void
-    {
-        Assert::same(['/x?a=1&b=2'], Html::links('<a href="/x?a=1&amp;b=2">q</a>'));
-        Assert::same(['mailto:a@b.c'], Html::links('<a href="mailto:a@b.c">m</a>'));
-    }
-
-    public function testLinksIgnoresHiddenAndUnsafeMarkup(): void
-    {
-        // Addresses cleaning rejects are not reported
-        Assert::same([], Html::links('<a href="javascript:alert(1)">Bad</a>'));
-
-        // Neither are links buried in comments or script strings
-        $html = '<!-- <a href="/c">c</a> --><script>"<a href=\'/s\'>"</script><a href="/ok">o</a>';
-        Assert::same(['/ok'], Html::links($html));
     }
 
     public function testMinify(): void
@@ -333,6 +301,13 @@ class HtmlTest extends TestCase
         Assert::notContains('form', $tags);
     }
 
+    public function testSafeTagsIncludesHeadOnlyTagsThatNeverSurvive(): void
+    {
+        // These are recognised names, but sanitize() treats its input as page content
+        Assert::contains('title', Html::safeTags());
+        Assert::same('', Html::sanitize('<title>x</title>'));
+    }
+
     public function testSafeTagsIsSortedList(): void
     {
         $tags = Html::safeTags();
@@ -341,13 +316,6 @@ class HtmlTest extends TestCase
 
         Assert::same($sorted, $tags);
         Assert::same(range(0, count($tags) - 1), array_keys($tags));
-    }
-
-    public function testSafeTagsIncludesHeadOnlyTagsThatNeverSurvive(): void
-    {
-        // These are recognised names, but sanitize() treats its input as page content
-        Assert::contains('title', Html::safeTags());
-        Assert::same('', Html::sanitize('<title>x</title>'));
     }
 
     public function testSanitizeAllowedTagsUnwrapOthers(): void
@@ -434,6 +402,38 @@ class HtmlTest extends TestCase
         Assert::same($long, Html::sanitize($long, [], ['https'], -1));
     }
 
+    public function testScriptWithContent(): void
+    {
+        $result = Html::script(null, 'alert("hi");');
+
+        Assert::same('<script>alert("hi");</script>', $result);
+    }
+
+    public function testScriptWithExtraAttributes(): void
+    {
+        $result = Html::script('app.js', '', ['defer' => true, 'async' => true]);
+
+        Assert::contains('defer', $result);
+        Assert::contains('async', $result);
+        Assert::contains('src="app.js"', $result);
+    }
+
+    public function testScriptWithNoSrc(): void
+    {
+        $result = Html::script(null);
+
+        Assert::same('<script></script>', $result);
+    }
+
+    public function testScriptWithSrc(): void
+    {
+        $result = Html::script('app.js');
+
+        Assert::contains('src="app.js"', $result);
+        Assert::contains('<script', $result);
+        Assert::contains('</script>', $result);
+    }
+
     public function testSecureLinks(): void
     {
         Assert::same(
@@ -441,17 +441,6 @@ class HtmlTest extends TestCase
             Html::secureLinks('<a href="https://example.com">Visit</a>')
         );
         Assert::same('', Html::secureLinks(''));
-    }
-
-    public function testSecureLinksForcesHttps(): void
-    {
-        Assert::same(
-            '<a href="https://example.com" rel="nofollow">Visit</a>',
-            Html::secureLinks('<a href="http://example.com">Visit</a>', 'nofollow', true)
-        );
-
-        // Media addresses are rewritten too
-        Assert::contains('src="https://e.com/a.png"', Html::secureLinks('<img src="http://e.com/a.png">', 'x', true));
     }
 
     public function testSecureLinksAlsoCleansTheDocument(): void
@@ -463,6 +452,17 @@ class HtmlTest extends TestCase
 
         // Anchors without an address still receive the relationship value
         Assert::same('<a rel="noopener noreferrer">jump</a>', Html::secureLinks('<a>jump</a>'));
+    }
+
+    public function testSecureLinksForcesHttps(): void
+    {
+        Assert::same(
+            '<a href="https://example.com" rel="nofollow">Visit</a>',
+            Html::secureLinks('<a href="http://example.com">Visit</a>', 'nofollow', true)
+        );
+
+        // Media addresses are rewritten too
+        Assert::contains('src="https://e.com/a.png"', Html::secureLinks('<img src="http://e.com/a.png">', 'x', true));
     }
 
     public function testStripComments(): void
@@ -620,9 +620,27 @@ class HtmlTest extends TestCase
         Assert::same('<input type="text">', Html::tag('input', '', ['type' => 'text', 'disabled' => null]));
     }
 
+    public function testTags(): void
+    {
+        Assert::same(['div', 'p'], Html::tags('<div><p>Hi</p><p>There</p></div>'));
+        Assert::same([], Html::tags('Just text'));
+        Assert::same([], Html::tags(''));
+    }
+
+    public function testTagsAreLowercasedAndUnique(): void
+    {
+        Assert::same(['p'], Html::tags('<P>one</P><p>two</p>'));
+    }
+
     public function testTagSelfClosingImg(): void
     {
         Assert::same('<img src="photo.jpg">', Html::tag('img', '', ['src' => 'photo.jpg']));
+    }
+
+    public function testTagsIgnoresHiddenMarkup(): void
+    {
+        Assert::same(['p'], Html::tags('<!-- <b>x</b> --><p>hi</p>'));
+        Assert::same(['p'], Html::tags('<script>"<i>y</i>"</script><p>hi</p>'));
     }
 
     public function testTagVoidElement(): void
@@ -638,24 +656,6 @@ class HtmlTest extends TestCase
     public function testTagWithAttributes(): void
     {
         Assert::same('<p class="greeting">Hello</p>', Html::tag('p', 'Hello', ['class' => 'greeting']));
-    }
-
-    public function testTags(): void
-    {
-        Assert::same(['div', 'p'], Html::tags('<div><p>Hi</p><p>There</p></div>'));
-        Assert::same([], Html::tags('Just text'));
-        Assert::same([], Html::tags(''));
-    }
-
-    public function testTagsAreLowercasedAndUnique(): void
-    {
-        Assert::same(['p'], Html::tags('<P>one</P><p>two</p>'));
-    }
-
-    public function testTagsIgnoresHiddenMarkup(): void
-    {
-        Assert::same(['p'], Html::tags('<!-- <b>x</b> --><p>hi</p>'));
-        Assert::same(['p'], Html::tags('<script>"<i>y</i>"</script><p>hi</p>'));
     }
 
     public function testToHtmlEmpty(): void

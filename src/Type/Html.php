@@ -7,8 +7,8 @@ namespace Phuture\Coherence\Type;
 use Override;
 use Phuture\Coherence\Enum\EncodingMode;
 use Phuture\Coherence\Interface\Htmlable;
-use Phuture\Coherence\Support\FluentClass;
 use Phuture\Coherence\Html as Transformer;
+use Phuture\Coherence\Support\FluentClass;
 
 /**
  * A fluent wrapper around the Html utility class for chainable HTML manipulation.
@@ -219,12 +219,17 @@ class Html extends FluentClass implements Htmlable
     /**
      * Returns the wrapped HTML markup.
      *
+     * This method hands back the markup itself, unchanged. It returns the same
+     * value as `toString()`; both exist so that code reading HTML can say so by
+     * name, while anything expecting a plain string still works.
+     *
      * @return string The wrapped HTML markup
+     * @see \Phuture\Coherence\Type\Html::toString()
      */
     #[Override]
     public function toHtml(): string
     {
-        return (string) $this->data;
+        return $this->toString();
     }
 
     /**
@@ -247,7 +252,8 @@ class Html extends FluentClass implements Htmlable
     #[Override]
     public function toString(): string
     {
-        return $this->toText();
+        // @phpstan-ignore-next-line
+        return (string) $this->data;
     }
 
     /**
@@ -259,7 +265,7 @@ class Html extends FluentClass implements Htmlable
     #[Override]
     public function toText(): string
     {
-        return Transformer::toText($this->data);
+        return Transformer::toText($this->toString());
     }
 
     /**

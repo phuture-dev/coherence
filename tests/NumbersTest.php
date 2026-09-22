@@ -472,17 +472,6 @@ class NumbersTest extends TestCase
         Assert::same('1 GB', Numbers::fileSize(1073741824));
     }
 
-    public function testFileSizeWithPrecision(): void
-    {
-        Assert::same('1.46 KB', Numbers::fileSize(1500, 2));
-        Assert::same('1.50 MB', Numbers::fileSize(1572864, 2));
-    }
-
-    public function testFileSizeZeroBytes(): void
-    {
-        Assert::same('0 B', Numbers::fileSize(0));
-    }
-
     public function testFileSizeDecimalBase(): void
     {
         Assert::same('1 KB', Numbers::fileSize(1000, 0, ByteBase::Decimal));
@@ -498,6 +487,17 @@ class NumbersTest extends TestCase
         // The same byte count reads differently under each base
         Assert::same('1.02 KB', Numbers::fileSize(1024, 2, ByteBase::Decimal));
         Assert::same('1.00 KB', Numbers::fileSize(1024, 2, ByteBase::Binary));
+    }
+
+    public function testFileSizeWithPrecision(): void
+    {
+        Assert::same('1.46 KB', Numbers::fileSize(1500, 2));
+        Assert::same('1.50 MB', Numbers::fileSize(1572864, 2));
+    }
+
+    public function testFileSizeZeroBytes(): void
+    {
+        Assert::same('0 B', Numbers::fileSize(0));
     }
 
     public function testFloatComparisonPrecision(): void

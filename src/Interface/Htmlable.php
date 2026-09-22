@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Interface;
 
+use Stringable;
+
 /**
  * Interface for objects that hold HTML and can be shown in other forms.
  *
@@ -16,7 +18,7 @@ namespace Phuture\Coherence\Interface;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Htmlable extends \Stringable
+interface Htmlable extends Stringable
 {
     /**
      * Returns the HTML held by the object.

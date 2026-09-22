@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Interface;
 
+use Stringable;
 use DateTimeImmutable;
 
 /**
@@ -18,7 +19,7 @@ use DateTimeImmutable;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Dateable extends \Stringable
+interface Dateable extends Stringable
 {
     /**
      * Returns the date portion formatted as a string.

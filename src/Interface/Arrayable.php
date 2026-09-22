@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Interface;
 
+use ArrayAccess;
+
 /**
  * Interface for objects that can be converted to arrays.
  *
@@ -15,7 +17,7 @@ namespace Phuture\Coherence\Interface;
  * @license https://opensource.org/licenses/MIT MIT License
  * @link https://www.phuture.dev/ Phuture
  */
-interface Arrayable extends \ArrayAccess
+interface Arrayable extends ArrayAccess
 {
     /**
      * Convert the object to an array representation.

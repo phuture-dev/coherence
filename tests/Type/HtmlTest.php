@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phuture\Coherence\Tests\Type;
 
+use Stringable;
 use Phuture\Coherence\Html;
 use Tester\{Assert, TestCase};
 use Phuture\Coherence\Enum\EncodingMode;
@@ -16,12 +17,12 @@ class HtmlTest extends TestCase
 {
     public function testChainsTransformations(): void
     {
-        $result = FluentHtml::from('<p onclick="steal()">Hello <script>alert(1)</script>world</p>')
+        $fluent = FluentHtml::from('<p onclick="steal()">Hello <script>alert(1)</script>world</p>')
             ->sanitize()
-            ->truncate(8)
-            ->toString();
+            ->truncate(8);
 
-        Assert::same('<p>Hello wo...</p>', $result);
+        Assert::same('<p>Hello wo...</p>', $fluent->toString());
+        Assert::same('Hello wo...', $fluent->toText());
     }
 
     public function testDecodeDelegates(): void
@@ -56,7 +57,7 @@ class HtmlTest extends TestCase
         $fluent = FluentHtml::from('<p>x</p>');
 
         Assert::type(Htmlable::class, $fluent);
-        Assert::type(\Stringable::class, $fluent);
+        Assert::type(Stringable::class, $fluent);
     }
 
     public function testIsSanitizedDelegates(): void
@@ -149,6 +150,33 @@ class HtmlTest extends TestCase
 
         Assert::same('<p>Hello</p>', $fluent->toHtml());
         Assert::same($fluent->toString(), $fluent->toHtml());
+    }
+
+    public function testToHtmlAndToStringAgree(): void
+    {
+        $fluent = FluentHtml::from('<p class="lead">Hello <b>world</b></p>');
+
+        // Like every other Type wrapper, the string form is the wrapped value
+        Assert::same('<p class="lead">Hello <b>world</b></p>', $fluent->toHtml());
+        Assert::same($fluent->toHtml(), $fluent->toString());
+        Assert::same($fluent->toHtml(), $fluent->get());
+    }
+
+    public function testTransformationsReadTheMarkupNotTheText(): void
+    {
+        // Chained calls must operate on the markup, never on stripped text
+        Assert::same(
+            '<p>Hello <b>world</b></p>',
+            FluentHtml::from('<p class="lead">Hello <b>world</b></p>')->sanitize()->get()
+        );
+        Assert::same(
+            '<p class="lead">Hello...</p>',
+            FluentHtml::from('<p class="lead">Hello <b>world</b></p>')->truncate(5)->get()
+        );
+        Assert::same(
+            '<p>a</p>',
+            FluentHtml::from('<p>a<!-- note --></p>')->stripComments()->get()
+        );
     }
 
     public function testToMarkdownDelegates(): void

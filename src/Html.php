@@ -8,9 +8,8 @@ use League\HTMLToMarkdown\HtmlConverter;
 use Phuture\Coherence\Enum\EncodingMode;
 use League\CommonMark\CommonMarkConverter;
 use Phuture\Coherence\Support\StaticClass;
-use Symfony\Component\HtmlSanitizer\HtmlSanitizer;
-use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
 use Phuture\Coherence\Exception\InvalidArgumentException;
+use Symfony\Component\HtmlSanitizer\{HtmlSanitizer, HtmlSanitizerConfig};
 
 /**
  * Comprehensive HTML manipulation utility class.
