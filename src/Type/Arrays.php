@@ -6,7 +6,6 @@ namespace Phuture\Coherence\Type;
 
 use Override;
 use Countable;
-use ArrayAccess;
 use Traversable;
 use ArrayIterator;
 use IteratorAggregate;
@@ -43,7 +42,7 @@ use Phuture\Coherence\Enum\{ArrayComparator, KeyCase, SortComparison};
  *     ->toArray();
  * ```
  */
-class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, IteratorAggregate
+class Arrays extends FluentClass implements Arrayable, Countable, IteratorAggregate
 {
     /**
      * Appends key-value pairs to the array if the keys do not already exist.
@@ -892,6 +891,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @return string The internal data as a JSON-encoded string
      */
+    #[Override]
     public function toJson(): string
     {
         return Transformer::toJson($this->data);
@@ -902,6 +902,7 @@ class Arrays extends FluentClass implements Arrayable, ArrayAccess, Countable, I
      *
      * @return object The internal data as a plain PHP object
      */
+    #[Override]
     public function toObject(): object
     {
         return Transformer::toObject($this->data);

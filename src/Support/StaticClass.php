@@ -17,7 +17,6 @@ use Phuture\Coherence\Exception\MemberAccessException;
  * - Hidden dependencies and tight coupling
  * - Lack of polymorphism and interface implementation
  *
- * Consider using regular classes with dependency injection for better testability and flexibility.
  * Reserve static classes for simple utility functions that have no state or dependencies.
  *
  * Example:

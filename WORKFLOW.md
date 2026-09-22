@@ -473,7 +473,7 @@ class CollectionTest extends TestCase
 ### Required Standards
 
 1. **PSR-12**: Mandatory coding style standard
-2. **PHPStan**: Static analysis at level `6`
+2. **PHPStan**: Static analysis at level `9`
 3. **PHP CodeSniffer**: Automatic PSR-12 enforcement
 
 ### Quality Check Commands

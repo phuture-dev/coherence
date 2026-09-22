@@ -201,6 +201,7 @@ class Files extends FluentClass implements Fileable
      * @return string The file extension without the leading dot, or an empty string when there is none
      * @see \Phuture\Coherence\Files::extension()
      */
+    #[Override]
     public function extension(): string
     {
         return Transformer::extension($this->data);
@@ -213,6 +214,7 @@ class Files extends FluentClass implements Fileable
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the time cannot be read
      * @see \Phuture\Coherence\Files::lastModified()
      */
+    #[Override]
     public function lastModified(): int
     {
         return Transformer::lastModified($this->data);
@@ -243,6 +245,7 @@ class Files extends FluentClass implements Fileable
      *     When the file does not exist or the MIME type cannot be detected
      * @see \Phuture\Coherence\Files::mimeType()
      */
+    #[Override]
     public function mimeType(): string
     {
         return Transformer::mimeType($this->data);
@@ -279,6 +282,7 @@ class Files extends FluentClass implements Fileable
      * @return string The file name with or without extension
      * @see \Phuture\Coherence\Files::name()
      */
+    #[Override]
     public function name(bool $includeExtension = true): string
     {
         return Transformer::name($this->data, $includeExtension);
@@ -319,6 +323,7 @@ class Files extends FluentClass implements Fileable
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or cannot be read
      * @see \Phuture\Coherence\Files::read()
      */
+    #[Override]
     public function read(): string
     {
         return Transformer::read($this->data);
@@ -367,6 +372,7 @@ class Files extends FluentClass implements Fileable
      * @throws \Phuture\Coherence\Exception\RuntimeException When the file does not exist or the size cannot be read
      * @see \Phuture\Coherence\Files::size()
      */
+    #[Override]
     public function size(): int
     {
         return Transformer::size($this->data);
