@@ -1,6 +1,6 @@
 {
     "name": "phuture/coherence",
-    "description": "",
+    "description": "A coherent collection of utility helpers for PHP.",
     "type": "library",
     "keywords": [
         "php", "array", "hash", "html", "multibyte", "string", "url", "polyfill", "helpers"
